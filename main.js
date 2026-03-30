@@ -350,14 +350,13 @@ app.whenReady().then(() => {
     // Auto-Updater Logic
     autoUpdater.checkForUpdatesAndNotify();
     autoUpdater.on('update-downloaded', (info) => {
-        dialog.showMessageBox({
-            type: 'info',
-            title: 'Update Ready',
-            message: 'A new version of Ooznest Control has been downloaded. The application will quit and install the update now.',
-            buttons: ['Install Update Now']
-        }).then(() => {
-            autoUpdater.quitAndInstall();
+        BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('update-downloaded');
         });
+    });
+
+    ipcMain.on('install-update', () => {
+        autoUpdater.quitAndInstall();
     });
 
     app.on('activate', () => {

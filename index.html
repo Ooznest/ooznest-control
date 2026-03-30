@@ -2218,6 +2218,21 @@
             const troubleshootingHandler = new TroubleshootingHandler(ws, store);
             window.troubleshooting = troubleshootingHandler;
             
+            if (window.electron && window.electron.on) {
+                window.electron.on('update-downloaded', () => {
+                    reporter.showConfirm(
+                        'Update Ready',
+                        'A new version of Ooznest Control has been downloaded. The application will quit and install the update now.',
+                        () => {
+                            window.electron.send('install-update');
+                        },
+                        null,
+                        'Install Update Now',
+                        'Cancel'
+                    );
+                });
+            }
+
             if (window.term) {
                 setTimeout(() => {
                     window.term.writeln('> Ready, please Connect');
