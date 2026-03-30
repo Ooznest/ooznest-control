@@ -34,6 +34,11 @@
   },
   "build": {
     "appId": "com.ooznest.control",
+    "publish": {
+      "provider": "github",
+      "owner": "Ooznest",
+      "repo": "ooznest-control"
+    },
     "files": [
       "**/*",
       "!node_modules/*",

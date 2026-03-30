@@ -5,8 +5,7 @@ const http = require('http');
 const net = require('net');
 const { SerialPort } = require('serialport');
 const { WebSocketServer } = require('ws');
-
-// Express App setup
+const { autoUpdater } = require('electron-updater');
 const expressApp = express();
 const port = 8081; // Pick a port for the internal server
 expressApp.use(express.static(__dirname));
@@ -347,6 +346,19 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow();
+    
+    // Auto-Updater Logic
+    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.on('update-downloaded', (info) => {
+        dialog.showMessageBox({
+            type: 'info',
+            title: 'Update Ready',
+            message: 'A new version of Ooznest Control has been downloaded. The application will quit and install the update now.',
+            buttons: ['Install Update Now']
+        }).then(() => {
+            autoUpdater.quitAndInstall();
+        });
+    });
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
