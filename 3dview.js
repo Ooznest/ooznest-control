@@ -901,13 +901,37 @@ export class GCodeViewer {
             const colorG23 = new THREE.Color(cssAppSecondary);
             const feedTypes = payload.feedTypes;
 
-            for (let i = 0; i < colorBuffer.length; i += 3) {
-                const type = (feedTypes && (i/3) < feedTypes.length) ? feedTypes[i / 3] : 1;
-                const c = (type === 2) ? colorG23 : colorG1;
+            // Faked directional light for line volume
+            const lightDir = new THREE.Vector3(1, 1, 1).normalize();
+            const D = new THREE.Vector3();
+            const crossVec = new THREE.Vector3();
+
+            for (let i = 0; i < colorBuffer.length; i += 6) {
+                // Compute direction of this segment
+                D.set(
+                    feedGeo[i + 3] - feedGeo[i],
+                    feedGeo[i + 4] - feedGeo[i + 1],
+                    feedGeo[i + 5] - feedGeo[i + 2]
+                );
                 
-                colorBuffer[i] = c.r;
-                colorBuffer[i + 1] = c.g;
-                colorBuffer[i + 2] = c.b;
+                // If zero length, default to 1
+                if (D.lengthSq() > 0) D.normalize();
+                else D.set(0, 0, 1);
+
+                // Intensity based on cross product (max light when line is perpendicular to light ray)
+                crossVec.crossVectors(D, lightDir);
+                // Base ambient 0.5 + Diffuse 0.5
+                const intensity = 0.5 + 0.5 * crossVec.length();
+
+                for (let v = 0; v < 2; v++) {
+                    const idx = i + v * 3;
+                    const type = (feedTypes && (idx/3) < feedTypes.length) ? feedTypes[idx / 3] : 1;
+                    const c = (type === 2) ? colorG23 : colorG1;
+                    
+                    colorBuffer[idx] = c.r * intensity;
+                    colorBuffer[idx + 1] = c.g * intensity;
+                    colorBuffer[idx + 2] = c.b * intensity;
+                }
             }
             
             this.feedColorsCache = new Float32Array(colorBuffer);
