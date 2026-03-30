@@ -1,7 +1,7 @@
 # Ooznest Control
 
 [![Cross-Platform Builds](https://github.com/ooznest/ooznest-control/actions/workflows/cross-platform-builds.yml/badge.svg)](https://github.com/ooznest/ooznest-control/actions/workflows/cross-platform-builds.yml)
-[![GitHub Pages](https://github.com/ooznest/ooznest-control/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/ooznest/ooznest-controll/actions/workflows/pages/pages-build-deployment)
+[![GitHub Pages](https://github.com/ooznest/ooznest-control/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/ooznest/ooznest-control/actions/workflows/pages/pages-build-deployment)
 
 A modern, cross platform user interface for grblHAL CNC controllers. It connects natively over WebSerial or WebSockets and is designed to be lightweight, fast, and highly portable.
 

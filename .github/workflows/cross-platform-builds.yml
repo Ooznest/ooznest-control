@@ -81,7 +81,7 @@ jobs:
           cordova platform add android
           cordova build android
           VERSION=$(node -p "require('../package.json').version")
-          mv platforms/android/app/build/outputs/apk/debug/app-debug.apk platforms/android/app/build/outputs/apk/debug/javascript-webserial-grblhal-${VERSION}-Android.apk || true
+          mv platforms/android/app/build/outputs/apk/debug/app-debug.apk platforms/android/app/build/outputs/apk/debug/ooznest-control-${VERSION}-Android.apk || true
           
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
@@ -122,7 +122,7 @@ jobs:
           mkdir -p Payload
           cp -r platforms/ios/build/Build/Products/Debug-iphoneos/*.app Payload/
           VERSION=$(node -p "require('../package.json').version")
-          zip -r javascript-webserial-grblhal-${VERSION}-iOS.ipa Payload/
+          zip -r ooznest-control-${VERSION}-iOS.ipa Payload/
           
       - name: Upload iOS App
         uses: actions/upload-artifact@v4
@@ -236,13 +236,13 @@ jobs:
           npm run build-sd
           VERSION=$(node -p "require('./package.json').version")
           cd dist
-          zip -r ../javascript-webserial-grblhal-${VERSION}-SDCard.zip index.html.gz *.stl
+          zip -r ../ooznest-control-${VERSION}-SDCard.zip index.html.gz *.stl
         
       - name: Upload SD Card Payload
         uses: actions/upload-artifact@v4
         with:
           name: Ooznest-SD-WebUI
-          path: javascript-webserial-grblhal-*-SDCard.zip
+          path: ooznest-control-*-SDCard.zip
 
   create-release:
     name: Create Release
