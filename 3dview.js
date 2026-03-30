@@ -948,36 +948,56 @@ export class GCodeViewer {
     updateProgress(currentLine) {
         if (!this.feedMesh || !this.lineMap) return;
 
+        const colorAttr = this.feedMesh.geometry.attributes.color;
+
         // If currentLine reset (e.g. restart), reset all colors
         if (currentLine < this.lastRenderedLine) {
-            const colorAttr = this.feedMesh.geometry.attributes.color;
             if (this.feedColorsCache) {
                 for (let i = 0; i < colorAttr.count; i++) {
                     const idx = i * 3;
                     colorAttr.setXYZ(i, this.feedColorsCache[idx], this.feedColorsCache[idx+1], this.feedColorsCache[idx+2]);
                 }
             }
+            colorAttr.updateRange.offset = 0;
+            colorAttr.updateRange.count = -1;
             colorAttr.needsUpdate = true;
             this.lastRenderedLine = 0;
         }
-
-        const colorAttr = this.feedMesh.geometry.attributes.color;
 
         // LineMap is Uint32Array: [start, count, start, count, ...]
         const maxLine = (this.lineMap.length / 2) - 1;
         const targetLine = Math.min(currentLine, maxLine);
 
         if (targetLine > this.lastRenderedLine) {
+            let minStart = Infinity;
+            let maxEnd = 0;
+            
             for (let l = this.lastRenderedLine + 1; l <= targetLine; l++) {
                 const start = this.lineMap[l * 2];
                 const count = this.lineMap[l * 2 + 1];
                 if (count > 0) {
+                    if (start < minStart) minStart = start;
+                    if (start + count > maxEnd) maxEnd = start + count;
+
                     for (let k = 0; k < count; k++) {
                         colorAttr.setXYZ(start + k, 0.2, 0.2, 0.2);
                     }
                 }
             }
-            colorAttr.needsUpdate = true;
+            if (minStart < Infinity) {
+                if (colorAttr.updateRange.count === -1) {
+                    colorAttr.updateRange.offset = minStart * 3;
+                    colorAttr.updateRange.count = (maxEnd - minStart) * 3;
+                } else {
+                    const currentOffset = colorAttr.updateRange.offset;
+                    const currentEnd = currentOffset + colorAttr.updateRange.count;
+                    const newOffset = Math.min(currentOffset, minStart * 3);
+                    const newEnd = Math.max(currentEnd, maxEnd * 3);
+                    colorAttr.updateRange.offset = newOffset;
+                    colorAttr.updateRange.count = newEnd - newOffset;
+                }
+                colorAttr.needsUpdate = true;
+            }
             this.lastRenderedLine = targetLine;
         }
     }
