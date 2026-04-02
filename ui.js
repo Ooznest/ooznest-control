@@ -97,7 +97,7 @@ class UIManager {
             setDisabled(unlockBtn, true);
             
             // Completely disable specific outer blocks remaining from previous UI styles
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => {
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => {
                 el.classList.add('opacity-50', 'pointer-events-none');
             });
         } 
@@ -115,7 +115,7 @@ class UIManager {
             }
             
             // Clean up general offline locks if they were present
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else if (state === 'run' || state === 'jog' || state === 'homing') {
             setDisabled(jogControls, true);
@@ -129,7 +129,7 @@ class UIManager {
                 btn.classList.remove('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
                 btn.classList.add('btn-secondary');
             }
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else if (state === 'hold' || state === 'door' || state === 'sleep') {
             setDisabled(jogControls, true);
@@ -143,7 +143,7 @@ class UIManager {
                 btn.classList.remove('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
                 btn.classList.add('btn-secondary');
             }
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else { 
             // Idle Space
@@ -158,7 +158,7 @@ class UIManager {
                 btn.classList.add('btn-secondary');
             }
             
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
 
             this.updateRunButtonsState();
         }
