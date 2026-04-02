@@ -40,6 +40,7 @@ export class AppStore {
                 finalDepth: 3.0,
                 clearance: 5.0,
                 useCoolant: false,
+                useMaxArea: false,
                 useFraming: false // Default off, but available
             }
         };

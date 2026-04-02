@@ -85,8 +85,8 @@ class UIManager {
         // UI Control Selectors
         const jogControls = '.jog-btn, .jog-btn-extra, .dro-zero-btn, .dro-sub-btn, #stepSize, #jogContinuous';
         const runControls = '#run-job-btn, #run-sd-btn';
-        const macroControls = '#macros-view button, #probe-panel-content button, #probe-panel-content input, #sd-tools button';
-        const txtConsole = '#console-input-area input, #console-input';
+        const macroControls = '#macros-view button, #probe-panel-content, #probe-panel-content button, #probe-panel-content input, #sd-tools button';
+        const txtConsole = '#console-input-area, #cmdInput, #btnSend';
         const unlockBtn = 'button[title="Unlock ($X)"]';
 
         if (state === 'offline') {
