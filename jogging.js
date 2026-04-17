@@ -63,7 +63,7 @@ class JoggingController {
                 const f = this.getFeedForDirection(dir, speedMode);
                 const isMm = window.store.get('general.units') === 'mm';
                 const unit = isMm ? 'G21' : 'G20';
-                const dist = isMm ? '1000' : '50';
+                const dist = isMm ? '10000' : '400';
                 let move = "";
                 if (dir.includes('X')) move += `X${dir.includes('X-') ? '-' : ''}${dist} `;
                 if (dir.includes('Y')) move += `Y${dir.includes('Y-') ? '-' : ''}${dist} `;
@@ -104,16 +104,25 @@ class JoggingController {
                 window.ws.sendCommand(`$J=G91 ${unit} ${move}F${f}`);
             };
 
-            btn.addEventListener('mousedown', startJog);
-            btn.addEventListener('mouseup', stopJog);
-            btn.addEventListener('mouseleave', stopJog);
-            btn.addEventListener('touchstart', (e) => {
-                if (toggle.checked) e.preventDefault();
-                startJog(e);
-            }, { passive: false });
-            btn.addEventListener('touchend', (e) => {
-                if (toggle.checked) e.preventDefault();
-                stopJog(e);
+            btn.addEventListener('pointerdown', (e) => {
+                if (toggle.checked) {
+                    if (e.cancelable) e.preventDefault();
+                    btn.setPointerCapture(e.pointerId);
+                    startJog(e);
+                }
+            });
+            btn.addEventListener('pointerup', (e) => {
+                if (toggle.checked) {
+                    if (e.cancelable) e.preventDefault();
+                    if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+                    stopJog(e);
+                }
+            });
+            btn.addEventListener('pointercancel', (e) => {
+                if (toggle.checked) {
+                    if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+                    stopJog(e);
+                }
             });
             btn.addEventListener('click', clickJog);
         });
