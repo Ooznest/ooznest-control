@@ -174,14 +174,14 @@
                     <div class="flex justify-between items-center mb-1 px-1">
 
                         <!-- Units Toggle (Segmented) -->
-                        <div class="oz-segmented-toggle" onclick="document.getElementById('unitToggle').click()">
+                        <label class="oz-segmented-toggle" for="unitToggle">
                             <input type="checkbox" id="unitToggle" class="sr-only" onchange="window.dro.toggleUnits();">
                             <div class="oz-segmented-bg">
                                 <div class="oz-segmented-slider"></div>
                                 <span class="oz-segmented-option left-opt">MM</span>
                                 <span class="oz-segmented-option right-opt">IN</span>
                             </div>
-                        </div>
+                        </label>
 
                         <!-- WCS Select -->
                         <div class="flex items-center gap-2 bg-white/10 rounded px-2 py-0 shadow-sm">
@@ -430,15 +430,14 @@
                             </div>
 
                             <!-- Continuous Toggle (Segmented) -->
-                            <div class="oz-segmented-toggle mt-1"
-                                onclick="document.getElementById('jogContinuous').click()">
+                            <label class="oz-segmented-toggle mt-1" for="jogContinuous">
                                 <input type="checkbox" id="jogContinuous" class="sr-only">
                                 <div class="oz-segmented-bg">
                                     <div class="oz-segmented-slider"></div>
                                     <span class="oz-segmented-option left-opt">INCR</span>
                                     <span class="oz-segmented-option right-opt">CONT</span>
                                 </div>
-                            </div>
+                            </label>
                         </div>
                     </div>
 
@@ -818,8 +817,7 @@
                                         <h3
                                             class="text-xs font-black text-grey uppercase tracking-wider mb-0 flex items-center">
                                             Dimensions</h3>
-                                        <div class="oz-segmented-toggle w-36 h-6"
-                                            onclick="document.getElementById('surf-dim-toggle').click()">
+                                        <label class="oz-segmented-toggle w-36 h-6" for="surf-dim-toggle">
                                             <input type="checkbox" id="surf-dim-toggle" class="sr-only"
                                                 onchange="window.surfacing.toggleDimMode()">
                                             <div class="oz-segmented-bg w-full h-6">
@@ -2288,14 +2286,14 @@
         // Unit Syncing
         const unitToggle = document.getElementById('unitToggle');
         unitToggle.addEventListener('change', () => {
-            const units = unitToggle.checked ? 'mm' : 'inch';
+            const units = unitToggle.checked ? 'inch' : 'mm';
             if (window.viewer) window.viewer.setUnits(units);
         });
 
         window.addEventListener('viewer-units-changed', (e) => {
             const isMm = e.detail.units === 'mm';
-            if (unitToggle.checked !== isMm) {
-                unitToggle.checked = isMm;
+            if (unitToggle.checked === isMm) {
+                unitToggle.checked = !isMm;
                 const label = document.getElementById('unitLabel');
                 if (label) label.innerText = isMm ? 'MM' : 'IN';
             }

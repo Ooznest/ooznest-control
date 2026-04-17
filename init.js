@@ -63,14 +63,14 @@ export function initializeApp(ws, store, viewer, reporter, term) {
     // Unit syncing
     const unitToggle = document.getElementById('unitToggle');
     unitToggle.addEventListener('change', () => {
-        const units = unitToggle.checked ? 'mm' : 'inch';
+        const units = unitToggle.checked ? 'inch' : 'mm';
         if (window.viewer) window.viewer.setUnits(units);
     });
 
     window.addEventListener('viewer-units-changed', (e) => {
         const isMm = e.detail.units === 'mm';
-        if (unitToggle.checked !== isMm) {
-            unitToggle.checked = isMm;
+        if (unitToggle.checked === isMm) {
+            unitToggle.checked = !isMm;
             window.store.set('general.units', e.detail.units);
         }
     });
