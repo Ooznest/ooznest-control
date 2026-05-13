@@ -158,7 +158,7 @@ export class ViewCube {
         canvas.height = 256;
 
         context.fillStyle = '#ffffff';
-        context.font = 'bold 62px Arial'; // Reduced slightly so BOTTOM fits
+        context.font = 'bold 62px "Nunito", sans-serif'; // Reduced slightly so BOTTOM fits
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText(text, 128, 128);

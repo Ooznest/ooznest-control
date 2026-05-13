@@ -15,6 +15,7 @@ export class DROHandler {
         this.spindleSpeed = 0;
         this.accessoryState = "";
         this.inputPins = "";
+        this.status = "Disconnected";
 
         // Initial UI Render
         this.updateUIUnits();
@@ -137,6 +138,7 @@ export class DROHandler {
 
         // Extract State
         const statePart = parts[0];
+        this.status = statePart.split(':')[0];
         // this._updateStateBadge(statePart); // DEFERRED to end of parse
 
         this.spindleSpeed = 0;
@@ -222,6 +224,21 @@ export class DROHandler {
                 const ln = parseInt(part.substring(3));
                 if (!isNaN(ln)) {
                     window.dispatchEvent(new CustomEvent('gcode-line', { detail: { line: ln } }));
+                }
+            }
+            // --- NEW: INA219 Power Monitor ---
+            else if (part.startsWith('INA219:')) {
+                const values = part.substring(7).split(',');
+                if (values.length >= 2) {
+                    const voltage = parseFloat(values[0]);
+                    const current = parseFloat(values[1]);
+                    if (!isNaN(voltage) && !isNaN(current)) {
+                        this.ina219Voltage = voltage;
+                        this.ina219Current = current;
+                        if (window.troubleshooting) {
+                            window.troubleshooting.updateINA219(voltage, current);
+                        }
+                    }
                 }
             }
             // --- NEW: Active Alarm (Alarm:X) from extended status report (0x87) ---

@@ -138,7 +138,7 @@ export class WebSerial {
      * Waits if grblHAL's RX buffer would overflow.
      */
     async sendCommand(line) {
-        const bytes = this.encoder.encode(line + '\n');
+        const bytes = this.encoder.encode(line + '\r\n');
         const len = bytes.length;
 
         // Block until there is room in grblHAL's RX buffer

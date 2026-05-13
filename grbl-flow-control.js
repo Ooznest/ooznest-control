@@ -22,7 +22,7 @@ export class GrblFlowControl {
     }
 
     async sendCommand(line) {
-        const bytes = this.encoder.encode(line + '\n');
+        const bytes = this.encoder.encode(line + '\r\n');
         const len = bytes.length;
 
         if (this._rxBufUsed + len >= this._rxBufSize) {

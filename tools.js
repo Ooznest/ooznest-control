@@ -24,6 +24,28 @@ export class ToolsHandler {
         }
     }
 
+    switchToolsTab(targetId, btn) {
+        // Hide all contents
+        document.querySelectorAll('.tools-tab-content').forEach(el => el.classList.add('hidden'));
+        // Show target
+        document.getElementById(targetId).classList.remove('hidden');
+
+        // Reset buttons
+        document.querySelectorAll('.tools-tab-btn').forEach(el => {
+            el.classList.replace('text-primary-dark', 'text-grey');
+            el.classList.replace('border-primary', 'border-transparent');
+        });
+
+        // Active button
+        btn.classList.replace('text-grey', 'text-primary-dark');
+        btn.classList.replace('border-transparent', 'border-primary');
+
+        // If switching away from calibration, cancel any active wizard logic
+        if (targetId !== 'tab-tool-calibration' && window.calibration) {
+            window.calibration.cancel();
+        }
+    }
+
     refresh() {
         if (!this.ws.isConnected) return;
         this.term.writeln('\x1b[34m[Tools] Fetching table ($#)...\x1b[0m');

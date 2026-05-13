@@ -1460,3 +1460,51 @@ textarea.xterm-helper-textarea {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* Tab pane sizing and scrollbar stability */
+.tab-pane {
+    width: 100% !important;
+    height: 100% !important;
+    scrollbar-gutter: stable;
+    position: relative; /* Base for absolute overlay */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Connection Warning Overlay */
+.connection-warning {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 500; /* Higher to stay above everything */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    background: rgba(235, 239, 239, 0.95); /* Slightly more opaque */
+}
+
+.tab-pane.is-offline .connection-warning {
+    display: flex;
+}
+
+.connection-warning-card {
+    background: white;
+    padding: 3rem;
+    border-radius: 2rem;
+    box-shadow: var(--oz-shadow-lg);
+    border: 1px solid var(--oz-teal-xlight);
+    max-width: 450px;
+    width: 100%;
+}
+
+.tab-pane.is-offline .hide-when-offline {
+    opacity: 0.15;
+    filter: blur(5px);
+    pointer-events: none;
+    user-select: none;
+}

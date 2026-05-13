@@ -543,7 +543,7 @@
             </div>
 
             <!-- Content -->
-            <div id="main-content-area" class="flex-1 relative overflow-hidden is-offline">
+            <div id="main-content-area" class="flex-1 relative overflow-hidden">
                 <!-- Added overflow-hidden here for strict constraint -->
 
                 <!-- 3D Viewer (Default) -->
@@ -1162,16 +1162,222 @@
 
                             <!-- Sub-Tab Content: Calibration -->
                             <div id="tab-tool-calibration" class="tools-tab-content hidden">
-                                <div class="bg-white p-8 rounded-xl border border-grey-light shadow-soft text-center">
-                                    <i class="bi bi-compass text-6xl text-grey-light mb-4 block"></i>
-                                    <h3 class="text-xl font-bold text-secondary-dark mb-2">Machine Calibration</h3>
-                                    <p class="text-grey max-w-md mx-auto">This section will contain wizards for squaring
-                                        the
-                                        gantry, calibrating steps per mm, and backsplash compensation.</p>
-                                    <div class="mt-8 flex justify-center gap-4">
-                                        <div class="w-32 h-1 bg-grey-bg rounded"></div>
-                                        <div class="w-32 h-1 bg-grey-bg rounded"></div>
-                                        <div class="w-32 h-1 bg-grey-bg rounded"></div>
+                                <div id="calibration-wizard" class="max-w-4xl mx-auto">
+                                    <!-- Initial State -->
+                                    <div id="cal-step-intro" class="bg-white p-8 rounded-xl border border-grey-light shadow-soft text-center">
+                                        <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <i class="bi bi-bullseye text-4xl text-primary"></i>
+                                        </div>
+                                        <h3 class="text-2xl font-black text-secondary-dark mb-2">Machine Calibration</h3>
+                                        <p class="text-grey max-w-md mx-auto mb-8">Select an axis to calibrate. Each axis may use a different method to ensure maximum accuracy.</p>
+                                        
+                                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                                            <!-- X AXIS -->
+                                            <button onclick="window.calibration.startWizard('X')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                <div class="text-axis-x font-black text-3xl mb-1">X</div>
+                                                <p class="text-[10px] text-grey uppercase font-bold">Vernier Method</p>
+                                            </button>
+                                            
+                                            <!-- Y AXIS -->
+                                            <button onclick="window.calibration.startWizard('Y')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                <div class="text-axis-y font-black text-3xl mb-1">Y</div>
+                                                <p class="text-[10px] text-grey uppercase font-bold">Vernier Method</p>
+                                            </button>
+
+                                            <!-- Z AXIS -->
+                                            <button onclick="window.calibration.startWizard('Z')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                <div class="text-axis-z font-black text-3xl mb-1">Z</div>
+                                                <p class="text-[10px] text-grey uppercase font-bold">Probe Method</p>
+                                            </button>
+
+                                            <!-- A AXIS -->
+                                            <button id="cal-btn-axis-a" onclick="window.calibration.startWizard('A')" class="hidden group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                <div class="text-secondary font-black text-3xl mb-1">A</div>
+                                                <p class="text-[10px] text-grey uppercase font-bold">Rotary Method</p>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 1: Setup -->
+                                    <div id="cal-step-setup" class="hidden bg-white rounded-xl border border-grey-light shadow-soft overflow-hidden">
+                                        <div class="bg-grey-bg px-6 py-4 border-b border-grey-light flex justify-between items-center">
+                                            <h3 class="font-black text-secondary-dark uppercase tracking-wider">Step 1: Machine Setup</h3>
+                                            <span class="text-xs font-bold text-primary">AXIS: <span id="cal-axis-display">X</span></span>
+                                        </div>
+                                        <div class="p-8 flex flex-col md:flex-row gap-8">
+                                            <div class="flex-1 space-y-4">
+                                                <div class="flex gap-4 items-start">
+                                                    <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">1</div>
+                                                    <p class="text-grey-dark pt-1">Secure a scrap piece of <strong>MDF or Wood</strong> to your wasteboard. Ensure it's at least 120mm long.</p>
+                                                </div>
+                                                <div class="flex gap-4 items-start">
+                                                    <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">2</div>
+                                                    <p class="text-grey-dark pt-1">Install a <strong>sharp V-Bit</strong> or engraving tool.</p>
+                                                </div>
+                                                <div class="flex gap-4 items-start">
+                                                    <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">3</div>
+                                                    <p class="text-grey-dark pt-1">Jog to the starting position on the scrap material and <strong>Zero the Z Axis</strong> on the surface.</p>
+                                                </div>
+                                                <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
+                                                    <i class="bi bi-exclamation-triangle-fill text-yellow-600 text-xl"></i>
+                                                    <p class="text-xs text-yellow-800">Ensure there is enough travel in the <span class="cal-axis-name">X</span> direction (approx 100mm) from the current position.</p>
+                                                </div>
+                                            </div>
+                                            <div class="w-full md:w-64 bg-grey-bg p-4 rounded-xl border border-grey-light">
+                                                <h4 class="text-[10px] font-black text-grey uppercase mb-3">Quick Control</h4>
+                                                <div class="space-y-2 mb-4">
+                                                    <div class="flex justify-between items-center bg-white p-2 rounded border border-grey-light">
+                                                        <span class="text-xs font-bold text-axis-z">Z</span>
+                                                        <span id="cal-z-pos" class="font-mono font-bold">0.000</span>
+                                                    </div>
+                                                </div>
+                                                <button onclick="sendCmd('G10 L20 P0 Z0')" class="btn btn-secondary w-full justify-center mb-4">Zero Z Axis</button>
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <button onclick="window.calibration.cancel()" class="btn btn-secondary justify-center">Cancel</button>
+                                                    <button onclick="window.calibration.nextStep()" class="btn btn-primary justify-center">Next Step</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 2: Cut -->
+                                    <div id="cal-step-cut" class="hidden bg-white rounded-xl border border-grey-light shadow-soft overflow-hidden">
+                                        <div class="bg-grey-bg px-6 py-4 border-b border-grey-light flex justify-between items-center">
+                                            <h3 class="font-black text-secondary-dark uppercase tracking-wider">Step 2: Cut Calibration Scale</h3>
+                                            <span class="text-xs font-bold text-primary">AXIS: <span id="cal-axis-display-2">X</span></span>
+                                        </div>
+                                        <div class="p-12 text-center">
+                                            <div class="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                                                <i class="bi bi-play-fill text-5xl text-orange-500"></i>
+                                            </div>
+                                            <h4 class="text-xl font-bold text-secondary-dark mb-4">Ready to cut?</h4>
+                                            <p class="text-grey max-w-md mx-auto mb-8">The machine will now cut 100 lines spaced 0.9mm apart. This will take approximately 2 minutes.</p>
+                                            
+                                            <div class="bg-red-50 border border-red-100 p-4 rounded-lg mb-8 max-w-md mx-auto flex items-center gap-3 text-left">
+                                                <i class="bi bi-fan text-red-500 text-2xl animate-spin"></i>
+                                                <div>
+                                                    <p class="text-xs font-black text-red-800 uppercase">Warning</p>
+                                                    <p class="text-xs text-red-700">Please ensure your <strong>spindle is turned ON</strong> before clicking Start Cut.</p>
+                                                </div>
+                                            </div>
+
+                                            <div id="cal-cut-progress" class="hidden mb-8 max-w-md mx-auto">
+                                                <div class="flex justify-between text-[10px] font-bold text-grey uppercase mb-1">
+                                                    <span>Cutting Mark <span id="cal-mark-num">0</span>/100</span>
+                                                    <span id="cal-cut-pct">0%</span>
+                                                </div>
+                                                <div class="h-2 w-full bg-grey-bg rounded-full overflow-hidden">
+                                                    <div id="cal-cut-bar" class="h-full bg-primary transition-all duration-300 w-0"></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex justify-center gap-4">
+                                                <button id="btn-cal-back-1" onclick="window.calibration.prevStep()" class="btn btn-secondary px-8">Back</button>
+                                                <button id="btn-cal-run" onclick="window.calibration.runCutJob()" class="btn btn-primary px-12 text-lg h-12 shadow-lg">Start Cut</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 3: Measure -->
+                                    <div id="cal-step-measure" class="hidden bg-white rounded-xl border border-grey-light shadow-soft overflow-hidden">
+                                        <div class="bg-grey-bg px-6 py-4 border-b border-grey-light flex justify-between items-center">
+                                            <h3 class="font-black text-secondary-dark uppercase tracking-wider">Step 3: Measurement</h3>
+                                        </div>
+                                        <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-12">
+                                            <div>
+                                                <h4 class="font-bold text-secondary-dark mb-4 flex items-center gap-2">
+                                                    <i class="bi bi-info-circle-fill text-primary"></i> How to Read
+                                                </h4>
+                                                <div class="space-y-4 text-sm text-grey-dark leading-relaxed">
+                                                    <p>1. Place a <strong>standard steel ruler</strong> against the cut marks, aligning the <strong>0 mark</strong> of the ruler with the <strong>first cut mark</strong>.</p>
+                                                    <p>2. Look along the ruler and find where a <strong>cut mark</strong> aligns perfectly with a <strong>millimeter mark</strong> on your ruler.</p>
+                                                    <div class="p-4 bg-grey-bg rounded-lg border border-grey-light italic text-xs">
+                                                        "The CNC marks are 0.9mm apart. By finding where they align with the 1mm marks on your ruler, we can calculate the exact error."
+                                                    </div>
+                                                </div>
+                                                <div class="mt-6">
+                                                    <img src="Calibration/vernier_example.png" alt="Vernier Example" class="rounded-lg border border-grey-light shadow-sm w-full" onerror="this.src='https://placehold.co/400x200?text=Vernier+Reading+Diagram'">
+                                                </div>
+                                            </div>
+                                            <div class="space-y-6 bg-grey-bg p-6 rounded-xl border border-grey-light">
+                                                <h4 class="text-[10px] font-black text-grey uppercase tracking-wider">Enter Readings</h4>
+                                                
+                                                <div>
+                                                    <label class="text-xs font-bold text-secondary-dark block mb-2">Which CNC mark aligns perfectly? (0-100)</label>
+                                                    <div class="relative">
+                                                        <input type="number" id="cal-input-mark" class="input-field pl-20 text-right text-lg font-mono" placeholder="96" min="0" max="100">
+                                                        <span class="absolute left-3 top-2.5 text-grey font-black text-xs">MARK</span>
+                                                    </div>
+                                                    <p class="text-[10px] text-grey mt-1 italic">Calculated CNC Distance: <span id="cal-cnc-dist-display">0.00</span> mm</p>
+                                                </div>
+
+                                                <div>
+                                                    <label class="text-xs font-bold text-secondary-dark block mb-2">What is the Ruler reading at that mark? (mm)</label>
+                                                    <div class="relative">
+                                                        <input type="number" id="cal-input-real" class="input-field pl-20 text-right text-lg font-mono" placeholder="86.0" step="0.1">
+                                                        <span class="absolute left-3 top-2.5 text-grey font-black text-xs">REAL</span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="pt-4">
+                                                    <button onclick="window.calibration.calculate()" class="btn btn-primary w-full justify-center h-12 text-lg shadow-md">Calculate Result</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 4: Result -->
+                                    <div id="cal-step-result" class="hidden bg-white rounded-xl border border-grey-light shadow-soft overflow-hidden">
+                                        <div class="bg-grey-bg px-6 py-4 border-b border-grey-light flex justify-between items-center">
+                                            <h3 class="font-black text-secondary-dark uppercase tracking-wider">Calibration Result</h3>
+                                        </div>
+                                        <div class="p-8">
+                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                                <div class="bg-grey-bg p-4 rounded-xl border border-grey-light text-center">
+                                                    <span class="text-[10px] font-black text-grey uppercase block mb-1">Current Steps/mm</span>
+                                                    <span id="cal-old-steps" class="text-2xl font-mono font-bold text-secondary-dark">0.000</span>
+                                                </div>
+                                                <div class="bg-primary/5 p-4 rounded-xl border border-primary/20 text-center ring-4 ring-primary/5">
+                                                    <span class="text-[10px] font-black text-primary uppercase block mb-1">New Steps/mm</span>
+                                                    <span id="cal-new-steps" class="text-3xl font-mono font-black text-primary">0.000</span>
+                                                </div>
+                                                <div class="bg-grey-bg p-4 rounded-xl border border-grey-light text-center">
+                                                    <span class="text-[10px] font-black text-grey uppercase block mb-1">Error Factor</span>
+                                                    <span id="cal-error-factor" class="text-2xl font-mono font-bold text-secondary-dark">0.0000</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl mb-8 flex items-start gap-4">
+                                                <i class="bi bi-info-circle-fill text-blue-500 text-2xl"></i>
+                                                <div class="text-sm text-blue-800 leading-relaxed">
+                                                    <p class="font-bold mb-1">Verification</p>
+                                                    <p>Applying this change will update your machine's <strong>$<span id="cal-setting-num">100</span></strong> setting. It is recommended to perform a test cut after applying to verify the accuracy.</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex justify-center gap-4">
+                                                <button onclick="window.calibration.cancel()" class="btn btn-secondary px-8">Discard</button>
+                                                <button onclick="window.calibration.apply()" class="btn btn-primary px-12 h-14 text-lg shadow-lg">Save to Firmware ($$)</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step: Done -->
+                                    <div id="cal-step-done" class="hidden bg-white p-12 rounded-xl border border-grey-light shadow-soft text-center animate-in fade-in zoom-in duration-300">
+                                        <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <i class="bi bi-check-lg text-4xl"></i>
+                                        </div>
+                                        <h3 class="text-2xl font-black text-secondary-dark mb-2">Calibration Complete!</h3>
+                                        <p class="text-grey max-w-md mx-auto mb-8">The new steps/mm have been saved to your machine's non-volatile memory. Your <span class="cal-axis-name font-bold">X</span> axis is now perfectly tuned.</p>
+                                        
+                                        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                                            <button onclick="window.calibration.cancel()" class="btn btn-primary px-8 h-12 shadow-md">
+                                                <i class="bi bi-arrow-repeat"></i> Calibrate Another Axis
+                                            </button>
+                                            <button onclick="window.toolsHandler.switchToolsTab('tab-tool-table', document.querySelector('.tools-tab-btn'))" class="btn btn-secondary px-8 h-12">
+                                                <i class="bi bi-table"></i> Back to Tool Table
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1842,14 +2048,32 @@
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Probe
                                         </h3>
                                     </div>
-                                    <div class="p-4 flex gap-6 justify-around">
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey uppercase">Triggered</span>
-                                            <div id="pin-indicator-P" class="signal-badge signal-off">OFF</div>
+                                    <div class="p-4 flex flex-col gap-4">
+                                        <div class="flex justify-around items-center">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey uppercase">Active Probe</span>
+                                                <div id="pin-indicator-P" class="signal-badge signal-off">OFF</div>
+                                            </div>
                                         </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey uppercase">No Probe</span>
-                                            <div id="pin-indicator-O" class="signal-badge signal-off">OFF</div>
+                                        <div class="flex justify-center gap-3">
+                                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                                <input type="radio" name="probe-mode" value="probe" checked
+                                                    onchange="window.troubleshooting.selectProbeMode('probe')"
+                                                    class="accent-primary w-3.5 h-3.5 cursor-pointer">
+                                                <span class="text-[11px] font-bold text-grey-dark">Probe</span>
+                                            </label>
+                                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                                <input type="radio" name="probe-mode" value="tls"
+                                                    onchange="window.troubleshooting.selectProbeMode('tls')"
+                                                    class="accent-primary w-3.5 h-3.5 cursor-pointer">
+                                                <span class="text-[11px] font-bold text-grey-dark">Probe TLS</span>
+                                            </label>
+                                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                                <input type="radio" name="probe-mode" value="probe2"
+                                                    onchange="window.troubleshooting.selectProbeMode('probe2')"
+                                                    class="accent-primary w-3.5 h-3.5 cursor-pointer">
+                                                <span class="text-[11px] font-bold text-grey-dark">Probe 2</span>
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
@@ -1874,6 +2098,71 @@
                                                 class="text-[10px] font-bold text-grey uppercase tracking-tight">Fault</span>
                                             <div id="pin-indicator-F" class="signal-badge signal-off">OFF</div>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- INA219 POWER MONITOR CARD -->
+                                <div id="ina219-card"
+                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
+                                    <div
+                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                        <i class="bi bi-battery-charging text-primary text-xs"></i>
+                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Power Supply</h3>
+                                    </div>
+                                    <div class="p-3 flex flex-col gap-2">
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div class="bg-grey-bg rounded-lg p-2 border border-grey-light">
+                                                <div class="text-[10px] font-bold text-grey uppercase mb-0.5">Voltage</div>
+                                                <div class="flex items-baseline gap-1">
+                                                    <span id="ina219-voltage" class="text-xl font-black text-secondary-dark font-mono">0.00</span>
+                                                    <span class="text-xs font-bold text-grey">V</span>
+                                                </div>
+                                            </div>
+                                            <div class="bg-grey-bg rounded-lg p-2 border border-grey-light">
+                                                <div class="text-[10px] font-bold text-grey uppercase mb-0.5">Current</div>
+                                                <div class="flex items-baseline gap-1">
+                                                    <span id="ina219-current" class="text-xl font-black text-secondary-dark font-mono">0.00</span>
+                                                    <span class="text-xs font-bold text-grey">A</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="relative">
+                                            <canvas id="ina219-chart" class="w-full h-20"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- PIN CONFIG & STATE CARD -->
+                                <div
+                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
+                                    <div
+                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                        <i class="bi bi-cpu text-primary text-xs"></i>
+                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Pin Configuration &amp; State</h3>
+                                        <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
+                                            onclick="window.troubleshooting.refreshPinInfo()">
+                                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                                        </button>
+                                    </div>
+                                    <div id="pin-info-content" class="p-3 text-[11px] font-mono text-secondary-dark max-h-80 overflow-y-auto">
+                                        <div class="text-grey italic text-center py-4">Click <strong>Refresh</strong> to load pin configuration and states.</div>
+                                    </div>
+                                </div>
+
+                                <!-- SPINDLES CARD -->
+                                <div
+                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
+                                    <div
+                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                        <i class="bi bi-sliders2 text-primary text-xs"></i>
+                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Spindles</h3>
+                                        <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
+                                            onclick="window.troubleshooting.refreshSpindles()">
+                                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                                        </button>
+                                    </div>
+                                    <div id="spindles-content" class="p-3 text-[11px] font-mono text-secondary-dark max-h-72 overflow-y-auto">
+                                        <div class="text-grey italic text-center py-4">Click <strong>Refresh</strong> to load spindle information.</div>
                                     </div>
                                 </div>
 
@@ -2257,6 +2546,7 @@
         import { MacroHandler } from './macros.js';
         import { ToolsHandler } from './tools.js';
         import { TroubleshootingHandler } from './troubleshooting.js';
+        import { CalibrationHandler } from './calibration.js';
         import { GCodeEditor } from './editor.js';
         import { initializeApp } from './init.js';
 
@@ -2406,6 +2696,9 @@
             const toolsHandler = new ToolsHandler(ws, window.term, store);
             window.toolsHandler = toolsHandler;
 
+            const calibrationHandler = new CalibrationHandler(ws, window.term, store);
+            window.calibration = calibrationHandler;
+
             const troubleshootingHandler = new TroubleshootingHandler(ws, store);
             window.troubleshooting = troubleshootingHandler;
 
@@ -2445,7 +2738,10 @@
         });
 
         window.addEventListener('tab-shown', (e) => {
-            if (e.detail.id === 'tools-view') window.toolsHandler.refresh();
+            if (e.detail.id === 'tools-view') {
+                window.toolsHandler.refresh();
+                if (window.calibration) window.calibration.refreshA();
+            }
             if (e.detail.id === 'troubleshooting-view') window.troubleshooting.refresh();
         });
 

@@ -336,7 +336,7 @@ export class GCodeViewer {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = COLORS.text;
-        ctx.font = `bold ${fontsize}px "JetBrains Mono", monospace`;
+        ctx.font = `bold ${fontsize}px "Nunito", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, width / 2, height / 2);
@@ -365,7 +365,7 @@ export class GCodeViewer {
         ctx.roundRect(0, 0, canvasWidth, canvasHeight, 16);
         ctx.fill();
         ctx.fillStyle = COLORS.statsText;
-        ctx.font = `bold ${fontsize}px "JetBrains Mono", monospace`;
+        ctx.font = `bold ${fontsize}px "Nunito", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, canvasWidth / 2, canvasHeight / 2);
