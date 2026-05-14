@@ -3,7 +3,6 @@ export class TroubleshootingHandler {
         this.ws = ws;
         this.store = store;
         this.lastPins = "";
-        this.ledSupported = false;
         this.ina219Data = [];
         this.ina219Chart = null;
         this.maxDataPoints = 1000;
@@ -13,14 +12,19 @@ export class TroubleshootingHandler {
         this._collectingPinInfo = null;
         this.spindles = [];
         this._collectingSpindles = false;
+        this._chainToSpindles = false;
+        this.isOoznestBoard = false;
+
+        this.ws.on('connect', () => {
+            setTimeout(() => {
+                this._chainToSpindles = true;
+                this.refreshPinInfo();
+            }, 3000);
+        });
 
         this.ws.on('line', (line) => {
-            if (line.includes('PLUGIN:RGB LED strips')) {
-                this.enableLEDCard();
-            }
-            if (line.startsWith('$536=')) {
-                const val = parseInt(line.split('=')[1]);
-                if (val > 0) this.enableLEDCard();
+            if (line.startsWith('[BOARD:Ooznest-CNC]')) {
+                this.isOoznestBoard = true;
             }
             if (this._collectingPinInfo === 'pins') {
                 this._collectPinDef(line);
@@ -32,41 +36,18 @@ export class TroubleshootingHandler {
         });
     }
 
-    enableLEDCard() {
-        if (this.ledSupported) return;
-        this.ledSupported = true;
-        const card = document.getElementById('led-troubleshooting-card');
-        if (card) card.classList.remove('hidden');
-    }
-
-    updateLEDColor(hex) {
-        const hexDisplay = document.getElementById('led-color-hex');
-        if (hexDisplay) hexDisplay.textContent = hex.toUpperCase();
-        this.sendLEDCommand(hex);
-    }
-
-    /**
-     * Send M150 RGB command
-     * @param {string} hex - Hex color string (e.g. "#FF0000")
-     */
     sendLEDCommand(hex) {
-        // Convert hex to RGB
         const r = parseInt(hex.slice(1, 3), 16);
         const g = parseInt(hex.slice(3, 5), 16);
         const b = parseInt(hex.slice(5, 7), 16);
-
-        // M150 command: R<red> U<green> B<blue>
-        // Note: User specified U for green intensity
         const cmd = `M150 R${r} U${g} B${b}`;
         this.ws.sendCommand(cmd);
+        const m150 = document.getElementById('led-m150-command');
+        if (m150) m150.textContent = cmd;
+    }
 
-        // Update color picker value if called from preset buttons
-        const picker = document.getElementById('led-color-picker');
-        if (picker && picker.value !== hex) {
-            picker.value = hex;
-            const hexDisplay = document.getElementById('led-color-hex');
-            if (hexDisplay) hexDisplay.textContent = hex.toUpperCase();
-        }
+    ledPickerColor(hex) {
+        this.sendLEDCommand(hex);
     }
 
     /**
@@ -153,6 +134,9 @@ export class TroubleshootingHandler {
         const canvas = document.getElementById('ina219-chart');
         if (!canvas || this.ina219Chart) return;
 
+        const powerTab = document.getElementById('trouble-tab-power');
+        if (powerTab && powerTab.classList.contains('hidden')) return;
+
         const ctx = canvas.getContext('2d');
         this.ina219Chart = new Chart(ctx, {
             type: 'line',
@@ -183,18 +167,15 @@ export class TroubleshootingHandler {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: false,
+                layout: { padding: 0 },
                 interaction: { intersect: false, mode: 'index' },
                 plugins: {
-                    legend: {
-                        display: true,
-                        labels: { boxWidth: 12, padding: 8, font: { size: 10 } }
-                    }
+                    legend: { display: false }
                 },
                 scales: {
                     x: {
                         type: 'linear',
-                        display: false,
-                        title: { display: false }
+                        display: false
                     },
                     y: {
                         type: 'linear',
@@ -202,7 +183,8 @@ export class TroubleshootingHandler {
                         position: 'left',
                         min: 22,
                         max: 26,
-                        title: { display: true, text: 'Voltage (V)', font: { size: 10 } },
+                        ticks: { font: { size: 8 } },
+                        title: { display: false },
                         grid: { drawOnChartArea: true }
                     },
                     y1: {
@@ -211,7 +193,8 @@ export class TroubleshootingHandler {
                         position: 'right',
                         min: 0,
                         max: 5,
-                        title: { display: true, text: 'Current (A)', font: { size: 10 } },
+                        ticks: { font: { size: 8 } },
+                        title: { display: false },
                         grid: { drawOnChartArea: false }
                     }
                 }
@@ -269,7 +252,12 @@ export class TroubleshootingHandler {
     _collectPinState(line) {
         if (line === 'ok') {
             this._collectingPinInfo = null;
-            this._renderPinInfo();
+            if (this._chainToSpindles) {
+                this._chainToSpindles = false;
+                this.refreshSpindles();
+            } else {
+                this._renderPinInfo();
+            }
             return;
         }
         const parts = line.slice(1, -1).split('|');
@@ -369,7 +357,15 @@ export class TroubleshootingHandler {
                 const name = parts[4];
                 const rpmRange = parts.length >= 6 ? parts[5] : null;
                 const isActive = caps.includes('*');
-                const typeLabel = type === '0' ? 'PWM' : type === '1' ? 'PWM' : type === '2' ? 'VFD' : `Type ${type}`;
+                let typeLabel;
+                if (this.isOoznestBoard) {
+                    if (type === '2') typeLabel = 'RS485 VFD';
+                    else if (name === 'PWM') typeLabel = 'Spindle (Analog, VFD10V)';
+                    else if (name === 'PWM2') typeLabel = 'Laser';
+                    else typeLabel = type === '0' ? 'PWM' : `Type ${type}`;
+                } else {
+                    typeLabel = type === '0' ? 'PWM' : type === '1' ? 'PWM' : type === '2' ? 'VFD' : `Type ${type}`;
+                }
                 this.spindles.push({ id, spindleNum, type, typeLabel, caps, name, rpmRange, isActive });
             }
         }
@@ -399,14 +395,14 @@ export class TroubleshootingHandler {
 
     _capabilityTags(caps) {
         const map = {
-            'S': { label: 'At Speed', class: 'bg-blue-100 text-blue-700' },
-            'D': { label: 'Direction', class: 'bg-indigo-100 text-indigo-700' },
-            'L': { label: 'Laser', class: 'bg-orange-100 text-orange-700' },
-            'P': { label: 'PID', class: 'bg-teal-100 text-teal-700' },
-            'I': { label: 'Invert', class: 'bg-yellow-100 text-yellow-700' },
-            'R': { label: 'RPM Limits', class: 'bg-cyan-100 text-cyan-700' },
-            'V': { label: 'Variable Speed', class: 'bg-purple-100 text-purple-700' },
-            'E': { label: 'Encoder', class: 'bg-pink-100 text-pink-700' },
+            'S': { label: 'At Speed', class: 'bg-grey-bg text-primary-dark' },
+            'D': { label: 'Direction', class: 'bg-white text-primary-dark border border-grey-light' },
+            'L': { label: 'Laser', class: 'bg-grey-bg text-secondary-dark' },
+            'P': { label: 'PID', class: 'bg-white text-secondary-dark border border-grey-light' },
+            'I': { label: 'Invert', class: 'bg-grey-bg text-grey-dark' },
+            'R': { label: 'RPM Limits', class: 'bg-white text-grey-dark border border-grey-light' },
+            'V': { label: 'Variable Speed', class: 'bg-grey-bg text-primary-dark' },
+            'E': { label: 'Encoder', class: 'bg-white text-primary-dark border border-grey-light' },
         };
         return Object.entries(map)
             .filter(([ch]) => caps.includes(ch))
@@ -478,6 +474,15 @@ export class TroubleshootingHandler {
         html += '</div>';
 
         container.innerHTML = html;
+    }
+
+    onPowerTabShown() {
+        if (this.ina219Chart) {
+            this.ina219Chart.resize();
+        } else if (this.ina219Data.length >= 2) {
+            this._initINA219Chart();
+            this._updateINA219Chart();
+        }
     }
 
     refresh() {

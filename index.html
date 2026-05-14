@@ -1926,301 +1926,306 @@
                     <div class="w-full h-full p-4 md:p-8 overflow-y-auto hide-when-offline">
                         <div class="w-full pb-20">
                             <div
-                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
+                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
                                         <i class="bi bi-tools"></i> Troubleshooting
                                     </h2>
-                                    <p class="text-sm text-grey mt-1">Live input signal states from the controller.
-                                        Signals
-                                        update in real-time from status reports.</p>
+                                    <p class="text-sm text-grey mt-1">Diagnostics and live signal monitoring.</p>
                                 </div>
-                                <div class="flex gap-2 w-full md:w-auto">
-                                    <button class="btn btn-secondary shadow-soft w-full md:w-auto"
-                                        onclick="window.troubleshooting.refresh()">
+                            </div>
+
+                            <!-- Sub-Tabs Navigation -->
+                            <div class="flex border-b border-grey-light mb-4 overflow-x-auto no-scrollbar">
+                                <button
+                                    class="px-5 py-2 text-sm font-bold text-primary-dark border-b-2 border-primary transition-colors hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    onclick="switchTroubleTab('trouble-tab-signals', this)">
+                                    Signals
+                                </button>
+                                <button
+                                    class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    onclick="switchTroubleTab('trouble-tab-power', this)">
+                                    Power Supply
+                                </button>
+                                <button
+                                    class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    onclick="switchTroubleTab('trouble-tab-spindles', this)">
+                                    Spindles
+                                </button>
+                                <button
+                                    class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    onclick="switchTroubleTab('trouble-tab-led', this)">
+                                    LED Strip
+                                </button>
+                            </div>
+
+                            <!-- SIGNALS SUB-TAB -->
+                            <div id="trouble-tab-signals" class="trouble-tab-content">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- LIMIT SWITCHES CARD -->
+                                    <div
+                                        class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
+                                        <div
+                                            class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                            <i class="bi bi-arrows-fullscreen text-primary text-xs"></i>
+                                            <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Limit Switches</h3>
+                                        </div>
+                                        <div class="p-4 grid grid-cols-3 sm:grid-cols-5 gap-3">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">X</span>
+                                                <div id="pin-indicator-X" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Y</span>
+                                                <div id="pin-indicator-Y" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Z</span>
+                                                <div id="pin-indicator-Z" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">A</span>
+                                                <div id="pin-indicator-A" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">B</span>
+                                                <div id="pin-indicator-B" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">C</span>
+                                                <div id="pin-indicator-C" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">U</span>
+                                                <div id="pin-indicator-U" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">V</span>
+                                                <div id="pin-indicator-V" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">W</span>
+                                                <div id="pin-indicator-W" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- CONTROL PINS CARD -->
+                                    <div
+                                        class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
+                                        <div
+                                            class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                            <i class="bi bi-toggle-on text-primary text-xs"></i>
+                                            <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Control Pins</h3>
+                                        </div>
+                                        <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Door</span>
+                                                <div id="pin-indicator-D" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Reset</span>
+                                                <div id="pin-indicator-R" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Hold</span>
+                                                <div id="pin-indicator-H" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Start</span>
+                                                <div id="pin-indicator-S" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">E-Stop</span>
+                                                <div id="pin-indicator-E" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Blk Del</span>
+                                                <div id="pin-indicator-L" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Opt Stop</span>
+                                                <div id="pin-indicator-T" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey">Step</span>
+                                                <div id="pin-indicator-Q" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- PROBE CARD -->
+                                    <div
+                                        class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
+                                        <div
+                                            class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                            <i class="bi bi-target text-primary text-xs"></i>
+                                            <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Probe</h3>
+                                        </div>
+                                        <div class="p-4 flex flex-col gap-4">
+                                            <div class="flex justify-around items-center">
+                                                <div class="flex flex-col items-center gap-1">
+                                                    <span class="text-[10px] font-bold text-grey uppercase">Active Probe</span>
+                                                    <div id="pin-indicator-P" class="signal-badge signal-off">OFF</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-center gap-3">
+                                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                                    <input type="radio" name="probe-mode" value="probe" checked
+                                                        onchange="window.troubleshooting.selectProbeMode('probe')"
+                                                        class="accent-primary w-3.5 h-3.5 cursor-pointer">
+                                                    <span class="text-[11px] font-bold text-grey-dark">Probe</span>
+                                                </label>
+                                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                                    <input type="radio" name="probe-mode" value="tls"
+                                                        onchange="window.troubleshooting.selectProbeMode('tls')"
+                                                        class="accent-primary w-3.5 h-3.5 cursor-pointer">
+                                                    <span class="text-[11px] font-bold text-grey-dark">Probe TLS</span>
+                                                </label>
+                                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                                    <input type="radio" name="probe-mode" value="probe2"
+                                                        onchange="window.troubleshooting.selectProbeMode('probe2')"
+                                                        class="accent-primary w-3.5 h-3.5 cursor-pointer">
+                                                    <span class="text-[11px] font-bold text-grey-dark">Probe 2</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- MOTOR STATUS CARD -->
+                                    <div
+                                        class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
+                                        <div
+                                            class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                            <i class="bi bi-exclamation-triangle-fill text-primary text-xs"></i>
+                                            <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Motor Status</h3>
+                                        </div>
+                                        <div class="p-4 flex gap-6 justify-around">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey uppercase tracking-tight">Warning</span>
+                                                <div id="pin-indicator-M" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                            <div class="flex flex-col items-center gap-1">
+                                                <span class="text-[10px] font-bold text-grey uppercase tracking-tight">Fault</span>
+                                                <div id="pin-indicator-F" class="signal-badge signal-off">OFF</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- PIN CONFIG & STATE CARD -->
+                                    <div
+                                        class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
+                                        <div
+                                            class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                            <i class="bi bi-cpu text-primary text-xs"></i>
+                                            <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Pin Configuration &amp; State</h3>
+                                            <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
+                                                onclick="window.troubleshooting.refreshPinInfo()">
+                                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                                            </button>
+                                        </div>
+                                        <div id="pin-info-content" class="p-3 text-[11px] font-mono text-secondary-dark max-h-80 overflow-y-auto">
+                                            <div class="text-grey italic text-center py-4">Click <strong>Refresh</strong> to load pin configuration and states.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- POWER SUPPLY SUB-TAB -->
+                            <div id="trouble-tab-power" class="trouble-tab-content hidden">
+                                <div class="flex items-stretch gap-4 mb-4">
+                                    <div class="bg-grey-bg rounded-xl p-4 border border-grey-light flex-1">
+                                        <div class="text-[10px] font-bold text-grey uppercase mb-1">Voltage</div>
+                                        <div class="flex items-baseline gap-1">
+                                            <span id="ina219-voltage" class="text-3xl font-black text-secondary-dark font-mono">0.00</span>
+                                            <span class="text-sm font-bold text-grey">V</span>
+                                        </div>
+                                    </div>
+                                    <div class="bg-grey-bg rounded-xl p-4 border border-grey-light flex-1">
+                                        <div class="text-[10px] font-bold text-grey uppercase mb-1">Current</div>
+                                        <div class="flex items-baseline gap-1">
+                                            <span id="ina219-current" class="text-3xl font-black text-secondary-dark font-mono">0.00</span>
+                                            <span class="text-sm font-bold text-grey">A</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-grey-bg rounded-xl border border-grey-light overflow-hidden" style="height:200px">
+                                    <canvas id="ina219-chart" style="display:block;width:100%;height:100%"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- SPINDLES SUB-TAB -->
+                            <div id="trouble-tab-spindles" class="trouble-tab-content hidden">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="font-bold text-secondary-dark text-sm">Spindles</h3>
+                                        <p class="text-[10px] text-grey">Select active spindle and control speed.</p>
+                                    </div>
+                                    <button class="btn btn-secondary h-7 text-[10px] px-3"
+                                        onclick="window.troubleshooting.refreshSpindles()">
                                         <i class="bi bi-arrow-clockwise"></i> Refresh
                                     </button>
                                 </div>
+                                <div id="spindles-content" class="text-[11px] font-mono text-secondary-dark">
+                                    <div class="text-grey italic text-center py-4">Click <strong>Refresh</strong> to load spindle information.</div>
+                                </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- LIMIT SWITCHES CARD -->
-                                <div
-                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
-                                    <div
-                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-arrows-fullscreen text-primary text-xs"></i>
-                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Limit
-                                            Switches</h3>
-                                    </div>
-                                    <div class="p-4 grid grid-cols-3 sm:grid-cols-5 gap-3">
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">X</span>
-                                            <div id="pin-indicator-X" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Y</span>
-                                            <div id="pin-indicator-Y" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Z</span>
-                                            <div id="pin-indicator-Z" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">A</span>
-                                            <div id="pin-indicator-A" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">B</span>
-                                            <div id="pin-indicator-B" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">C</span>
-                                            <div id="pin-indicator-C" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">U</span>
-                                            <div id="pin-indicator-U" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">V</span>
-                                            <div id="pin-indicator-V" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">W</span>
-                                            <div id="pin-indicator-W" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                    </div>
+                            <!-- LED STRIP SUB-TAB -->
+                            <div id="trouble-tab-led" class="trouble-tab-content hidden">
+                                <p class="text-xs text-grey mb-3">Test RGB LED strips connected to the controller. Pick a color or use the picker below.</p>
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#ff0000" title="Red"
+                                        onclick="window.troubleshooting.sendLEDCommand('#ff0000')"></button>
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#ff6600" title="Orange"
+                                        onclick="window.troubleshooting.sendLEDCommand('#ff6600')"></button>
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#ffcc00" title="Yellow"
+                                        onclick="window.troubleshooting.sendLEDCommand('#ffcc00')"></button>
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#00ff00" title="Green"
+                                        onclick="window.troubleshooting.sendLEDCommand('#00ff00')"></button>
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#00ccff" title="Cyan"
+                                        onclick="window.troubleshooting.sendLEDCommand('#00ccff')"></button>
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#0066ff" title="Blue"
+                                        onclick="window.troubleshooting.sendLEDCommand('#0066ff')"></button>
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#6600cc" title="Purple"
+                                        onclick="window.troubleshooting.sendLEDCommand('#6600cc')"></button>
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#ff00ff" title="Magenta"
+                                        onclick="window.troubleshooting.sendLEDCommand('#ff00ff')"></button>
+                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                        style="background:#ffffff" title="White"
+                                        onclick="window.troubleshooting.sendLEDCommand('#ffffff')"></button>
+                                    <button class="btn btn-secondary h-9 px-3 text-[10px]"
+                                        onclick="window.troubleshooting.sendLEDCommand('#000000')">
+                                        <i class="bi bi-lightbulb-off"></i> Off
+                                    </button>
                                 </div>
-
-                                <!-- CONTROL PINS CARD -->
-                                <div
-                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
-                                    <div
-                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-toggle-on text-primary text-xs"></i>
-                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">
-                                            Control
-                                            Pins</h3>
+                                <div class="flex items-center gap-3 bg-grey-bg rounded-xl p-3 border border-grey-light">
+                                    <div class="relative w-10 h-10 rounded-lg overflow-hidden border-2 border-white shadow-sm shrink-0">
+                                        <input type="color" id="led-color-picker"
+                                            class="absolute inset-[-5px] w-[150%] h-[150%] cursor-pointer"
+                                            value="#000000"
+                                            oninput="window.troubleshooting.ledPickerColor(this.value)">
                                     </div>
-                                    <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Door</span>
-                                            <div id="pin-indicator-D" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Reset</span>
-                                            <div id="pin-indicator-R" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Hold</span>
-                                            <div id="pin-indicator-H" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Start</span>
-                                            <div id="pin-indicator-S" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">E-Stop</span>
-                                            <div id="pin-indicator-E" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Blk Del</span>
-                                            <div id="pin-indicator-L" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Opt Stop</span>
-                                            <div id="pin-indicator-T" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span class="text-[10px] font-bold text-grey">Step</span>
-                                            <div id="pin-indicator-Q" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- PROBE CARD -->
-                                <div
-                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
-                                    <div
-                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-target text-primary text-xs"></i>
-                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Probe
-                                        </h3>
-                                    </div>
-                                    <div class="p-4 flex flex-col gap-4">
-                                        <div class="flex justify-around items-center">
-                                            <div class="flex flex-col items-center gap-1">
-                                                <span class="text-[10px] font-bold text-grey uppercase">Active Probe</span>
-                                                <div id="pin-indicator-P" class="signal-badge signal-off">OFF</div>
-                                            </div>
-                                        </div>
-                                        <div class="flex justify-center gap-3">
-                                            <label class="flex items-center gap-1.5 cursor-pointer">
-                                                <input type="radio" name="probe-mode" value="probe" checked
-                                                    onchange="window.troubleshooting.selectProbeMode('probe')"
-                                                    class="accent-primary w-3.5 h-3.5 cursor-pointer">
-                                                <span class="text-[11px] font-bold text-grey-dark">Probe</span>
-                                            </label>
-                                            <label class="flex items-center gap-1.5 cursor-pointer">
-                                                <input type="radio" name="probe-mode" value="tls"
-                                                    onchange="window.troubleshooting.selectProbeMode('tls')"
-                                                    class="accent-primary w-3.5 h-3.5 cursor-pointer">
-                                                <span class="text-[11px] font-bold text-grey-dark">Probe TLS</span>
-                                            </label>
-                                            <label class="flex items-center gap-1.5 cursor-pointer">
-                                                <input type="radio" name="probe-mode" value="probe2"
-                                                    onchange="window.troubleshooting.selectProbeMode('probe2')"
-                                                    class="accent-primary w-3.5 h-3.5 cursor-pointer">
-                                                <span class="text-[11px] font-bold text-grey-dark">Probe 2</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- MOTOR STATUS CARD -->
-                                <div
-                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
-                                    <div
-                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-exclamation-triangle-fill text-primary text-xs"></i>
-                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Motor
-                                            Status</h3>
-                                    </div>
-                                    <div class="p-4 flex gap-6 justify-around">
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span
-                                                class="text-[10px] font-bold text-grey uppercase tracking-tight">Warning</span>
-                                            <div id="pin-indicator-M" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span
-                                                class="text-[10px] font-bold text-grey uppercase tracking-tight">Fault</span>
-                                            <div id="pin-indicator-F" class="signal-badge signal-off">OFF</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- INA219 POWER MONITOR CARD -->
-                                <div id="ina219-card"
-                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
-                                    <div
-                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-battery-charging text-primary text-xs"></i>
-                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Power Supply</h3>
-                                    </div>
-                                    <div class="p-3 flex flex-col gap-2">
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <div class="bg-grey-bg rounded-lg p-2 border border-grey-light">
-                                                <div class="text-[10px] font-bold text-grey uppercase mb-0.5">Voltage</div>
-                                                <div class="flex items-baseline gap-1">
-                                                    <span id="ina219-voltage" class="text-xl font-black text-secondary-dark font-mono">0.00</span>
-                                                    <span class="text-xs font-bold text-grey">V</span>
-                                                </div>
-                                            </div>
-                                            <div class="bg-grey-bg rounded-lg p-2 border border-grey-light">
-                                                <div class="text-[10px] font-bold text-grey uppercase mb-0.5">Current</div>
-                                                <div class="flex items-baseline gap-1">
-                                                    <span id="ina219-current" class="text-xl font-black text-secondary-dark font-mono">0.00</span>
-                                                    <span class="text-xs font-bold text-grey">A</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="relative">
-                                            <canvas id="ina219-chart" class="w-full h-20"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- PIN CONFIG & STATE CARD -->
-                                <div
-                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
-                                    <div
-                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-cpu text-primary text-xs"></i>
-                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Pin Configuration &amp; State</h3>
-                                        <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
-                                            onclick="window.troubleshooting.refreshPinInfo()">
-                                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                                        </button>
-                                    </div>
-                                    <div id="pin-info-content" class="p-3 text-[11px] font-mono text-secondary-dark max-h-80 overflow-y-auto">
-                                        <div class="text-grey italic text-center py-4">Click <strong>Refresh</strong> to load pin configuration and states.</div>
-                                    </div>
-                                </div>
-
-                                <!-- SPINDLES CARD -->
-                                <div
-                                    class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
-                                    <div
-                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-sliders2 text-primary text-xs"></i>
-                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Spindles</h3>
-                                        <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
-                                            onclick="window.troubleshooting.refreshSpindles()">
-                                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                                        </button>
-                                    </div>
-                                    <div id="spindles-content" class="p-3 text-[11px] font-mono text-secondary-dark max-h-72 overflow-y-auto">
-                                        <div class="text-grey italic text-center py-4">Click <strong>Refresh</strong> to load spindle information.</div>
-                                    </div>
-                                </div>
-
-                                <!-- LED TROUBLESHOOTING CARD -->
-                                <div id="led-troubleshooting-card"
-                                    class="hidden bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex flex-col">
-                                    <div
-                                        class="px-4 py-3 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-lightbulb-fill text-primary text-xs"></i>
-                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">LED
-                                            Strip
-                                            Test</h3>
-                                    </div>
-                                    <div class="p-4 flex flex-col gap-4">
-                                        <p class="text-[10px] text-grey">Test RGB LED strips connected to the
-                                            controller.
-                                            This sends <code class="bg-grey-bg px-1 rounded">M150</code> commands.</p>
-
-                                        <div
-                                            class="flex items-center gap-4 bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                            <div
-                                                class="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-white shadow-sm shrink-0">
-                                                <input type="color" id="led-color-picker"
-                                                    class="absolute inset-[-5px] w-[150%] h-[150%] cursor-pointer"
-                                                    value="#000000"
-                                                    oninput="window.troubleshooting.updateLEDColor(this.value)">
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="text-[10px] font-bold text-grey uppercase mb-1">Select Color
-                                                </div>
-                                                <div id="led-color-hex"
-                                                    class="font-mono text-sm font-bold text-secondary-dark">#000000
-                                                </div>
-                                            </div>
-                                            <button class="btn btn-secondary h-10 px-4"
-                                                onclick="window.troubleshooting.sendLEDCommand('#000000')">
-                                                <i class="bi bi-lightbulb-off"></i> Off
-                                            </button>
-                                        </div>
-
-                                        <div class="grid grid-cols-3 gap-2">
-                                            <button class="btn btn-secondary h-8 text-[10px]"
-                                                onclick="window.troubleshooting.sendLEDCommand('#ff0000')">Red</button>
-                                            <button class="btn btn-secondary h-8 text-[10px]"
-                                                onclick="window.troubleshooting.sendLEDCommand('#00ff00')">Green</button>
-                                            <button class="btn btn-secondary h-8 text-[10px]"
-                                                onclick="window.troubleshooting.sendLEDCommand('#0000ff')">Blue</button>
-                                        </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-[10px] font-bold text-grey uppercase mb-0.5">M150 Command</div>
+                                        <div id="led-m150-command" class="font-mono text-sm font-bold text-secondary-dark truncate">M150 R0 U0 B0</div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 </div>
-                <!-- END TROUBLESHOOTING TAB PANE -->
-            </div>
     </div>
-    </main>
+    <!-- END TROUBLESHOOTING TAB PANE -->
+            </div>
+        </main>
     </div>
 
     <!-- Connection Modal -->
@@ -2493,6 +2498,20 @@
                 const overlay = document.getElementById('machine-sidebar-overlay');
                 if (sidebar) sidebar.classList.remove('open');
                 if (overlay) overlay.classList.add('hidden');
+            }
+        }
+
+        function switchTroubleTab(targetId, btn) {
+            document.querySelectorAll('.trouble-tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(targetId).classList.remove('hidden');
+            document.querySelectorAll('.trouble-tab-btn').forEach(el => {
+                el.classList.replace('text-primary-dark', 'text-grey');
+                el.classList.replace('border-primary', 'border-transparent');
+            });
+            btn.classList.replace('text-grey', 'text-primary-dark');
+            btn.classList.replace('border-transparent', 'border-primary');
+            if (targetId === 'trouble-tab-power' && window.troubleshooting) {
+                window.troubleshooting.onPowerTabShown();
             }
         }
 
