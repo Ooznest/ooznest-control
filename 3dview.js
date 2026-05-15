@@ -1240,8 +1240,9 @@ export class GCodeViewer {
         const h = this.container.clientHeight;
         if (this.camera instanceof THREE.PerspectiveCamera) {
             const aspect = w / h;
-            const frustumSize = currentPos.distanceTo(currentTarget);
-            this.camera = new THREE.OrthographicCamera(frustumSize * aspect / -2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / -2, 0.1, 10000);
+            let frustumSize = currentPos.distanceTo(currentTarget);
+            if (frustumSize < 100) frustumSize = 100;
+            this.camera = new THREE.OrthographicCamera(frustumSize * aspect / -2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / -2, 1, 10000);
             this.camera.up.set(0, 0, 1);
             this.camera.position.copy(currentPos);
             this.camera.zoom = 1;

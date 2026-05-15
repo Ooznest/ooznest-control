@@ -48,6 +48,12 @@ export class TroubleshootingHandler {
 
     ledPickerColor(hex) {
         this.sendLEDCommand(hex);
+        const picker = document.getElementById('led-color-picker');
+        if (picker) {
+            const swatch = picker.parentElement;
+            swatch.style.background = hex;
+            swatch.style.borderStyle = 'solid';
+        }
     }
 
     /**
@@ -110,7 +116,7 @@ export class TroubleshootingHandler {
                 this.ws.sendCommand('G65P5Q1');
                 break;
             case 'probe2':
-                this.ws.sendCommand('G65P6Q0');
+                this.ws.sendCommand('G65P5Q2');
                 break;
         }
     }
