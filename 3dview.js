@@ -568,6 +568,7 @@ export class GCodeViewer {
         if (x && y && z) {
             this.machineLimits = { x, y, z };
             this.renderMachineBox();
+            this._updateFeedEnvelopeColors();
             if (this.gridMode === 'machine') {
                 this.updateGridBounds();
                 this.renderCoolGrid();
@@ -606,6 +607,7 @@ export class GCodeViewer {
                 this.updateGridBounds();
                 this.renderCoolGrid();
             }
+            this._updateFeedEnvelopeColors();
         }
     }
 
@@ -614,10 +616,56 @@ export class GCodeViewer {
         this.wcsGroup.add(new THREE.AxesHelper(20));
     }
 
+    _getEnvelopeBounds() {
+        const { x, y, z } = this.machineLimits || { x: 0, y: 0, z: 0 };
+        let xMin, xMax, yMin, yMax, zMin, zMax;
+        if (this.isPositiveSpace) {
+            if (this.homingDirMask & 1) { xMin = 0; xMax = x; } else { xMin = -x; xMax = 0; }
+            if (this.homingDirMask & 2) { yMin = 0; yMax = y; } else { yMin = -y; yMax = 0; }
+            if (this.homingDirMask & 4) { zMin = 0; zMax = z; } else { zMin = -z; zMax = 0; }
+        } else {
+            xMin = -x; xMax = 0; yMin = -y; yMax = 0; zMin = -z; zMax = 0;
+        }
+        return { xMin, xMax, yMin, yMax, zMin, zMax };
+    }
+
+    _updateFeedEnvelopeColors() {
+        if (!this.feedMesh) return;
+        const posAttr = this.feedMesh.geometry.attributes.position;
+        const colAttr = this.feedMesh.geometry.attributes.color;
+        if (!posAttr || !colAttr || !this.feedColorsCache) return;
+
+        const pos = posAttr.array;
+        const colors = colAttr.array;
+        const cache = this.feedColorsCache;
+        const env = this._getEnvelopeBounds();
+        const wco = this.wco || { x: 0, y: 0, z: 0 };
+
+        const outsideColor = new THREE.Color(0xdc2626);
+
+        for (let i = 0; i < pos.length; i += 3) {
+            const mx = pos[i] + wco.x;
+            const my = pos[i + 1] + wco.y;
+            const mz = pos[i + 2] + wco.z;
+            const inside = mx >= env.xMin && mx <= env.xMax &&
+                           my >= env.yMin && my <= env.yMax &&
+                           mz >= env.zMin && mz <= env.zMax;
+            if (!inside) {
+                colors[i] = outsideColor.r;
+                colors[i + 1] = outsideColor.g;
+                colors[i + 2] = outsideColor.b;
+            } else {
+                colors[i] = cache[i];
+                colors[i + 1] = cache[i + 1];
+                colors[i + 2] = cache[i + 2];
+            }
+        }
+        colAttr.needsUpdate = true;
+    }
+
     renderMachineBox() {
         this.machineGroup.clear();
 
-        // Machine Box is now static at World (0,0,0) -> Machine Home
         const { x, y, z } = this.machineLimits;
 
         // Origin after homing logic ($23 and Z option):
@@ -627,22 +675,11 @@ export class GCodeViewer {
         let xMin, xMax, yMin, yMax, zMin, zMax;
 
         if (this.isPositiveSpace) {
-            // X Axis
-            if (this.homingDirMask & 1) { xMin = 0; xMax = x; } // Home to Min
-            else { xMin = -x; xMax = 0; }                      // Home to Max
-
-            // Y Axis
-            if (this.homingDirMask & 2) { yMin = 0; yMax = y; } // Home to Min
-            else { yMin = -y; yMax = 0; }                      // Home to Max
-
-            // Z Axis
-            if (this.homingDirMask & 4) { zMin = 0; zMax = z; } // Home to Min
-            else { zMin = -z; zMax = 0; }                      // Home to Max
+            if (this.homingDirMask & 1) { xMin = 0; xMax = x; } else { xMin = -x; xMax = 0; }
+            if (this.homingDirMask & 2) { yMin = 0; yMax = y; } else { yMin = -y; yMax = 0; }
+            if (this.homingDirMask & 4) { zMin = 0; zMax = z; } else { zMin = -z; zMax = 0; }
         } else {
-            // Standard CNC (non-Z): Usually Home at Max, Travel is Negative
-            xMin = -x; xMax = 0;
-            yMin = -y; yMax = 0;
-            zMin = -z; zMax = 0;
+            xMin = -x; xMax = 0; yMin = -y; yMax = 0; zMin = -z; zMax = 0;
         }
 
         const vertices = [];
@@ -944,6 +981,7 @@ export class GCodeViewer {
             });
             this.feedMesh = new THREE.LineSegments(geo, mat);
             this.gcodeGroup.add(this.feedMesh);
+            this._updateFeedEnvelopeColors();
         }
 
         if (rapidGeo && rapidGeo.length > 0) {
@@ -1314,6 +1352,7 @@ export class GCodeViewer {
     setHomingDirMask(mask) {
         this.homingDirMask = mask;
         this.renderMachineBox();
+        this._updateFeedEnvelopeColors();
         this.updateGridBounds();
         this.renderCoolGrid();
     }
