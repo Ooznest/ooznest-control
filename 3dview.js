@@ -152,6 +152,10 @@ export class GCodeViewer {
         this.feedMesh = null;
         this.particleSystem = null; // Instantiated in init()
 
+        // Tool Visibility
+        this.toolSegments = []; // [{ tool, toolLabel, startVertex, endVertex, visible }]
+        this.currentGCode = '';
+
         // Spindle Animation State
         this.spindleSpeed = 0;
         this.laserPower = 0; // 0-1 range
@@ -879,6 +883,7 @@ export class GCodeViewer {
     }
 
     sendToWorker(data) {
+        this.currentGCode = data; // Store for tool parsing
         const worker = new Worker('gcview.worker.js', { type: 'module' });
         worker.onmessage = (msg) => {
             const payload = msg.data;
@@ -897,6 +902,10 @@ export class GCodeViewer {
                 this.nativeUnits = payload.inch ? 'inch' : 'mm';
                 this.renderLines(payload);
                 this.renderCoolGrid();
+                // Parse tool segments for visibility toggles
+                this.parseToolSegments(this.currentGCode);
+                // Update tool visibility panel UI
+                window.dispatchEvent(new CustomEvent('tool-vis-update'));
                 if (this.loadingOverlay) this.loadingOverlay.classList.add('hidden');
                 worker.terminate();
 
@@ -1005,6 +1014,113 @@ export class GCodeViewer {
             this.renderJobStats(box);
             this.resetCamera();
         }
+    }
+
+    /**
+     * Parse tool usage order from G-code text and map to vertex ranges.
+     * Populates this.toolSegments for the tool visibility panel.
+     */
+    parseToolSegments(gcode) {
+        this.currentGCode = gcode || '';
+        this.toolSegments = [];
+        if (!this.currentGCode || !this.lineMap || this.lineMap.length < 2) return;
+
+        const lines = this.currentGCode.split('\n');
+        let currentTool = null;
+        let currentStartLine = -1;
+        const toolRuns = []; // [{ tool, startLine, endLine }]
+
+        for (let i = 0; i < lines.length; i++) {
+            const match = lines[i].match(/\bT(\d+)\b/);
+            if (match) {
+                const tool = parseInt(match[1]);
+                if (currentTool !== null && currentStartLine >= 0) {
+                    toolRuns.push({ tool: currentTool, startLine: currentStartLine, endLine: i - 1 });
+                }
+                currentTool = tool;
+                currentStartLine = i;
+            }
+        }
+        // Flush last run
+        if (currentTool !== null && currentStartLine >= 0) {
+            toolRuns.push({ tool: currentTool, startLine: currentStartLine, endLine: lines.length - 1 });
+        }
+
+        if (toolRuns.length === 0) return;
+
+        // Deduplicate consecutive same-tool for cleaner display
+        // But preserve tool order — tool R1, tool R2, tool R1, tool R3
+        const countMap = {};
+        toolRuns.forEach(run => {
+            countMap[run.tool] = (countMap[run.tool] || 0) + 1;
+        });
+
+        let toolRunIndex = 0;
+        for (const run of toolRuns) {
+            let minStart = Infinity;
+            let maxEnd = 0;
+            let hasGeo = false;
+
+            for (let lineNum = run.startLine; lineNum <= run.endLine; lineNum++) {
+                const start = this.lineMap[lineNum * 2];
+                const count = this.lineMap[lineNum * 2 + 1];
+                if (count > 0) {
+                    if (start < minStart) minStart = start;
+                    if (start + count > maxEnd) maxEnd = start + count;
+                    hasGeo = true;
+                }
+            }
+
+            if (hasGeo) {
+                const count = countMap[run.tool];
+                const label = count > 1 ? `T${run.tool} (${toolRunIndex + 1}/${count})` : `T${run.tool}`;
+                this.toolSegments.push({
+                    tool: run.tool,
+                    toolLabel: label,
+                    startVertex: minStart,
+                    endVertex: maxEnd,
+                    visible: true
+                });
+            }
+            toolRunIndex++;
+        }
+    }
+
+    /**
+     * Toggle visibility of a tool segment by index.
+     * Hides by dimming segments to near-grey, shows by restoring original color cache.
+     */
+    toggleToolSegment(index) {
+        const seg = this.toolSegments[index];
+        if (!seg || !this.feedMesh) return;
+
+        const colorAttr = this.feedMesh.geometry.attributes.color;
+        if (!colorAttr) return;
+
+        seg.visible = !seg.visible;
+
+        for (let v = seg.startVertex; v < seg.endVertex; v++) {
+            if (seg.visible) {
+                // Restore from original color cache
+                if (this.feedColorsCache) {
+                    const idx = v * 3;
+                    colorAttr.setXYZ(v,
+                        this.feedColorsCache[idx],
+                        this.feedColorsCache[idx + 1],
+                        this.feedColorsCache[idx + 2]
+                    );
+                }
+            } else {
+                // Dim to almost invisible
+                colorAttr.setXYZ(v, 0.92, 0.92, 0.92);
+            }
+        }
+
+        colorAttr.updateRange.offset = seg.startVertex * 3;
+        colorAttr.updateRange.count = (seg.endVertex - seg.startVertex) * 3;
+        colorAttr.needsUpdate = true;
+
+        return seg.visible;
     }
 
     updateProgress(currentLine) {

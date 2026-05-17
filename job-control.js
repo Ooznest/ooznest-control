@@ -7,7 +7,8 @@ class JobController {
             lines: [],
             index: 0,
             active: false,
-            paused: false
+            paused: false,
+            waitingMTC: false
         };
         this.jobStartTime = 0;
         this.sdJobActive = false;
@@ -156,6 +157,7 @@ class JobController {
      */
     finishGCodeStream() {
         this.gcodeStreamer.active = false;
+        this.gcodeStreamer.waitingMTC = false;
         window.term.writeln("\x1b[32m[Job Stream] Complete.\x1b[0m");
         this.resetJobUI();
 
@@ -169,6 +171,7 @@ class JobController {
      */
     abortGCodeStream(error) {
         this.gcodeStreamer.active = false;
+        this.gcodeStreamer.waitingMTC = false;
         window.term.writeln(`\x1b[31m[Job Stream] Aborted: ${error}\x1b[0m`);
         this.resetJobUI();
 
@@ -231,12 +234,36 @@ class JobController {
      * @returns {boolean} - True if handled
      */
     processLine(line) {
-        if (this.gcodeStreamer.active && (line === 'ok' || line.toLowerCase().startsWith('error:'))) {
-            if (line.toLowerCase().startsWith('error:')) this.abortGCodeStream(line);
-            else this.advanceGCodeStream();
+        if (!this.gcodeStreamer.active) return false;
+
+        if (line === 'ok') {
+            this.advanceGCodeStream();
             return true;
         }
+
+        if (line.toLowerCase().startsWith('error:')) {
+            const isMtcError = line.includes('40') && window.toolsHandler?.mtcActive;
+            if (isMtcError) {
+                this.gcodeStreamer.waitingMTC = true;
+                this.gcodeStreamer.paused = true;
+                // Decrement index to re-send the errored command after MTC resolves
+                this.gcodeStreamer.index = Math.max(0, this.gcodeStreamer.index - 1);
+                window.term.writeln(`\x1b[33m[MTC] Tool change pending — streaming paused, waiting for MTC to complete.\x1b[0m`);
+            } else {
+                this.abortGCodeStream(line);
+            }
+            return true;
+        }
+
         return false;
+    }
+
+    resumeMTCStream() {
+        if (!this.gcodeStreamer.active || !this.gcodeStreamer.waitingMTC) return;
+        this.gcodeStreamer.waitingMTC = false;
+        this.gcodeStreamer.paused = false;
+        window.term.writeln(`\x1b[32m[MTC] Resuming G-code stream.\x1b[0m`);
+        this.advanceGCodeStream();
     }
 }
 

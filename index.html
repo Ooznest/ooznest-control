@@ -600,6 +600,23 @@
                         <button class="overlay-btn" onclick="toggleGridMode()" id="grid-toggle-btn">
                             <i class="bi bi-grid-3x3 text-secondary"></i> Grid: Machine
                         </button>
+                        <button id="tool-vis-toggle-btn" class="overlay-btn hidden" onclick="toggleToolVisibility()">
+                            <i class="bi bi-tools text-secondary"></i> Tools
+                        </button>
+                    </div>
+
+                    <!-- Tool Visibility Panel (Bottom Right) -->
+                    <div id="tool-vis-panel"
+                        class="hidden absolute bottom-6 right-6 w-56 bg-white/95 backdrop-blur rounded-xl border border-grey-light shadow-xl pointer-events-auto max-h-80 overflow-y-auto">
+                        <div class="p-3 border-b border-grey-light bg-grey-bg rounded-t-xl flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-grey uppercase tracking-wider">Tool Visibility</span>
+                            <button class="text-grey hover:text-secondary-dark text-xs" onclick="document.getElementById('tool-vis-panel').classList.add('hidden')">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div id="tool-vis-list" class="p-2 space-y-1 text-sm">
+                            <div class="p-3 text-center text-grey text-xs italic">No tool data</div>
+                        </div>
                     </div>
 
                     <!-- Stats & Info (Bottom Left) -->
@@ -971,10 +988,14 @@
 
                             <!-- Sub-Tab Content: Tool Table -->
                             <div id="tab-tool-table" class="tools-tab-content hidden">
-                                <div class="flex justify-end mb-4">
+                                <div class="flex justify-end gap-2 mb-4">
                                     <button class="btn btn-secondary shadow-soft text-xs"
                                         onclick="window.toolsHandler.refresh()">
                                         <i class="bi bi-arrow-clockwise"></i> Refresh Table ($#)
+                                    </button>
+                                    <button class="btn btn-secondary shadow-soft text-xs"
+                                        onclick="window.ws.sendCommand('M6')">
+                                        <i class="bi bi-tools"></i> Test M6
                                     </button>
                                 </div>
 
@@ -1098,8 +1119,14 @@
                                                     <p class="text-xs text-grey font-bold uppercase"><i
                                                             class="bi bi-info-circle-fill"></i> Description</p>
                                                     <textarea id="edit-tool-desc"
-                                                        class="input-field h-24 resize-none text-xs"
+                                                        class="input-field h-16 resize-none text-xs"
                                                         placeholder="Endmill, Ballnose, etc..."></textarea>
+                                                    <p class="text-[10px] text-grey leading-tight">
+                                                        <i class="bi bi-info-circle"></i>
+                                                        For <strong>manual tool change</strong>, use the TLO buttons in the MTC modal
+                                                        (Set Ref + Measure) instead of managing Z offsets here.
+                                                        This tool table is primarily for ATC workflows.
+                                                    </p>
                                                 </div>
                                                 <button
                                                     class="btn btn-primary h-14 text-base shadow-md w-full mt-6 justify-center"
@@ -1936,7 +1963,7 @@
                                 <button
                                     class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
                                     onclick="switchTroubleTab('trouble-tab-led', this)">
-                                    LED Strip
+                                    RGB LED
                                 </button>
                             </div>
 
@@ -2380,20 +2407,35 @@
     <div id="tool-change-modal"
         class="hidden fixed inset-0 z-[1100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
         <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border-4 border-primary animate-in fade-in zoom-in duration-200">
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border-4 border-primary animate-in fade-in zoom-in duration-200">
             <!-- Header -->
             <div class="bg-primary p-4 flex justify-between items-center">
                 <h3 class="text-xl font-black text-black uppercase flex items-center gap-2">
                     <i class="bi bi-exclamation-triangle-fill"></i> Manual Tool Change
                 </h3>
-                <div class="bg-black/20 text-black px-2 py-0.5 rounded text-xs font-bold">M6</div>
+                <div class="flex items-center gap-2">
+                    <span id="mtc-tool-badge" class="bg-black/20 text-black px-2 py-0.5 rounded text-xs font-bold hidden">T?</span>
+                    <div class="bg-black/20 text-black px-2 py-0.5 rounded text-xs font-bold">M6</div>
+                </div>
             </div>
 
             <!-- Body -->
-            <div class="p-6 space-y-6">
+            <div class="p-6 space-y-5">
                 <div class="text-center space-y-2">
                     <p class="text-lg font-bold text-secondary-dark">The machine has requested a tool change.</p>
                     <p class="text-sm text-grey">Spindle is stopped. Jogging is enabled.</p>
+                </div>
+
+                <!-- Current / Next Tool Info -->
+                <div id="mtc-tool-info" class="hidden grid grid-cols-2 gap-3 text-sm">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+                        <div class="text-[10px] font-bold text-grey uppercase">Current</div>
+                        <div id="mtc-current-tool" class="text-lg font-black text-blue-700">—</div>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                        <div class="text-[10px] font-bold text-grey uppercase">Next</div>
+                        <div id="mtc-next-tool" class="text-lg font-black text-amber-700">—</div>
+                    </div>
                 </div>
 
                 <!-- Steps -->
@@ -2408,24 +2450,45 @@
                         <div
                             class="font-bold bg-white w-6 h-6 rounded-full flex items-center justify-center border border-grey-light shrink-0">
                             2</div>
-                        <span>Jog to safe location (if needed).</span>
+                        <span>Jog to touch-off surface.</span>
                     </div>
                     <div class="flex gap-3">
                         <div
                             class="font-bold bg-white w-6 h-6 rounded-full flex items-center justify-center border border-grey-light shrink-0">
                             3</div>
-                        <span>Probe or set length offsets.</span>
+                        <span>Set tool length offset.</span>
                     </div>
                 </div>
 
-                <!-- Helper Actions -->
-                <div class="grid grid-cols-2 gap-3">
-                    <button class="btn btn-secondary text-xs h-10" onclick="ws.sendCommand('$TLR')">
-                        Set Length Ref ($TLR)
-                    </button>
-                    <button class="btn btn-secondary text-xs h-10" onclick="ws.sendCommand('$TPW')">
-                        Probe Workpiece ($TPW)
-                    </button>
+                <!-- TLO Measurement -->
+                <div class="bg-grey-bg p-4 rounded-xl border border-grey-light space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-grey uppercase">Tool Length Offset</span>
+                        <div id="tlo-ref-info" class="hidden text-[10px] text-grey flex items-center gap-2">
+                            <span>Ref: <strong id="tlo-ref-tool">?</strong> @ Z=<strong id="tlo-ref-z">—</strong></span>
+                            <span class="text-grey-light">|</span>
+                            <span>Prev: <strong id="tlo-prev-tool">?</strong> @ Z=<strong id="tlo-prev-z">—</strong></span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="btn btn-secondary text-xs h-9" onclick="window.toolsHandler.setTLOReference()">
+                            <i class="bi bi-geo-alt-fill text-sm"></i> Set Ref
+                        </button>
+                        <button class="btn btn-secondary text-xs h-9" onclick="window.toolsHandler.measureTLO()">
+                            <i class="bi bi-rulers text-sm"></i> Measure
+                        </button>
+                        <button class="btn btn-secondary text-xs h-9" onclick="window.toolsHandler.resetTLO()">
+                            <i class="bi bi-arrow-counterclockwise text-sm"></i> Reset
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="btn btn-secondary text-xs h-9" onclick="ws.sendCommand('$TLR')">
+                            Set Length Ref ($TLR)
+                        </button>
+                        <button class="btn btn-secondary text-xs h-9" onclick="ws.sendCommand('$TPW')">
+                            Probe Workpiece ($TPW)
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -3172,6 +3235,53 @@
             if (panel && panel.classList.contains('hidden')) {
                 panel.classList.remove('hidden');
             }
+        });
+
+        // ── Tool Visibility Panel ──────────────────────────────────────────────
+        function renderToolVisibility() {
+            var list = document.getElementById('tool-vis-list');
+            var toggleBtn = document.getElementById('tool-vis-toggle-btn');
+            if (!list || !window.viewer) return;
+
+            var segments = window.viewer.toolSegments;
+            if (!segments || segments.length === 0) {
+                list.innerHTML = '<div class="p-3 text-center text-grey text-xs italic">No tool data</div>';
+                if (toggleBtn) toggleBtn.classList.add('hidden');
+                return;
+            }
+
+            if (toggleBtn) toggleBtn.classList.remove('hidden');
+
+            var html = '';
+            for (var i = 0; i < segments.length; i++) {
+                var seg = segments[i];
+                var checked = seg.visible ? 'checked' : '';
+                // Cycle through color classes for different tools
+                var colorClass = i % 2 === 0 ? 'text-secondary-dark' : 'text-primary';
+                html += '<label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-grey-bg cursor-pointer transition-colors">';
+                html += '<input type="checkbox" ' + checked + ' data-tool-idx="' + i + '" class="rounded border-grey text-primary focus:ring-primary cursor-pointer">';
+                html += '<span class="font-bold text-sm ' + colorClass + '">' + seg.toolLabel + '</span>';
+                html += '</label>';
+            }
+            list.innerHTML = html;
+
+            // Bind change events
+            list.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
+                cb.addEventListener('change', function() {
+                    var idx = parseInt(this.getAttribute('data-tool-idx'));
+                    if (window.viewer) window.viewer.toggleToolSegment(idx);
+                });
+            });
+        }
+
+        window.toggleToolVisibility = function() {
+            var panel = document.getElementById('tool-vis-panel');
+            if (!panel) return;
+            panel.classList.toggle('hidden');
+        };
+
+        window.addEventListener('tool-vis-update', function() {
+            renderToolVisibility();
         });
 
     </script>
