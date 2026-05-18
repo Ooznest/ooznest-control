@@ -236,6 +236,8 @@ export class TroubleshootingHandler {
         if (!this.ws || !this.ws.isConnected) return;
         this.pinDefs = {};
         this.pinDefsByPin = {};
+        this.inputDefsByPin = {};
+        this.outputDefsByPin = {};
         this.pinStateDIN = [];
         this.pinStateDOUT = [];
         document.getElementById('pin-info-content').innerHTML = '<div class="text-grey text-center py-4"><i class="bi bi-arrow-clockwise animate-spin"></i> Loading...</div>';
@@ -278,6 +280,12 @@ export class TroubleshootingHandler {
             }
             if (pinId) {
                 this.pinDefsByPin[pinId] = { hw, label, func };
+                const isOutput = hw.startsWith('HC595') || /\bout\b/i.test(label);
+                if (isOutput) {
+                    this.outputDefsByPin[pinId] = { hw, label, func };
+                } else {
+                    this.inputDefsByPin[pinId] = { hw, label, func };
+                }
             }
         }
     }
@@ -302,18 +310,22 @@ export class TroubleshootingHandler {
         const pn = desc.match(/P(\d+)/);
         const realPin = pn ? pn[1] : parts[2];
         if (parts[0] === 'PINSTATE:DIN') {
-            this.pinStateDIN.push({ name: desc, pin: realPin, id: parts[2], mode: parts[3], caps: parts[4], state: parts[5] });
+            if (!this.pinStateDIN.some(e => e.pin === realPin)) {
+                this.pinStateDIN.push({ name: desc, pin: realPin, id: parts[2], mode: parts[3], caps: parts[4], state: parts[5] });
+            }
         } else if (parts[0] === 'PINSTATE:DOUT') {
-            this.pinStateDOUT.push({ name: desc, pin: realPin, id: parts[2], mode: parts[3], caps: parts[4], state: parts[5] });
+            if (!this.pinStateDOUT.some(e => e.pin === realPin)) {
+                this.pinStateDOUT.push({ name: desc, pin: realPin, id: parts[2], mode: parts[3], caps: parts[4], state: parts[5] });
+            }
         }
     }
 
     toggleOutput(pinNum, on) {
         if (!this.ws || !this.ws.isConnected) return;
         if (on) {
-            this.ws.sendCommand(`M65 P${pinNum}`);
-        } else {
             this.ws.sendCommand(`M64 P${pinNum}`);
+        } else {
+            this.ws.sendCommand(`M65 P${pinNum}`);
         }
         // Refresh pin state after a short delay to allow the command to process
         setTimeout(() => {
@@ -334,7 +346,7 @@ export class TroubleshootingHandler {
             html += '<div class="font-bold text-[10px] uppercase tracking-wider text-grey mb-2">Digital Inputs</div>';
             html += '<div class="grid gap-1 mb-4">';
             this.pinStateDIN.forEach(p => {
-                const pinDef = this.pinDefsByPin[p.pin];
+                const pinDef = this.inputDefsByPin[p.pin] || this.pinDefsByPin[p.pin];
                 const label = pinDef ? pinDef.label : p.name;
                 const hwInfo = pinDef ? pinDef.hw : '';
                 const isOn = p.state === '1';
@@ -355,7 +367,7 @@ export class TroubleshootingHandler {
             html += '<div class="font-bold text-[10px] uppercase tracking-wider text-grey mb-2">Digital Outputs</div>';
             html += '<div class="grid gap-1">';
             this.pinStateDOUT.forEach(p => {
-                const pinDef = this.pinDefsByPin[p.pin];
+                const pinDef = this.outputDefsByPin[p.pin] || this.pinDefsByPin[p.pin];
                 const label = pinDef ? pinDef.label : p.name;
                 const hwInfo = pinDef ? pinDef.hw : '';
                 const func = pinDef ? pinDef.func : '';
