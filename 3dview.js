@@ -1350,40 +1350,52 @@ export class GCodeViewer {
     }
 
     toggleCamera() {
-        const currentPos = this.camera.position.clone();
-        const currentTarget = this.controls.target.clone();
+        console.log('[toggleCamera] entered. cameraMode:', this.cameraMode, 'camera type:', this.camera?.constructor?.name);
+        this.cameraMode = 'orbit';
+        const oldPos = this.camera.position.clone();
+        const oldTarget = this.controls.target.clone();
+        console.log('[toggleCamera] oldPos:', oldPos.toArray().map(v=>v.toFixed(2)), 'oldTarget:', oldTarget.toArray().map(v=>v.toFixed(2)));
         const w = this.container.clientWidth;
         const h = this.container.clientHeight;
         if (this.camera instanceof THREE.PerspectiveCamera) {
+            console.log('[toggleCamera] switching TO orthographic');
+            const box = new THREE.Box3().setFromObject(this.gcodeGroup);
+            let maxDim = 100;
+            if (!box.isEmpty()) {
+                const size = box.getSize(new THREE.Vector3());
+                maxDim = Math.max(size.x, size.y);
+                console.log('[toggleCamera] gcode box size:', size.toArray().map(v=>v.toFixed(2)), 'maxDim:', maxDim);
+            } else {
+                console.log('[toggleCamera] gcodeGroup box is EMPTY');
+            }
             const aspect = w / h;
-            let frustumSize = currentPos.distanceTo(currentTarget);
-            if (frustumSize < 100) frustumSize = 100;
+            const frustumSize = Math.max(maxDim * 0.6, 100);
+            console.log('[toggleCamera] frustumSize:', frustumSize, 'aspect:', aspect);
             this.camera = new THREE.OrthographicCamera(frustumSize * aspect / -2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / -2, 1, 10000);
             this.camera.up.set(0, 0, 1);
-            this.camera.position.copy(currentPos);
+            this.camera.position.copy(oldPos);
             this.camera.zoom = 1;
             this.controls.object = this.camera;
-            this.controls.target.copy(currentTarget);
-
-            // Update viewcube with new camera reference
-            if (this.viewCube) {
-                this.viewCube.updateCamera(this.camera, this.controls);
-            }
-
-            return 'Orthographic';
+            this.controls.target.copy(oldTarget);
         } else {
+            console.log('[toggleCamera] switching TO perspective');
             this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 10000);
             this.camera.up.set(0, 0, 1);
-            this.camera.position.copy(currentPos);
+            this.camera.position.copy(oldPos);
             this.controls.object = this.camera;
-            this.controls.target.copy(currentTarget);
-            // Update viewcube with new camera reference
-            if (this.viewCube) {
-                this.viewCube.updateCamera(this.camera, this.controls);
-            }
-
-            return 'Perspective';
+            this.controls.target.copy(oldTarget);
         }
+        console.log('[toggleCamera] new camera pos:', this.camera.position.toArray().map(v=>v.toFixed(2)), 'target:', this.controls.target.toArray().map(v=>v.toFixed(2)));
+        if (this.viewCube) {
+            this.viewCube.updateCamera(this.camera, this.controls);
+        }
+        console.log('[toggleCamera] scheduling resetCamera in 50ms');
+        setTimeout(() => {
+            console.log('[toggleCamera] resetCamera firing');
+            this.resetCamera();
+            console.log('[toggleCamera] after resetCamera pos:', this.camera.position.toArray().map(v=>v.toFixed(2)), 'target:', this.controls.target.toArray().map(v=>v.toFixed(2)));
+        }, 50);
+        return this.camera instanceof THREE.PerspectiveCamera ? 'Perspective' : 'Orthographic';
     }
 
     getCameraType() {
