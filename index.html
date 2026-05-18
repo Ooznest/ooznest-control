@@ -2728,6 +2728,13 @@
 
                 switchTab('viewer-view');
             }
+
+            // Auto-load sample logo file on page load
+            fetch('./ooznestlogo.gcode')
+                .then(r => r.text())
+                .then(content => window.loadGCode(content, 'ooznestlogo.gcode'))
+                .catch(() => {}); // silently ignore if file doesn't exist
+
             const sdHandler = new SDCardHandler(ws, window.term, viewer, {
                 onDownloadComplete: (content, filename, fullPath) => {
                     window.currentGCodeContent = content;
