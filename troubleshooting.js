@@ -6,7 +6,8 @@ export class TroubleshootingHandler {
         this.ina219Data = [];
         this.ina219Chart = null;
         this.maxDataPoints = 1000;
-        this.pinDefs = {};
+        this.pinDefs = {};        // by hardware ID (e.g. "HC595.1")
+        this.pinDefsByPin = {};   // by pin number (e.g. "1" -> { hw, label, func })
         this.pinStateDIN = [];
         this.pinStateDOUT = [];
         this._collectingPinInfo = null;
@@ -234,6 +235,7 @@ export class TroubleshootingHandler {
     refreshPinInfo() {
         if (!this.ws || !this.ws.isConnected) return;
         this.pinDefs = {};
+        this.pinDefsByPin = {};
         this.pinStateDIN = [];
         this.pinStateDOUT = [];
         document.getElementById('pin-info-content').innerHTML = '<div class="text-grey text-center py-4"><i class="bi bi-arrow-clockwise animate-spin"></i> Loading...</div>';
@@ -247,11 +249,30 @@ export class TroubleshootingHandler {
             this.ws.sendCommand('$pinstate');
             return;
         }
+        // [PIN:HC595.1,Aux out 5,P2 <- Flood enable (M8)]
         const m = line.match(/^\[PIN:([^,]+),([^\]]+)\]$/);
         if (m) {
-            const pinNum = m[1];
-            const desc = m[2];
-            this.pinDefs[pinNum] = desc;
+            const hw = m[1];                    // "HC595.1"
+            const desc = m[2];                  // "Aux out 5,P2 <- Flood enable (M8)"
+            this.pinDefs[hw] = desc;
+
+            // Extract useful parts: label, pin number, function
+            const parts = desc.split(',');
+            const label = parts[0] || hw;       // "Aux out 5"
+            let pinId = null;
+            let func = '';
+            for (let i = 1; i < parts.length; i++) {
+                const pn = parts[i].match(/^P(\d+)/);
+                if (pn) {
+                    pinId = pn[1];               // "2"
+                } else {
+                    // Extract function name (before arrow, strip parentheses)
+                    func = parts[i].replace(/<-\s*/, '').replace(/\(.*?\)/g, '').trim();
+                }
+            }
+            if (pinId) {
+                this.pinDefsByPin[pinId] = { hw, label, func };
+            }
         }
     }
 
@@ -277,10 +298,17 @@ export class TroubleshootingHandler {
     toggleOutput(pinNum, on) {
         if (!this.ws || !this.ws.isConnected) return;
         if (on) {
-            this.ws.sendCommand(`M65P${pinNum}`);
+            this.ws.sendCommand(`M65 P${pinNum}`);
         } else {
-            this.ws.sendCommand(`M64P${pinNum}`);
+            this.ws.sendCommand(`M64 P${pinNum}`);
         }
+        // Refresh pin state after a short delay to allow the command to process
+        setTimeout(() => {
+            this.pinStateDIN = [];
+            this.pinStateDOUT = [];
+            this._collectingPinInfo = 'pinstate';
+            this.ws.sendCommand('$pinstate');
+        }, 200);
     }
 
     _renderPinInfo() {
@@ -293,11 +321,16 @@ export class TroubleshootingHandler {
             html += '<div class="font-bold text-[10px] uppercase tracking-wider text-grey mb-2">Digital Inputs</div>';
             html += '<div class="grid gap-1 mb-4">';
             this.pinStateDIN.forEach(p => {
-                const desc = this.pinDefs[p.pin] || p.name;
+                const pinDef = this.pinDefsByPin[p.pin];
+                const label = pinDef ? pinDef.label : p.name;
+                const hwInfo = pinDef ? pinDef.hw : '';
                 const isOn = p.state === '1';
                 html += `<div class="flex items-center gap-2 bg-grey-bg rounded px-2.5 py-1.5 border border-grey-light">
                     <span class="w-5 h-5 rounded-full shrink-0 ${isOn ? 'bg-green-500' : 'bg-grey-light'}"></span>
-                    <span class="flex-1 font-bold">${desc}</span>
+                    <span class="flex-1">
+                        <span class="font-bold text-secondary-dark">${label}</span>
+                        ${hwInfo ? `<span class="text-grey text-[10px] ml-1.5">${hwInfo}</span>` : ''}
+                    </span>
                     <span class="text-grey text-[10px]">Pin ${p.pin}</span>
                     <span class="font-bold ${isOn ? 'text-green-600' : 'text-grey'}">${isOn ? '1' : '0'}</span>
                 </div>`;
@@ -309,23 +342,24 @@ export class TroubleshootingHandler {
             html += '<div class="font-bold text-[10px] uppercase tracking-wider text-grey mb-2">Digital Outputs</div>';
             html += '<div class="grid gap-1">';
             this.pinStateDOUT.forEach(p => {
-                const rawDesc = this.pinDefs[p.pin] || p.name;
-                const desc = rawDesc.replace(/,P\d+$/, '');
-                const pxLabel = p.name;
-                const isPx = /^P\d+$/.test(p.name);
+                const pinDef = this.pinDefsByPin[p.pin];
+                const label = pinDef ? pinDef.label : p.name;
+                const hwInfo = pinDef ? pinDef.hw : '';
+                const func = pinDef ? pinDef.func : '';
+                const isPx = /^\d+$/.test(p.pin);
                 const isOn = p.state === '1';
                 html += `<div class="flex items-center gap-2 bg-grey-bg rounded px-2.5 py-1.5 border border-grey-light">
                     <span class="w-5 h-5 rounded-full shrink-0 ${isOn ? 'bg-green-500' : 'bg-grey-light'}"></span>
-                    <span class="flex-1">
-                        <span class="font-bold text-secondary-dark">${desc}</span>
-                        ${isPx ? `<span class="text-[10px] font-bold text-grey ml-1">(${pxLabel})</span>` : ''}
+                    <span class="flex-1 min-w-0">
+                        <span class="font-bold text-secondary-dark text-[11px]">${label}</span>
+                        ${hwInfo ? `<span class="text-grey text-[10px] ml-1">${hwInfo}</span>` : ''}
+                        ${func ? `<span class="text-[10px] font-bold text-primary ml-1">${func}</span>` : ''}
                     </span>
-                    <span class="text-grey text-[10px]">Pin ${p.pin}</span>
-                    <span class="font-bold ${isOn ? 'text-green-600' : 'text-grey'}">${isOn ? '1' : '0'}</span>
-                    ${isPx ? `<div class="flex gap-1 ml-1">
-                        <button class="px-2 py-0.5 rounded text-[10px] font-bold ${isOn ? 'bg-grey-light text-grey' : 'bg-green-500 text-white hover:bg-green-600'}" ${isOn ? 'disabled' : ''} onclick="window.troubleshooting.toggleOutput('${p.pin}', true)">ON</button>
-                        <button class="px-2 py-0.5 rounded text-[10px] font-bold ${!isOn ? 'bg-grey-light text-grey' : 'bg-red-500 text-white hover:bg-red-600'}" ${!isOn ? 'disabled' : ''} onclick="window.troubleshooting.toggleOutput('${p.pin}', false)">OFF</button>
-                    </div>` : ''}
+                    <span class="text-grey text-[10px] shrink-0">P${p.pin}</span>
+                    ${isPx ? `<div class="flex gap-1 shrink-0">
+                        <button class="px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${isOn ? 'bg-grey-light text-grey cursor-default' : 'bg-green-500 text-white hover:bg-green-600'}" ${isOn ? 'disabled' : ''} onclick="window.troubleshooting.toggleOutput('${p.pin}', true)">ON</button>
+                        <button class="px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${!isOn ? 'bg-grey-light text-grey cursor-default' : 'bg-red-500 text-white hover:bg-red-600'}" ${!isOn ? 'disabled' : ''} onclick="window.troubleshooting.toggleOutput('${p.pin}', false)">OFF</button>
+                    </div>` : `<span class="font-bold text-xs ${isOn ? 'text-green-600' : 'text-grey'}">${isOn ? '1' : '0'}</span>`}
                 </div>`;
             });
             html += '</div>';

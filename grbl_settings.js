@@ -434,12 +434,20 @@ export class GrblSettings {
                 const displayValue = isModified ? this.pendingChanges[s.id] : s.val;
                 const rowClass = isModified ? 'bg-yellow-50' : 'hover:bg-grey-bg';
 
+                // Enrichment for Event Plugin settings ($760-$769)
+                let enrichmentHtml = '';
+                const idNum = parseInt(s.id);
+                if (idNum >= 760 && idNum <= 769) {
+                    enrichmentHtml = this._getEventPluginEnrichment(s);
+                }
+
                 html += `
                     <tr class="${rowClass} transition-colors group">
                         <td class="px-0.5 md:px-4 py-2 md:py-3 font-mono text-secondary-dark font-bold text-[10px] md:text-xs align-top pt-3 md:pt-4 text-center md:text-left break-all">$${s.id}</td>
                         <td class="px-1 md:px-4 py-2 md:py-3 align-top">
                             <div class="text-grey-dark font-bold text-[11px] md:text-xs leading-tight">${s.label}</div>
                             ${s.desc ? `<div class="hidden md:block text-[10px] text-grey mt-1 leading-tight max-w-md">${s.desc.replace(/\\n/g, '<br>')}</div>` : ''}
+                            ${enrichmentHtml}
                         </td>
                         <td class="px-0.5 md:px-4 py-2 md:py-3 align-top">
                             ${this._renderInput(s, displayValue)}
@@ -471,6 +479,39 @@ export class GrblSettings {
             const sbContainer = newSidebar.querySelector('.overflow-y-auto');
             if (sbContainer) sbContainer.scrollTop = prevSidebarScroll;
         }
+    }
+
+    _getEventPluginEnrichment(s) {
+        // Cross-reference Event Plugin settings ($760-$769) with pin data from troubleshooting
+        const trouble = window.troubleshooting;
+        if (!trouble || !trouble.pinDefsByPin || Object.keys(trouble.pinDefsByPin).length === 0) return '';
+
+        const val = s.val;
+        if (!val || val === '-1' || val === '') return '';
+
+        // Check if the value is a pin number
+        const pinDef = trouble.pinDefsByPin[val];
+        if (!pinDef) return '';
+
+        // Check if this function is already assigned to another pin
+        const assignedElsewhere = Object.entries(trouble.pinDefsByPin)
+            .filter(([pin, def]) => pin !== val && def.label === pinDef.label)
+            .map(([pin]) => `P${pin}`);
+
+        let html = `<div class="flex flex-wrap gap-1 mt-1.5 text-[10px]">`;
+        html += `<span class="font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">${pinDef.hw}</span>`;
+        html += `<span class="font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">P${val}</span>`;
+        if (pinDef.func) {
+            html += `<span class="font-bold px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">${pinDef.func}</span>`;
+        }
+        if (pinDef.label !== s.label) {
+            html += `<span class="text-grey italic">as ${pinDef.label}</span>`;
+        }
+        if (assignedElsewhere.length) {
+            html += `<span class="font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Also assigned: ${assignedElsewhere.join(', ')}</span>`;
+        }
+        html += '</div>';
+        return html;
     }
 
     _renderInput(s, val) {
