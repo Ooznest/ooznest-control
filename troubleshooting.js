@@ -262,12 +262,18 @@ export class TroubleshootingHandler {
             let pinId = null;
             let func = '';
             for (let i = 1; i < parts.length; i++) {
-                const pn = parts[i].match(/^P(\d+)/);
+                const segment = parts[i];
+                // Check for leading P-number: "P2 <- Flood enable (M8)"
+                const pn = segment.match(/^P(\d+)/);
                 if (pn) {
                     pinId = pn[1];               // "2"
+                    // Extract function from the rest after P-number: "<- Flood enable (M8)"
+                    const rest = segment.slice(pn[0].length).replace(/<-\s*/, '').replace(/\(.*?\)/g, '').trim();
+                    if (rest) func = rest;
                 } else {
-                    // Extract function name (before arrow, strip parentheses)
-                    func = parts[i].replace(/<-\s*/, '').replace(/\(.*?\)/g, '').trim();
+                    // Plain function text, no P-number prefix
+                    const f = segment.replace(/\(.*?\)/g, '').trim();
+                    if (f) func = f;
                 }
             }
             if (pinId) {
@@ -287,11 +293,18 @@ export class TroubleshootingHandler {
             }
             return;
         }
+        // [PINSTATE:<type>|<description>|<id>|<mode>|<capabilities>|<state>]
+        // description example: "P2 <- Flood enable (M8)"
         const parts = line.slice(1, -1).split('|');
-        if (parts[0] === 'PINSTATE:DIN' && parts.length >= 6) {
-            this.pinStateDIN.push({ name: parts[1], pin: parts[2], func: parts[3], mode: parts[4], state: parts[5] });
-        } else if (parts[0] === 'PINSTATE:DOUT' && parts.length >= 6) {
-            this.pinStateDOUT.push({ name: parts[1], pin: parts[2], func: parts[3], mode: parts[4], state: parts[5] });
+        if (parts.length < 6) return;
+        const desc = parts[1];
+        // Extract real P-number from description, not the raw id field
+        const pn = desc.match(/P(\d+)/);
+        const realPin = pn ? pn[1] : parts[2];
+        if (parts[0] === 'PINSTATE:DIN') {
+            this.pinStateDIN.push({ name: desc, pin: realPin, id: parts[2], mode: parts[3], caps: parts[4], state: parts[5] });
+        } else if (parts[0] === 'PINSTATE:DOUT') {
+            this.pinStateDOUT.push({ name: desc, pin: realPin, id: parts[2], mode: parts[3], caps: parts[4], state: parts[5] });
         }
     }
 
@@ -328,10 +341,10 @@ export class TroubleshootingHandler {
                 html += `<div class="flex items-center gap-2 bg-grey-bg rounded px-2.5 py-1.5 border border-grey-light">
                     <span class="w-5 h-5 rounded-full shrink-0 ${isOn ? 'bg-green-500' : 'bg-grey-light'}"></span>
                     <span class="flex-1">
-                        <span class="font-bold text-secondary-dark">${label}</span>
+                        <span class="font-bold text-grey-dark text-xs">${label}</span>
                         ${hwInfo ? `<span class="text-grey text-[10px] ml-1.5">${hwInfo}</span>` : ''}
                     </span>
-                    <span class="text-grey text-[10px]">Pin ${p.pin}</span>
+                    <span class="text-grey text-[10px]">P${p.pin}</span>
                     <span class="font-bold ${isOn ? 'text-green-600' : 'text-grey'}">${isOn ? '1' : '0'}</span>
                 </div>`;
             });
@@ -346,20 +359,19 @@ export class TroubleshootingHandler {
                 const label = pinDef ? pinDef.label : p.name;
                 const hwInfo = pinDef ? pinDef.hw : '';
                 const func = pinDef ? pinDef.func : '';
-                const isPx = /^\d+$/.test(p.pin);
                 const isOn = p.state === '1';
                 html += `<div class="flex items-center gap-2 bg-grey-bg rounded px-2.5 py-1.5 border border-grey-light">
-                    <span class="w-5 h-5 rounded-full shrink-0 ${isOn ? 'bg-green-500' : 'bg-grey-light'}"></span>
+                    <span class="w-4 h-4 rounded-full shrink-0 ${isOn ? 'bg-green-500' : 'bg-grey-light'}"></span>
                     <span class="flex-1 min-w-0">
-                        <span class="font-bold text-secondary-dark text-[11px]">${label}</span>
+                        <span class="font-bold text-grey-dark text-xs">${label}</span>
                         ${hwInfo ? `<span class="text-grey text-[10px] ml-1">${hwInfo}</span>` : ''}
                         ${func ? `<span class="text-[10px] font-bold text-primary ml-1">${func}</span>` : ''}
                     </span>
-                    <span class="text-grey text-[10px] shrink-0">P${p.pin}</span>
-                    ${isPx ? `<div class="flex gap-1 shrink-0">
+                    <span class="text-grey text-[10px] shrink-0 font-mono">P${p.pin}</span>
+                    <div class="flex gap-1 shrink-0">
                         <button class="px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${isOn ? 'bg-grey-light text-grey cursor-default' : 'bg-green-500 text-white hover:bg-green-600'}" ${isOn ? 'disabled' : ''} onclick="window.troubleshooting.toggleOutput('${p.pin}', true)">ON</button>
                         <button class="px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${!isOn ? 'bg-grey-light text-grey cursor-default' : 'bg-red-500 text-white hover:bg-red-600'}" ${!isOn ? 'disabled' : ''} onclick="window.troubleshooting.toggleOutput('${p.pin}', false)">OFF</button>
-                    </div>` : `<span class="font-bold text-xs ${isOn ? 'text-green-600' : 'text-grey'}">${isOn ? '1' : '0'}</span>`}
+                    </div>
                 </div>`;
             });
             html += '</div>';

@@ -474,6 +474,8 @@
                         class="flex gap-2 mt-2 opacity-50 pointer-events-none transition-opacity duration-200">
                         <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code...">
                         <button id="btnSend"><i class="bi bi-send-fill text-[12px]"></i></button>
+                        <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
+                            class="text-grey hover:text-red-500 transition-colors"><i class="bi bi-trash3 text-[12px]"></i></button>
                     </div>
                 </div>
             </div>
@@ -1969,140 +1971,136 @@
 
                             <!-- SIGNALS SUB-TAB -->
                             <div id="trouble-tab-signals" class="trouble-tab-content">
-                                <!-- Real-time signals: Limit Switches + Control Pins + Motor Status -->
                                 <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden mb-4">
                                     <div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">
                                         <i class="bi bi-activity text-primary text-xs"></i>
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Machine Signals</h3>
                                         <span class="text-[10px] text-grey ml-auto">Updated from status reports</span>
                                     </div>
-                                    <div class="divide-y divide-grey-light/60">
+                                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-px bg-grey-light/60">
                                         <!-- Limits -->
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">X‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">X Limit</span>
                                             <div id="pin-indicator-X" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Y‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Y Limit</span>
                                             <div id="pin-indicator-Y" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Z‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Z Limit</span>
                                             <div id="pin-indicator-Z" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">A‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">A Limit</span>
                                             <div id="pin-indicator-A" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">B‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">B Limit</span>
                                             <div id="pin-indicator-B" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">C‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">C Limit</span>
                                             <div id="pin-indicator-C" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">U‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">U Limit</span>
                                             <div id="pin-indicator-U" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">V‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">V Limit</span>
                                             <div id="pin-indicator-V" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrows-fullscreen text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">W‑Limit</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrows-fullscreen text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">W Limit</span>
                                             <div id="pin-indicator-W" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <!-- Divider label -->
-                                        <div class="px-4 py-1.5 bg-grey-bg/30 text-[10px] font-bold text-grey uppercase tracking-wider">Control Pins</div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-door-open text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Door</span>
+                                        <!-- Control Pins -->
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-door-open text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Door</span>
                                             <div id="pin-indicator-D" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrow-counterclockwise text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Reset</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrow-counterclockwise text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Reset</span>
                                             <div id="pin-indicator-R" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-pause-circle text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Hold</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-pause-circle text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Hold</span>
                                             <div id="pin-indicator-H" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-play-circle text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Start</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-play-circle text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Start</span>
                                             <div id="pin-indicator-S" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-exclamation-octagon text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">E‑Stop</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-exclamation-octagon text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">E Stop</span>
                                             <div id="pin-indicator-E" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-slash-circle text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Block Delete</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-slash-circle text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Block Delete</span>
                                             <div id="pin-indicator-L" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-skip-end-circle text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Optional Stop</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-skip-end-circle text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Optional Stop</span>
                                             <div id="pin-indicator-T" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-arrow-right-circle text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Single Step</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-arrow-right-circle text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Single Step</span>
                                             <div id="pin-indicator-Q" class="signal-badge signal-off">OFF</div>
                                         </div>
                                         <!-- Motor Status -->
-                                        <div class="px-4 py-1.5 bg-grey-bg/30 text-[10px] font-bold text-grey uppercase tracking-wider">Motor Status</div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-exclamation-triangle text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Warning</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-exclamation-triangle text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Warning</span>
                                             <div id="pin-indicator-M" class="signal-badge signal-off">OFF</div>
                                         </div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-bug text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Fault</span>
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-bug text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Fault</span>
                                             <div id="pin-indicator-F" class="signal-badge signal-off">OFF</div>
                                         </div>
                                         <!-- Probe -->
-                                        <div class="px-4 py-1.5 bg-grey-bg/30 text-[10px] font-bold text-grey uppercase tracking-wider">Probe</div>
-                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-grey-bg/50">
-                                            <i class="bi bi-target text-grey text-xs w-4 shrink-0"></i>
-                                            <span class="text-sm font-bold text-secondary-dark flex-1">Probe</span>
-                                            <div id="pin-indicator-P" class="signal-badge signal-off mr-2">OFF</div>
-                                            <div class="flex items-center gap-2 text-xs border-l border-grey-light pl-3 ml-1">
-                                                <label class="flex items-center gap-1 cursor-pointer">
+                                        <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <i class="bi bi-target text-grey text-[10px] w-3 shrink-0"></i>
+                                            <span class="text-xs font-bold text-grey-dark flex-1">Probe</span>
+                                            <div class="flex items-center gap-1.5 text-[10px] mr-1">
+                                                <label class="flex items-center gap-0.5 cursor-pointer">
                                                     <input type="radio" name="probe-mode" value="probe" checked
                                                         onchange="window.troubleshooting.selectProbeMode('probe')"
-                                                        class="accent-primary w-3 h-3 cursor-pointer">
-                                                    <span class="font-bold text-grey-dark">Probe</span>
+                                                        class="accent-primary w-2.5 h-2.5 cursor-pointer">
+                                                    <span class="font-bold text-grey-dark">P</span>
                                                 </label>
-                                                <label class="flex items-center gap-1 cursor-pointer">
+                                                <label class="flex items-center gap-0.5 cursor-pointer">
                                                     <input type="radio" name="probe-mode" value="tls"
                                                         onchange="window.troubleshooting.selectProbeMode('tls')"
-                                                        class="accent-primary w-3 h-3 cursor-pointer">
+                                                        class="accent-primary w-2.5 h-2.5 cursor-pointer">
                                                     <span class="font-bold text-grey-dark">TLS</span>
                                                 </label>
-                                                <label class="flex items-center gap-1 cursor-pointer">
+                                                <label class="flex items-center gap-0.5 cursor-pointer">
                                                     <input type="radio" name="probe-mode" value="probe2"
                                                         onchange="window.troubleshooting.selectProbeMode('probe2')"
-                                                        class="accent-primary w-3 h-3 cursor-pointer">
-                                                    <span class="font-bold text-grey-dark">Probe 2</span>
+                                                        class="accent-primary w-2.5 h-2.5 cursor-pointer">
+                                                    <span class="font-bold text-grey-dark">P2</span>
                                                 </label>
                                             </div>
+                                            <div id="pin-indicator-P" class="signal-badge signal-off">OFF</div>
                                         </div>
                                     </div>
                                 </div>
