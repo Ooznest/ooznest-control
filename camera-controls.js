@@ -21,6 +21,8 @@ class CameraControls {
         if (nextMode === 'Perspective') {
             if (window.viewer.getCameraType() === 'Orthographic') window.viewer.toggleCamera();
             window.viewer.setCameraMode('orbit');
+            console.log('[CameraControls] calling viewer.resetCamera() after spindle->perspective switch');
+            window.viewer.resetCamera();
         }
         else if (nextMode === 'Orthographic') {
             if (window.viewer.getCameraType() === 'Perspective') window.viewer.toggleCamera();
