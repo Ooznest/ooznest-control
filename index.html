@@ -596,6 +596,9 @@
                         <button class="overlay-btn" onclick="resetCamera()">
                             <i class="bi bi-camera-video-fill text-secondary"></i> Reset
                         </button>
+                        <button id="gcode-stats-toggle-btn" class="overlay-btn hidden" onclick="toggleGcodeStats()">
+                            <i class="bi bi-bar-chart-fill text-secondary"></i> Stats
+                        </button>
                         <button class="overlay-btn" onclick="toggleCamera()" id="cam-toggle-btn">
                             <i class="bi bi-eye-fill text-secondary"></i> Perspective
                         </button>
@@ -635,6 +638,29 @@
                                 <span id="viewer-file-name"
                                     class="text-secondary-dark font-bold text-sm truncate leading-none">No file
                                     loaded</span>
+                            </div>
+                        </div>
+                        <div id="gcode-stats-panel"
+                            class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light p-3 shadow-lg pointer-events-auto">
+                            <div class="mb-2">
+                                <span class="text-grey text-[10px] uppercase font-black tracking-wider">G-Code Stats</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                <div>
+                                    <span class="text-grey">Run Time</span>
+                                    <span id="stat-runtime" class="font-bold text-secondary-dark block">—</span>
+                                </div>
+                                <div>
+                                    <span class="text-grey">Distance</span>
+                                    <span id="stat-distance" class="font-bold text-secondary-dark block">—</span>
+                                </div>
+                                <div class="col-span-2">
+                                    <span class="text-grey">Dimensions</span>
+                                    <span id="stat-dimensions" class="font-bold text-secondary-dark block">—</span>
+                                </div>
+                            </div>
+                            <div id="segment-chart-container" class="mt-2" style="height:40px">
+                                <canvas id="gcode-segment-chart" style="width:100%;height:100%"></canvas>
                             </div>
                         </div>
                     </div>
@@ -3152,20 +3178,31 @@
             _lastStats = detail;
             const { totalDist, totalTime, segmentLengthStats, inch } = detail;
 
-            document.getElementById('stat-runtime').textContent = formatRuntime(totalTime);
-            document.getElementById('stat-distance').textContent = formatDistance(totalDist, inch);
+            const runtimeEl = document.getElementById('stat-runtime');
+            const distEl = document.getElementById('stat-distance');
+            if (runtimeEl) runtimeEl.textContent = formatRuntime(totalTime);
+            if (distEl) distEl.textContent = formatDistance(totalDist, inch);
+
+            // Update viewer file name from editor context
+            const fileNameEl = document.getElementById('viewer-file-name');
+            const editorName = document.getElementById('editor-file-name');
+            if (fileNameEl && editorName && fileNameEl.innerText === 'No file loaded') {
+                fileNameEl.innerText = editorName.innerText;
+            }
 
             // Dimensions come from the 3D viewer bounding box (available after renderLines)
             setTimeout(() => {
-                const dims = getJobDimensions(inch);
-                document.getElementById('stat-dimensions').textContent = dims || '—';
+                const dimsEl = document.getElementById('stat-dimensions');
+                if (dimsEl) dimsEl.textContent = getJobDimensions(inch) || '—';
             }, 200);
 
             renderSegmentChart(segmentLengthStats);
 
-            // Show the toggle button now that we have stats
+            // Show the toggle button and auto-open panel
             const toggleBtn = document.getElementById('gcode-stats-toggle-btn');
             if (toggleBtn) toggleBtn.style.display = '';
+            const panel = document.getElementById('gcode-stats-panel');
+            if (panel) panel.classList.remove('hidden');
         }
         window.updateGcodeStatsPanel = updateGcodeStatsPanel;
 
