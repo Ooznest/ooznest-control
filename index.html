@@ -527,23 +527,23 @@
 
                 <!-- Scrollable Tabs Container -->
                 <div id="tabs-scroll-container" class="flex-1 flex overflow-x-auto no-scrollbar scroll-smooth">
-                    <button class="tab-btn active" onclick="switchTab('viewer-view', this)">3D Preview</button>
-                    <button class="tab-btn" onclick="switchTab('editor-view', this)">Editor</button>
-                    <button class="tab-btn" onclick="switchTab('probe-view', this)">Probe</button>
-                    <button class="tab-btn" onclick="switchTab('macros-view', this)">Macros</button>
-                    <button class="tab-btn" onclick="switchTab('surfacing-view', this)">Surfacing</button>
-                    <button class="tab-btn" onclick="switchTab('tools-view', this)">
+                    <button class="tab-btn active" data-tab="viewer-view" onclick="switchTab('viewer-view', this)">3D Preview</button>
+                    <button class="tab-btn" data-tab="editor-view" onclick="switchTab('editor-view', this)">Editor</button>
+                    <button class="tab-btn" data-tab="probe-view" onclick="switchTab('probe-view', this)">Probe</button>
+                    <button class="tab-btn" data-tab="macros-view" onclick="switchTab('macros-view', this)">Macros</button>
+                    <button class="tab-btn" data-tab="surfacing-view" onclick="switchTab('surfacing-view', this)">Surfacing</button>
+                    <button class="tab-btn" data-tab="tools-view" onclick="switchTab('tools-view', this)">
                         Tools
                         <span id="tools-badge"
                             class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
                     </button>
-                    <button class="tab-btn" onclick="switchTab('sd-view', this)">
+                    <button class="tab-btn" data-tab="sd-view" onclick="switchTab('sd-view', this)">
                         SD Card
                         <span id="sd-badge"
                             class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
                     </button>
-                    <button class="tab-btn" onclick="switchTab('settings-view', this)">Settings</button>
-                    <button class="tab-btn" onclick="switchTab('troubleshooting-view', this)">Troubleshooting</button>
+                    <button class="tab-btn" data-tab="settings-view" onclick="switchTab('settings-view', this)">Settings</button>
+                    <button class="tab-btn" data-tab="troubleshooting-view" onclick="switchTab('troubleshooting-view', this)">Troubleshooting</button>
                 </div>
 
                 <!-- Right Scroll Arrow -->
@@ -2536,7 +2536,7 @@
 
             // 3. Update buttons
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            if (btn) btn.classList.add('active');
+            (btn || document.querySelector(`.tab-btn[data-tab="${targetId}"]`))?.classList.add('active');
 
             // 4. Global Event: Notify listeners that a tab was shown
             // (Moved OUTSIDE the specific checks so Editor gets it too)
