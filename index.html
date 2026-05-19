@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ooznest | Machine Control</title>
+    <meta name="description" content="Ooznest Machine Control Web UI for grblHAL CNC controllers. Control, monitor, and manage your CNC machine wirelessly.">
     <link rel="icon" href="./favicon.ico" sizes="32x32">
     <link rel="icon" href="./favicon-32x32.png" sizes="32x32">
     <link rel="icon" href="./favicon-16x16.png" sizes="16x16">
@@ -483,7 +484,7 @@
                     <div id="console-input-area"
                         class="flex gap-2 mt-2 opacity-50 pointer-events-none transition-opacity duration-200">
                         <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
-                        <button id="btnSend"><i class="bi bi-send-fill text-[12px]"></i></button>
+                        <button id="btnSend" aria-label="Send G-Code"><i class="bi bi-send-fill text-[12px]"></i></button>
                         <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
                             class="text-grey hover:text-red-500 transition-colors"><i class="bi bi-trash3 text-[12px]"></i></button>
                     </div>
@@ -511,7 +512,7 @@
                     </button>
 
                     <div class="flex items-center gap-2 pl-1 md:pl-8 border-r border-grey h-full pr-1">
-                        <img src="themes/ooznest-logo.png" alt="Logo" id="app-logo" class="h-8 md:h-12">
+                        <img src="themes/ooznest-logo.png" alt="Ooznest" id="app-logo" class="h-8 md:h-12" fetchpriority="high">
                         <!-- Hidden elements kept for JS compatibility -->
                         <div id="connection-dot" class="hidden"></div>
                         <span id="connection-text" class="hidden"></span>
