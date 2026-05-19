@@ -131,9 +131,6 @@
     </style>
 
 
-    <!-- Preload critical modules (browser discovers importmap late) -->
-    <link rel="modulepreload" href="vendor/three.module.js">
-    <link rel="modulepreload" href="vendor/jsm/controls/OrbitControls.js">
     <!-- Three.js importmap - local vendor copies for offline use -->
     <script type="importmap">
         { "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/jsm/" } }
@@ -502,7 +499,7 @@
             <h1 class="sr-only">Ooznest Machine Control</h1>
 
             <!-- Navigation (Updated with Logo and Unified Sidebar Trigger) -->
-            <div class="h-10 flex items-center bg-secondary-dark text-white justify-between shadow-md z-20 shrink-0">
+            <div class="h-10 flex items-center bg-grey-dark text-white justify-between shadow-md z-20 shrink-0">
 
                 <!-- Sidebar Trigger & Logo & Status -->
                 <div class="flex items-center h-full overflow-hidden shrink-0">
