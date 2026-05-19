@@ -352,12 +352,14 @@ export class ViewCube {
     animate() {
         requestAnimationFrame(() => this.animate());
 
+        // Only re-render when camera rotation changes (saves ~30s CPU when idle)
+        if (!this._lastQuat) this._lastQuat = new THREE.Quaternion();
+        if (this._lastQuat.equals(this.mainCamera.quaternion)) return;
+        this._lastQuat.copy(this.mainCamera.quaternion);
+
         // Sync cube rotation with main camera
-        // Extract rotation from main camera's view matrix
         const matrix = new THREE.Matrix4();
         matrix.extractRotation(this.mainCamera.matrixWorldInverse);
-
-        // Apply inverse rotation to cube so it rotates opposite to camera
         this.cube.rotation.setFromRotationMatrix(matrix);
 
         this.renderer.render(this.scene, this.camera);
