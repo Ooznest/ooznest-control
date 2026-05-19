@@ -1,6 +1,4 @@
-/* Local vendor fonts - works offline */
-@import url('../vendor/google-fonts.css');
-@import url('../vendor/bootstrap-icons.css');
+/* vendor fonts loaded via <link> in index.html */
 
 /*
  * OOZNEST MACHINE CONTROL THEME v9.0
@@ -32,7 +30,7 @@
     /* Neutrals */
     --oz-black: #0D1F22;
     --oz-grey-dark: #2F373C;
-    --oz-grey-mid: #909090;
+    --oz-grey-mid: #6B7280;
     --oz-grey-light: #EBEFEF;
     --oz-white: #FFFFFF;
     --oz-bg-panel: #F7F9F9;
@@ -71,7 +69,7 @@
     --color-secondary-light: var(--oz-primary-light);
     --color-secondary-dark: var(--oz-primary-dark);
     --color-grey-dark: var(--oz-grey-dark);
-    --color-grey: var(--oz-grey-mid);
+    --color-grey: var(--oz-grey-mid); /* #6B7280 — WCAG AA compliant on white */
     --color-grey-light: var(--oz-teal-xlight);
     --color-bg: var(--oz-bg-panel);
     --color-surface: var(--oz-white);

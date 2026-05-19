@@ -5,8 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ooznest | Machine Control</title>
+    <link rel="icon" href="./favicon.ico" sizes="32x32">
+    <link rel="icon" href="./favicon-32x32.png" sizes="32x32">
+    <link rel="icon" href="./favicon-16x16.png" sizes="16x16">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <!-- Preconnect to CDN origins -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <!-- Themes -->
     <link id="theme-stylesheet" rel="stylesheet" href="themes/ooznest.css">
+    <!-- Vendor fonts & icons (was @import, now <link> for faster parallel load) -->
+    <link rel="stylesheet" href="vendor/google-fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap-icons.css">
     <!-- xterm CSS (local vendor copy) -->
     <link rel="stylesheet" href="vendor/xterm.css">
     <script>
@@ -121,6 +131,9 @@
     </style>
 
 
+    <!-- Preload critical modules (browser discovers importmap late) -->
+    <link rel="modulepreload" href="vendor/three.module.js">
+    <link rel="modulepreload" href="vendor/jsm/controls/OrbitControls.js">
     <!-- Three.js importmap - local vendor copies for offline use -->
     <script type="importmap">
         { "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/jsm/" } }
@@ -472,7 +485,7 @@
                     <!-- Console Input -->
                     <div id="console-input-area"
                         class="flex gap-2 mt-2 opacity-50 pointer-events-none transition-opacity duration-200">
-                        <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code...">
+                        <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
                         <button id="btnSend"><i class="bi bi-send-fill text-[12px]"></i></button>
                         <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
                             class="text-grey hover:text-red-500 transition-colors"><i class="bi bi-trash3 text-[12px]"></i></button>
@@ -486,6 +499,7 @@
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col bg-grey-bg relative overflow-hidden h-full">
+            <h1 class="sr-only">Ooznest Machine Control</h1>
 
             <!-- Navigation (Updated with Logo and Unified Sidebar Trigger) -->
             <div class="h-10 flex items-center bg-secondary-dark text-white justify-between shadow-md z-20 shrink-0">
@@ -2284,11 +2298,11 @@
                     <p class="text-xs text-grey">Connect to grblHAL over Ethernet or WiFi (Electron only).</p>
                     <div class="relative">
                         <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">IP</span>
-                        <input type="text" id="ip-telnet" class="input-field pl-8 h-10" placeholder="192.168.1.10">
+                        <input type="text" id="ip-telnet" class="input-field pl-8 h-10" placeholder="192.168.1.10" aria-label="Telnet IP address">
                     </div>
                     <div class="relative">
                         <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">Port</span>
-                        <input type="number" id="port-telnet" class="input-field pl-12 h-10" value="23">
+                        <input type="number" id="port-telnet" class="input-field pl-12 h-10" value="23" aria-label="Telnet port">
                     </div>
                 </div>
 
@@ -2343,7 +2357,7 @@
                 <!-- Name & Color -->
                 <div class="grid grid-cols-3 gap-4">
                     <div class="col-span-2 space-y-1">
-                        <label class="text-[11px] font-bold text-grey uppercase">Macro Name</label>
+                        <label for="macro-name-input" class="text-[11px] font-bold text-grey uppercase">Macro Name</label>
                         <input type="text" id="macro-name-input" class="input-field" placeholder="e.g. Probe Z">
                     </div>
                     <div class="space-y-1">
@@ -2505,10 +2519,10 @@
     </div>
 
     <!-- CryptoJS for firmware flash integrity -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" defer></script>
 
     <!-- Chart.js for GCode stats histogram -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
 
     <!-- xterm.js - local vendor copy for offline use -->
     <script src="vendor/xterm.js"></script>
