@@ -557,6 +557,37 @@ export class GrblSettings {
             return html;
         }
 
+        // 4: Axis mask (Checkbox List for X, Y, Z, A, B, C)
+        if (s.type === 4) {
+            const intVal = parseInt(val) || 0;
+            let labels;
+            if (s.format) {
+                if (/^\d+$/.test(s.format)) {
+                    labels = ['X', 'Y', 'Z', 'A', 'B', 'C'].slice(0, parseInt(s.format));
+                } else {
+                    labels = s.format.split(',').map(l => l.trim());
+                }
+            } else {
+                labels = ['X', 'Y', 'Z', 'A', 'B', 'C'];
+            }
+            let html = `<div class="flex flex-col gap-1 border border-grey-light rounded p-1 bg-grey-bg">`;
+            labels.forEach((label, index) => {
+                if (!label || label.toUpperCase() === 'N/A') return;
+                const bitMask = 1 << index;
+                const isSet = (intVal & bitMask) !== 0;
+                html += `
+                    <label class="inline-flex items-center gap-1 cursor-pointer hover:bg-white rounded px-0.5 transition-colors">
+                        <input type="checkbox" class="rounded text-primary focus:ring-primary h-3 w-3 border-grey-light"
+                            onchange="window.grblSettings.updateMask('${s.id}', ${bitMask}, this.checked)"
+                            ${isSet ? 'checked' : ''}>
+                        <span class="text-[9px] md:text-[11px] text-grey-dark leading-none pt-0.5 truncate font-mono font-bold">${label}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+            return html;
+        }
+
         // 3: Enum (Select)
         if (s.type === 3 && s.format) {
             const options = s.format.split(',');
