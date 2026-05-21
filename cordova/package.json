@@ -16,6 +16,7 @@
     "cordova-android": "^14.0.1",
     "cordova-ios": "^8.0.0",
     "cordova-plugin-webserver": "^1.0.4",
+    "cordova-plugin-whitelist": "^1.3.5",
     "cordovarduino": "^0.0.10"
   },
   "cordova": {
@@ -24,6 +25,7 @@
       "android"
     ],
     "plugins": {
+      "cordova-plugin-whitelist": {},
       "cordovarduino": {}
     }
   }

@@ -396,6 +396,20 @@ export class ConnectionManager {
         this.backendWs.send(JSON.stringify({ type: 'listPorts' }));
     }
 
+    _showConnectingStatus(msg) {
+        const dot = document.getElementById('connection-dot');
+        const text = document.getElementById('connection-text');
+        if (dot) {
+            dot.classList.remove('bg-green-500', 'bg-red-500');
+            dot.classList.add('bg-yellow-400');
+        }
+        if (text) text.textContent = msg || 'Connecting...';
+    }
+
+    _clearConnectingStatus() {
+        // Restored by handleConnect/handleDisconnect via uiManager
+    }
+
     async connect() {
         this.saveSettings();
         
@@ -472,9 +486,43 @@ export class ConnectionManager {
             }));
         } else if (this.type === 'websocket') {
             const url = document.getElementById('url-websocket').value || `ws://${window.location.hostname}:81/ws`;
-            this.directWs = new WebSocket(url);
+            this._showConnectingStatus(`Connecting to ${url}...`);
+
+            let connectionTimedOut = false;
+            const connectTimeout = setTimeout(() => {
+                if (this.directWs && this.directWs.readyState !== WebSocket.OPEN) {
+                    connectionTimedOut = true;
+                    this.directWs.close();
+                    this.directWs = null;
+                    const dot = document.getElementById('connection-dot');
+                    const text = document.getElementById('connection-text');
+                    if (dot) {
+                        dot.classList.remove('bg-yellow-400');
+                        dot.classList.add('bg-red-500');
+                    }
+                    if (text) text.textContent = 'Connection timed out';
+                    this.emit('error', new Error(`WebSocket connection to ${url} timed out after 10s. Check that the IP is correct and the controller is reachable.`));
+                }
+            }, 10000);
+
+            try {
+                this.directWs = new WebSocket(url);
+            } catch (e) {
+                clearTimeout(connectTimeout);
+                const dot = document.getElementById('connection-dot');
+                const text = document.getElementById('connection-text');
+                if (dot) {
+                    dot.classList.remove('bg-yellow-400');
+                    dot.classList.add('bg-red-500');
+                }
+                if (text) text.textContent = 'Invalid URL';
+                this.emit('error', new Error(`Invalid WebSocket URL: ${e.message}`));
+                this.modal.classList.add('hidden');
+                return;
+            }
 
             this.directWs.onopen = () => {
+                clearTimeout(connectTimeout);
                 console.log("Direct WebSocket Connected to grblHAL");
                 try {
                     const wsUrl = new URL(url);
@@ -506,12 +554,22 @@ export class ConnectionManager {
             };
 
             this.directWs.onerror = (err) => {
+                if (connectionTimedOut) return;
+                clearTimeout(connectTimeout);
                 console.error("Direct WebSocket Error:", err);
-                this.emit('error', new Error("WebSocket Error"));
+                const dot = document.getElementById('connection-dot');
+                const text = document.getElementById('connection-text');
+                if (dot) {
+                    dot.classList.remove('bg-yellow-400');
+                    dot.classList.add('bg-red-500');
+                }
+                if (text) text.textContent = 'WebSocket Error';
+                this.emit('error', new Error("WebSocket connection failed. Make sure the controller is powered on and reachable."));
             };
 
-            this.directWs.onclose = () => {
-                console.log("Direct WebSocket Closed");
+            this.directWs.onclose = (event) => {
+                clearTimeout(connectTimeout);
+                console.log("Direct WebSocket Closed (code: " + event.code + ")");
                 if (this.isConnected) this.handleDisconnect();
             };
         }
