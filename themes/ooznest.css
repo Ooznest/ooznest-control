@@ -568,14 +568,115 @@ select {
     border-left: none;
 }
 
-/* Axis letter box */
-.dro-label-box {
-    width: 36px;
+/* Home axis button (left of axis label) */
+.dro-home-btn {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    padding-left: 4px;
+    justify-content: center;
     gap: 2px;
+    padding: 0 5px;
+    margin: 2px 2px 2px 0;
+    border: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: var(--oz-r-xs);
+    transition: all 0.15s;
+    white-space: nowrap;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.dro-home-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+.dro-home-btn:active {
+    transform: scale(0.95);
+}
+.dro-home-btn.text-green-500 {
+    color: #22c55e;
+}
+.dro-home-btn.text-green-500:hover {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.2);
+}
+.dro-home-btn i {
+    font-size: 10px;
+}
+
+@media (min-width: 768px) {
+    .dro-home-btn {
+        padding: 0 7px;
+        gap: 3px;
+        font-size: 9px;
+    }
+    .dro-home-btn i {
+        font-size: 11px;
+    }
+}
+
+/* Column header row */
+.dro-header-row {
+    height: 18px !important;
+    border-bottom: none !important;
+    margin-bottom: 1px !important;
+}
+.dro-header-row .dro-readout {
+    align-items: center;
+}
+.dro-header-row .dro-mach-group {
+    min-width: 64px;
+    justify-content: flex-end;
+    padding-right: 4px;
+}
+.dro-header-row .dro-mach-group .dro-coord-header {
+    text-align: right;
+}
+.dro-header-row .dro-work-group {
+    justify-content: flex-end;
+    padding-right: 10px;
+}
+@media (min-width: 768px) {
+.dro-header-row .dro-mach-group {
+        min-width: 72px;
+    }
+}
+.dro-coord-header {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1;
+}
+.dro-home-header {
+    display: flex;
+    min-width: 44px;
+    margin: 2px 2px 2px 0;
+}
+.dro-zero-header {
+    display: flex;
+    width: 38px;
+    margin: 2px 0;
+}
+@media (min-width: 768px) {
+    .dro-home-header {
+        min-width: 52px;
+    }
+    .dro-zero-header {
+        width: 42px;
+    }
+}
+
+/* Axis letter box */
+.dro-label-box {
+    width: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: transparent !important;
     border-right: none !important;
     font-family: 'Nunito', sans-serif;
@@ -586,9 +687,7 @@ select {
 
 @media (min-width: 768px) {
     .dro-label-box {
-        width: 44px;
-        padding-left: 8px;
-        gap: 4px;
+        width: 28px;
         font-size: 18px;
     }
 }
@@ -597,10 +696,10 @@ select {
 .dro-readout {
     flex: 1;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 2px;
-    padding: 0 2px;
+    padding: 0 3px;
     background: transparent !important;
     overflow: hidden;
 }
@@ -633,15 +732,44 @@ select {
     color: rgba(255, 255, 255, 0.7) !important;
     line-height: 1;
     text-align: right;
-    width: 60px;
+    min-width: 54px;
     flex-shrink: 0;
     align-self: center;
 }
 
 @media (min-width: 768px) {
     .dro-val-sm {
-        width: 64px;
+        min-width: 60px;
     }
+}
+
+/* Force full white text on override buttons (spindle, feed, rapids) */
+.dro-panel .border-t button,
+.dro-panel .border-t span {
+    color: white !important;
+}
+
+/* Coordinate label tag (W / M) */
+.dro-coord-label {
+    font-size: 9px;
+    font-weight: 800;
+    opacity: 0.4;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    align-self: center;
+}
+.dro-mach-group {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 1px;
+    flex-shrink: 0;
+}
+.dro-work-group {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 1px;
+    flex: 1;
+    justify-content: flex-end;
 }
 
 /* Zero button */

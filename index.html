@@ -214,19 +214,37 @@
 
                     <!-- Accessories Status (Moved to Footer) -->
 
+                    <!-- Column Headers -->
+                    <div class="dro-card dro-header-row">
+                        <span class="dro-home-header"></span>
+                        <span class="dro-label-box"></span>
+                        <div class="dro-readout">
+                            <span class="dro-mach-group">
+                                <span class="dro-coord-header">MACHINE</span>
+                            </span>
+                            <span class="dro-work-group">
+                                <span class="dro-coord-header">WORK</span>
+                            </span>
+                        </div>
+                        <span class="dro-zero-header"></span>
+                    </div>
+
                     <!-- X Axis -->
                     <div class="dro-card border-l-4 border-l-axis-x">
+                        <button id="homing-btn-x" class="dro-home-btn"
+                            onclick="window.dro.homeAxis('X')" title="Home X">
+                            <i class="bi bi-house-door-fill"></i> Home X
+                        </button>
                         <div class="dro-label-box">
                             <span>X</span>
-                            <button id="homing-btn-x"
-                                class="text-[10px] text-grey-light hover:text-primary transition-colors"
-                                onclick="window.dro.homeAxis('X')" title="Home X">
-                                <i class="bi bi-house-door-fill"></i>
-                            </button>
                         </div>
                         <div class="dro-readout">
-                            <span id="dro-x-m" class="dro-val-sm">0.000</span>
-                            <span id="dro-x" class="dro-val-lg">0.000</span>
+                            <span class="dro-mach-group">
+                                <span id="dro-x-m" class="dro-val-sm">0.000</span>
+                            </span>
+                            <span class="dro-work-group">
+                                <span id="dro-x" class="dro-val-lg">0.000</span>
+                            </span>
                         </div>
                         <button class="dro-zero-btn" onclick="window.dro.setZero('X')"
                             aria-label="Zero X axis">Zero</button>
@@ -234,17 +252,20 @@
 
                     <!-- Y Axis -->
                     <div class="dro-card border-l-4 border-l-axis-y">
+                        <button id="homing-btn-y" class="dro-home-btn"
+                            onclick="window.dro.homeAxis('Y')" title="Home Y">
+                            <i class="bi bi-house-door-fill"></i> Home Y
+                        </button>
                         <div class="dro-label-box">
                             <span>Y</span>
-                            <button id="homing-btn-y"
-                                class="text-[10px] text-grey-light hover:text-primary transition-colors"
-                                onclick="window.dro.homeAxis('Y')" title="Home Y">
-                                <i class="bi bi-house-door-fill"></i>
-                            </button>
                         </div>
                         <div class="dro-readout">
-                            <span id="dro-y-m" class="dro-val-sm">0.000</span>
-                            <span id="dro-y" class="dro-val-lg">0.000</span>
+                            <span class="dro-mach-group">
+                                <span id="dro-y-m" class="dro-val-sm">0.000</span>
+                            </span>
+                            <span class="dro-work-group">
+                                <span id="dro-y" class="dro-val-lg">0.000</span>
+                            </span>
                         </div>
                         <button class="dro-zero-btn" onclick="window.dro.setZero('Y')"
                             aria-label="Zero Y axis">Zero</button>
@@ -252,17 +273,20 @@
 
                     <!-- Z Axis -->
                     <div class="dro-card border-l-4 border-l-axis-z">
+                        <button id="homing-btn-z" class="dro-home-btn"
+                            onclick="window.dro.homeAxis('Z')" title="Home Z">
+                            <i class="bi bi-house-door-fill"></i> Home Z
+                        </button>
                         <div class="dro-label-box">
                             <span>Z</span>
-                            <button id="homing-btn-z"
-                                class="text-[10px] text-grey-light hover:text-primary transition-colors"
-                                onclick="window.dro.homeAxis('Z')" title="Home Z">
-                                <i class="bi bi-house-door-fill"></i>
-                            </button>
                         </div>
                         <div class="dro-readout">
-                            <span id="dro-z-m" class="dro-val-sm">0.000</span>
-                            <span id="dro-z" class="dro-val-lg">0.000</span>
+                            <span class="dro-mach-group">
+                                <span id="dro-z-m" class="dro-val-sm">0.000</span>
+                            </span>
+                            <span class="dro-work-group">
+                                <span id="dro-z" class="dro-val-lg">0.000</span>
+                            </span>
                         </div>
                         <button class="dro-zero-btn" onclick="window.dro.setZero('Z')"
                             aria-label="Zero Z axis">Zero</button>
@@ -270,17 +294,20 @@
 
                     <!-- A Axis (Hidden by default) -->
                     <div class="dro-row hidden dro-card border-l-4 border-l-axis-a">
+                        <button id="homing-btn-a" class="dro-home-btn"
+                            onclick="window.dro.homeAxis('A')" title="Home A">
+                            <i class="bi bi-house-door-fill"></i> Home A
+                        </button>
                         <div class="dro-label-box">
                             <span>A</span>
-                            <button id="homing-btn-a"
-                                class="text-[10px] text-grey-light hover:text-primary transition-colors"
-                                onclick="window.dro.homeAxis('A')" title="Home A">
-                                <i class="bi bi-house-door-fill"></i>
-                            </button>
                         </div>
                         <div class="dro-readout">
-                            <span id="dro-a-m" class="dro-val-sm">0.000</span>
-                            <span id="dro-a" class="dro-val-lg">0.000</span>
+                            <span class="dro-mach-group">
+                                <span id="dro-a-m" class="dro-val-sm">0.000</span>
+                            </span>
+                            <span class="dro-work-group">
+                                <span id="dro-a" class="dro-val-lg">0.000</span>
+                            </span>
                         </div>
                         <button class="dro-zero-btn" onclick="window.dro.setZero('A')"
                             aria-label="Zero A axis">Zero</button>
@@ -289,7 +316,7 @@
 
 
                     <!-- Footer Actions -->
-                    <div class="grid grid-cols-3 gap-2 mt-2 pt-0">
+                    <div class="grid grid-cols-4 gap-2 mt-2 pt-0">
                         <div class="col-span-1 flex flex-col gap-1 items-center justify-center">
                             <span id="machine-state" class="machine-status-pill w-full text-center">Unknown</span>
                             <!-- Icons Moved Here -->
@@ -302,18 +329,22 @@
                                     title="Mist Coolant"></i>
                             </div>
                         </div>
-                        <div class="col-span-2 flex gap-1">
+                        <div class="col-span-3 flex gap-1">
                             <button class="dro-sub-btn !bg-primary !text-black !border-primary hover:!bg-primary-dark"
                                 onclick="window.dro.home()">
                                 <i class="bi bi-house-door-fill"></i> <span class="hidden md:inline">HOME</span>
                             </button>
                             <button class="dro-sub-btn px-1" onclick="window.dro.setZero('XYZ')">
-                                <span class="md:hidden">ZERO ALL</span>
+                                <span class="md:hidden">ALL 0</span>
                                 <span class="hidden md:inline">SET ZERO ALL</span>
                             </button>
                             <button class="dro-sub-btn px-1" onclick="window.dro.goXY0()">
-                                <span class="md:hidden">GO 0</span>
-                                <span class="hidden md:inline">GO XY 0</span>
+                                <span class="md:hidden">XY<br>ZERO</span>
+                                <span class="hidden md:inline">GO TO XY<br>ZERO</span>
+                            </button>
+                            <button class="dro-sub-btn px-1" onclick="window.dro.goZ0()">
+                                <span class="md:hidden">Z<br>ZERO</span>
+                                <span class="hidden md:inline">GO TO Z<br>ZERO</span>
                             </button>
                         </div>
                     </div>
@@ -327,12 +358,12 @@
                             </div>
                             <div class="flex gap-1 items-center">
                                 <button onclick="sendRealtime('\x9B')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold">-</button>
-                                <span id="spindle-ovr" class="min-w-[32px] text-center font-bold text-white">100%</span>
+                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold">-</button>
+                                <span id="spindle-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
                                 <button onclick="sendRealtime('\x9A')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold">+</button>
+                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold">+</button>
                                 <button onclick="sendRealtime('\x99')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Reset to 100%">RST</button>
                             </div>
                         </div>
@@ -343,12 +374,12 @@
                             </div>
                             <div class="flex gap-1 items-center">
                                 <button onclick="sendRealtime('\x92')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold">-</button>
-                                <span id="feed-ovr" class="min-w-[32px] text-center font-bold text-white">100%</span>
+                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold">-</button>
+                                <span id="feed-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
                                 <button onclick="sendRealtime('\x91')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold">+</button>
+                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold">+</button>
                                 <button onclick="sendRealtime('\x90')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Reset to 100%">RST</button>
                             </div>
                         </div>
@@ -358,15 +389,15 @@
                                 <span>Rapids</span>
                             </div>
                             <div class="flex gap-1 items-center">
-                                <span id="rapid-ovr" class="min-w-[32px] text-center font-bold text-white">100%</span>
+                                <span id="rapid-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
                                 <button onclick="sendRealtime('\x97')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Set to 25%">25</button>
                                 <button onclick="sendRealtime('\x96')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Set to 50%">50</button>
                                 <button onclick="sendRealtime('\x95')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Set to 100%">100</button>
                             </div>
                         </div>

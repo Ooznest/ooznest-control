@@ -48,6 +48,10 @@ export class DROHandler {
         this.ws.sendCommand('G0 X0 Y0');
     }
 
+    goZ0() {
+        this.ws.sendCommand('G0 Z0');
+    }
+
     setWCS(wcs) {
         this.ws.sendCommand(wcs);
         this.term.writeln(`\x1b[34m> Switched to ${wcs}\x1b[0m`);
