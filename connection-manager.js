@@ -652,7 +652,8 @@ export class ConnectionManager {
 
             socket.onError = (err) => {
                 const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
-                console.error("Cordova Telnet Error:", msg);
+                console.error("Cordova Telnet Error payload:", JSON.stringify(err));
+                console.error("Cordova Telnet Error msg:", msg);
                 if (!this.isConnected) {
                     reject(new Error(msg));
                 } else {
@@ -668,10 +669,13 @@ export class ConnectionManager {
 
             socket.open(host, port, () => {
                 this._cordovaTelnetSocket = socket;
-                console.log("Cordova Telnet Connected");
+                console.log("Cordova Telnet Connected, waiting 2s for board to stabilize...");
                 this.flowControl.reset();
-                this.handleConnect();
-                resolve();
+                setTimeout(() => {
+                    console.log("Cordova Telnet delay complete, activating connection");
+                    this.handleConnect();
+                    resolve();
+                }, 2000);
             }, (err) => {
                 const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
                 console.error("Cordova Telnet Open failed:", msg);
@@ -711,14 +715,13 @@ export class ConnectionManager {
     async sendCommand(line) {
         if (this.type === 'webserial') {
             await this.webSerial.sendCommand(line);
-        } else if (this.isCordova && window.serial) {
-            await this.flowControl.sendCommand(line);
-            this.emit('sent', line);
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
-            // flowControl.sendCommand already calls writeRaw which writes to the socket
+            await this.flowControl.sendCommand(line);
+            this.emit('sent', line);
+        } else if (this.isCordova && window.serial) {
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
         } else if (this.backendWs) {
@@ -730,8 +733,18 @@ export class ConnectionManager {
     async sendRealtime(char) {
         if (this.type === 'webserial') {
             await this.webSerial.sendRealtime(char);
+        } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
+            this.directWs.send(char);
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
+            const bytes = new TextEncoder().encode(char);
+            console.log("Telnet TX realtime:", JSON.stringify(char));
+            this._cordovaTelnetSocket.write(bytes, () => {
+                console.log("Telnet TX realtime success");
+            }, (err) => {
+                const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
+                console.error("Telnet Realtime TX Error:", msg);
+            });
         } else if (this.isCordova && window.serial) {
-            // Drop realtime char if port is actively writing to prevent queue flooding
             if (this._cordovaWriting) return;
             this._cordovaWriting = true;
 
@@ -743,16 +756,6 @@ export class ConnectionManager {
                 });
             });
             this._cordovaWriting = false;
-        } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
-            this.directWs.send(char);
-        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
-            const bytes = new TextEncoder().encode(char);
-            this._cordovaTelnetSocket.write(bytes, () => {}, (err) => {
-                if (err) {
-                    const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
-                    console.error("Telnet Realtime TX Error:", msg);
-                }
-            });
         } else if (this.backendWs) {
             this.backendWs.send(JSON.stringify({ type: 'write', data: char }));
         }
@@ -761,8 +764,22 @@ export class ConnectionManager {
     async writeRaw(data) {
         if (this.type === 'webserial') {
             await this.webSerial.writeRaw(data);
+        } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
+            this.directWs.send(new Uint8Array(data));
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
+            const bytes = new Uint8Array(data);
+            console.log("Telnet TX writeRaw:", bytes.length, "bytes");
+            await new Promise((resolve) => {
+                this._cordovaTelnetSocket.write(bytes, () => {
+                    console.log("Telnet TX writeRaw success");
+                    resolve();
+                }, (err) => {
+                    const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
+                    console.error("Telnet Raw TX Error:", msg);
+                    resolve();
+                });
+            });
         } else if (this.isCordova && window.serial) {
-            // Lock to prevent concurrent ThreadPool exhaustion
             while (this._cordovaWriting) {
                 await new Promise(r => setTimeout(r, 2));
             }
@@ -780,19 +797,6 @@ export class ConnectionManager {
                 });
             });
             this._cordovaWriting = false;
-        } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
-            this.directWs.send(new Uint8Array(data));
-        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
-            const bytes = new Uint8Array(data);
-            await new Promise((resolve) => {
-                this._cordovaTelnetSocket.write(bytes, resolve, (err) => {
-                    if (err) {
-                        const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
-                        console.error("Telnet Raw TX Error:", msg);
-                    }
-                    resolve();
-                });
-            });
         } else if (this.backendWs) {
             // Efficiently convert Uint8Array to Base64
             const bytes = new Uint8Array(data);
