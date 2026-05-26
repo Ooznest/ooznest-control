@@ -426,7 +426,9 @@ export class ConnectionManager {
 
     async refreshNodePorts() {
         if (!this.backendWs) await this.connectToBackend();
-        this.backendWs.send(JSON.stringify({ type: 'listPorts' }));
+        if (this.backendWs && this.backendWs.readyState === WebSocket.OPEN) {
+            this.backendWs.send(JSON.stringify({ type: 'listPorts' }));
+        }
     }
 
     _showConnectingStatus(msg) {

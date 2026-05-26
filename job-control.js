@@ -63,8 +63,8 @@ class JobController {
             this.gcodeStreamer.paused = false;
 
             document.getElementById('run-job-btn').classList.add('hidden');
-            document.getElementById('job-active-controls').classList.remove('hidden');
-            document.getElementById('job-active-controls').classList.add('flex');
+            const jac = document.getElementById('job-active-controls');
+            if (jac) { jac.classList.remove('hidden'); jac.classList.add('flex'); }
 
             // Show job progress overlay
             document.getElementById('job-progress-overlay').classList.remove('hidden');
@@ -193,8 +193,8 @@ class JobController {
 
         // Reset buttons
         document.getElementById('run-job-btn').classList.remove('hidden');
-        document.getElementById('job-active-controls').classList.add('hidden');
-        document.getElementById('job-active-controls').classList.remove('flex');
+        const jac2 = document.getElementById('job-active-controls');
+        if (jac2) { jac2.classList.add('hidden'); jac2.classList.remove('flex'); }
         const btn = document.getElementById('pause-job-btn');
         btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
         btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
@@ -207,8 +207,8 @@ class JobController {
      */
     startJobUI() {
         document.getElementById('run-job-btn').classList.add('hidden');
-        document.getElementById('job-active-controls').classList.remove('hidden');
-        document.getElementById('job-active-controls').classList.add('flex');
+        const jac3 = document.getElementById('job-active-controls');
+        if (jac3) { jac3.classList.remove('hidden'); jac3.classList.add('flex'); }
         document.getElementById('job-progress-overlay').classList.remove('hidden');
         this.jobStartTime = Date.now();
     }

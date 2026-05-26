@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ooznest | Machine Control</title>
+    <title>Ooznest Control</title>
     <meta name="description" content="Ooznest Machine Control Web UI for grblHAL CNC controllers. Control, monitor, and manage your CNC machine wirelessly.">
     <link rel="icon" href="./favicon.ico" sizes="32x32">
     <link rel="icon" href="./favicon-32x32.png" sizes="32x32">
@@ -143,7 +143,7 @@
     <div id="electron-title-bar"
         class="hidden h-10 bg-[#1e293b] text-white flex items-center justify-between px-4 border-b border-white/5 window-drag-region shrink-0">
         <div class="flex items-center">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-[#529A9F]">Ooznest WorkBee Control</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-[#529A9F]">Ooznest Control <span id="electron-title-version"></span></span>
         </div>
         <div class="flex items-center window-no-drag">
             <button class="w-11 h-10 flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -521,6 +521,7 @@
                     </div>
                 </div>
             </div>
+
         </aside>
 
         <!-- Sidebar Overlay (Unified) -->
@@ -2684,6 +2685,15 @@
         const store = new AppStore();
         window.ws = ws;
         window.store = store;
+
+        // Fetch version from package.json (available on Hosted/Electron, silently skipped on Cordova)
+        fetch('./package.json').then(r => r.ok ? r.json() : null).then(data => {
+            const v = data?.version;
+            if (!v) return;
+            document.title = `Ooznest Control v${v}`;
+            const el = document.getElementById('electron-title-version');
+            if (el) el.textContent = `v${v}`;
+        }).catch(() => {});
 
         window.addEventListener('beforeunload', (e) => {
             if (ws && ws.isConnected) {
