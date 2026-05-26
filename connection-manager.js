@@ -305,7 +305,7 @@ export class ConnectionManager {
             },
             (err) => {
                 console.error("Cordova Serial Read Error:", err);
-                const errMsg = (err && err.message) ? err.message : String(err);
+                const errMsg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
                 this.emit('error', new Error("Serial Read Error: " + errMsg));
             }
         );
@@ -477,7 +477,7 @@ export class ConnectionManager {
                                     if (err.toString().toLowerCase().includes("no device") || err.toString().toLowerCase().includes("not found")) {
                                         tryConnect(index + 1);
                                     } else {
-                                        const errMsg = (err && err.message) ? err.message : String(err);
+                                        const errMsg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
                                         this.emit('error', new Error("Can't open port: " + errMsg));
                                     }
                                 }
@@ -549,7 +549,8 @@ export class ConnectionManager {
                 if (isHttps && url.startsWith('ws://')) {
                     this.emit('error', new Error(`Cannot use ws:// from HTTPS page. Try Telnet instead: connect to the same IP on port 23.`));
                 } else {
-                    this.emit('error', new Error(`Invalid WebSocket URL: ${e.message}`));
+                    const wsErr = (typeof e === 'string') ? e : (e && e.message) ? e.message : JSON.stringify(e);
+                    this.emit('error', new Error(`Invalid WebSocket URL: ${wsErr}`));
                 }
                 this.modal.classList.add('hidden');
                 return;
@@ -650,7 +651,7 @@ export class ConnectionManager {
             };
 
             socket.onError = (err) => {
-                const msg = (err && err.message) ? err.message : String(err);
+                const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
                 console.error("Cordova Telnet Error:", msg);
                 if (!this.isConnected) {
                     reject(new Error(msg));
@@ -672,7 +673,7 @@ export class ConnectionManager {
                 this.handleConnect();
                 resolve();
             }, (err) => {
-                const msg = (err && err.message) ? err.message : String(err);
+                const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
                 console.error("Cordova Telnet Open failed:", msg);
                 this.emit('error', new Error("Telnet connection failed: " + msg));
                 reject(new Error(msg));
@@ -747,7 +748,7 @@ export class ConnectionManager {
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
             const bytes = new TextEncoder().encode(char);
             this._cordovaTelnetSocket.write(bytes, null, (err) => {
-                const msg = (err && err.message) ? err.message : String(err);
+                const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
                 console.error("Telnet Realtime TX Error:", msg);
             });
         } else if (this.backendWs) {
@@ -782,7 +783,7 @@ export class ConnectionManager {
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
             const bytes = new Uint8Array(data);
             this._cordovaTelnetSocket.write(bytes, null, (err) => {
-                const msg = (err && err.message) ? err.message : String(err);
+                const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
                 console.error("Telnet Raw TX Error:", msg);
             });
         } else if (this.backendWs) {
