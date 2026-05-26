@@ -636,8 +636,8 @@ export class ConnectionManager {
             const socket = new this.CordovaSocket();
 
             socket.onData = (data) => {
-                // data is Uint8Array
                 const decoded = new TextDecoder().decode(data);
+                console.log("Telnet RX:", JSON.stringify(decoded));
                 this._backendBuffer = (this._backendBuffer || '') + decoded;
                 const lines = this._backendBuffer.split('\n');
                 this._backendBuffer = lines.pop();
@@ -747,9 +747,11 @@ export class ConnectionManager {
             this.directWs.send(char);
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
             const bytes = new TextEncoder().encode(char);
-            this._cordovaTelnetSocket.write(bytes, null, (err) => {
-                const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
-                console.error("Telnet Realtime TX Error:", msg);
+            this._cordovaTelnetSocket.write(bytes, () => {}, (err) => {
+                if (err) {
+                    const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
+                    console.error("Telnet Realtime TX Error:", msg);
+                }
             });
         } else if (this.backendWs) {
             this.backendWs.send(JSON.stringify({ type: 'write', data: char }));
@@ -782,9 +784,14 @@ export class ConnectionManager {
             this.directWs.send(new Uint8Array(data));
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
             const bytes = new Uint8Array(data);
-            this._cordovaTelnetSocket.write(bytes, null, (err) => {
-                const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
-                console.error("Telnet Raw TX Error:", msg);
+            await new Promise((resolve) => {
+                this._cordovaTelnetSocket.write(bytes, resolve, (err) => {
+                    if (err) {
+                        const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
+                        console.error("Telnet Raw TX Error:", msg);
+                    }
+                    resolve();
+                });
             });
         } else if (this.backendWs) {
             // Efficiently convert Uint8Array to Base64
