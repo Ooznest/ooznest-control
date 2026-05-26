@@ -714,10 +714,20 @@ export class ConnectionManager {
         }
     }
 
+    _keepAwake(enable) {
+        try {
+            if (enable && window.plugins && window.plugins.insomnia) {
+                window.plugins.insomnia.keepAwake();
+            } else if (window.plugins && window.plugins.insomnia) {
+                window.plugins.insomnia.allowSleepAgain();
+            }
+        } catch (e) {}
+    }
+
     handleConnect() {
         this.isConnected = true;
         this.emit('connect');
-        // Auto-open sidebar on mobile to show console/log
+        this._keepAwake(true);
         const sidebar = document.getElementById('machine-sidebar');
         if (sidebar && !sidebar.classList.contains('open')) {
             sidebar.classList.add('open');
@@ -729,6 +739,7 @@ export class ConnectionManager {
     handleDisconnect() {
         this.isConnected = false;
         this.emit('disconnect');
+        this._keepAwake(false);
     }
 
     // --- Data Transmission ---
