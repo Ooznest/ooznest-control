@@ -647,12 +647,13 @@ export class ConnectionManager {
                 });
             };
 
-            socket.onError = (errorMessage) => {
-                console.error("Cordova Telnet Error:", errorMessage);
+            socket.onError = (err) => {
+                const msg = (err && err.message) ? err.message : String(err);
+                console.error("Cordova Telnet Error:", msg);
                 if (!this.isConnected) {
-                    reject(new Error(errorMessage));
+                    reject(new Error(msg));
                 } else {
-                    this.emit('error', new Error("Telnet error: " + errorMessage));
+                    this.emit('error', new Error("Telnet error: " + msg));
                 }
             };
 
@@ -668,10 +669,11 @@ export class ConnectionManager {
                 this.flowControl.reset();
                 this.handleConnect();
                 resolve();
-            }, (errorMessage) => {
-                console.error("Cordova Telnet Open failed:", errorMessage);
-                this.emit('error', new Error("Telnet connection failed: " + errorMessage));
-                reject(new Error(errorMessage));
+            }, (err) => {
+                const msg = (err && err.message) ? err.message : String(err);
+                console.error("Cordova Telnet Open failed:", msg);
+                this.emit('error', new Error("Telnet connection failed: " + msg));
+                reject(new Error(msg));
             });
         });
     }
@@ -717,7 +719,8 @@ export class ConnectionManager {
             const cmd = line + '\n';
             const bytes = new TextEncoder().encode(cmd);
             this._cordovaTelnetSocket.write(bytes, null, (err) => {
-                console.error("Telnet TX Error:", err);
+                const msg = (err && err.message) ? err.message : String(err);
+                console.error("Telnet TX Error:", msg);
             });
             this.emit('sent', line);
         } else if (this.backendWs) {
@@ -747,7 +750,8 @@ export class ConnectionManager {
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
             const bytes = new TextEncoder().encode(char);
             this._cordovaTelnetSocket.write(bytes, null, (err) => {
-                console.error("Telnet Realtime TX Error:", err);
+                const msg = (err && err.message) ? err.message : String(err);
+                console.error("Telnet Realtime TX Error:", msg);
             });
         } else if (this.backendWs) {
             this.backendWs.send(JSON.stringify({ type: 'write', data: char }));
@@ -781,7 +785,8 @@ export class ConnectionManager {
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
             const bytes = new Uint8Array(data);
             this._cordovaTelnetSocket.write(bytes, null, (err) => {
-                console.error("Telnet Raw TX Error:", err);
+                const msg = (err && err.message) ? err.message : String(err);
+                console.error("Telnet Raw TX Error:", msg);
             });
         } else if (this.backendWs) {
             // Efficiently convert Uint8Array to Base64
