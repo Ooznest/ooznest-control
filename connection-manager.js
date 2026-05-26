@@ -262,10 +262,18 @@ export class ConnectionManager {
     }
 
     initCordova() {
-        if (window.TCPConnect) {
+        // Check for TCP Socket plugin (cordova-plugin-socket-tcp)
+        try {
+            var SocketMod = cordova.require('cordova-plugin-socket-tcp.Socket');
+            this.CordovaSocket = SocketMod;
             console.log("Cordova TCP Socket Plugin Ready");
-        } else {
-            console.log("Cordova TCP Socket plugin not available — Telnet will be disabled");
+        } catch (e) {
+            if (window.Socket) {
+                this.CordovaSocket = window.Socket;
+                console.log("Cordova TCP Socket Plugin Ready (global)");
+            } else {
+                console.log("Cordova TCP Socket plugin not available — Telnet will be disabled");
+            }
         }
 
         if (!window.serial) {
@@ -614,7 +622,7 @@ export class ConnectionManager {
     }
 
     async _connectCordovaTelnet(host, port) {
-        if (!window.TCPConnect) {
+        if (!this.CordovaSocket) {
             this.emit('error', new Error("TCP Socket plugin not available. Cannot connect via Telnet."));
             return;
         }
@@ -622,44 +630,48 @@ export class ConnectionManager {
         this._showConnectingStatus(`Connecting to ${host}:${port} (Telnet)...`);
 
         return new Promise((resolve, reject) => {
-            window.TCPConnect.open(
-                host,
-                port,
-                {},
-                (data) => {
-                    const decoded = typeof data === 'string' ? data : new TextDecoder().decode(new Uint8Array(data));
-                    this._backendBuffer = (this._backendBuffer || '') + decoded;
-                    const lines = this._backendBuffer.split('\n');
-                    this._backendBuffer = lines.pop();
-                    lines.forEach(line => {
-                        const trimmed = line.trim();
-                        if (trimmed) {
-                            this.flowControl.processLine(trimmed);
-                            this.emit('line', trimmed);
-                        }
-                    });
-                },
-                (error) => {
-                    console.error("Cordova Telnet Error:", error);
-                    this.emit('error', new Error("Telnet connection failed: " + (error.message || error)));
-                    reject(error);
-                },
-                () => {
-                    console.log("Cordova Telnet Closed");
-                    if (this.isConnected) this.handleDisconnect();
+            const socket = new this.CordovaSocket();
+
+            socket.onData = (data) => {
+                // data is Uint8Array
+                const decoded = new TextDecoder().decode(data);
+                this._backendBuffer = (this._backendBuffer || '') + decoded;
+                const lines = this._backendBuffer.split('\n');
+                this._backendBuffer = lines.pop();
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (trimmed) {
+                        this.flowControl.processLine(trimmed);
+                        this.emit('line', trimmed);
+                    }
+                });
+            };
+
+            socket.onError = (errorMessage) => {
+                console.error("Cordova Telnet Error:", errorMessage);
+                if (!this.isConnected) {
+                    reject(new Error(errorMessage));
+                } else {
+                    this.emit('error', new Error("Telnet error: " + errorMessage));
                 }
-            )
-            .then((socketId) => {
-                this._cordovaTelnetSocketId = socketId;
-                console.log("Cordova Telnet Connected (socket:", socketId, ")");
+            };
+
+            socket.onClose = (hasError) => {
+                console.log("Cordova Telnet Closed (hasError:", hasError, ")");
+                this._cordovaTelnetSocket = null;
+                if (this.isConnected) this.handleDisconnect();
+            };
+
+            socket.open(host, port, () => {
+                this._cordovaTelnetSocket = socket;
+                console.log("Cordova Telnet Connected");
                 this.flowControl.reset();
                 this.handleConnect();
                 resolve();
-            })
-            .catch((err) => {
-                console.error("Cordova Telnet Open failed:", err);
-                this.emit('error', new Error("Telnet connection failed: " + (err.message || err)));
-                reject(err);
+            }, (errorMessage) => {
+                console.error("Cordova Telnet Open failed:", errorMessage);
+                this.emit('error', new Error("Telnet connection failed: " + errorMessage));
+                reject(new Error(errorMessage));
             });
         });
     }
@@ -670,9 +682,9 @@ export class ConnectionManager {
         } else if (this.type === 'websocket' && this.directWs) {
             this.directWs.close();
             this.directWs = null;
-        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocketId != null) {
-            window.TCPConnect.close(this._cordovaTelnetSocketId, () => {}, () => {});
-            this._cordovaTelnetSocketId = null;
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
+            this._cordovaTelnetSocket.close();
+            this._cordovaTelnetSocket = null;
             this.handleDisconnect();
         } else if (this.backendWs) {
             this.backendWs.send(JSON.stringify({ type: 'disconnect' }));
@@ -700,10 +712,11 @@ export class ConnectionManager {
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
-        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocketId != null) {
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
             await this.flowControl.sendCommand(line);
             const cmd = line + '\n';
-            window.TCPConnect.send(this._cordovaTelnetSocketId, cmd, () => {}, (err) => {
+            const bytes = new TextEncoder().encode(cmd);
+            this._cordovaTelnetSocket.write(bytes, null, (err) => {
                 console.error("Telnet TX Error:", err);
             });
             this.emit('sent', line);
@@ -731,8 +744,9 @@ export class ConnectionManager {
             this._cordovaWriting = false;
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
             this.directWs.send(char);
-        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocketId != null) {
-            window.TCPConnect.send(this._cordovaTelnetSocketId, char, () => {}, (err) => {
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
+            const bytes = new TextEncoder().encode(char);
+            this._cordovaTelnetSocket.write(bytes, null, (err) => {
                 console.error("Telnet Realtime TX Error:", err);
             });
         } else if (this.backendWs) {
@@ -764,13 +778,9 @@ export class ConnectionManager {
             this._cordovaWriting = false;
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
             this.directWs.send(new Uint8Array(data));
-        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocketId != null) {
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
             const bytes = new Uint8Array(data);
-            let str = "";
-            for (let i = 0; i < bytes.length; i++) {
-                str += String.fromCharCode(bytes[i]);
-            }
-            window.TCPConnect.send(this._cordovaTelnetSocketId, str, () => {}, (err) => {
+            this._cordovaTelnetSocket.write(bytes, null, (err) => {
                 console.error("Telnet Raw TX Error:", err);
             });
         } else if (this.backendWs) {
