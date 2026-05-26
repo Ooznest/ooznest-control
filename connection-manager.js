@@ -12,6 +12,7 @@ export class ConnectionManager {
         this.hasBackend = this.isElectron || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '8081');
         this.httpBaseUrl = null;
         this._scanning = false;
+        this._cordovaTelnetSocketId = null;
 
         this.listeners = {
             connect: [],
@@ -87,12 +88,21 @@ export class ConnectionManager {
             this.hasBackend = true; // Cordova counts as a backend
             this.initCordova();
             // Re-run UI setup now that we know we're in Cordova
-            // Show the native USB tab
+            // Show native USB and Telnet tabs
             const usbTab = document.getElementById('tab-usb');
             const telnetTab = document.getElementById('tab-telnet');
             if (usbTab) usbTab.classList.remove('hidden');
-            if (telnetTab) telnetTab.classList.add('hidden'); // telnet still hidden on mobile
-            this.setConnectionType('websocket');
+            if (telnetTab) telnetTab.classList.remove('hidden');
+            // Pre-fill telnet IP from the WebSocket URL if available
+            const wsInput = document.getElementById('url-websocket');
+            const telnetIpInput = document.getElementById('ip-telnet');
+            if (wsInput && wsInput.value && telnetIpInput && !telnetIpInput.value) {
+                try {
+                    const parsed = new URL(wsInput.value);
+                    telnetIpInput.value = parsed.hostname;
+                } catch (e) {}
+            }
+            this.setConnectionType('telnet');
         }, false);
 
         // UI initialization based on hosting environment
@@ -252,12 +262,17 @@ export class ConnectionManager {
     }
 
     initCordova() {
+        if (window.TCPConnect) {
+            console.log("Cordova TCP Socket Plugin Ready");
+        } else {
+            console.log("Cordova TCP Socket plugin not available — Telnet will be disabled");
+        }
+
         if (!window.serial) {
-            console.error("Cordova Serial plugin not available");
+            console.warn("Cordova Serial plugin not available — USB disabled");
             return;
         }
 
-        // Auto-refresh ports or just show UI
         console.log("Cordova Serial Plugin Ready");
 
         // Cordova Serial registration
@@ -475,15 +490,19 @@ export class ConnectionManager {
                 }));
             }
         } else if (this.type === 'telnet') {
-            if (!this.backendWs) await this.connectToBackend();
             const ip = document.getElementById('ip-telnet').value;
-            const port = parseInt(document.getElementById('port-telnet').value);
-            this.backendWs.send(JSON.stringify({
-                type: 'connect',
-                connectionType: 'telnet',
-                ip: ip,
-                port: port
-            }));
+            const port = parseInt(document.getElementById('port-telnet').value) || 23;
+            if (this.isCordova) {
+                await this._connectCordovaTelnet(ip, port);
+            } else {
+                if (!this.backendWs) await this.connectToBackend();
+                this.backendWs.send(JSON.stringify({
+                    type: 'connect',
+                    connectionType: 'telnet',
+                    ip: ip,
+                    port: port
+                }));
+            }
         } else if (this.type === 'websocket') {
             const url = document.getElementById('url-websocket').value || `ws://${window.location.hostname}:81/ws`;
             this._showConnectingStatus(`Connecting to ${url}...`);
@@ -515,8 +534,13 @@ export class ConnectionManager {
                     dot.classList.remove('bg-yellow-400');
                     dot.classList.add('bg-red-500');
                 }
-                if (text) text.textContent = 'Invalid URL';
-                this.emit('error', new Error(`Invalid WebSocket URL: ${e.message}`));
+                if (text) text.textContent = 'Connection Error';
+                const isHttps = window.location.protocol === 'https:' || window.location.protocol === 'file:';
+                if (isHttps && url.startsWith('ws://')) {
+                    this.emit('error', new Error(`Cannot use ws:// from HTTPS page. Try Telnet instead: connect to the same IP on port 23.`));
+                } else {
+                    this.emit('error', new Error(`Invalid WebSocket URL: ${e.message}`));
+                }
                 this.modal.classList.add('hidden');
                 return;
             }
@@ -589,12 +613,67 @@ export class ConnectionManager {
         });
     }
 
+    async _connectCordovaTelnet(host, port) {
+        if (!window.TCPConnect) {
+            this.emit('error', new Error("TCP Socket plugin not available. Cannot connect via Telnet."));
+            return;
+        }
+
+        this._showConnectingStatus(`Connecting to ${host}:${port} (Telnet)...`);
+
+        return new Promise((resolve, reject) => {
+            window.TCPConnect.open(
+                host,
+                port,
+                {},
+                (data) => {
+                    const decoded = typeof data === 'string' ? data : new TextDecoder().decode(new Uint8Array(data));
+                    this._backendBuffer = (this._backendBuffer || '') + decoded;
+                    const lines = this._backendBuffer.split('\n');
+                    this._backendBuffer = lines.pop();
+                    lines.forEach(line => {
+                        const trimmed = line.trim();
+                        if (trimmed) {
+                            this.flowControl.processLine(trimmed);
+                            this.emit('line', trimmed);
+                        }
+                    });
+                },
+                (error) => {
+                    console.error("Cordova Telnet Error:", error);
+                    this.emit('error', new Error("Telnet connection failed: " + (error.message || error)));
+                    reject(error);
+                },
+                () => {
+                    console.log("Cordova Telnet Closed");
+                    if (this.isConnected) this.handleDisconnect();
+                }
+            )
+            .then((socketId) => {
+                this._cordovaTelnetSocketId = socketId;
+                console.log("Cordova Telnet Connected (socket:", socketId, ")");
+                this.flowControl.reset();
+                this.handleConnect();
+                resolve();
+            })
+            .catch((err) => {
+                console.error("Cordova Telnet Open failed:", err);
+                this.emit('error', new Error("Telnet connection failed: " + (err.message || err)));
+                reject(err);
+            });
+        });
+    }
+
     disconnect() {
         if (this.type === 'webserial') {
             this.webSerial.disconnect();
         } else if (this.type === 'websocket' && this.directWs) {
             this.directWs.close();
             this.directWs = null;
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocketId != null) {
+            window.TCPConnect.close(this._cordovaTelnetSocketId, () => {}, () => {});
+            this._cordovaTelnetSocketId = null;
+            this.handleDisconnect();
         } else if (this.backendWs) {
             this.backendWs.send(JSON.stringify({ type: 'disconnect' }));
         }
@@ -621,6 +700,13 @@ export class ConnectionManager {
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocketId != null) {
+            await this.flowControl.sendCommand(line);
+            const cmd = line + '\n';
+            window.TCPConnect.send(this._cordovaTelnetSocketId, cmd, () => {}, (err) => {
+                console.error("Telnet TX Error:", err);
+            });
+            this.emit('sent', line);
         } else if (this.backendWs) {
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
@@ -645,6 +731,10 @@ export class ConnectionManager {
             this._cordovaWriting = false;
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
             this.directWs.send(char);
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocketId != null) {
+            window.TCPConnect.send(this._cordovaTelnetSocketId, char, () => {}, (err) => {
+                console.error("Telnet Realtime TX Error:", err);
+            });
         } else if (this.backendWs) {
             this.backendWs.send(JSON.stringify({ type: 'write', data: char }));
         }
@@ -674,6 +764,15 @@ export class ConnectionManager {
             this._cordovaWriting = false;
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
             this.directWs.send(new Uint8Array(data));
+        } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocketId != null) {
+            const bytes = new Uint8Array(data);
+            let str = "";
+            for (let i = 0; i < bytes.length; i++) {
+                str += String.fromCharCode(bytes[i]);
+            }
+            window.TCPConnect.send(this._cordovaTelnetSocketId, str, () => {}, (err) => {
+                console.error("Telnet Raw TX Error:", err);
+            });
         } else if (this.backendWs) {
             // Efficiently convert Uint8Array to Base64
             const bytes = new Uint8Array(data);
@@ -814,6 +913,10 @@ export class ConnectionManager {
             const urlInput = document.getElementById('url-websocket');
             if (urlInput) {
                 urlInput.value = `ws://${res.ip}:81/ws`;
+            }
+            const telnetIpInput = document.getElementById('ip-telnet');
+            if (telnetIpInput) {
+                telnetIpInput.value = res.ip;
             }
             // Auto-hide results
             resultsDiv.classList.add('hidden');

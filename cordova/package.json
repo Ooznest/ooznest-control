@@ -17,6 +17,7 @@
     "cordova-ios": "^8.0.0",
     "cordova-plugin-webserver": "^1.0.4",
     "cordova-plugin-whitelist": "^1.3.5",
+    "cordova-plugin-tcp-connection": "^1.0.0",
     "cordovarduino": "^0.0.10"
   },
   "cordova": {
@@ -26,6 +27,7 @@
     ],
     "plugins": {
       "cordova-plugin-whitelist": {},
+      "cordova-plugin-tcp-connection": {},
       "cordovarduino": {}
     }
   }
