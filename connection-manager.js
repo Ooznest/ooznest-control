@@ -305,7 +305,8 @@ export class ConnectionManager {
             },
             (err) => {
                 console.error("Cordova Serial Read Error:", err);
-                this.emit('error', new Error("Serial Read Error: " + err));
+                const errMsg = (err && err.message) ? err.message : String(err);
+                this.emit('error', new Error("Serial Read Error: " + errMsg));
             }
         );
     }
@@ -476,7 +477,8 @@ export class ConnectionManager {
                                     if (err.toString().toLowerCase().includes("no device") || err.toString().toLowerCase().includes("not found")) {
                                         tryConnect(index + 1);
                                     } else {
-                                        this.emit('error', new Error("Can't open port: " + err));
+                                        const errMsg = (err && err.message) ? err.message : String(err);
+                                        this.emit('error', new Error("Can't open port: " + errMsg));
                                     }
                                 }
                             );
@@ -715,13 +717,8 @@ export class ConnectionManager {
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
+            // flowControl.sendCommand already calls writeRaw which writes to the socket
             await this.flowControl.sendCommand(line);
-            const cmd = line + '\n';
-            const bytes = new TextEncoder().encode(cmd);
-            this._cordovaTelnetSocket.write(bytes, null, (err) => {
-                const msg = (err && err.message) ? err.message : String(err);
-                console.error("Telnet TX Error:", msg);
-            });
             this.emit('sent', line);
         } else if (this.backendWs) {
             await this.flowControl.sendCommand(line);
