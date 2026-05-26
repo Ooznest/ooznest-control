@@ -31,6 +31,7 @@ export class ConnectionManager {
         window.setConnectionType = (type) => this.setConnectionType(type);
         window.handleConnectClick = () => this.connect();
         window.refreshNodePorts = () => this.refreshNodePorts();
+        window.scanTelnetNetwork = () => this.scanTelnetNetwork();
 
         // If we have a backend, initiate sync connection immediately
         if (this.hasBackend) {
@@ -85,24 +86,32 @@ export class ConnectionManager {
         document.addEventListener("deviceready", () => {
             console.log("Cordova deviceready fired!");
             this.isCordova = true;
-            this.hasBackend = true; // Cordova counts as a backend
+            this.hasBackend = true;
             this.initCordova();
-            // Re-run UI setup now that we know we're in Cordova
-            // Show native USB and Telnet tabs
+
             const usbTab = document.getElementById('tab-usb');
             const telnetTab = document.getElementById('tab-telnet');
+            const wsTab = document.getElementById('tab-websocket');
             if (usbTab) usbTab.classList.remove('hidden');
             if (telnetTab) telnetTab.classList.remove('hidden');
-            // Pre-fill telnet IP from the WebSocket URL if available
-            const wsInput = document.getElementById('url-websocket');
-            const telnetIpInput = document.getElementById('ip-telnet');
-            if (wsInput && wsInput.value && telnetIpInput && !telnetIpInput.value) {
-                try {
-                    const parsed = new URL(wsInput.value);
-                    telnetIpInput.value = parsed.hostname;
-                } catch (e) {}
-            }
+            if (wsTab) wsTab.classList.add('hidden');
+
             this.setConnectionType('telnet');
+
+            // Auto-discover grblHAL Telnet devices on local network
+            setTimeout(() => {
+                this._discoverTelnetDevices().then(devices => {
+                    if (devices.length === 1) {
+                        console.log("Auto-discovered 1 Telnet device:", devices[0]);
+                        this._autoConnectTelnet(devices[0]);
+                    } else if (devices.length > 1) {
+                        console.log("Auto-discovered multiple Telnet devices:", devices);
+                        this._showDiscoveredDevices(devices);
+                    } else {
+                        console.log("No Telnet devices discovered on network");
+                    }
+                });
+            }, 2000);
         }, false);
 
         // UI initialization based on hosting environment
@@ -514,6 +523,11 @@ export class ConnectionManager {
                 }));
             }
         } else if (this.type === 'websocket') {
+            if (this.isCordova) {
+                this.emit('error', new Error('WebSocket is not supported on Cordova (HTTPS restricts ws://). Please use Telnet instead.'));
+                this.modal.classList.add('hidden');
+                return;
+            }
             const url = document.getElementById('url-websocket').value || `ws://${window.location.hostname}:81/ws`;
             this._showConnectingStatus(`Connecting to ${url}...`);
 
@@ -703,6 +717,13 @@ export class ConnectionManager {
     handleConnect() {
         this.isConnected = true;
         this.emit('connect');
+        // Auto-open sidebar on mobile to show console/log
+        const sidebar = document.getElementById('machine-sidebar');
+        if (sidebar && !sidebar.classList.contains('open')) {
+            sidebar.classList.add('open');
+            const overlay = document.getElementById('machine-sidebar-overlay');
+            if (overlay) overlay.classList.remove('hidden');
+        }
     }
 
     handleDisconnect() {
@@ -946,5 +967,217 @@ export class ConnectionManager {
             resultsDiv.classList.add('hidden');
         };
         resultsDiv.appendChild(div);
+    }
+
+    // --- Cordova Telnet auto-discovery ---
+
+    async scanTelnetNetwork() {
+        if (!this.isCordova || !this.CordovaSocket) return;
+        const statusEl = document.getElementById('discover-status');
+        const list = document.getElementById('discovered-list');
+        const container = document.getElementById('discovered-devices');
+        const btn = document.getElementById('btn-scan-telnet');
+        const portInput = document.getElementById('port-telnet');
+        const port = parseInt(portInput?.value) || 23;
+        if (btn) btn.disabled = true;
+        if (statusEl) {
+            statusEl.classList.remove('hidden');
+            statusEl.textContent = `Starting scan on port ${port}...`;
+        }
+        if (container) container.classList.add('hidden');
+        if (list) list.innerHTML = '';
+
+        const devices = await this._discoverTelnetDevices(port);
+
+        if (statusEl) statusEl.classList.add('hidden');
+        if (btn) btn.disabled = false;
+
+        if (devices.length === 1) {
+            this._autoConnectTelnet(devices[0]);
+        } else if (devices.length > 1) {
+            this._showDiscoveredDevices(devices);
+        } else {
+            if (statusEl) {
+                statusEl.classList.remove('hidden', 'animate-pulse');
+                statusEl.textContent = `No grblHAL devices found on port ${port}`;
+                setTimeout(() => { statusEl.classList.add('hidden', 'animate-pulse'); }, 3000);
+            }
+        }
+    }
+
+    async _getLocalIP() {
+        return new Promise((resolve) => {
+            try {
+                const pc = new RTCPeerConnection({ iceServers: [] });
+                pc.createDataChannel('');
+                pc.createOffer().then(o => pc.setLocalDescription(o)).catch(() => {});
+                let resolved = false;
+                pc.onicecandidate = (ice) => {
+                    if (resolved) return;
+                    if (!ice || !ice.candidate || !ice.candidate.candidate) {
+                        if (!resolved) { pc.close(); resolve(null); resolved = true; }
+                        return;
+                    }
+                    const m = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(ice.candidate.candidate);
+                    if (m) {
+                        const ip = m[1];
+                        if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+                            resolved = true;
+                            pc.close();
+                            resolve(ip);
+                        }
+                    }
+                };
+                setTimeout(() => { if (!resolved) { pc.close(); resolve(null); resolved = true; } }, 2000);
+            } catch (e) {
+                resolve(null);
+            }
+        });
+    }
+
+    async _discoverTelnetDevices(port) {
+        if (!this.isCordova || !this.CordovaSocket) return [];
+
+        port = port || 23;
+        const statusEl = document.getElementById('discover-status');
+        if (statusEl) statusEl.classList.remove('hidden');
+
+        const devices = [];
+
+        // Step 1: Try saved IP first (fast path, with longer timeout)
+        const saved = this.loadSettings();
+        if (saved && saved.telnetIp) {
+            if (statusEl) statusEl.textContent = `Checking ${saved.telnetIp}...`;
+            const found = await this._checkTelnetPortSequential(saved.telnetIp, port, 2000);
+            if (found) {
+                devices.push(found);
+                if (statusEl) statusEl.classList.add('hidden');
+                return devices;
+            }
+        }
+
+        // Step 2: Detect local subnet via WebRTC
+        let localIP = null;
+        try {
+            localIP = await this._getLocalIP();
+        } catch (e) {}
+
+        const subnets = [];
+        if (localIP) {
+            const parts = localIP.split('.');
+            subnets.push(parts.slice(0, 3).join('.'));
+        } else {
+            subnets.push('192.168.0', '192.168.1', '192.168.4', '10.0.0');
+        }
+
+        // Step 3: Sequential TCP scan (plugin tracks by port, so only one connection at a time)
+        for (const subnet of subnets) {
+            if (devices.length > 0) break;
+            devices.push(...await this._tcpScanSubnetSequential(subnet, port, statusEl));
+        }
+
+        if (statusEl) statusEl.classList.add('hidden');
+        return devices;
+    }
+
+    async _tcpScanSubnetSequential(subnet, port, statusEl) {
+        if (!this.CordovaSocket) return [];
+        const ips = Array.from({ length: 254 }, (_, i) => `${subnet}.${i + 1}`);
+        for (let i = 0; i < ips.length; i++) {
+            if (statusEl) {
+                const pct = Math.round(((i + 1) / ips.length) * 100);
+                statusEl.textContent = `Scanning ${subnet}.x  ${pct}%  (port ${port})`;
+            }
+            const result = await this._checkTelnetPortSequential(ips[i], port, 300);
+            if (result) return [result];
+        }
+        return [];
+    }
+
+    async _checkTelnetPortSequential(ip, port, timeout) {
+        return new Promise((resolve) => {
+            let resolved = false;
+            let socket;
+            try {
+                socket = new this.CordovaSocket();
+            } catch (e) {
+                resolve(null);
+                return;
+            }
+
+            const timer = setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    try { socket.close(); } catch (e) {}
+                    resolve(null);
+                }
+            }, timeout);
+
+            socket.onData = (data) => {
+                if (!resolved) {
+                    const text = new TextDecoder().decode(data);
+                    if (text.includes('GrblHAL') || text.includes('grbl') || text.includes('Ooznest')) {
+                        clearTimeout(timer);
+                        resolved = true;
+                        try { socket.close(); } catch (e) {}
+                        resolve(ip);
+                    }
+                }
+            };
+
+            socket.onError = () => {
+                if (!resolved) { clearTimeout(timer); resolved = true; resolve(null); }
+            };
+
+            socket.onClose = () => {
+                if (!resolved) { clearTimeout(timer); resolved = true; resolve(null); }
+            };
+
+            socket.open(ip, port, () => {}, (err) => {
+                if (!resolved) { clearTimeout(timer); resolved = true; resolve(null); }
+            });
+        });
+    }
+
+    _autoConnectTelnet(ip) {
+        console.log("Auto-connecting Telnet to", ip);
+        const ipInput = document.getElementById('ip-telnet');
+        const portInput = document.getElementById('port-telnet');
+        if (ipInput) ipInput.value = ip;
+        if (portInput) portInput.value = '23';
+
+        this.type = 'telnet';
+        this.saveSettings();
+        this.modal.classList.add('hidden');
+        this._showConnectingStatus(`Auto-connecting to ${ip}:23 (Telnet)...`);
+        this._connectCordovaTelnet(ip, 23).catch(err => {
+            console.error("Telnet auto-connect failed:", err);
+        });
+    }
+
+    _showDiscoveredDevices(devices) {
+        const container = document.getElementById('discovered-devices');
+        const list = document.getElementById('discovered-list');
+        const statusEl = document.getElementById('discover-status');
+        if (!container || !list) return;
+
+        if (statusEl) statusEl.classList.add('hidden');
+        list.innerHTML = '';
+        container.classList.remove('hidden');
+
+        for (const ip of devices) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-1.5 hover:bg-white rounded cursor-pointer transition-colors border-b border-grey-light last:border-b-0 group';
+            div.innerHTML = `
+                <span class="text-xs font-bold text-secondary-dark">${ip}</span>
+                <i class="bi bi bi-chevron-right text-grey group-hover:text-primary transition-colors"></i>
+            `;
+            div.onclick = () => {
+                const ipInput = document.getElementById('ip-telnet');
+                if (ipInput) ipInput.value = ip;
+                container.classList.add('hidden');
+            };
+            list.appendChild(div);
+        }
     }
 }

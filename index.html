@@ -159,8 +159,8 @@
     <!-- Main App Container -->
     <div class="app-container flex-1">
 
-        <!-- Machine Sidebar (Unified) -->
-        <aside class="machine-sidebar" id="machine-sidebar">
+        <!-- Machine Sidebar (Unified) - open by default on mobile, always visible on desktop via CSS -->
+        <aside class="machine-sidebar open" id="machine-sidebar">
 
             <!-- Scrollable Content -->
             <div id="machine-controls"
@@ -2324,7 +2324,7 @@
 
                 <!-- Telnet Config -->
                 <div id="config-telnet" class="hidden flex flex-col gap-3">
-                    <p class="text-xs text-grey">Connect to grblHAL over Ethernet or WiFi (Electron only).</p>
+                    <p class="text-xs text-grey">Connect to grblHAL over Ethernet or WiFi.</p>
                     <div class="relative">
                         <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">IP</span>
                         <input type="text" id="ip-telnet" class="input-field pl-8 h-10" placeholder="192.168.1.10" aria-label="Telnet IP address">
@@ -2333,6 +2333,20 @@
                         <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">Port</span>
                         <input type="number" id="port-telnet" class="input-field pl-12 h-10" value="23" aria-label="Telnet port">
                     </div>
+                    <div class="flex items-center justify-between -mt-1">
+                        <span class="text-[10px] font-bold text-grey uppercase">Scan</span>
+                        <button id="btn-scan-telnet" onclick="window.scanTelnetNetwork()"
+                            class="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors">
+                            <i class="bi bi-search mr-1"></i> SCAN NETWORK
+                        </button>
+                    </div>
+                    <!-- Discovered Devices (Cordova auto-scan) -->
+                    <div id="discovered-devices" class="hidden flex flex-col gap-1">
+                        <span class="text-[10px] font-bold text-grey uppercase">Discovered on Network</span>
+                        <div id="discovered-list" class="flex flex-col gap-1 max-h-28 overflow-y-auto p-2 border border-grey-light rounded-lg bg-grey-bg">
+                        </div>
+                    </div>
+                    <div id="discover-status" class="hidden text-[10px] text-grey animate-pulse italic">Scanning local network for grblHAL controllers...</div>
                 </div>
 
                 <!-- WebSocket Config -->
@@ -2582,13 +2596,7 @@
                 if (window.macroHandler) window.macroHandler.render();
             }
 
-            // Close machine sidebar on mobile when tab is clicked
-            if (window.innerWidth < 1024) { // Match lg breakpoint
-                const sidebar = document.getElementById('machine-sidebar');
-                const overlay = document.getElementById('machine-sidebar-overlay');
-                if (sidebar) sidebar.classList.remove('open');
-                if (overlay) overlay.classList.add('hidden');
-            }
+
         }
 
         function switchTroubleTab(targetId, btn) {
