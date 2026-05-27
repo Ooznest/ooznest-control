@@ -32,13 +32,25 @@ export class GrblFlowControl {
     sendCommand(line) {
         const bytes = this.encoder.encode(line + '\n');
         this.sentBuffer.push(line);
-        console.log(`fc sendCommand line="${line}" bufLen=${this.sentBuffer.length} totalChars=${this.sentBuffer.reduce((s,l)=>s+l.length,0)}`);
-        this.transport.writeRaw(bytes);
+        const totalChars = this.sentBuffer.reduce((s,l)=>s+l.length,0);
+        console.log(`fc sendCommand line="${line}" bufLen=${this.sentBuffer.length} totalChars=${totalChars}`);
+        try {
+            this.transport.writeRaw(bytes);
+        } catch (e) {
+            console.error(`fc ERROR in writeRaw:`, e);
+        }
     }
 
     processLine(line) {
         if (line === 'ok' || line.startsWith('error:') || line.startsWith('alarm:')) {
-            this.sentBuffer.shift();
+            if (this.sentBuffer.length === 0) {
+                console.warn(`fc processLine underflow: line="${line}" bufLen=0`);
+                return;
+            }
+            const removed = this.sentBuffer.shift();
+            if (line.startsWith('error:')) {
+                console.warn(`fc processLine ERROR: line="${line}" removed="${removed}" bufLen=${this.sentBuffer.length}`);
+            }
         }
     }
 }
