@@ -203,9 +203,11 @@ export class GCodeViewer {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.0;
+        this.renderer.toneMappingExposure = 1.25;
 
         this.container.appendChild(this.renderer.domElement);
+
+        this._createEnvironment();
 
         // Camera (Z-Up)
         this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 10000);
@@ -248,6 +250,27 @@ export class GCodeViewer {
 
         // Context Menu Event
         this.renderer.domElement.addEventListener('contextmenu', (e) => this.onContextMenu(e));
+    }
+
+    _createEnvironment() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 512);
+        grad.addColorStop(0, '#c8d8e8');
+        grad.addColorStop(0.45, '#8898a8');
+        grad.addColorStop(0.55, '#586878');
+        grad.addColorStop(1, '#384858');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        const envTexture = new THREE.CanvasTexture(canvas);
+        envTexture.mapping = THREE.EquirectangularReflectionMapping;
+        const pmrem = new THREE.PMREMGenerator(this.renderer);
+        const envMap = pmrem.fromEquirectangular(envTexture).texture;
+        pmrem.dispose();
+        this.scene.environment = envMap;
     }
 
     setUnits(units) {

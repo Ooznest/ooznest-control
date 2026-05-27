@@ -15,10 +15,10 @@ const DEFAULT_PARAMS = {
 };
 
 const COATING_COLORS = {
-    'Carbide (Uncoated)': { color: 0x484b4d, metalness: 0.85, roughness: 0.28 },
-    'TiN (Gold)': { color: 0xd4af37, metalness: 0.95, roughness: 0.18 },
-    'AlTiN (Violet/Black)': { color: 0x2e2b38, metalness: 0.8, roughness: 0.35 },
-    'TiCN (Rose/Bronze)': { color: 0xc5806c, metalness: 0.9, roughness: 0.22 }
+    'Carbide (Uncoated)': { color: 0x7a7e82, metalness: 0.35, roughness: 0.45 },
+    'TiN (Gold)': { color: 0xd4af37, metalness: 0.40, roughness: 0.35 },
+    'AlTiN (Violet/Black)': { color: 0x585365, metalness: 0.35, roughness: 0.40 },
+    'TiCN (Rose/Bronze)': { color: 0xc5806c, metalness: 0.40, roughness: 0.35 }
 };
 
 function applyBaseShape(geometry, toolType, R, H) {
@@ -150,8 +150,8 @@ function buildToolGroup(params) {
 
     const shankMat = new THREE.MeshStandardMaterial({
         color: 0x8a9094,
-        metalness: 0.9,
-        roughness: 0.15
+        metalness: 0.35,
+        roughness: 0.40
     });
 
     const shankMesh = new THREE.Mesh(shankGeo, shankMat);
@@ -165,9 +165,9 @@ function buildToolGroup(params) {
         const holderGroup = new THREE.Group();
 
         const nutMat = new THREE.MeshStandardMaterial({
-            color: 0x1e2022,
-            metalness: 0.8,
-            roughness: 0.35
+            color: 0x424547,
+            metalness: 0.45,
+            roughness: 0.40
         });
 
         const hexGeo = new THREE.CylinderGeometry(R_shank + 5.0, R_shank + 5.0, 8.5, 6);
