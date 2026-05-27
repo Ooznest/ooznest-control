@@ -16,6 +16,31 @@ class JobController {
         this.setupEventListeners();
     }
 
+    _getFlow() {
+        const ws = window.ws;
+        if (!ws) return null;
+        return ws.type === 'webserial' ? ws.webSerial : ws.flowControl;
+    }
+
+    _updateBufferUI() {
+        const flow = this._getFlow();
+        if (!flow || !flow.sentBuffer) return;
+        const bufSize = flow.rxBufSize || 128;
+        const used = flow.sentBuffer.reduce((s, l) => s + l.length, 0);
+        const max = bufSize - 1;
+        const clamped = Math.min(used, max);
+        const pct = max > 0 ? (clamped / max) * 100 : 0;
+
+        const bar = document.getElementById('job-buffer-bar');
+        const stats = document.getElementById('job-buffer-stats');
+        if (bar) {
+            bar.style.width = `${pct}%`;
+            bar.className = 'h-full transition-all duration-200 rounded-full ' +
+                (pct >= 80 ? 'bg-red-400' : pct >= 50 ? 'bg-amber-400' : 'bg-green-400');
+        }
+        if (stats) stats.textContent = `${clamped} / ${max}`;
+    }
+
     setupEventListeners() {
         // Listen for alarm being cleared (state transition Alarm → Idle)
         window.addEventListener('machine-alarm-cleared', () => {
@@ -137,8 +162,7 @@ class JobController {
     advanceGCodeStream() {
         if (!this.gcodeStreamer.active || this.gcodeStreamer.paused) return;
 
-        const ws = window.ws;
-        const flow = ws?.type === 'webserial' ? ws?.webSerial : ws?.flowControl;
+        const flow = this._getFlow();
         if (!flow) {
             console.warn("advanceGCodeStream: flow is undefined — sending without limit!");
         }
@@ -148,12 +172,13 @@ class JobController {
             const line = this.gcodeStreamer.lines[this.gcodeStreamer.index];
             const canSend = flow ? flow.canSend(line) : false;
             if (flow && !canSend) break;
-            ws.sendCommand(line);
+            window.ws.sendCommand(line);
             this.gcodeStreamer.index++;
             sentAny = true;
         }
 
         if (sentAny) {
+            this._updateBufferUI();
             const pct = Math.round((this.gcodeStreamer.index / this.gcodeStreamer.lines.length) * 100);
             const label = `Line ${this.gcodeStreamer.index} of ${this.gcodeStreamer.lines.length}`;
             this.updateJobProgressUI(pct, label);
@@ -175,9 +200,9 @@ class JobController {
      */
     _checkStreamComplete() {
         if (this.gcodeStreamer.index < this.gcodeStreamer.lines.length) return;
-        const ws = window.ws;
-        const flow = ws?.type === 'webserial' ? ws?.webSerial : ws?.flowControl;
+        const flow = this._getFlow();
         if (!flow || flow.isDrained()) {
+            this._updateBufferUI();
             this.finishGCodeStream();
         }
     }
@@ -231,6 +256,12 @@ class JobController {
             btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
         }
 
+        // Reset TX buffer stats
+        const bufBar = document.getElementById('job-buffer-bar');
+        const bufStats = document.getElementById('job-buffer-stats');
+        if (bufBar) { bufBar.style.width = '0%'; bufBar.className = 'h-full transition-all duration-200 rounded-full'; }
+        if (bufStats) bufStats.textContent = '0 / 127';
+
         this.sdJobActive = false; // Reset SD flag
     }
 
@@ -270,6 +301,7 @@ class JobController {
 
         // Alarm during streaming → abort immediately, clear planner queue, then unlock
         if (line.toLowerCase().startsWith('alarm:')) {
+            this._updateBufferUI();
             this.abortGCodeStream(line);
             if (window.ws) {
                 window.ws.sendRealtime('\x18');
@@ -281,12 +313,14 @@ class JobController {
         }
 
         if (line === 'ok') {
+            this._updateBufferUI();
             this.advanceGCodeStream();
             this._checkStreamComplete();
             return true;
         }
 
         if (line.toLowerCase().startsWith('error:')) {
+            this._updateBufferUI();
             const isMtcError = line.includes('40') && window.toolsHandler?.mtcActive;
             if (isMtcError) {
                 this.gcodeStreamer.waitingMTC = true;

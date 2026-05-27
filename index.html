@@ -610,17 +610,33 @@
                     <div id="job-progress-overlay"
                         class="hidden absolute bottom-20 left-0 right-0 z-40 px-4 transition-all duration-300">
                         <div class="max-w-2xl mx-auto">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-white font-bold text-sm">Job Progress</span>
-                                <span id="job-progress-pct" class="text-white font-mono font-bold text-sm">0%</span>
-                            </div>
-                            <div class="h-3 w-full bg-grey-dark rounded-full overflow-hidden shadow-inner">
-                                <div id="job-progress-bar"
-                                    class="h-full bg-primary transition-all duration-300 w-0 shadow-lg"></div>
-                            </div>
-                            <div class="flex justify-between items-center mt-2 text-xs text-grey-light">
-                                <span id="job-progress-line">Line 0 of 0</span>
-                                <span id="job-progress-time">Elapsed: 0:00</span>
+                            <div class="bg-gray-900/90 backdrop-blur rounded-lg p-3 shadow-xl border border-gray-700/50">
+                                <!-- Title row -->
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-white font-bold text-xs tracking-wide">Job Progress</span>
+                                    <span id="job-progress-pct" class="text-white font-mono font-bold text-xs">0%</span>
+                                </div>
+                                <!-- Progress bar (job completion) -->
+                                <div class="h-2 w-full bg-gray-700 rounded-full overflow-hidden mb-1">
+                                    <div id="job-progress-bar"
+                                        class="h-full bg-primary transition-all duration-300 w-0"></div>
+                                </div>
+                                <!-- Stats row -->
+                                <div class="flex justify-between items-center text-xs text-gray-300">
+                                    <span id="job-progress-line">Line 0 of 0</span>
+                                    <span id="job-progress-time">Elapsed: 0:00</span>
+                                </div>
+                                <!-- TX Buffer bar (send queue fill) -->
+                                <div class="mt-1.5 pt-1.5 border-t border-gray-700/50">
+                                    <div class="flex justify-between items-center text-xs text-gray-400 mb-0.5">
+                                        <span>TX Buffer</span>
+                                        <span id="job-buffer-stats">0 / 127</span>
+                                    </div>
+                                    <div class="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
+                                        <div id="job-buffer-bar"
+                                            class="h-full transition-all duration-200 w-0 rounded-full"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
