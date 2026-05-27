@@ -3142,7 +3142,7 @@
                 window.jobControl.resetJobUI();
                 // Also ensure we are not in Hold
                 const pauseBtn = document.getElementById('pause-job-btn');
-                if (pauseBtn.innerText.includes('Resume')) {
+                if (pauseBtn && pauseBtn.innerText.includes('Resume')) {
                     // Reset pause button visual state if it was paused
                     pauseBtn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
                     pauseBtn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";

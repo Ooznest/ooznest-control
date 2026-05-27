@@ -47,7 +47,7 @@ class JobController {
                 this.resetJobUI();
                 // Also ensure we are not in Hold
                 const pauseBtn = document.getElementById('pause-job-btn');
-                if (pauseBtn.innerText.includes('Resume')) {
+                if (pauseBtn && pauseBtn.innerText.includes('Resume')) {
                     // Reset pause button visual state if it was paused
                     pauseBtn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
                     pauseBtn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
@@ -100,6 +100,7 @@ class JobController {
     pauseJob() {
         if (!this.gcodeStreamer.active) return;
         const btn = document.getElementById('pause-job-btn');
+        if (!btn) return;
         this.gcodeStreamer.paused = !this.gcodeStreamer.paused;
 
         if (this.gcodeStreamer.paused) {
@@ -204,8 +205,10 @@ class JobController {
         const jac2 = document.getElementById('job-active-controls');
         if (jac2) { jac2.classList.add('hidden'); jac2.classList.remove('flex'); }
         const btn = document.getElementById('pause-job-btn');
-        btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
-        btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
+        if (btn) {
+            btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+            btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
+        }
 
         this.sdJobActive = false; // Reset SD flag
     }
