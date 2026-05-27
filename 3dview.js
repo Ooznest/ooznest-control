@@ -20,10 +20,10 @@ const COLORS = {
 };
 
 const LASER_CONFIG = {
-    color: 0x0044ff, // 445nm blue diode laser
+    color: 0x0030cc, // 445nm blue diode laser — deeper to avoid additive washout
     beamLength: 20,
     beamRadius: 0.2,
-    glowColor: 'rgba(0, 68, 255, 1)'
+    glowColor: 'rgba(0, 48, 204, 1)'
 };
 
 class ParticleSystem {
@@ -802,8 +802,7 @@ export class GCodeViewer {
         const beamMat = new THREE.MeshBasicMaterial({
             color: LASER_CONFIG.color,
             transparent: true,
-            opacity: 0.6,
-            blending: THREE.AdditiveBlending,
+            opacity: 0.5,
             depthWrite: false
         });
         this.laserBeam = new THREE.Mesh(beamGeo, beamMat);
@@ -845,9 +844,9 @@ export class GCodeViewer {
         canvas.height = 64;
         const ctx = canvas.getContext('2d');
         const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-        gradient.addColorStop(0, 'rgba(0, 68, 255, 1)');
-        gradient.addColorStop(0.2, 'rgba(0, 68, 255, 0.8)');
-        gradient.addColorStop(0.5, 'rgba(0, 68, 255, 0.2)');
+        gradient.addColorStop(0, 'rgba(0, 20, 140, 1)');
+        gradient.addColorStop(0.2, 'rgba(0, 40, 200, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(0, 80, 255, 0.35)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 64, 64);
@@ -875,10 +874,10 @@ export class GCodeViewer {
 
         const flicker = 0.95 + Math.random() * 0.1;
 
-        this.laserBeam.material.opacity = (0.2 + (power * 0.6)) * flicker;
-        this.laserGlow.material.opacity = (0.4 + (power * 0.6)) * flicker;
+        this.laserBeam.material.opacity = (0.15 + (power * 0.3)) * flicker;
+        this.laserGlow.material.opacity = (0.15 + (power * 0.35)) * flicker;
 
-        const scale = (5 + (power * 10)) * flicker;
+        const scale = (4 + (power * 6)) * flicker;
         this.laserGlow.scale.set(scale, scale, 1);
     }
 
