@@ -17,6 +17,14 @@ class JobController {
     }
 
     setupEventListeners() {
+        // Listen for alarm being cleared (state transition Alarm → Idle)
+        window.addEventListener('machine-alarm-cleared', () => {
+            if (this.gcodeStreamer.active) {
+                this.abortGCodeStream("Alarm cleared");
+            } else {
+                this.resetJobUI();
+            }
+        });
         // SD Job Progress Listeners
         window.addEventListener('sd-status', (e) => {
             const { pct, filename } = e.detail;
@@ -235,6 +243,12 @@ class JobController {
      */
     processLine(line) {
         if (!this.gcodeStreamer.active) return false;
+
+        // Alarm during streaming → abort immediately
+        if (line.toLowerCase().startsWith('alarm:')) {
+            this.abortGCodeStream(line);
+            return true;
+        }
 
         if (line === 'ok') {
             this.advanceGCodeStream();

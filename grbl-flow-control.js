@@ -38,7 +38,7 @@ export class GrblFlowControl {
     }
 
     processLine(line) {
-        if (line === 'ok' || line.startsWith('error:')) {
+        if (line === 'ok' || line.startsWith('error:') || line.startsWith('alarm:')) {
             const len = this._pendingLens.shift();
             if (len !== undefined) {
                 this._rxBufUsed -= len;

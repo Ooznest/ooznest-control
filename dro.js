@@ -16,6 +16,7 @@ export class DROHandler {
         this.accessoryState = "";
         this.inputPins = "";
         this.status = "Disconnected";
+        this._lastState = "";
 
         // Initial UI Render
         this.updateUIUnits();
@@ -368,6 +369,13 @@ export class DROHandler {
         stateEl.textContent = cleanState;
         stateEl.className = "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase text-white transition-all duration-300";
         const s = cleanState.toLowerCase();
+
+        // Detect alarm → non-alarm transition (alarm cleared via $X or reset)
+        const wasAlarmed = this._lastState && this._lastState.startsWith('alarm');
+        this._lastState = s;
+        if (wasAlarmed && !s.startsWith('alarm')) {
+            window.dispatchEvent(new CustomEvent('machine-alarm-cleared'));
+        }
 
         const isAlarmed = s.startsWith('alarm');
 

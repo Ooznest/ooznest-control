@@ -72,7 +72,12 @@ class LineProcessor {
         const report = window.reporter.handleLine(line);
         if (report) {
             if (typeof report === 'string') window.term.writeln(report);
-            return;
+            // Don't return for active alarm/error reports — job controller needs to see them
+            if (line.toLowerCase().startsWith('alarm:') || line.toLowerCase().startsWith('error:')) {
+                // Fall through to job controller
+            } else {
+                return;
+            }
         }
 
         // Status reports
