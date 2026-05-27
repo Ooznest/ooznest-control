@@ -247,9 +247,15 @@ class JobController {
     processLine(line) {
         if (!this.gcodeStreamer.active) return false;
 
-        // Alarm during streaming → abort immediately
+        // Alarm during streaming → abort immediately, clear planner queue, then unlock
         if (line.toLowerCase().startsWith('alarm:')) {
             this.abortGCodeStream(line);
+            if (window.ws) {
+                window.ws.sendRealtime('\x18');
+                setTimeout(() => {
+                    window.ws.sendCommand('$X');
+                }, 3000);
+            }
             return true;
         }
 
