@@ -28,17 +28,12 @@ class JobController {
         const bufSize = flow.rxBufSize || 128;
         const used = flow.sentBuffer.reduce((s, l) => s + l.length, 0);
         const max = bufSize - 1;
-        const clamped = Math.min(used, max);
-        const pct = max > 0 ? (clamped / max) * 100 : 0;
+        const pct = max > 0 ? (Math.min(used, max) / max) * 100 : 0;
 
         const bar = document.getElementById('job-buffer-bar');
         const stats = document.getElementById('job-buffer-stats');
-        if (bar) {
-            bar.style.width = `${pct}%`;
-            bar.className = 'h-full transition-all duration-200 rounded-full ' +
-                (pct >= 80 ? 'bg-red-400' : pct >= 50 ? 'bg-amber-400' : 'bg-green-400');
-        }
-        if (stats) stats.textContent = `${clamped} / ${max}`;
+        if (bar) bar.style.width = `${pct}%`;
+        if (stats) stats.textContent = used;
     }
 
     setupEventListeners() {
@@ -256,11 +251,11 @@ class JobController {
             btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
         }
 
-        // Reset TX buffer stats
+        // Reset TX buffer
         const bufBar = document.getElementById('job-buffer-bar');
         const bufStats = document.getElementById('job-buffer-stats');
-        if (bufBar) { bufBar.style.width = '0%'; bufBar.className = 'h-full transition-all duration-200 rounded-full'; }
-        if (bufStats) bufStats.textContent = '0 / 127';
+        if (bufBar) bufBar.style.width = '0%';
+        if (bufStats) bufStats.textContent = '0';
 
         this.sdJobActive = false; // Reset SD flag
     }
