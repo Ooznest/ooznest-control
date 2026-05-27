@@ -696,24 +696,16 @@
 
                     <!-- Stats & Info (Bottom Left) -->
                     <div class="absolute bottom-6 left-6 flex flex-col gap-3 pointer-events-none w-72">
-                        <div
-                            class="bg-white/90 backdrop-blur rounded-lg border border-grey-light p-3 shadow-lg flex items-center gap-3 pointer-events-auto">
-                            <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center shrink-0">
-                                <i class="bi bi-file-earmark-code-fill text-teal-600 text-xl"></i>
-                            </div>
-                            <div class="flex flex-col min-w-0">
-                                <span
-                                    class="text-grey text-[10px] uppercase font-black tracking-wider leading-none mb-1">Loaded
-                                    File</span>
-                                <span id="viewer-file-name"
-                                    class="text-secondary-dark font-bold text-sm truncate leading-none">No file
-                                    loaded</span>
-                            </div>
-                        </div>
                         <div id="gcode-stats-panel"
                             class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light p-3 shadow-lg pointer-events-auto">
-                            <div class="mb-2">
+                            <div class="flex items-center justify-between mb-2">
                                 <span class="text-grey text-[10px] uppercase font-black tracking-wider">G-Code Stats</span>
+                                <div class="flex items-center gap-1.5 truncate ml-2">
+                                    <i class="bi bi-file-earmark-code-fill text-teal-600 text-xs shrink-0"></i>
+                                    <span id="viewer-file-name"
+                                        class="text-secondary-dark font-bold text-xs truncate leading-none">No file
+                                        loaded</span>
+                                </div>
                             </div>
                             <div class="grid grid-cols-2 gap-2 text-[11px]">
                                 <div>
@@ -2969,13 +2961,13 @@
                 window.electron.on('update-downloaded', () => {
                     reporter.showConfirm(
                         'Update Ready',
-                        'A new version of Ooznest Control has been downloaded. The application will quit and install the update now.',
+                        'A new version of Ooznest Control has been downloaded. Would you like to install it now, or later?',
                         () => {
                             window.electron.send('install-update');
                         },
                         null,
                         'Install Update Now',
-                        'Cancel'
+                        'Later'
                     );
                 });
             }
