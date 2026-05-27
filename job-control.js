@@ -135,29 +135,44 @@ class JobController {
      * Advance to the next line in the G-code stream
      */
     advanceGCodeStream() {
-        if (!this.gcodeStreamer.active) return;
-        if (this.gcodeStreamer.index >= this.gcodeStreamer.lines.length) {
-            this.finishGCodeStream();
-            return;
+        if (!this.gcodeStreamer.active || this.gcodeStreamer.paused) return;
+
+        const flow = window.ws?.flowControl;
+        let sentAny = false;
+
+        while (this.gcodeStreamer.index < this.gcodeStreamer.lines.length) {
+            const line = this.gcodeStreamer.lines[this.gcodeStreamer.index];
+            if (flow && !flow.canSend(line)) break;
+            window.ws.sendCommand(line);
+            this.gcodeStreamer.index++;
+            sentAny = true;
         }
-        const line = this.gcodeStreamer.lines[this.gcodeStreamer.index];
-        window.ws.sendCommand(line);
-        this.gcodeStreamer.index++;
 
-        const pct = Math.round((this.gcodeStreamer.index / this.gcodeStreamer.lines.length) * 100);
-        const label = `Line ${this.gcodeStreamer.index} of ${this.gcodeStreamer.lines.length}`;
+        if (sentAny) {
+            const pct = Math.round((this.gcodeStreamer.index / this.gcodeStreamer.lines.length) * 100);
+            const label = `Line ${this.gcodeStreamer.index} of ${this.gcodeStreamer.lines.length}`;
+            this.updateJobProgressUI(pct, label);
 
-        this.updateJobProgressUI(pct, label);
+            if (window.ws.backendWs) {
+                window.ws.backendWs.send(JSON.stringify({
+                    type: 'updateJob',
+                    active: true,
+                    currentLine: this.gcodeStreamer.index,
+                    totalLines: this.gcodeStreamer.lines.length,
+                    pct: pct
+                }));
+            }
+        }
+    }
 
-        // Sync with backend if connected
-        if (window.ws.backendWs) {
-            window.ws.backendWs.send(JSON.stringify({
-                type: 'updateJob',
-                active: true,
-                currentLine: this.gcodeStreamer.index,
-                totalLines: this.gcodeStreamer.lines.length,
-                pct: pct
-            }));
+    /**
+     * Check if all sent lines have been acknowledged and finish if so
+     */
+    _checkStreamComplete() {
+        if (this.gcodeStreamer.index < this.gcodeStreamer.lines.length) return;
+        const flow = window.ws?.flowControl;
+        if (!flow || flow.isDrained()) {
+            this.finishGCodeStream();
         }
     }
 
@@ -261,6 +276,7 @@ class JobController {
 
         if (line === 'ok') {
             this.advanceGCodeStream();
+            this._checkStreamComplete();
             return true;
         }
 

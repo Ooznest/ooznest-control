@@ -60,4 +60,13 @@ export class GrblFlowControl {
             }
         }
     }
+
+    canSend(line) {
+        const len = this.encoder.encode(line + '\r\n').length;
+        return this._rxBufUsed + len < this._rxBufSize;
+    }
+
+    isDrained() {
+        return this._pendingLens.length === 0 && this._sendQueue.length === 0;
+    }
 }
