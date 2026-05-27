@@ -161,7 +161,6 @@ async function build() {
 
         console.log(`\nDONE!`);
         console.log(`- Main UI Package:  ${(gzip.length / 1024).toFixed(2)} KB (Fast Load)`);
-        console.log(`- Lazy Assets:      ${stlFiles.join(', ')} (Stored Externally)`);
         console.log(`Deployment: Copy ALL files from 'dist/' to your SD Card root.`);
     } catch (err) {
         console.error('Build Error:', err);
