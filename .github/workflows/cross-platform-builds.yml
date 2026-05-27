@@ -156,7 +156,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Ooznest-Windows-App
-          path: dist/*.exe
+          path: |
+            dist/*.exe
+            dist/latest.yml
 
   build-macos:
     name: Build macOS App
@@ -184,7 +186,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Ooznest-macOS-App
-          path: dist/*.dmg
+          path: |
+            dist/*.dmg
+            dist/latest-mac.yml
 
   build-linux:
     name: Build Linux App
@@ -212,7 +216,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Ooznest-Linux-App
-          path: dist/*.AppImage
+          path: |
+            dist/*.AppImage
+            dist/latest-linux.yml
 
   build-sd:
     name: Build SD Card Payload
@@ -266,3 +272,4 @@ jobs:
             output-artifacts/**/*.dmg
             output-artifacts/**/*.AppImage
             output-artifacts/**/*.zip
+            output-artifacts/**/latest*.yml
