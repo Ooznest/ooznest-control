@@ -158,6 +158,7 @@ jobs:
           name: Ooznest-Windows-App
           path: |
             dist/*.exe
+            dist/*.exe.blockmap
             dist/latest.yml
 
   build-macos:
@@ -188,6 +189,7 @@ jobs:
           name: Ooznest-macOS-App
           path: |
             dist/*.dmg
+            dist/*.dmg.blockmap
             dist/latest-mac.yml
 
   build-linux:
@@ -218,6 +220,7 @@ jobs:
           name: Ooznest-Linux-App
           path: |
             dist/*.AppImage
+            dist/*.AppImage.blockmap
             dist/latest-linux.yml
 
   build-sd:
@@ -273,3 +276,4 @@ jobs:
             output-artifacts/**/*.AppImage
             output-artifacts/**/*.zip
             output-artifacts/**/latest*.yml
+            output-artifacts/**/*.blockmap

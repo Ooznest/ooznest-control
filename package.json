@@ -48,7 +48,8 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "cordova/resources/icon.png"
+      "icon": "cordova/resources/icon.png",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
       "target": "dmg",
