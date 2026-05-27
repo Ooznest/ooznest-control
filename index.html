@@ -2840,6 +2840,9 @@
             window.firmwareHandler = firmwareHandler;
 
             if (window.electron && window.electron.on) {
+                window.electron.on('update-available', (info) => {
+                    window.term.writeln(`\x1b[33m[Update] v${info.version} available — downloading...\x1b[0m`);
+                });
                 window.electron.on('update-downloaded', () => {
                     reporter.showConfirm(
                         'Update Ready',

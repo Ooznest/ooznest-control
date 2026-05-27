@@ -348,11 +348,21 @@ app.whenReady().then(() => {
     createWindow();
     
     // Auto-Updater Logic
-    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+        console.error('Auto-update check failed:', err.message);
+    });
+    autoUpdater.on('update-available', (info) => {
+        BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('update-available', info);
+        });
+    });
     autoUpdater.on('update-downloaded', (info) => {
         BrowserWindow.getAllWindows().forEach(win => {
             win.webContents.send('update-downloaded');
         });
+    });
+    autoUpdater.on('error', (err) => {
+        console.error('Auto-updater error:', err.message || err);
     });
 
     ipcMain.on('install-update', () => {
