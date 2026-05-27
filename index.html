@@ -645,9 +645,18 @@
                     </div>
 
                     <div class="viewer-controls">
+                        <!-- Job control button group -->
                         <button id="run-job-btn" class="overlay-btn !bg-primary !text-white" onclick="runCurrentJob()">
                             <i class="bi bi-play-fill text-lg"></i> Run Job
                         </button>
+                        <div id="job-active-controls" class="hidden flex gap-1.5">
+                            <button id="pause-job-btn" class="overlay-btn !bg-yellow-100 !text-yellow-800 flex-1" onclick="pauseJob()">
+                                <i class="bi bi-pause-fill text-lg"></i> Pause
+                            </button>
+                            <button id="stop-job-btn" class="overlay-btn !bg-red-100 !text-red-800 flex-1" onclick="stopJob()">
+                                <i class="bi bi-stop-fill text-lg"></i> Stop
+                            </button>
+                        </div>
                         <button class="overlay-btn" onclick="resetCamera()">
                             <i class="bi bi-camera-video-fill text-secondary"></i> Reset
                         </button>
