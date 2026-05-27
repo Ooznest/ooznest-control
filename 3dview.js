@@ -20,10 +20,10 @@ const COLORS = {
 };
 
 const LASER_CONFIG = {
-    color: 0x00aaff, // Blue diode laser
+    color: 0x0044ff, // 445nm blue diode laser
     beamLength: 20,
     beamRadius: 0.2,
-    glowColor: 'rgba(0, 170, 255, 1)'
+    glowColor: 'rgba(0, 68, 255, 1)'
 };
 
 class ParticleSystem {
@@ -811,6 +811,18 @@ export class GCodeViewer {
         this.laserBeam.position.z = LASER_CONFIG.beamLength / 2;
         this.toolGroup.add(this.laserBeam);
 
+        // 2b. Idle beam — dim, non-glowing line visible when laser is off
+        const idleMat = new THREE.MeshBasicMaterial({
+            color: LASER_CONFIG.color,
+            transparent: true,
+            opacity: 0.15,
+            depthWrite: false
+        });
+        this.laserBeamIdle = new THREE.Mesh(beamGeo.clone(), idleMat);
+        this.laserBeamIdle.rotation.x = Math.PI / 2;
+        this.laserBeamIdle.position.z = LASER_CONFIG.beamLength / 2;
+        this.toolGroup.add(this.laserBeamIdle);
+
         // 3. Laser Glow Sprite
         // At the tip (Z=0)
         const glowTexture = this.createGlowTexture();
@@ -843,20 +855,22 @@ export class GCodeViewer {
     }
 
     updateLaserVisuals() {
-        if (!this.laserBeam || !this.laserGlow) return;
+        if (!this.laserBeam || !this.laserGlow || !this.laserBeamIdle) return;
 
         // Pulse effect or power-based scaling
         // Min opacity when on: 0.3, Max: 0.9
-        const power = Math.max(this.laserPower, 0.05); // Always show a little bit if 'on' mode but power is low? 
+        const power = Math.max(this.laserPower, 0.05);
         // Actually, if spindle is 0, power is 0. 
 
         if (this.spindleSpeed <= 0) {
             this.laserBeam.visible = false;
             this.laserGlow.visible = false;
+            this.laserBeamIdle.visible = true;
             return;
         } else {
             this.laserBeam.visible = true;
             this.laserGlow.visible = true;
+            this.laserBeamIdle.visible = false;
         }
 
         const flicker = 0.95 + Math.random() * 0.1;
