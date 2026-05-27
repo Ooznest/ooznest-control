@@ -129,9 +129,8 @@ function buildToolGroup(params) {
         applyFlutes(cutterGeo, params.toolType, R, H_cut, params.flutes, params.helixAngle * Math.PI / 180, params.fluteDepth);
     }
 
-    // Position cutter tip at origin in Y-up, then rotate to Z-up
+    // Position in Y-up: tip at Y=0, top at Y=H_cut
     cutterGeo.translate(0, H_cut / 2, 0);
-    cutterGeo.rotateX(-Math.PI / 2);
 
     const coating = COATING_COLORS[params.coating] || COATING_COLORS['Carbide (Uncoated)'];
     const cutterMat = new THREE.MeshStandardMaterial({
@@ -145,11 +144,9 @@ function buildToolGroup(params) {
     cutterMesh.receiveShadow = true;
     group.add(cutterMesh);
 
-    // --- Shank ---
+    // --- Shank (Y-up: bottom at Y=H_cut, top at Y=H_cut+H_shank) ---
     const shankGeo = new THREE.CylinderGeometry(R_shank, R_shank, H_shank, 32, 1, false);
-    // Position above cutter in Y-up, then rotate to Z-up
     shankGeo.translate(0, H_cut + H_shank / 2, 0);
-    shankGeo.rotateX(-Math.PI / 2);
 
     const shankMat = new THREE.MeshStandardMaterial({
         color: 0x8a9094,
@@ -173,28 +170,26 @@ function buildToolGroup(params) {
             roughness: 0.35
         });
 
-        // Hex nut body in Y-up
         const hexGeo = new THREE.CylinderGeometry(R_shank + 5.0, R_shank + 5.0, 8.5, 6);
         hexGeo.translate(0, 4.25, 0);
-        hexGeo.rotateX(-Math.PI / 2);
         const hexMesh = new THREE.Mesh(hexGeo, nutMat);
         hexMesh.castShadow = true;
         hexMesh.receiveShadow = true;
         holderGroup.add(hexMesh);
 
-        // Flange in Y-up
         const flangeGeo = new THREE.CylinderGeometry(R_shank + 5.2, R_shank + 5.2, 1.5, 32);
         flangeGeo.translate(0, 9.25, 0);
-        flangeGeo.rotateX(-Math.PI / 2);
         const flangeMesh = new THREE.Mesh(flangeGeo, nutMat);
         flangeMesh.castShadow = true;
         flangeMesh.receiveShadow = true;
         holderGroup.add(flangeMesh);
 
-        // Position the holder group — after rotateX, the Y-up y becomes Z-up z
-        holderGroup.position.z = holderBaseY;
+        holderGroup.position.y = holderBaseY;
         group.add(holderGroup);
     }
+
+    // Rotate entire assembly from Y-up to Z-up for the viewer
+    group.rotation.x = Math.PI / 2;
 
     return group;
 }
