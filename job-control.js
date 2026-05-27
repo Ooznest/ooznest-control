@@ -290,6 +290,9 @@ class JobController {
                 window.term.writeln(`\x1b[33m[MTC] Tool change pending — streaming paused, waiting for MTC to complete.\x1b[0m`);
             } else {
                 this.abortGCodeStream(line);
+                if (window.ws) {
+                    window.ws.sendRealtime('\x18');
+                }
             }
             return true;
         }
