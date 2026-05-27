@@ -133,19 +133,11 @@ export class ConnectionManager {
             if (usbTab) usbTab.classList.add('hidden');
             if (telnetTab) telnetTab.classList.add('hidden');
 
-            // If hosted directly on grblHAL (via hardware IP, not localhost), default to websocket
-            if (window.location.protocol === 'http:' && window.location.port !== '8081' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                this.setConnectionType('websocket');
-                const wsUrlInput = document.getElementById('url-websocket');
-                if (wsUrlInput) {
-                    wsUrlInput.value = `ws://${window.location.hostname}:81/ws`; // Assuming default networking plugin port
-                }
-                this.httpBaseUrl = window.location.origin;
-                // Auto-connect in SD card mode
-                setTimeout(() => this.connect(), 500);
-            } else {
-                this.setConnectionType('webserial');
-            }
+            this.setConnectionType('webserial');
+
+            // Probe for SD card mode: if grblHAL's WebSocket responds on port 81,
+            // we're being served from the controller's own filesystem
+            this._probeSDMode();
         }
     }
 
@@ -236,6 +228,37 @@ export class ConnectionManager {
             } else {
                 this.refreshNodePorts();
             }
+        }
+    }
+
+    async _probeSDMode() {
+        const url = `ws://${window.location.hostname}:81/ws`;
+        let ws;
+        try {
+            await new Promise((resolve, reject) => {
+                ws = new WebSocket(url);
+                const timeout = setTimeout(() => {
+                    ws.close();
+                    reject(new Error('timeout'));
+                }, 1500);
+                ws.onopen = () => {
+                    clearTimeout(timeout);
+                    ws.close();
+                    resolve();
+                };
+                ws.onerror = () => {
+                    clearTimeout(timeout);
+                    reject(new Error('connection failed'));
+                };
+            });
+            // Probe succeeded — we're in SD card mode
+            this.setConnectionType('websocket');
+            const wsUrlInput = document.getElementById('url-websocket');
+            if (wsUrlInput) wsUrlInput.value = url;
+            this.httpBaseUrl = window.location.origin;
+            setTimeout(() => this.connect(), 300);
+        } catch {
+            // Probe failed — regular web mode, stay on webserial
         }
     }
 
