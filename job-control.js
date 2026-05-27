@@ -27,13 +27,9 @@ class JobController {
         if (!flow || !flow.sentBuffer) return;
         const bufSize = flow.rxBufSize || 128;
         const used = flow.sentBuffer.reduce((s, l) => s + l.length, 0);
-        const max = bufSize - 1;
-        const pct = max > 0 ? (Math.min(used, max) / max) * 100 : 0;
-
+        const pct = bufSize > 1 ? (Math.min(used, bufSize - 1) / (bufSize - 1)) * 100 : 0;
         const bar = document.getElementById('job-buffer-bar');
-        const stats = document.getElementById('job-buffer-stats');
         if (bar) bar.style.width = `${pct}%`;
-        if (stats) stats.textContent = used;
     }
 
     setupEventListeners() {
@@ -253,9 +249,7 @@ class JobController {
 
         // Reset TX buffer
         const bufBar = document.getElementById('job-buffer-bar');
-        const bufStats = document.getElementById('job-buffer-stats');
         if (bufBar) bufBar.style.width = '0%';
-        if (bufStats) bufStats.textContent = '0';
 
         this.sdJobActive = false; // Reset SD flag
     }

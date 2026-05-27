@@ -612,12 +612,8 @@
                         <div class="max-w-2xl mx-auto">
                             <div class="bg-gray-900/90 backdrop-blur rounded-lg p-3 shadow-xl border border-gray-700/50">
                                 <!-- Title row -->
-                                <div class="flex justify-between items-center mb-1">
+                                <div class="mb-1">
                                     <span class="text-white font-bold text-xs tracking-wide">Job Progress</span>
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-gray-400 text-xs">Buffer <span id="job-buffer-stats">0</span></span>
-                                        <span id="job-progress-pct" class="text-white font-mono font-bold text-xs">0%</span>
-                                    </div>
                                 </div>
                                 <!-- Bars row: 80% progress + 20% buffer -->
                                 <div class="flex gap-1.5 mb-1">
@@ -632,7 +628,7 @@
                                 </div>
                                 <!-- Stats row -->
                                 <div class="flex justify-between items-center text-xs text-gray-300">
-                                    <span id="job-progress-line">Line 0 of 0</span>
+                                    <span><span id="job-progress-pct" class="font-bold text-white">0%</span> &middot; <span id="job-progress-line">Line 0 of 0</span></span>
                                     <span id="job-progress-time">Elapsed: 0:00</span>
                                 </div>
                             </div>
