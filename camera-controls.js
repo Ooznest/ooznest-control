@@ -63,6 +63,7 @@ class CameraControls {
     toggleLaserMode() {
         if (!window.viewer) return;
         const btn = document.getElementById('laser-toggle-btn');
+        if (!btn) return;
         const newState = !window.viewer.isLaserMode;
         window.viewer.setLaserMode(newState);
 

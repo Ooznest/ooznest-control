@@ -655,6 +655,9 @@
                         <button id="tool-vis-toggle-btn" class="overlay-btn hidden" onclick="toggleToolVisibility()">
                             <i class="bi bi-tools text-secondary"></i> Tools
                         </button>
+                        <button class="overlay-btn" onclick="toggleLaserMode()" id="laser-toggle-btn">
+                            <i class="bi bi-brightness-high-fill text-secondary"></i> Laser Mode
+                        </button>
                     </div>
 
                     <!-- Tool Visibility Panel (Bottom Right) -->
@@ -3176,6 +3179,7 @@
         window.toggleLaserMode = function () {
             if (!window.viewer) return;
             const btn = document.getElementById('laser-toggle-btn');
+            if (!btn) return;
             // Toggle
             const newState = !window.viewer.isLaserMode;
             window.viewer.setLaserMode(newState);
