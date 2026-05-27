@@ -49,17 +49,6 @@ async function build() {
 
         console.log('2. Handling External Assets (Lazy Loading)...');
 
-        // Copy STLs to dist instead of inlining them
-        const stlFiles = ['endmill.stl', 'collet-nut.stl', 'collet-shaft.stl'];
-        for (const file of stlFiles) {
-            const src = path.join(rootDir, file);
-            const dest = path.join(distDir, file);
-            if (fs.existsSync(src)) {
-                console.log(`   - Copying ${file} to dist/ (External)`);
-                fs.copyFileSync(src, dest);
-            }
-        }
-
         console.log('3. Internalizing Fonts & Critical CSS...');
 
         function inlineFontsInCss(cssFilePath, seen = new Set()) {

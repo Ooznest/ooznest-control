@@ -245,7 +245,7 @@ jobs:
           npm run build-sd
           VERSION=$(node -p "require('./package.json').version")
           cd dist
-          zip -r ../ooznest-control-${VERSION}-SDCard.zip index.html.gz *.stl
+          zip -r ../ooznest-control-${VERSION}-SDCard.zip index.html.gz
         
       - name: Upload SD Card Payload
         uses: actions/upload-artifact@v4

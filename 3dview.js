@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 import { ViewCube } from './viewcube.js';
+import { buildToolGroup, DEFAULT_PARAMS } from './endmill-generator.js';
 
 // --- Theme Colors ---
 const COLORS = {
@@ -155,6 +155,13 @@ export class GCodeViewer {
         // Tool Visibility
         this.toolSegments = []; // [{ tool, toolLabel, startVertex, endVertex, visible }]
         this.currentGCode = '';
+
+        // Endmill parameters (persisted via store)
+        this.endmillParams = { ...DEFAULT_PARAMS };
+        if (this.store) {
+            const saved = this.store.get('viewer.endmillParams');
+            if (saved) this.endmillParams = { ...DEFAULT_PARAMS, ...saved };
+        }
 
         // Spindle Animation State
         this.spindleSpeed = 0;
@@ -720,6 +727,19 @@ export class GCodeViewer {
     }
 
     renderTool() {
+        // Dispose old tool geometry/materials
+        if (this._endmillGeneratedGroup) {
+            this._endmillGeneratedGroup.traverse(child => {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                        else child.material.dispose();
+                    }
+                }
+            });
+            this._endmillGeneratedGroup = null;
+        }
         this.toolGroup.clear();
 
         if (this.isLaserMode) {
@@ -826,41 +846,23 @@ export class GCodeViewer {
     }
 
     renderEndmill() {
-        const transparency = 0.9;
-        const endmillMat = new THREE.MeshNormalMaterial({
-            transparent: true,
-            opacity: transparency,
-            side: THREE.DoubleSide
-        });
-        const colletNutMat = new THREE.MeshStandardMaterial({
-            color: 0x000000,
-            roughness: 0.4,
-            metalness: 0.6,
-            transparent: true,
-            opacity: transparency,
-        });
-        const colletShaftMat = new THREE.MeshStandardMaterial({
-            color: 0xbdc3c7,
-            roughness: 0.4,
-            metalness: 0.6,
-            transparent: true,
-            opacity: transparency,
-        });
-        const loader = new STLLoader();
-        loader.load('./endmill.stl', (geometry) => {
-            const mesh = new THREE.Mesh(geometry, endmillMat);
-            this.toolGroup.add(mesh);
-        }, undefined, (error) => console.warn('Could not load endmill.stl', error));
-        loader.load('./collet-nut.stl', (geometry) => {
-            const mesh = new THREE.Mesh(geometry, colletNutMat);
-            mesh.position.z = 30;
-            this.toolGroup.add(mesh);
-        }, undefined, (error) => console.warn('Could not load collet-nut.stl', error));
-        loader.load('./collet-shaft.stl', (geometry) => {
-            const mesh = new THREE.Mesh(geometry, colletShaftMat);
-            mesh.position.z = 30;
-            this.toolGroup.add(mesh);
-        }, undefined, (error) => console.warn('Could not load collet-shaft.stl', error));
+        const toolGroup = buildToolGroup(this.endmillParams);
+        this.toolGroup.add(toolGroup);
+        this._endmillGeneratedGroup = toolGroup;
+    }
+
+    updateEndmillParams(params) {
+        this.endmillParams = { ...this.endmillParams, ...params };
+        if (this.store) {
+            this.store.set('viewer.endmillParams', this.endmillParams);
+        }
+        if (!this.isLaserMode) {
+            this.renderTool();
+        }
+    }
+
+    getEndmillParams() {
+        return { ...this.endmillParams };
     }
 
     updateToolPosition(x, y, z) {
