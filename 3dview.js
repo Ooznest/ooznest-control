@@ -815,7 +815,7 @@ export class GCodeViewer {
         const idleMat = new THREE.MeshBasicMaterial({
             color: LASER_CONFIG.color,
             transparent: true,
-            opacity: 0.15,
+            opacity: 0.3,
             depthWrite: false
         });
         this.laserBeamIdle = new THREE.Mesh(beamGeo.clone(), idleMat);
@@ -828,7 +828,7 @@ export class GCodeViewer {
         const glowTexture = this.createGlowTexture();
         const glowMat = new THREE.SpriteMaterial({
             map: glowTexture,
-            color: LASER_CONFIG.color,
+            color: 0xffffff,
             transparent: true,
             blending: THREE.AdditiveBlending,
             depthWrite: false
@@ -845,9 +845,9 @@ export class GCodeViewer {
         canvas.height = 64;
         const ctx = canvas.getContext('2d');
         const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
-        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(0, 'rgba(0, 68, 255, 1)');
+        gradient.addColorStop(0.2, 'rgba(0, 68, 255, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(0, 68, 255, 0.2)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 64, 64);
