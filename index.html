@@ -619,16 +619,17 @@
                                 <div class="flex gap-1.5 mb-1">
                                     <div class="h-2 bg-gray-700 rounded-full overflow-hidden" style="width:90%">
                                         <div id="job-progress-bar"
-                                            class="h-full bg-primary transition-all duration-300 w-0"></div>
+                                            class="h-full transition-all duration-300 w-0"></div>
                                     </div>
-                                    <div class="h-2 bg-gray-700 rounded-full overflow-hidden" style="width:10%">
+                                    <div class="h-2 bg-gray-700 rounded-full overflow-hidden" style="width:10%" title="Controller send buffer fill">
                                         <div id="job-buffer-bar"
-                                            class="h-full bg-amber-400/70 transition-all duration-200 w-0 rounded-full"></div>
+                                            class="h-full transition-all duration-200 w-0 rounded-full"></div>
                                     </div>
                                 </div>
                                 <!-- Stats row -->
-                                <div class="flex justify-between items-center text-xs text-gray-300">
+                                <div class="flex items-center gap-2 text-xs text-gray-300">
                                     <span><span id="job-progress-pct" class="font-bold text-white">0%</span> &middot; <span id="job-progress-line">Line 0 of 0</span></span>
+                                    <span class="text-gray-500">|</span>
                                     <span id="job-progress-time">Elapsed: 0:00</span>
                                 </div>
                             </div>

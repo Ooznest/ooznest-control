@@ -1567,6 +1567,11 @@ table [id^="pin-indicator-"] {
     background: var(--oz-primary);
 }
 
+/* Send buffer fill bar */
+#job-buffer-bar {
+    background: var(--oz-teal-mid);
+}
+
 /* xterm accessibility textarea — must stay hidden */
 textarea.xterm-helper-textarea {
     opacity: 0 !important;
