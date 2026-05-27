@@ -748,26 +748,19 @@ export class ConnectionManager {
 
     async sendCommand(line) {
         if (this.type === 'webserial') {
-            console.log(`CM sendCommand: WEBSERIAL line="${line}"`);
             await this.webSerial.sendCommand(line);
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
-            console.log(`CM sendCommand: WEBSOCKET line="${line}"`);
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
-            console.log(`CM sendCommand: TELNET line="${line}"`);
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
         } else if (this.isCordova && window.serial) {
-            console.log(`CM sendCommand: CORDOVA line="${line}"`);
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
         } else if (this.backendWs) {
-            console.log(`CM sendCommand: BACKEND type=${this.type} line="${line}"`);
             await this.flowControl.sendCommand(line);
             this.emit('sent', line);
-        } else {
-            console.warn(`CM sendCommand: NO MATCH type=${this.type} hasDirect=${!!this.directWs} wsReady=${this.directWs?.readyState} hasBackend=${!!this.backendWs} line="${line}"`);
         }
     }
 

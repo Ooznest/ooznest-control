@@ -19,10 +19,7 @@ export class GrblFlowControl {
     }
 
     canSend(line) {
-        const bs = this.bufferSpace();
-        const ok = line.length < bs;
-        console.log(`fc canSend len=${line.length} bs=${bs} bufLen=${this.sentBuffer.length} ok=${ok}`);
-        return ok;
+        return line.length < this.bufferSpace();
     }
 
     isDrained() {
@@ -32,25 +29,20 @@ export class GrblFlowControl {
     sendCommand(line) {
         const bytes = this.encoder.encode(line + '\n');
         this.sentBuffer.push(line);
-        const totalChars = this.sentBuffer.reduce((s,l)=>s+l.length,0);
-        console.log(`fc sendCommand line="${line}" bufLen=${this.sentBuffer.length} totalChars=${totalChars}`);
         try {
             this.transport.writeRaw(bytes);
         } catch (e) {
-            console.error(`fc ERROR in writeRaw:`, e);
+            console.error('GrblFlowControl: writeRaw error:', e);
         }
     }
 
     processLine(line) {
         if (line === 'ok' || line.startsWith('error:') || line.startsWith('alarm:')) {
             if (this.sentBuffer.length === 0) {
-                console.warn(`fc processLine underflow: line="${line}" bufLen=0`);
+                console.warn(`fc underflow: line="${line}" bufLen=0`);
                 return;
             }
-            const removed = this.sentBuffer.shift();
-            if (line.startsWith('error:')) {
-                console.warn(`fc processLine ERROR: line="${line}" removed="${removed}" bufLen=${this.sentBuffer.length}`);
-            }
+            this.sentBuffer.shift();
         }
     }
 }

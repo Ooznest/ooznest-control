@@ -137,7 +137,8 @@ class JobController {
     advanceGCodeStream() {
         if (!this.gcodeStreamer.active || this.gcodeStreamer.paused) return;
 
-        const flow = window.ws?.flowControl;
+        const ws = window.ws;
+        const flow = ws?.type === 'webserial' ? ws?.webSerial : ws?.flowControl;
         if (!flow) {
             console.warn("advanceGCodeStream: flow is undefined — sending without limit!");
         }
@@ -147,12 +148,7 @@ class JobController {
             const line = this.gcodeStreamer.lines[this.gcodeStreamer.index];
             const canSend = flow ? flow.canSend(line) : false;
             if (flow && !canSend) break;
-            if (!flow) {
-                console.warn("advanceGCodeStream: SENDING without flow control:", line);
-                window.ws.sendCommand(line);
-            } else {
-                window.ws.sendCommand(line);
-            }
+            ws.sendCommand(line);
             this.gcodeStreamer.index++;
             sentAny = true;
         }
@@ -179,7 +175,8 @@ class JobController {
      */
     _checkStreamComplete() {
         if (this.gcodeStreamer.index < this.gcodeStreamer.lines.length) return;
-        const flow = window.ws?.flowControl;
+        const ws = window.ws;
+        const flow = ws?.type === 'webserial' ? ws?.webSerial : ws?.flowControl;
         if (!flow || flow.isDrained()) {
             this.finishGCodeStream();
         }
