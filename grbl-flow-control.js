@@ -19,7 +19,10 @@ export class GrblFlowControl {
     }
 
     canSend(line) {
-        return line.length < this.bufferSpace();
+        const bs = this.bufferSpace();
+        const ok = line.length < bs;
+        console.log(`fc canSend len=${line.length} bs=${bs} bufLen=${this.sentBuffer.length} ok=${ok}`);
+        return ok;
     }
 
     isDrained() {
@@ -29,6 +32,7 @@ export class GrblFlowControl {
     sendCommand(line) {
         const bytes = this.encoder.encode(line + '\n');
         this.sentBuffer.push(line);
+        console.log(`fc sendCommand line="${line}" bufLen=${this.sentBuffer.length} totalChars=${this.sentBuffer.reduce((s,l)=>s+l.length,0)}`);
         this.transport.writeRaw(bytes);
     }
 

@@ -138,12 +138,21 @@ class JobController {
         if (!this.gcodeStreamer.active || this.gcodeStreamer.paused) return;
 
         const flow = window.ws?.flowControl;
+        if (!flow) {
+            console.warn("advanceGCodeStream: flow is undefined — sending without limit!");
+        }
         let sentAny = false;
 
         while (this.gcodeStreamer.index < this.gcodeStreamer.lines.length) {
             const line = this.gcodeStreamer.lines[this.gcodeStreamer.index];
-            if (flow && !flow.canSend(line)) break;
-            window.ws.sendCommand(line);
+            const canSend = flow ? flow.canSend(line) : false;
+            if (flow && !canSend) break;
+            if (!flow) {
+                console.warn("advanceGCodeStream: SENDING without flow control:", line);
+                window.ws.sendCommand(line);
+            } else {
+                window.ws.sendCommand(line);
+            }
             this.gcodeStreamer.index++;
             sentAny = true;
         }
