@@ -13,6 +13,8 @@ export class ConnectionManager {
         this.httpBaseUrl = null;
         this._scanning = false;
         this._cordovaTelnetSocketId = null;
+        // Direct connection mode — skip the connect modal entirely
+        this._isDirectMode = !this.isElectron && !this.isCordova;
 
         this.listeners = {
             connect: [],
@@ -68,6 +70,8 @@ export class ConnectionManager {
             this.btnConnect.onclick = () => {
                 if (this.isConnected) {
                     this.disconnect();
+                } else if (this._isDirectMode) {
+                    this.connect();
                 } else {
                     this.toggleModal();
                 }
@@ -87,6 +91,7 @@ export class ConnectionManager {
             console.log("Cordova deviceready fired!");
             this.isCordova = true;
             this.hasBackend = true;
+            this._isDirectMode = false;
             this.initCordova();
 
             const usbTab = document.getElementById('tab-usb');
@@ -136,6 +141,8 @@ export class ConnectionManager {
                     wsUrlInput.value = `ws://${window.location.hostname}:81/ws`; // Assuming default networking plugin port
                 }
                 this.httpBaseUrl = window.location.origin;
+                // Auto-connect in SD card mode
+                setTimeout(() => this.connect(), 500);
             } else {
                 this.setConnectionType('webserial');
             }
@@ -170,6 +177,8 @@ export class ConnectionManager {
 
     toggleModal() {
         if (!this.modal) return;
+        // In direct mode only allow closing, never opening the modal
+        if (this._isDirectMode && this.modal.classList.contains('hidden')) return;
         this.modal.classList.toggle('hidden');
 
         // If showing USB tab and in Electron, refresh ports
