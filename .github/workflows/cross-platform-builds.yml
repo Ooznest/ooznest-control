@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Setup Node.js
-        uses: actions/setup-node@v6.4
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: '20'
       - name: Bump Version
@@ -58,7 +58,7 @@ jobs:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6.4
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: '20'
           
@@ -99,7 +99,7 @@ jobs:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6.4
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: '20'
           
@@ -140,7 +140,7 @@ jobs:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6.4
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: '20'
           
@@ -171,7 +171,7 @@ jobs:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6.4
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: '20'
           
@@ -202,7 +202,7 @@ jobs:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6.4
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: '20'
           
@@ -233,7 +233,7 @@ jobs:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6.4
+        uses: actions/setup-node@v6.4.0
         with:
           node-version: '20'
           
