@@ -275,8 +275,7 @@
                             </div>
                         </div>
                         <div class="col-span-3 flex gap-1">
-                            <button class="dro-sub-btn !bg-primary !text-black !border-primary hover:!bg-primary-dark"
-                                onclick="window.dro.home()" aria-label="Home all axes">
+                            <button class="dro-sub-btn px-1 flex-col" onclick="window.dro.home()" aria-label="Home all axes">
                                 <i class="bi bi-house-door-fill"></i> <span class="hidden md:inline">HOME</span>
                             </button>
                             <button class="dro-sub-btn px-1" onclick="window.dro.setZero('XYZ')">
@@ -303,12 +302,12 @@
                             </div>
                             <div class="flex gap-1 items-center">
                                 <button onclick="sendRealtime('\x9B')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold">-</button>
+                                    class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold">-</button>
                                 <span id="spindle-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
                                 <button onclick="sendRealtime('\x9A')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold">+</button>
+                                    class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold">+</button>
                                 <button onclick="sendRealtime('\x99')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Reset to 100%">RST</button>
                             </div>
                         </div>
@@ -319,12 +318,12 @@
                             </div>
                             <div class="flex gap-1 items-center">
                                 <button onclick="sendRealtime('\x92')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold">-</button>
+                                    class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold">-</button>
                                 <span id="feed-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
                                 <button onclick="sendRealtime('\x91')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold">+</button>
+                                    class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold">+</button>
                                 <button onclick="sendRealtime('\x90')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Reset to 100%">RST</button>
                             </div>
                         </div>
@@ -336,13 +335,13 @@
                             <div class="flex gap-1 items-center">
                                 <span id="rapid-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
                                 <button onclick="sendRealtime('\x97')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Set to 25%">25</button>
                                 <button onclick="sendRealtime('\x96')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Set to 50%">50</button>
                                 <button onclick="sendRealtime('\x95')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-white/20 hover:bg-white/40 !text-white transition-colors font-bold text-[8px]"
+                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px]"
                                     title="Set to 100%">100</button>
                             </div>
                         </div>

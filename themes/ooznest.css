@@ -802,7 +802,7 @@ select {
     background: white !important;
     border: none !important;
     border-radius: 4px;
-    color: var(--oz-primary) !important;
+    color: var(--oz-grey-dark) !important;
     font-size: 10px;
     font-weight: 800;
     text-transform: uppercase;
@@ -833,7 +833,6 @@ select {
 .dro-sub-btn.\!bg-primary,
 .dro-panel .bg-primary {
     background: white !important;
-    color: var(--oz-teal-brand) !important;
     border-color: white !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
@@ -1581,9 +1580,14 @@ textarea.xterm-helper-textarea {
     width: 100% !important;
     height: 100% !important;
     scrollbar-gutter: stable;
-    position: relative; /* Base for absolute overlay */
+    position: relative;
     display: flex;
     flex-direction: column;
+}
+
+/* Override Tailwind v4 @layer utilities cascade layer issue for tab-pane only */
+.tab-pane.hidden {
+    display: none !important;
 }
 
 
