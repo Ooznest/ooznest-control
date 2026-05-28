@@ -10,9 +10,6 @@
     <link rel="icon" href="./favicon-32x32.png" sizes="32x32">
     <link rel="icon" href="./favicon-16x16.png" sizes="16x16">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-    <!-- Preconnect to CDN origins -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <!-- Themes -->
     <link id="theme-stylesheet" rel="stylesheet" href="themes/ooznest.css">
     <!-- Vendor fonts & icons (was @import, now <link> for faster parallel load) -->
@@ -33,62 +30,12 @@
         } catch (e) { console.error("Theme Init:", e); }
     </script>
 
-    <!-- Tailwind CSS (local vendor copy for offline use) -->
-    <script src="vendor/tailwind.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            DEFAULT: 'var(--color-primary, #449D9F)',
-                            dark: 'var(--color-primary-dark, #004C5B)',
-                            light: 'var(--color-primary-light, #6DBCBE)'
-                        },
-                        secondary: {
-                            DEFAULT: 'var(--color-secondary, #FF6600)',
-                            dark: 'var(--color-secondary-dark, #E05500)',
-                            light: 'var(--color-secondary-light, #FF8533)'
-                        },
-                        grey: {
-                            dark: 'var(--color-grey-dark, #2F373C)',
-                            DEFAULT: 'var(--color-grey, #909090)',
-                            light: 'var(--color-grey-light, #EBEFEF)',
-                            bg: 'var(--color-bg, #F0F4F4)'
-                        },
-                        surface: 'var(--color-surface, #FFFFFF)',
-                        // CNC Standard Axis Colors
-                        axis: {
-                            x: 'var(--color-axis-x, #e11d48)',
-                            y: 'var(--color-axis-y, #16a34a)',
-                            z: 'var(--color-axis-z, #2563eb)',
-                            a: 'var(--color-axis-a, #ea580c)'
-                        }
-                    },
-                    fontFamily: {
-                        heading: ['Nunito', 'Inter', 'sans-serif'],
-                        body: ['Nunito', 'Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace']
-                    },
-                    boxShadow: {
-                        'soft': '0 4px 20px rgba(0, 76, 91, 0.08)',
-                        'card': '0 2px 12px rgba(0, 76, 91, 0.06)'
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Pre-built Tailwind CSS (static, no runtime) -->
+    <link rel="stylesheet" href="vendor/tailwind.css">
 
-    <style type="text/tailwindcss">
-        /* Tailwind utility layer only — component styling is in themes/ooznest.css */
-        @layer utilities {
-            .no-scrollbar::-webkit-scrollbar { display: none; }
-            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        }
-
+    <style>
         .xterm-viewport { overflow-y: auto !important; }
 
-        /* Hide xterm internal accessibility textarea - Tailwind preflight was making it visible */
         textarea.xterm-helper-textarea {
             opacity: 0 !important;
             border: none !important;
@@ -105,14 +52,10 @@
             pointer-events: none !important;
         }
 
-
-
-        /* Improve xterm selection visibility */
         .xterm .xterm-selection div {
-            background-color: rgba(255, 255, 0, 0.5) !important; /* Bright yellow highlight */
+            background-color: rgba(255, 255, 0, 0.5) !important;
         }
 
-        /* Custom OS Window Drag Area and Controls */
         .window-drag-region {
             -webkit-app-region: drag !important;
             user-select: none !important;
@@ -125,7 +68,6 @@
             z-index: 10000;
         }
 
-        /* Ensure smooth rendering for the viewer */
         #viewer-view canvas {
             outline: none;
         }

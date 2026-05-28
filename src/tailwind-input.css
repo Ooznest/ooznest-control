@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--color-primary, #449D9F);
+  --color-primary-dark: var(--color-primary-dark, #004C5B);
+  --color-primary-light: var(--color-primary-light, #6DBCBE);
+
+  --color-secondary: var(--color-secondary, #FF6600);
+  --color-secondary-dark: var(--color-secondary-dark, #E05500);
+  --color-secondary-light: var(--color-secondary-light, #FF8533);
+
+  --color-grey-dark: var(--color-grey-dark, #2F373C);
+  --color-grey: var(--color-grey, #909090);
+  --color-grey-light: var(--color-grey-light, #EBEFEF);
+  --color-grey-bg: var(--color-bg, #F0F4F4);
+
+  --color-surface: var(--color-surface, #FFFFFF);
+
+  --color-axis-x: var(--color-axis-x, #e11d48);
+  --color-axis-y: var(--color-axis-y, #16a34a);
+  --color-axis-z: var(--color-axis-z, #2563eb);
+  --color-axis-a: var(--color-axis-a, #ea580c);
+
+  --font-family-heading: Nunito, Inter, sans-serif;
+  --font-family-body: Nunito, Inter, sans-serif;
+  --font-family-mono: JetBrains Mono, monospace;
+
+  --shadow-soft: 0 4px 20px rgba(0, 76, 91, 0.08);
+  --shadow-card: 0 2px 12px rgba(0, 76, 91, 0.06);
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
