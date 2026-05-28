@@ -12,11 +12,13 @@
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
     <!-- Themes -->
     <link id="theme-stylesheet" rel="stylesheet" href="themes/ooznest.css">
-    <!-- Vendor fonts & icons (was @import, now <link> for faster parallel load) -->
-    <link rel="stylesheet" href="vendor/google-fonts.css">
-    <link rel="stylesheet" href="vendor/bootstrap-icons.css">
+    <!-- Vendor fonts & icons (deferred — not critical for first paint) -->
+    <link rel="stylesheet" href="vendor/google-fonts.css" media="print" onload="this.media='all'; this.onload=null">
+    <link rel="stylesheet" href="vendor/bootstrap-icons.css" media="print" onload="this.media='all'; this.onload=null">
+    <noscript><link rel="stylesheet" href="vendor/google-fonts.css"><link rel="stylesheet" href="vendor/bootstrap-icons.css"></noscript>
     <!-- xterm CSS (local vendor copy) -->
-    <link rel="stylesheet" href="vendor/xterm.css">
+    <link rel="stylesheet" href="vendor/xterm.css" media="print" onload="this.media='all'; this.onload=null">
+    <noscript><link rel="stylesheet" href="vendor/xterm.css"></noscript>
     <script>
         // Synchronously apply saved theme to prevent FOUC (Flash of Unstyled Content)
         try {
@@ -30,8 +32,9 @@
         } catch (e) { console.error("Theme Init:", e); }
     </script>
 
-    <!-- Pre-built Tailwind CSS (static, no runtime) -->
-    <link rel="stylesheet" href="vendor/tailwind.css">
+    <!-- Pre-built Tailwind CSS (static, no runtime, deferred) -->
+    <link rel="stylesheet" href="vendor/tailwind.css" media="print" onload="this.media='all'; this.onload=null">
+    <noscript><link rel="stylesheet" href="vendor/tailwind.css"></noscript>
 
     <style>
         .xterm-viewport { overflow-y: auto !important; }
@@ -273,7 +276,7 @@
                         </div>
                         <div class="col-span-3 flex gap-1">
                             <button class="dro-sub-btn !bg-primary !text-black !border-primary hover:!bg-primary-dark"
-                                onclick="window.dro.home()">
+                                onclick="window.dro.home()" aria-label="Home all axes">
                                 <i class="bi bi-house-door-fill"></i> <span class="hidden md:inline">HOME</span>
                             </button>
                             <button class="dro-sub-btn px-1" onclick="window.dro.setZero('XYZ')">
@@ -771,11 +774,11 @@
                             <div
                                 class="min-h-[3rem] h-auto bg-white border-b border-grey-light flex items-center justify-between px-4 py-2 shrink-0 shadow-sm z-10">
                                 <div class="flex items-center gap-2 overflow-hidden">
-                                    <h3
+                                    <h2
                                         class="text-xs md:text-sm font-bold text-secondary-dark uppercase tracking-wider flex items-center gap-1 shrink-0">
                                         <i class="bi bi-code-square"></i> <span class="hidden sm:inline">G-Code
                                             Editor</span>
-                                    </h3>
+                                    </h2>
                                     <span id="editor-file-name"
                                         class="text-[10px] md:text-xs text-grey italic truncate ml-1 md:ml-2">No file
                                         loaded</span>
@@ -870,19 +873,23 @@
                                             Tool & Speeds</h3>
                                         <div class="grid grid-cols-2 gap-4">
                                             <div><label
-                                                    class="text-[11px] font-bold text-secondary-dark block mb-1">Tool
+                                                    class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    for="surf-tool">Tool
                                                     Diameter (mm)</label><input type="number" id="surf-tool"
                                                     class="input-field font-mono text-sm"></div>
                                             <div><label
-                                                    class="text-[11px] font-bold text-secondary-dark block mb-1">Stepover
+                                                    class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    for="surf-stepover">Stepover
                                                     (%)</label><input type="number" id="surf-stepover"
                                                     class="input-field font-mono text-sm"></div>
                                             <div><label
-                                                    class="text-[11px] font-bold text-secondary-dark block mb-1">Feed
+                                                    class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    for="surf-feed">Feed
                                                     Rate (mm/min)</label><input type="number" id="surf-feed"
                                                     class="input-field font-mono text-sm"></div>
                                             <div><label
-                                                    class="text-[11px] font-bold text-secondary-dark block mb-1">Spindle
+                                                    class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    for="surf-rpm">Spindle
                                                     RPM</label><input type="number" id="surf-rpm"
                                                     class="input-field font-mono text-sm"></div>
                                         </div>
@@ -910,16 +917,19 @@
                                         <div id="surf-dim-fields"
                                             class="grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
                                             <div><label
-                                                    class="text-[11px] font-bold text-secondary-dark block mb-1">Width
+                                                    class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    for="surf-x">Width
                                                     (X)</label><input type="number" id="surf-x"
                                                     class="input-field font-mono text-sm"></div>
                                             <div><label
-                                                    class="text-[11px] font-bold text-secondary-dark block mb-1">Height
+                                                    class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    for="surf-y">Height
                                                     (Y)</label><input type="number" id="surf-y"
                                                     class="input-field font-mono text-sm"></div>
                                         </div>
                                         <div>
-                                            <label class="text-[11px] font-bold text-secondary-dark block mb-1">Cutting
+                                            <label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                for="surf-dir">Cutting
                                                 Direction</label>
                                             <select id="surf-dir" class="input-field text-sm">
                                                 <option value="X">Along X-Axis</option>
@@ -939,15 +949,18 @@
                                     <div class="space-y-3">
                                         <div class="grid grid-cols-2 gap-4">
                                             <div><label
-                                                    class="text-[11px] font-bold text-secondary-dark block mb-1">Depth
+                                                    class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    for="surf-z-step">Depth
                                                     per Pass (mm)</label><input type="number" id="surf-z-step"
                                                     class="input-field font-mono text-sm"></div>
                                             <div><label
-                                                    class="text-[11px] font-bold text-secondary-dark block mb-1">Final
+                                                    class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    for="surf-z-final">Final
                                                     Depth (mm)</label><input type="number" id="surf-z-final"
                                                     class="input-field font-mono text-sm"></div>
                                         </div>
-                                        <div><label class="text-[11px] font-bold text-secondary-dark block mb-1">Safe Z
+                                        <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                for="surf-z-safe">Safe Z
                                                 Clearance (mm)</label><input type="number" id="surf-z-safe"
                                                 class="input-field font-mono text-sm"></div>
                                     </div>
@@ -962,7 +975,7 @@
                                         class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light mb-2">
                                         <span class="text-xs font-bold text-secondary-dark">Use Coolant (M8)?</span>
                                         <label class="inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" id="surf-coolant" class="sr-only peer">
+                                            <input type="checkbox" id="surf-coolant" class="sr-only peer" aria-label="Use coolant">
                                             <div
                                                 class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary">
                                             </div>
@@ -973,7 +986,7 @@
                                         class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
                                         <span class="text-xs font-bold text-secondary-dark">Add Framing Pass?</span>
                                         <label class="inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" id="surf-framing" class="sr-only peer">
+                                            <input type="checkbox" id="surf-framing" class="sr-only peer" aria-label="Add framing pass">
                                             <div
                                                 class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary">
                                             </div>
@@ -1639,7 +1652,8 @@
                                                 <span class="text-xs font-bold text-secondary-dark">Touch Plate?</span>
                                                 <label class="inline-flex items-center cursor-pointer">
                                                     <input type="checkbox" id="prb-use-plate-main" class="sr-only peer"
-                                                        onchange="window.probeHandler.saveSettings()">
+                                                        onchange="window.probeHandler.saveSettings()"
+                                                        aria-label="Touch plate">
                                                     <div
                                                         class="relative w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-primary">
                                                     </div>
@@ -1647,18 +1661,21 @@
                                             </div>
 
                                             <!-- Basic Params -->
-                                            <div><label class="text-[10px] font-bold text-grey block mb-1">Probe
+                                            <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-tool">Probe
                                                     Diameter</label>
                                                 <input type="number" id="prb-tool"
                                                     class="input-field font-mono text-xs h-8" step="0.01">
                                             </div>
-                                            <div><label class="text-[10px] font-bold text-grey block mb-1">Plate
+                                            <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-z-thick">Plate
                                                     Thickness
                                                     (Z)</label>
                                                 <input type="number" id="prb-z-thick"
                                                     class="input-field font-mono text-xs h-8" step="0.01">
                                             </div>
-                                            <div><label class="text-[10px] font-bold text-grey block mb-1">Plate Offset
+                                            <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-xy-offset">Plate Offset
                                                     (XY)</label>
                                                 <input type="number" id="prb-xy-offset"
                                                     class="input-field font-mono text-xs h-8" step="0.01">
@@ -1668,35 +1685,41 @@
 
                                             <!-- Speeds -->
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div><label class="text-[10px] font-bold text-grey block mb-1">Fast
+                                                <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                        for="prb-feed">Fast
                                                         Feed</label>
                                                     <input type="number" id="prb-feed"
                                                         class="input-field font-mono text-xs h-8">
                                                 </div>
-                                                <div><label class="text-[10px] font-bold text-grey block mb-1">Latch
+                                                <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                        for="prb-feed-latch">Latch
                                                         Feed</label>
                                                     <input type="number" id="prb-feed-latch"
                                                         class="input-field font-mono text-xs h-8">
                                                 </div>
                                             </div>
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div><label class="text-[10px] font-bold text-grey block mb-1">Max
+                                                <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                        for="prb-dist">Max
                                                         Dist</label>
                                                     <input type="number" id="prb-dist"
                                                         class="input-field font-mono text-xs h-8">
                                                 </div>
                                                 <div><label
-                                                        class="text-[10px] font-bold text-grey block mb-1">Retract</label>
+                                                        class="text-[10px] font-bold text-grey block mb-1"
+                                                        for="prb-retract">Retract</label>
                                                     <input type="number" id="prb-retract"
                                                         class="input-field font-mono text-xs h-8">
                                                 </div>
                                             </div>
-                                            <div><label class="text-[10px] font-bold text-grey block mb-1">XY
+                                            <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-edge-dist">XY
                                                     Clearance</label>
                                                 <input type="number" id="prb-edge-dist"
                                                     class="input-field font-mono text-xs h-8">
                                             </div>
-                                            <div><label class="text-[10px] font-bold text-grey block mb-1">Z Depth
+                                            <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-z-depth">Z Depth
                                                     (Edges)</label>
                                                 <input type="number" id="prb-z-depth"
                                                     class="input-field font-mono text-xs h-8">
@@ -1842,19 +1865,23 @@
                                                         <button
                                                             class="corner-sel-btn rounded-tl bg-grey-bg border border-grey-light hover:bg-primary h-full"
                                                             data-corner="RL"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'RL')"></button>
+                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'RL')"
+                                                            aria-label="Rear-left outside corner"></button>
                                                         <button
                                                             class="corner-sel-btn rounded-tr bg-grey-bg border border-grey-light hover:bg-primary h-full"
                                                             data-corner="RR"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'RR')"></button>
+                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'RR')"
+                                                            aria-label="Rear-right outside corner"></button>
                                                         <button
                                                             class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 ring-2 ring-primary/30 h-full"
                                                             data-corner="FL"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'FL')"></button>
+                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'FL')"
+                                                            aria-label="Front-left outside corner"></button>
                                                         <button
                                                             class="corner-sel-btn rounded-br bg-grey-bg border border-grey-light hover:bg-primary h-full"
                                                             data-corner="FR"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"></button>
+                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"
+                                                            aria-label="Front-right outside corner"></button>
                                                     </div>
                                                     <button class="btn btn-primary flex-1 h-auto"
                                                         onclick="window.probeHandler.runCornerProbe('Outside')">Start</button>
@@ -1873,14 +1900,18 @@
                                                     <div
                                                         class="w-24 h-24 grid grid-cols-2 gap-1 flex-shrink-0 p-1 bg-grey-light rounded-lg">
                                                         <button class="corner-sel-btn rounded-tl bg-white h-full"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'RL')"></button>
+                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'RL')"
+                                                            aria-label="Rear-left inside corner"></button>
                                                         <button class="corner-sel-btn rounded-tr bg-white h-full"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'RR')"></button>
+                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'RR')"
+                                                            aria-label="Rear-right inside corner"></button>
                                                         <button
                                                             class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 h-full"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'FL')"></button>
+                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'FL')"
+                                                            aria-label="Front-left inside corner"></button>
                                                         <button class="corner-sel-btn rounded-br bg-white h-full"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'FR')"></button>
+                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'FR')"
+                                                            aria-label="Front-right inside corner"></button>
                                                     </div>
                                                     <button class="btn btn-secondary flex-1 h-auto"
                                                         onclick="window.probeHandler.runCornerProbe('Inside')">Start</button>
