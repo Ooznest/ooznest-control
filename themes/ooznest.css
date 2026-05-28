@@ -161,22 +161,6 @@ select {
     }
 }
 
-/* Sidebar overlay (mobile) */
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 40;
-    backdrop-filter: blur(4px);
-}
-
-@media (max-width: 767px) {
-    .sidebar-overlay {
-        display: block;
-    }
-}
-
 /* ================================================================
    ELECTRON TITLE BAR
    ================================================================ */

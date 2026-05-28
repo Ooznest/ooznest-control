@@ -469,9 +469,6 @@
 
         </aside>
 
-        <!-- Sidebar Overlay (Unified) -->
-        <div id="machine-sidebar-overlay" class="sidebar-overlay" onclick="toggleMachineSidebar()"></div>
-
         <!-- Main Content -->
         <main class="flex-1 flex flex-col bg-grey-bg relative overflow-hidden h-full">
             <h1 class="sr-only">Ooznest Machine Control</h1>
@@ -489,7 +486,7 @@
                     </button>
 
                     <div class="flex items-center gap-2 pl-1 md:pl-8 border-r border-grey h-full pr-1">
-                        <img src="themes/ooznest-logo.png" alt="Ooznest" id="app-logo" class="h-8 md:h-12" fetchpriority="high">
+                        <img src="themes/ooznest-logo.png" alt="Ooznest" id="app-logo" class="h-6 md:h-3" fetchpriority="high">
                         <!-- Hidden elements kept for JS compatibility -->
                         <div id="connection-dot" class="hidden"></div>
                         <span id="connection-text" class="hidden"></span>
@@ -2701,9 +2698,7 @@
 
         function toggleMachineSidebar() {
             const sidebar = document.getElementById('machine-sidebar');
-            const overlay = document.getElementById('machine-sidebar-overlay');
             if (sidebar) sidebar.classList.toggle('open');
-            if (overlay) overlay.classList.toggle('hidden');
         }
 
         // New function to scroll the tabs
