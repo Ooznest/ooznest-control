@@ -1,6 +1,6 @@
 {
   "name": "ooznest-control",
-  "version": "1.0.75",
+  "version": "1.0.76",
   "description": "grblHAL Web interface with WebSerial and Electron support",
   "main": "main.js",
   "scripts": {
