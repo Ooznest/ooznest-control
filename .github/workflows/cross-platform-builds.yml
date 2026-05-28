@@ -18,11 +18,11 @@ jobs:
       new_version: ${{ steps.bump.outputs.version }}
       changelog: ${{ steps.changelog.outputs.msg }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.4
         with:
           node-version: '20'
       - name: Bump Version
@@ -53,17 +53,17 @@ jobs:
     needs: bump-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.4
         with:
           node-version: '20'
           
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5.2.0
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -84,7 +84,7 @@ jobs:
           mv platforms/android/app/build/outputs/apk/debug/app-debug.apk platforms/android/app/build/outputs/apk/debug/ooznest-control-${VERSION}-Android.apk || true
           
       - name: Upload Android APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: Ooznest-Android-APK
           path: cordova/platforms/android/app/build/outputs/apk/debug/*.apk
@@ -94,12 +94,12 @@ jobs:
     needs: bump-version
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.4
         with:
           node-version: '20'
           
@@ -125,7 +125,7 @@ jobs:
           zip -r ooznest-control-${VERSION}-iOS.ipa Payload/
           
       - name: Upload iOS App
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: Ooznest-iOS-IPA
           path: cordova/*.ipa
@@ -135,12 +135,12 @@ jobs:
     needs: bump-version
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.4
         with:
           node-version: '20'
           
@@ -153,7 +153,7 @@ jobs:
         run: npm run build-windows
         
       - name: Upload Windows Exe
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: Ooznest-Windows-App
           path: |
@@ -166,12 +166,12 @@ jobs:
     needs: bump-version
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.4
         with:
           node-version: '20'
           
@@ -184,7 +184,7 @@ jobs:
         run: npm run build-macos
         
       - name: Upload macOS DMG
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: Ooznest-macOS-App
           path: |
@@ -197,12 +197,12 @@ jobs:
     needs: bump-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.4
         with:
           node-version: '20'
           
@@ -215,7 +215,7 @@ jobs:
         run: npm run build-linux
         
       - name: Upload Linux AppImage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: Ooznest-Linux-App
           path: |
@@ -228,12 +228,12 @@ jobs:
     needs: bump-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           ref: ${{ needs.bump-version.outputs.new_version }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.4
         with:
           node-version: '20'
           
@@ -248,7 +248,7 @@ jobs:
           zip -r ../ooznest-control-${VERSION}-SDCard.zip index.html.gz
         
       - name: Upload SD Card Payload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: Ooznest-SD-WebUI
           path: ooznest-control-*-SDCard.zip
@@ -259,11 +259,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
           path: output-artifacts
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3.0.0
         with:
           tag_name: ${{ needs.bump-version.outputs.new_version }}
           name: Release ${{ needs.bump-version.outputs.new_version }}
