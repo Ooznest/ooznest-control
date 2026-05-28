@@ -567,8 +567,6 @@
                     <button class="tab-btn" data-tab="surfacing-view" onclick="switchTab('surfacing-view', this)">Surfacing</button>
                     <button class="tab-btn" data-tab="tools-view" onclick="switchTab('tools-view', this)">
                         Tools
-                        <span id="tools-badge"
-                            class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
                     </button>
                     <button class="tab-btn" data-tab="sd-view" onclick="switchTab('sd-view', this)">
                         SD Card
@@ -1157,6 +1155,8 @@
                                     class="px-6 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-table', this)">
                                     Tool Table
+                                    <span id="tools-badge"
+                                        class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
                                 </button>
                                 <button
                                     class="px-6 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"

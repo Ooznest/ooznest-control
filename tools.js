@@ -145,8 +145,8 @@ export class ToolsHandler {
 
     renderTable() {
         const tbody = document.getElementById('tool-table-body');
-        const badge = document.getElementById('tool-count-badge');
-        const navBadge = document.getElementById('tools-badge');
+        const badge = document.getElementById('tools-badge');
+        const libBadge = document.getElementById('tool-count-badge');
 
         if (!tbody) return;
 
@@ -154,10 +154,7 @@ export class ToolsHandler {
         const ids = Object.keys(this.tools).map(Number).sort((a, b) => a - b);
 
         if (badge) badge.textContent = ids.length;
-        if (navBadge) {
-            navBadge.textContent = ids.length;
-            if (ids.length > 0) navBadge.classList.remove('hidden');
-        }
+        if (libBadge) libBadge.textContent = ids.length;
 
         if (ids.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-grey italic">No defined tools found.<br><span class="text-[10px]">Ensure N_TOOLS > 0 in grblHAL config.</span></td></tr>';

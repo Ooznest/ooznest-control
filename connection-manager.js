@@ -97,9 +97,11 @@ export class ConnectionManager {
             const usbTab = document.getElementById('tab-usb');
             const telnetTab = document.getElementById('tab-telnet');
             const wsTab = document.getElementById('tab-websocket');
+            const wsSerialTab = document.getElementById('tab-webserial');
             if (usbTab) usbTab.classList.remove('hidden');
             if (telnetTab) telnetTab.classList.remove('hidden');
             if (wsTab) wsTab.classList.add('hidden');
+            if (wsSerialTab) wsSerialTab.classList.add('hidden');
 
             this.setConnectionType('telnet');
 
@@ -124,6 +126,13 @@ export class ConnectionManager {
             const tb = document.getElementById('electron-title-bar');
             if (tb) tb.classList.remove('hidden');
             this.setConnectionType('usb');
+        }
+
+        if (this.isElectron || this.isCordova) {
+            const wsSerialTab = document.getElementById('tab-webserial');
+            const wsTab = document.getElementById('tab-websocket');
+            if (wsSerialTab) wsSerialTab.classList.add('hidden');
+            if (wsTab) wsTab.classList.add('hidden');
         }
 
         if (!this.hasBackend) {
@@ -178,7 +187,7 @@ export class ConnectionManager {
             this.refreshNodePorts();
         }
 
-        // Auto-hide Node/Telnet tabs if no backend detected
+        // Auto-hide connection tabs that don't apply to current platform
         if (!this.hasBackend) {
             const usbTab = document.getElementById('tab-usb');
             const telnetTab = document.getElementById('tab-telnet');
@@ -187,8 +196,14 @@ export class ConnectionManager {
             if (this.type !== 'websocket') {
                 this.setConnectionType('webserial');
             }
-        } else if (this.isElectron) {
-            // Show title bar in Electron
+        } else if (this.isElectron || this.isCordova) {
+            const wsSerialTab = document.getElementById('tab-webserial');
+            const wsTab = document.getElementById('tab-websocket');
+            if (wsSerialTab) wsSerialTab.classList.add('hidden');
+            if (wsTab) wsTab.classList.add('hidden');
+        }
+
+        if (this.isElectron) {
             const tb = document.getElementById('electron-title-bar');
             if (tb) tb.classList.remove('hidden');
         }
@@ -449,6 +464,15 @@ export class ConnectionManager {
                         }
                     }
                 }
+                break;
+            case 'scanTelnetProgress':
+                const pctEl = document.getElementById('discover-status');
+                if (pctEl) pctEl.textContent = `Scanning network... ${msg.percent}%`;
+                break;
+            case 'scanTelnetResult':
+                const portInput2 = document.getElementById('port-telnet');
+                const port2 = parseInt(portInput2?.value) || 23;
+                this._handleScanResult(msg.devices || [], port2);
                 break;
             case 'error':
                 this.emit('error', new Error(msg.message));
@@ -1017,7 +1041,6 @@ export class ConnectionManager {
     // --- Cordova Telnet auto-discovery ---
 
     async scanTelnetNetwork() {
-        if (!this.isCordova || !this.CordovaSocket) return;
         const statusEl = document.getElementById('discover-status');
         const list = document.getElementById('discovered-list');
         const container = document.getElementById('discovered-devices');
@@ -1032,8 +1055,25 @@ export class ConnectionManager {
         if (container) container.classList.add('hidden');
         if (list) list.innerHTML = '';
 
-        const devices = await this._discoverTelnetDevices(port);
+        if (this.isCordova && this.CordovaSocket) {
+            const devices = await this._discoverTelnetDevices(port);
+            this._handleScanResult(devices, port);
+        } else if (this.isElectron && this.backendWs) {
+            if (statusEl) statusEl.textContent = 'Scanning network...';
+            this.backendWs.send(JSON.stringify({ type: 'scanTelnet', port }));
+        } else {
+            if (statusEl) {
+                statusEl.classList.remove('hidden', 'animate-pulse');
+                statusEl.textContent = 'Telnet scanning unavailable on this platform';
+                setTimeout(() => { statusEl.classList.add('hidden', 'animate-pulse'); }, 3000);
+            }
+            if (btn) btn.disabled = false;
+        }
+    }
 
+    _handleScanResult(devices, port) {
+        const statusEl = document.getElementById('discover-status');
+        const btn = document.getElementById('btn-scan-telnet');
         if (statusEl) statusEl.classList.add('hidden');
         if (btn) btn.disabled = false;
 
@@ -1195,9 +1235,21 @@ export class ConnectionManager {
         this.saveSettings();
         this.modal.classList.add('hidden');
         this._showConnectingStatus(`Auto-connecting to ${ip}:23 (Telnet)...`);
-        this._connectCordovaTelnet(ip, 23).catch(err => {
-            console.error("Telnet auto-connect failed:", err);
-        });
+        if (this.isCordova) {
+            this._connectCordovaTelnet(ip, 23).catch(err => {
+                console.error("Telnet auto-connect failed:", err);
+            });
+        } else {
+            if (!this.backendWs) {
+                this.connectToBackend().then(() => {
+                    this.backendWs.send(JSON.stringify({ type: 'connect', connectionType: 'telnet', ip, port: 23 }));
+                }).catch(err => {
+                    console.error("Telnet auto-connect failed:", err);
+                });
+            } else {
+                this.backendWs.send(JSON.stringify({ type: 'connect', connectionType: 'telnet', ip, port: 23 }));
+            }
+        }
     }
 
     _showDiscoveredDevices(devices) {

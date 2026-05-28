@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const http = require('http');
 const net = require('net');
+const os = require('os');
 const { SerialPort } = require('serialport');
 const { WebSocketServer } = require('ws');
 const { autoUpdater } = require('electron-updater');
@@ -33,7 +34,6 @@ ipcMain.on('window-close', (event) => {
 });
 
 ipcMain.handle('get-network-info', async () => {
-    const os = require('os');
     const interfaces = os.networkInterfaces();
     const results = [];
     for (const name of Object.keys(interfaces)) {
@@ -167,6 +167,16 @@ async function handleMessage(data, ws) {
                 ws.send(JSON.stringify({ type: 'ports', data: ports }));
             } catch (err) {
                 ws.send(JSON.stringify({ type: 'error', message: err.message }));
+            }
+            break;
+
+        case 'scanTelnet':
+            try {
+                const scanPort = data.port || 23;
+                const devices = await scanTelnetNetwork(scanPort, ws);
+                ws.send(JSON.stringify({ type: 'scanTelnetResult', devices }));
+            } catch (err) {
+                ws.send(JSON.stringify({ type: 'scanTelnetResult', devices: [], error: err.message }));
             }
             break;
 
@@ -306,6 +316,87 @@ async function handleMessage(data, ws) {
 server.listen(port, '0.0.0.0', () => {
     console.log(`Internal server running at http://0.0.0.0:${port}`);
 });
+
+// --- Telnet Network Scanning (Electron backend) ---
+
+function _getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return null;
+}
+
+function _checkTelnetPort(ip, port, timeout) {
+    return new Promise((resolve) => {
+        const socket = new net.Socket();
+        socket.setTimeout(timeout);
+        let settled = false;
+        socket.on('connect', () => {
+            let data = '';
+            socket.on('data', (chunk) => {
+                data += chunk.toString();
+                if (data.includes('Grbl') || data.includes('grbl') || data.includes('Ooznest')) {
+                    settled = true;
+                    socket.destroy();
+                    resolve(ip);
+                }
+            });
+            setTimeout(() => {
+                if (!settled) { socket.destroy(); settled = true; resolve(null); }
+            }, 400);
+        });
+        socket.on('error', () => { if (!settled) { socket.destroy(); settled = true; resolve(null); } });
+        socket.on('timeout', () => { if (!settled) { socket.destroy(); settled = true; resolve(null); } });
+        socket.connect(port, ip);
+    });
+}
+
+function _scanSubnet(subnet, port, onProgress) {
+    return new Promise((resolve) => {
+        let found = null;
+        let idx = 0;
+        const next = () => {
+            if (found || idx >= 254) return resolve(found);
+            idx++;
+            if (onProgress) onProgress(idx, 254);
+            _checkTelnetPort(`${subnet}.${idx}`, port, 300).then(ip => {
+                if (ip) { found = ip; resolve(ip); }
+                else setImmediate(next);
+            });
+        };
+        next();
+    });
+}
+
+async function scanTelnetNetwork(port, ws) {
+    port = port || 23;
+    const localIP = _getLocalIP();
+    const subnets = [];
+    if (localIP) {
+        const parts = localIP.split('.');
+        subnets.push(parts.slice(0, 3).join('.'));
+    } else {
+        subnets.push('192.168.0', '192.168.1', '192.168.4', '10.0.0');
+    }
+    const total = subnets.length * 254;
+    let scanned = 0;
+    for (const subnet of subnets) {
+        const found = await _scanSubnet(subnet, port, (done, of) => {
+            scanned++;
+            const pct = Math.min(Math.round((scanned / total) * 100), 99);
+            if (ws && ws.readyState === 1) {
+                ws.send(JSON.stringify({ type: 'scanTelnetProgress', percent: pct }));
+            }
+        });
+        if (found) return [found];
+    }
+    return [];
+}
 
 function createWindow() {
     const mainWindow = new BrowserWindow({

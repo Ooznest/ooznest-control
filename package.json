@@ -35,6 +35,7 @@
   },
   "build": {
     "appId": "com.ooznest.control",
+    "productName": "Ooznest Control",
     "publish": {
       "provider": "github",
       "owner": "Ooznest",

@@ -30,6 +30,18 @@ class ParticleSystem {
     constructor(scene) {
         this.scene = scene;
         this.particles = [];
+        this.chipColors = this._loadChipColors();
+    }
+
+    _loadChipColors() {
+        const s = getComputedStyle(document.body);
+        return [
+            s.getPropertyValue('--oz-primary').trim() || '#FF6600',
+            s.getPropertyValue('--oz-primary-light').trim() || '#FF8533',
+            s.getPropertyValue('--oz-primary-dark').trim() || '#D55700',
+            s.getPropertyValue('--oz-grey-dark').trim() || '#2F373C',
+            s.getPropertyValue('--oz-grey-mid').trim() || '#6B7280',
+        ];
     }
 
     emit(pos, count, type) {
@@ -40,7 +52,8 @@ class ParticleSystem {
     }
 
     createChip(pos) {
-        const mat = new THREE.SpriteMaterial({ color: COLORS.tool }); // Uses theme tool color
+        const hex = this.chipColors[Math.floor(Math.random() * this.chipColors.length)];
+        const mat = new THREE.SpriteMaterial({ color: new THREE.Color(hex) });
         const sprite = new THREE.Sprite(mat);
         sprite.position.copy(pos);
         sprite.scale.set(1.5, 1.5, 1.5);
@@ -57,7 +70,7 @@ class ParticleSystem {
 
     createVapor(pos) {
         const mat = new THREE.SpriteMaterial({
-            color: 0x00aaff,
+            color: 0x0030cc,
             transparent: true,
             opacity: 0.6,
             blending: THREE.AdditiveBlending
