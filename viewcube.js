@@ -51,11 +51,15 @@ export class ViewCube {
         this.mouse = new THREE.Vector2();
 
         // Bind events
-        this.renderer.domElement.addEventListener('click', this.onClick.bind(this));
-        this.renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this));
+        this._boundClick = (e) => this.onClick(e);
+        this._boundMouseMove = (e) => this.onMouseMove(e);
+        this._boundControlsChange = () => this.syncAndRender();
+        this.renderer.domElement.addEventListener('click', this._boundClick);
+        this.renderer.domElement.addEventListener('mousemove', this._boundMouseMove);
+        this.mainControls.addEventListener('change', this._boundControlsChange);
 
-        // Start animation
-        this.animate();
+        // Initial render
+        this.syncAndRender();
     }
 
     createCube() {
@@ -238,6 +242,8 @@ export class ViewCube {
                 }
             }
         }
+
+        this.syncAndRender();
     }
 
     setMainCameraView(view) {
@@ -345,19 +351,14 @@ export class ViewCube {
     }
 
     updateCamera(newCamera, newControls) {
+        this.mainControls.removeEventListener('change', this._boundControlsChange);
         this.mainCamera = newCamera;
         this.mainControls = newControls;
+        this.mainControls.addEventListener('change', this._boundControlsChange);
+        this.syncAndRender();
     }
 
-    animate() {
-        requestAnimationFrame(() => this.animate());
-
-        // Only re-render when camera rotation changes (saves ~30s CPU when idle)
-        if (!this._lastQuat) this._lastQuat = new THREE.Quaternion();
-        if (this._lastQuat.equals(this.mainCamera.quaternion)) return;
-        this._lastQuat.copy(this.mainCamera.quaternion);
-
-        // Sync cube rotation with main camera
+    syncAndRender() {
         const matrix = new THREE.Matrix4();
         matrix.extractRotation(this.mainCamera.matrixWorldInverse);
         this.cube.rotation.setFromRotationMatrix(matrix);
@@ -366,8 +367,9 @@ export class ViewCube {
     }
 
     dispose() {
-        this.renderer.domElement.removeEventListener('click', this.onClick.bind(this));
-        this.renderer.domElement.removeEventListener('mousemove', this.onMouseMove.bind(this));
+        this.mainControls.removeEventListener('change', this._boundControlsChange);
+        this.renderer.domElement.removeEventListener('click', this._boundClick);
+        this.renderer.domElement.removeEventListener('mousemove', this._boundMouseMove);
         this.container.removeChild(this.renderer.domElement);
         this.renderer.dispose();
     }

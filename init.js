@@ -29,12 +29,15 @@ export function initializeApp(ws, store, viewer, reporter, term) {
     // Setup tab shown handler
     window.addEventListener('tab-shown', (e) => {
         if (e.detail.id === 'viewer-view') {
+            if (window.viewer) window.viewer.startAnim();
             requestAnimationFrame(() => {
                 if (window.viewer) {
                     window.viewer.resize();
                     if (window.viewer.controls.target.length() === 0) window.viewer.resetCamera();
                 }
             });
+        } else {
+            if (window.viewer) window.viewer.stopAnim();
         }
         if (e.detail.id === 'settings-view' && ws.isConnected) {
             if (Object.keys(window.grblSettings.settings).length === 0) {

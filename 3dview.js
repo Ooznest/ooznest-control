@@ -259,10 +259,22 @@ export class GCodeViewer {
         // Instantiate Particle System attached to workOffsetsGroup so it uses local Work coordinates
         this.particleSystem = new ParticleSystem(this.workOffsetsGroup);
 
-        this.animate();
-
         // Context Menu Event
         this.renderer.domElement.addEventListener('contextmenu', (e) => this.onContextMenu(e));
+
+        // Start animation loop (viewer tab is default visible)
+        this._active = true;
+        requestAnimationFrame(() => this.animate());
+    }
+
+    startAnim() {
+        if (this._active) return;
+        this._active = true;
+        requestAnimationFrame(() => this.animate());
+    }
+
+    stopAnim() {
+        this._active = false;
     }
 
     _createEnvironment() {
@@ -297,6 +309,7 @@ export class GCodeViewer {
     }
 
     animate() {
+        if (!this._active) return;
         requestAnimationFrame(() => this.animate());
         const delta = this.clock.getDelta();
 
