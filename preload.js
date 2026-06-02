@@ -7,5 +7,7 @@ contextBridge.exposeInMainWorld('electron', {
     maximize: () => ipcRenderer.send('window-maximize'),
     close: () => ipcRenderer.send('window-close'),
     getNetworkInfo: () => ipcRenderer.invoke('get-network-info'),
+    loadGCode: () => ipcRenderer.invoke('load-gcode-dialog'),
+    onOpenFile: (callback) => ipcRenderer.on('open-file', (event, filePath) => callback(filePath)),
     isElectron: true
 });

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const net = require('net');
@@ -13,6 +14,54 @@ expressApp.use(express.static(__dirname));
 
 const server = http.createServer(expressApp);
 const wss = new WebSocketServer({ server });
+
+// Queue file paths that arrived before the renderer is ready
+let pendingFile = null;
+
+const GCODE_EXTS = ['.gcode', '.nc', '.gc', '.ngc'];
+
+function isGcodeFile(filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    return GCODE_EXTS.includes(ext);
+}
+
+function sendFileToRenderer(filePath) {
+    const wins = BrowserWindow.getAllWindows();
+    if (wins.length === 0) {
+        pendingFile = filePath;
+        return;
+    }
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const filename = path.basename(filePath);
+        wins[0].webContents.send('open-file', { content, filename, filePath });
+    } catch (err) {
+        console.error('Failed to read file:', filePath, err.message);
+        wins[0].webContents.send('open-file', { error: err.message, filePath });
+    }
+}
+
+// Single instance lock — subsequent launches pass their args to the running instance
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+    app.quit();
+} else {
+    app.on('second-instance', (event, argv) => {
+        const fileArg = argv.find(a => isGcodeFile(a));
+        if (fileArg) sendFileToRenderer(path.resolve(fileArg));
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) {
+            if (win.isMinimized()) win.restore();
+            win.focus();
+        }
+    });
+}
+
+// macOS: file dropped on dock icon when app is already running
+app.on('open-file', (event, filePath) => {
+    event.preventDefault();
+    if (isGcodeFile(filePath)) sendFileToRenderer(filePath);
+});
 
 // IPC Handlers for Window Controls
 ipcMain.on('window-minimize', (event) => {
@@ -431,6 +480,17 @@ function createWindow() {
 
     mainWindow.loadURL(`http://127.0.0.1:${port}`);
 
+    // When the window is ready, send any queued or argv file to the renderer
+    mainWindow.webContents.on('did-finish-load', () => {
+        // File passed as command-line argument (file association / double-click)
+        const fileArg = process.argv.find(a => isGcodeFile(a));
+        const fileToOpen = pendingFile || (fileArg ? path.resolve(fileArg) : null);
+        if (fileToOpen) {
+            sendFileToRenderer(fileToOpen);
+            pendingFile = null;
+        }
+    });
+
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
 }
@@ -458,6 +518,28 @@ app.whenReady().then(() => {
 
     ipcMain.on('install-update', () => {
         autoUpdater.quitAndInstall();
+    });
+
+    // Renderer asks to open a G-code file via native dialog
+    ipcMain.handle('load-gcode-dialog', async () => {
+        const wins = BrowserWindow.getAllWindows();
+        if (wins.length === 0) return null;
+        const result = await dialog.showOpenDialog(wins[0], {
+            title: 'Open G-Code File',
+            filters: [
+                { name: 'G-Code Files', extensions: ['gcode', 'nc', 'gc', 'ngc'] },
+                { name: 'All Files', extensions: ['*'] }
+            ],
+            properties: ['openFile']
+        });
+        if (result.canceled || result.filePaths.length === 0) return null;
+        const filePath = result.filePaths[0];
+        try {
+            const content = fs.readFileSync(filePath, 'utf-8');
+            return { content, filename: path.basename(filePath), filePath };
+        } catch (err) {
+            return { error: err.message, filePath };
+        }
     });
 
     app.on('activate', () => {

@@ -1594,6 +1594,9 @@
                                     <button class="btn btn-primary flex-1" onclick="window.grblSettings.saveChanges()">
                                         <i class="bi bi-save"></i> Save
                                     </button>
+                                    <button class="btn btn-secondary flex-1" onclick="window.configWizard.showWizard()">
+                                        <i class="bi bi-magic"></i> Wizard
+                                    </button>
                                 </div>
                             </div>
 
@@ -2093,6 +2096,11 @@
                                     onclick="switchTroubleTab('trouble-tab-led', this)">
                                     RGB LED
                                 </button>
+                                <button
+                                    class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    onclick="switchTroubleTab('trouble-tab-info', this)">
+                                    Info
+                                </button>
                             </div>
 
                             <!-- SIGNALS SUB-TAB -->
@@ -2329,6 +2337,16 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="text-[10px] font-bold text-grey uppercase mb-0.5">M150 Command</div>
                                         <div id="led-m150-command" class="font-mono text-sm font-bold text-secondary-dark truncate">M150 R0 U0 B0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- INFO SUB-TAB -->
+                            <div id="trouble-tab-info" class="trouble-tab-content hidden">
+                                <div id="trouble-tab-info-content" class="space-y-4">
+                                    <div class="text-grey text-center py-8">
+                                        <i class="bi bi-arrow-clockwise animate-spin text-2xl"></i>
+                                        <p class="text-xs mt-2">Waiting for firmware info...</p>
                                     </div>
                                 </div>
                             </div>
@@ -2745,6 +2763,7 @@
         import { TroubleshootingHandler } from './troubleshooting.js';
         import { FirmwareHandler } from './firmware.js';
         import { CalibrationHandler } from './calibration.js';
+        import { ConfigWizard } from './config-wizard.js';
         import { GCodeEditor } from './editor.js';
         import { initializeApp } from './init.js';
 
@@ -2917,6 +2936,8 @@
             window.troubleshooting = troubleshootingHandler;
             const firmwareHandler = new FirmwareHandler(ws, store);
             window.firmwareHandler = firmwareHandler;
+            const configWizard = new ConfigWizard(ws, store);
+            window.configWizard = configWizard;
 
             if (window.electron && window.electron.on) {
                 window.electron.on('update-available', (info) => {
@@ -3582,6 +3603,25 @@
             document.body.appendChild(s);
         })();
     </script>
+
+    <!-- Configuration Wizard Modal -->
+    <div id="config-wizard-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] isolate hidden flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all scale-100 border border-grey-light max-h-[90vh] flex flex-col">
+            <div class="px-5 py-3 border-b border-grey-light flex items-center justify-between bg-grey-bg shrink-0">
+                <h3 class="font-bold text-sm text-secondary-dark flex items-center gap-2">
+                    <i class="bi bi-magic text-primary"></i> Machine Configuration Wizard
+                </h3>
+                <button onclick="window.configWizard.hideWizard()" class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
+            </div>
+            <div id="config-wizard-body" class="p-5 overflow-y-auto">
+                <div class="text-center py-8">
+                    <i class="bi bi-arrow-clockwise animate-spin text-2xl text-grey"></i>
+                    <p class="text-xs text-grey mt-2">Loading...</p>
+                </div>
+            </div>
+            <div id="config-wizard-status" class="px-5 pb-2"></div>
+        </div>
+    </div>
 </body>
 
 </html>

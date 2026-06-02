@@ -49,17 +49,30 @@ export function initializeApp(ws, store, viewer, reporter, term) {
         }
     });
 
+    // Handle file opened via Electron file association (from main process)
+    if (window.electron && window.electron.onOpenFile) {
+        window.electron.onOpenFile((data) => {
+            if (data.error) {
+                if (window.reporter) window.reporter.showAlert('Error Opening File', data.error);
+                return;
+            }
+            window.loadGCode(data.content, data.filename);
+        });
+    }
+
     // Setup gcode-loaded event (from surfacing wizard, etc.)
     window.addEventListener('gcode-loaded', (e) => {
-        window.currentGCodeContent = e.detail;
+        const content = typeof e.detail === 'string' ? e.detail : e.detail.content;
+        const filename = typeof e.detail === 'string' ? 'Generated_Job.gcode' : (e.detail.filename || 'Generated_Job.gcode');
+        window.currentGCodeContent = content;
         window.currentSDFile = null;
         window.uiManager.updateRunButtonsState();
 
         if (window.editor) {
-            window.editor.setValue(e.detail);
+            window.editor.setValue(content);
             const lineCount = window.editor.getValue().split('\\n').length;
             document.getElementById('editor-line-count').innerText = lineCount;
-            document.getElementById('editor-file-name').innerText = "Surfacing_Job.gcode";
+            document.getElementById('editor-file-name').innerText = filename;
         }
     });
 

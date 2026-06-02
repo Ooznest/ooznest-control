@@ -1,5 +1,7 @@
 /* --- START OF FILE calibration.js --- */
 
+import { makeLine, getTextWidth, drawTextString } from './gcode-draw.js';
+
 export class CalibrationHandler {
     constructor(ws, term, store) {
         this.ws = ws;
@@ -122,11 +124,15 @@ export class CalibrationHandler {
         else if (this.step === 'result') this.setStep('measure');
     }
 
-    cancel() {
+    cancel(msg) {
         if (this.posInterval) clearInterval(this.posInterval);
+        if (this.alarmWatch) clearInterval(this.alarmWatch);
         this.isCutting = false;
         if (this.okListener) this.ws.removeListener('line', this.okListener);
         this.setStep('intro');
+        if (msg && this.term) {
+            this.term.writeln(`\x1b[31m[Calibration] ${msg}\x1b[0m`);
+        }
     }
 
     runCutJob() {
@@ -142,6 +148,21 @@ export class CalibrationHandler {
         this.currentLineIndex = 0;
         this.marksCut = 0;
         this.isCutting = true;
+
+        // Watch for alarms during the cut job
+        if (this.alarmWatch) clearInterval(this.alarmWatch);
+        this.alarmWatch = setInterval(() => {
+            if (!this.isCutting) {
+                clearInterval(this.alarmWatch);
+                return;
+            }
+            if (window.dro && window.dro.status === 'Alarm') {
+                clearInterval(this.alarmWatch);
+                this.term.writeln(`\x1b[31m[Calibration] Machine alarm detected! Aborting job.\x1b[0m`);
+                if (window.reporter) window.reporter.showToast('Calibration aborted due to machine alarm', 'error');
+                this.cancel('Aborted due to machine alarm. Check machine and re-home before retrying.');
+            }
+        }, 200);
 
         // Listener for 'ok' responses
         this.okListener = (line) => {
@@ -181,8 +202,8 @@ export class CalibrationHandler {
         document.getElementById('cal-cut-bar').style.width = `${pct}%`;
         document.getElementById('cal-cut-pct').textContent = `${pct}%`;
         
-        // Count marks: every time we start a mark (Z-5.2)
-        if (line.includes('Z-5.2')) {
+        // Count marks: every time we plunge into the material
+        if (/G0?1.*Z-/.test(line)) {
             this.marksCut++;
             document.getElementById('cal-mark-num').textContent = Math.min(this.marksCut, 100);
         }
@@ -212,31 +233,105 @@ export class CalibrationHandler {
 
 
     generateGCode() {
-        let g = "G21 ; Units mm\n";
-        g += "G91 ; Incremental\n";
-        g += "G0 Z5 ; Safe Z\n";
-        
-        // 100 Marks, 0.9mm apart
+        const orientation = this.axis;
+        const lengthLet = 3;
+        const hightLet = 4;
+        const space = 1.5;
+        const depth = -0.3;
+        const up = 1;
+        const feedrate = 500;
+        const plungeRate = 150;
+        const rotateLabels = true;
+
+        const down = depth;
+        const rapide = 'G0';
+        const lent = 'G01';
+
+        let gcode = '';
+        gcode += `G21 G90 G17 F${feedrate}\n`;
+        gcode += `G0 X0 Y0 Z${up}\n`;
+
+        // 1. Draw scale lines spanning 90mm with 101 divisions
         for (let i = 0; i <= 100; i++) {
-            // Mark
-            g += "G1 Z-5.2 F100 ; Cut depth (relative to Z0 - assuming user is at Z5)\n";
-            if (this.axis === 'X') {
-                g += "G1 Y2 F500 ; Cut line\n";
-                g += "G0 Z5.2 ; Retract\n";
-                g += "G0 Y-2 ; Return Y\n";
-                if (i < 100) g += "G0 X0.9 ; Move to next\n";
+            const u = i * 0.9;
+            let tickHeight = hightLet * 0.5;
+            if (i % 10 === 0) {
+                tickHeight = hightLet;
+            } else if (i % 5 === 0) {
+                tickHeight = hightLet * 0.75;
+            }
+
+            gcode += makeLine(rapide, orientation, u, 0, { z: up });
+            gcode += makeLine(lent, orientation, u, 0, { z: down, f: plungeRate });
+            gcode += makeLine(lent, orientation, u, tickHeight, { z: down });
+            gcode += makeLine(rapide, orientation, u, tickHeight, { z: up });
+        }
+
+        // 2. Render division label values aligning with ticks
+        const labelBaseline = hightLet + 1.5;
+        for (let i = 0; i <= 100; i += 10) {
+            const uTick = i * 0.9;
+            const labelText = i + 'X';
+
+            if (rotateLabels) {
+                gcode += drawTextString(labelText, uTick, labelBaseline, lengthLet, hightLet, space, depth, up, orientation, true);
             } else {
-                g += "G1 X2 F500 ; Cut line\n";
-                g += "G0 Z5.2 ; Retract\n";
-                g += "G0 X-2 ; Return X\n";
-                if (i < 100) g += "G0 Y0.9 ; Move to next\n";
+                const labelWidth = getTextWidth(labelText, lengthLet, space);
+                const uStart = uTick - labelWidth / 2;
+                gcode += drawTextString(labelText, uStart, labelBaseline, lengthLet, hightLet, space, depth, up, orientation, false);
             }
         }
-        
-        g += "G90 ; Absolute\n";
-        g += "G0 Z10 ; Safe height\n";
-        g += "M5 ; Stop Spindle\n";
-        return g;
+
+        // 3. Compute vertical spacing for the upper dimension boundary bar
+        let maxLabelLength = 0;
+        if (rotateLabels) {
+            maxLabelLength = getTextWidth("100X", lengthLet, space);
+        } else {
+            maxLabelLength = hightLet;
+        }
+
+        const dimensionBaseline = labelBaseline + maxLabelLength + 4.5;
+        const extensionMinV = labelBaseline + maxLabelLength + 1.2;
+        const extensionMaxV = dimensionBaseline + 1.5;
+
+        // Left bounds bar line
+        gcode += makeLine(rapide, orientation, 0, extensionMinV, { z: up });
+        gcode += makeLine(lent, orientation, 0, extensionMinV, { z: down, f: plungeRate });
+        gcode += makeLine(lent, orientation, 0, extensionMaxV, { z: down });
+        gcode += makeLine(rapide, orientation, 0, extensionMaxV, { z: up });
+
+        // Right bounds bar line
+        gcode += makeLine(rapide, orientation, 90, extensionMinV, { z: up });
+        gcode += makeLine(lent, orientation, 90, extensionMinV, { z: down, f: plungeRate });
+        gcode += makeLine(lent, orientation, 90, extensionMaxV, { z: down });
+        gcode += makeLine(rapide, orientation, 90, extensionMaxV, { z: up });
+
+        // Dimension text "90mm" centered along the main axis
+        const dimText = "90MM";
+        const dimTextWidth = getTextWidth(dimText, lengthLet, space);
+        const dimTextStart = 45 - dimTextWidth / 2;
+        const dimTextBaseline = dimensionBaseline - (hightLet / 2);
+
+        gcode += drawTextString(dimText, dimTextStart, dimTextBaseline, lengthLet, hightLet, space, depth, up, orientation, false);
+
+        const textGap = 2.0;
+        const lineV = dimensionBaseline;
+
+        // Horizontal connector segments
+        gcode += makeLine(rapide, orientation, 0, lineV, { z: up });
+        gcode += makeLine(lent, orientation, 0, lineV, { z: down, f: plungeRate });
+        gcode += makeLine(lent, orientation, 45 - (dimTextWidth / 2) - textGap, lineV, { z: down });
+        gcode += makeLine(rapide, orientation, 45 - (dimTextWidth / 2) - textGap, lineV, { z: up });
+
+        gcode += makeLine(rapide, orientation, 45 + (dimTextWidth / 2) + textGap, lineV, { z: up });
+        gcode += makeLine(lent, orientation, 45 + (dimTextWidth / 2) + textGap, lineV, { z: down, f: plungeRate });
+        gcode += makeLine(lent, orientation, 90, lineV, { z: down });
+        gcode += makeLine(rapide, orientation, 90, lineV, { z: up });
+
+        // Return safe home
+        gcode += makeLine(rapide, orientation, 0, 0, { z: up });
+
+        return gcode;
     }
 
     calculate() {

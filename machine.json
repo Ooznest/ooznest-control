@@ -1,0 +1,167 @@
+{
+    "machines": [
+        {
+            "id": "z1-500x500",
+            "name": "500×500mm",
+            "category": "z1+",
+            "travel": { "x": 270, "y": 270, "z": 100 },
+            "routers": [
+                { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+                { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+                { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+                { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+                { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+                { "id": "laser-pwm", "name": "PWM Laser Module" }
+            ],
+            "grblConfig": "$0=10\n$1=25\n$2=0\n$3=0\n$4=0\n$5=0\n$6=0\n$10=1\n$11=0.010\n$12=0.002\n$13=0\n$20=0\n$21=0\n$22=0\n$23=0\n$24=25.000\n$25=500.000\n$26=250\n$27=1.000\n$30=1000\n$31=0\n$32=0\n$33=0\n$34=0\n$36=1\n$37=25.000\n$38=1\n$39=0\n$40=0\n$41=0\n$42=0\n$43=0\n$44=0\n$45=0\n$46=0\n$47=0\n$48=0\n$49=0\n$50=0\n$51=0\n$52=0\n$53=0\n$54=0\n$55=0\n$56=0\n$57=0\n$58=0\n$59=0\n$60=0\n$61=0\n$62=0\n$63=0\n$64=0\n$65=0\n$66=0\n$67=0\n$68=0\n$69=0\n$70=0\n$71=0\n$72=0\n$73=0\n$74=0\n$75=0\n$76=0\n$77=0\n$78=0\n$79=0\n$80=0\n$81=0\n$82=0\n$83=0\n$84=0\n$85=0\n$86=0\n$87=0\n$88=0\n$89=0\n$90=0\n$91=0\n$92=0\n$93=0\n$94=0\n$95=0\n$96=0\n$97=0\n$98=0\n$99=0\n$100=25.000\n$101=25.000\n$102=25.000\n$103=25.000\n$104=25.000\n$105=25.000\n$106=25.000\n$107=25.000\n$108=25.000\n$109=25.000\n$110=5000.000\n$111=5000.000\n$112=500.000\n$113=5000.000\n$114=5000.000\n$115=500.000\n$116=5000.000\n$117=5000.000\n$118=500.000\n$120=50.000\n$121=50.000\n$122=10.000\n$123=50.000\n$124=50.000\n$125=10.000\n$126=50.000\n$127=50.000\n$128=10.000\n$130=270.000\n$131=270.000\n$132=100.000\n$133=270.000\n$134=270.000\n$135=100.000\n$136=270.000\n$137=270.000\n$138=100.000"
+        },
+        {
+            "id": "z1-750x750",
+            "name": "750×750mm",
+            "category": "z1+",
+            "travel": { "x": 520, "y": 520, "z": 100 },
+            "routers": [
+                { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+                { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+                { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+                { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+                { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+                { "id": "laser-pwm", "name": "PWM Laser Module" }
+            ],
+            "grblConfig": "$0=10\n$1=25\n$2=0\n$3=0\n$4=0\n$5=0\n$6=0\n$10=1\n$11=0.010\n$12=0.002\n$13=0\n$20=0\n$21=0\n$22=0\n$23=0\n$24=25.000\n$25=500.000\n$26=250\n$27=1.000\n$30=1000\n$31=0\n$32=0\n$33=0\n$34=0\n$36=1\n$37=25.000\n$38=1\n$39=0\n$40=0\n$41=0\n$42=0\n$43=0\n$44=0\n$45=0\n$46=0\n$47=0\n$48=0\n$49=0\n$50=0\n$51=0\n$52=0\n$53=0\n$54=0\n$55=0\n$56=0\n$57=0\n$58=0\n$59=0\n$60=0\n$61=0\n$62=0\n$63=0\n$64=0\n$65=0\n$66=0\n$67=0\n$68=0\n$69=0\n$70=0\n$71=0\n$72=0\n$73=0\n$74=0\n$75=0\n$76=0\n$77=0\n$78=0\n$79=0\n$80=0\n$81=0\n$82=0\n$83=0\n$84=0\n$85=0\n$86=0\n$87=0\n$88=0\n$89=0\n$90=0\n$91=0\n$92=0\n$93=0\n$94=0\n$95=0\n$96=0\n$97=0\n$98=0\n$99=0\n$100=25.000\n$101=25.000\n$102=25.000\n$103=25.000\n$104=25.000\n$105=25.000\n$106=25.000\n$107=25.000\n$108=25.000\n$109=25.000\n$110=5000.000\n$111=5000.000\n$112=500.000\n$113=5000.000\n$114=5000.000\n$115=500.000\n$116=5000.000\n$117=5000.000\n$118=500.000\n$120=50.000\n$121=50.000\n$122=10.000\n$123=50.000\n$124=50.000\n$125=10.000\n$126=50.000\n$127=50.000\n$128=10.000\n$130=520.000\n$131=520.000\n$132=100.000\n$133=520.000\n$134=520.000\n$135=100.000\n$136=520.000\n$137=520.000\n$138=100.000"
+        },
+        {
+            "id": "z1-750x1000",
+            "name": "750×1000mm",
+            "category": "z1+",
+            "travel": { "x": 520, "y": 770, "z": 100 },
+            "routers": [
+                { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+                { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+                { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+                { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+                { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+                { "id": "laser-pwm", "name": "PWM Laser Module" }
+            ],
+            "grblConfig": "$0=10\n$1=25\n$2=0\n$3=0\n$4=0\n$5=0\n$6=0\n$10=1\n$11=0.010\n$12=0.002\n$13=0\n$20=0\n$21=0\n$22=0\n$23=0\n$24=25.000\n$25=500.000\n$26=250\n$27=1.000\n$30=1000\n$31=0\n$32=0\n$33=0\n$34=0\n$36=1\n$37=25.000\n$38=1\n$39=0\n$40=0\n$41=0\n$42=0\n$43=0\n$44=0\n$45=0\n$46=0\n$47=0\n$48=0\n$49=0\n$50=0\n$51=0\n$52=0\n$53=0\n$54=0\n$55=0\n$56=0\n$57=0\n$58=0\n$59=0\n$60=0\n$61=0\n$62=0\n$63=0\n$64=0\n$65=0\n$66=0\n$67=0\n$68=0\n$69=0\n$70=0\n$71=0\n$72=0\n$73=0\n$74=0\n$75=0\n$76=0\n$77=0\n$78=0\n$79=0\n$80=0\n$81=0\n$82=0\n$83=0\n$84=0\n$85=0\n$86=0\n$87=0\n$88=0\n$89=0\n$90=0\n$91=0\n$92=0\n$93=0\n$94=0\n$95=0\n$96=0\n$97=0\n$98=0\n$99=0\n$100=25.000\n$101=25.000\n$102=25.000\n$103=25.000\n$104=25.000\n$105=25.000\n$106=25.000\n$107=25.000\n$108=25.000\n$109=25.000\n$110=5000.000\n$111=5000.000\n$112=500.000\n$113=5000.000\n$114=5000.000\n$115=500.000\n$116=5000.000\n$117=5000.000\n$118=500.000\n$120=50.000\n$121=50.000\n$122=10.000\n$123=50.000\n$124=50.000\n$125=10.000\n$126=50.000\n$127=50.000\n$128=10.000\n$130=520.000\n$131=770.000\n$132=100.000\n$133=520.000\n$134=770.000\n$135=100.000\n$136=520.000\n$137=770.000\n$138=100.000"
+        },
+        {
+            "id": "z1-1000x1000",
+            "name": "1000×1000mm",
+            "category": "z1+",
+            "travel": { "x": 770, "y": 770, "z": 100 },
+            "routers": [
+                { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+                { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+                { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+                { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+                { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+                { "id": "laser-pwm", "name": "PWM Laser Module" }
+            ],
+            "grblConfig": "$0=10\n$1=25\n$2=0\n$3=0\n$4=0\n$5=0\n$6=0\n$10=1\n$11=0.010\n$12=0.002\n$13=0\n$20=0\n$21=0\n$22=0\n$23=0\n$24=25.000\n$25=500.000\n$26=250\n$27=1.000\n$30=1000\n$31=0\n$32=0\n$33=0\n$34=0\n$36=1\n$37=25.000\n$38=1\n$39=0\n$40=0\n$41=0\n$42=0\n$43=0\n$44=0\n$45=0\n$46=0\n$47=0\n$48=0\n$49=0\n$50=0\n$51=0\n$52=0\n$53=0\n$54=0\n$55=0\n$56=0\n$57=0\n$58=0\n$59=0\n$60=0\n$61=0\n$62=0\n$63=0\n$64=0\n$65=0\n$66=0\n$67=0\n$68=0\n$69=0\n$70=0\n$71=0\n$72=0\n$73=0\n$74=0\n$75=0\n$76=0\n$77=0\n$78=0\n$79=0\n$80=0\n$81=0\n$82=0\n$83=0\n$84=0\n$85=0\n$86=0\n$87=0\n$88=0\n$89=0\n$90=0\n$91=0\n$92=0\n$93=0\n$94=0\n$95=0\n$96=0\n$97=0\n$98=0\n$99=0\n$100=25.000\n$101=25.000\n$102=25.000\n$103=25.000\n$104=25.000\n$105=25.000\n$106=25.000\n$107=25.000\n$108=25.000\n$109=25.000\n$110=5000.000\n$111=5000.000\n$112=500.000\n$113=5000.000\n$114=5000.000\n$115=500.000\n$116=5000.000\n$117=5000.000\n$118=500.000\n$120=50.000\n$121=50.000\n$122=10.000\n$123=50.000\n$124=50.000\n$125=10.000\n$126=50.000\n$127=50.000\n$128=10.000\n$130=770.000\n$131=770.000\n$132=100.000\n$133=770.000\n$134=770.000\n$135=100.000\n$136=770.000\n$137=770.000\n$138=100.000"
+        },
+        {
+            "id": "z1-1000x1500",
+            "name": "1000×1500mm",
+            "category": "z1+",
+            "travel": { "x": 770, "y": 1270, "z": 100 },
+            "routers": [
+                { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+                { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+                { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+                { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+                { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+                { "id": "laser-pwm", "name": "PWM Laser Module" }
+            ],
+            "grblConfig": "$0=10\n$1=25\n$2=0\n$3=0\n$4=0\n$5=0\n$6=0\n$10=1\n$11=0.010\n$12=0.002\n$13=0\n$20=0\n$21=0\n$22=0\n$23=0\n$24=25.000\n$25=500.000\n$26=250\n$27=1.000\n$30=1000\n$31=0\n$32=0\n$33=0\n$34=0\n$36=1\n$37=25.000\n$38=1\n$39=0\n$40=0\n$41=0\n$42=0\n$43=0\n$44=0\n$45=0\n$46=0\n$47=0\n$48=0\n$49=0\n$50=0\n$51=0\n$52=0\n$53=0\n$54=0\n$55=0\n$56=0\n$57=0\n$58=0\n$59=0\n$60=0\n$61=0\n$62=0\n$63=0\n$64=0\n$65=0\n$66=0\n$67=0\n$68=0\n$69=0\n$70=0\n$71=0\n$72=0\n$73=0\n$74=0\n$75=0\n$76=0\n$77=0\n$78=0\n$79=0\n$80=0\n$81=0\n$82=0\n$83=0\n$84=0\n$85=0\n$86=0\n$87=0\n$88=0\n$89=0\n$90=0\n$91=0\n$92=0\n$93=0\n$94=0\n$95=0\n$96=0\n$97=0\n$98=0\n$99=0\n$100=25.000\n$101=25.000\n$102=25.000\n$103=25.000\n$104=25.000\n$105=25.000\n$106=25.000\n$107=25.000\n$108=25.000\n$109=25.000\n$110=5000.000\n$111=5000.000\n$112=500.000\n$113=5000.000\n$114=5000.000\n$115=500.000\n$116=5000.000\n$117=5000.000\n$118=500.000\n$120=50.000\n$121=50.000\n$122=10.000\n$123=50.000\n$124=50.000\n$125=10.000\n$126=50.000\n$127=50.000\n$128=10.000\n$130=770.000\n$131=1270.000\n$132=100.000\n$133=770.000\n$134=1270.000\n$135=100.000\n$136=770.000\n$137=1270.000\n$138=100.000"
+        },
+        {
+            "id": "z1-1500x1500",
+            "name": "1500×1500mm",
+            "category": "z1+",
+            "travel": { "x": 1270, "y": 1270, "z": 100 },
+            "routers": [
+                { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+                { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+                { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+                { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+                { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+                { "id": "laser-pwm", "name": "PWM Laser Module" }
+            ],
+            "grblConfig": "$0=10\n$1=25\n$2=0\n$3=0\n$4=0\n$5=0\n$6=0\n$10=1\n$11=0.010\n$12=0.002\n$13=0\n$20=0\n$21=0\n$22=0\n$23=0\n$24=25.000\n$25=500.000\n$26=250\n$27=1.000\n$30=1000\n$31=0\n$32=0\n$33=0\n$34=0\n$36=1\n$37=25.000\n$38=1\n$39=0\n$40=0\n$41=0\n$42=0\n$43=0\n$44=0\n$45=0\n$46=0\n$47=0\n$48=0\n$49=0\n$50=0\n$51=0\n$52=0\n$53=0\n$54=0\n$55=0\n$56=0\n$57=0\n$58=0\n$59=0\n$60=0\n$61=0\n$62=0\n$63=0\n$64=0\n$65=0\n$66=0\n$67=0\n$68=0\n$69=0\n$70=0\n$71=0\n$72=0\n$73=0\n$74=0\n$75=0\n$76=0\n$77=0\n$78=0\n$79=0\n$80=0\n$81=0\n$82=0\n$83=0\n$84=0\n$85=0\n$86=0\n$87=0\n$88=0\n$89=0\n$90=0\n$91=0\n$92=0\n$93=0\n$94=0\n$95=0\n$96=0\n$97=0\n$98=0\n$99=0\n$100=25.000\n$101=25.000\n$102=25.000\n$103=25.000\n$104=25.000\n$105=25.000\n$106=25.000\n$107=25.000\n$108=25.000\n$109=25.000\n$110=5000.000\n$111=5000.000\n$112=500.000\n$113=5000.000\n$114=5000.000\n$115=500.000\n$116=5000.000\n$117=5000.000\n$118=500.000\n$120=50.000\n$121=50.000\n$122=10.000\n$123=50.000\n$124=50.000\n$125=10.000\n$126=50.000\n$127=50.000\n$128=10.000\n$130=1270.000\n$131=1270.000\n$132=100.000\n$133=1270.000\n$134=1270.000\n$135=100.000\n$136=1270.000\n$137=1270.000\n$138=100.000"
+        },
+        { "id": "z2-500x500", "name": "500×500mm", "category": "z2+", "travel": { "x": 270, "y": 270, "z": 88 }, "routers": [
+            { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+            { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+            { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+            { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+            { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+            { "id": "laser-pwm", "name": "PWM Laser Module" }
+        ] },
+        { "id": "z2-750x750", "name": "750×750mm", "category": "z2+", "travel": { "x": 520, "y": 520, "z": 88 }, "routers": [
+            { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+            { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+            { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+            { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+            { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+            { "id": "laser-pwm", "name": "PWM Laser Module" }
+        ] },
+        { "id": "z2-750x1000", "name": "750×1000mm", "category": "z2+", "travel": { "x": 520, "y": 770, "z": 88 }, "routers": [
+            { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+            { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+            { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+            { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+            { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+            { "id": "laser-pwm", "name": "PWM Laser Module" }
+        ] },
+        { "id": "z2-1000x1000", "name": "1000×1000mm", "category": "z2+", "travel": { "x": 770, "y": 770, "z": 88 }, "routers": [
+            { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+            { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+            { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+            { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+            { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+            { "id": "laser-pwm", "name": "PWM Laser Module" }
+        ] },
+        { "id": "z2-1000x1500", "name": "1000×1500mm", "category": "z2+", "travel": { "x": 770, "y": 1270, "z": 88 }, "routers": [
+            { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+            { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+            { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+            { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+            { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+            { "id": "laser-pwm", "name": "PWM Laser Module" }
+        ] },
+        { "id": "z2-1500x1500", "name": "1500×1500mm", "category": "z2+", "travel": { "x": 1270, "y": 1270, "z": 88 }, "routers": [
+            { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+            { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+            { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+            { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+            { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+            { "id": "laser-pwm", "name": "PWM Laser Module" }
+        ] },
+        { "id": "custom", "name": "Custom Machine", "category": "custom", "travel": { "x": 0, "y": 0, "z": 0 }, "routers": [
+            { "id": "workbee-router-head", "name": "WorkBee Router Head" },
+            { "id": "mafell-digital", "name": "Mafell FM 1000 Router Head (Digital Control)" },
+            { "id": "mafell-manual", "name": "Mafell FM 1000 Router Head (Manual Control)" },
+            { "id": "vfd-0-10v", "name": "VFD (0-10v)" },
+            { "id": "vfd-modbus", "name": "VFD (Modbus)" },
+            { "id": "laser-pwm", "name": "PWM Laser Module" }
+        ] }
+    ],
+    "spindles": {
+        "workbee-router-head": { "name": "WorkBee Router Head", "category": "router", "type": "pwm", "value": 0, "port": 0 },
+        "mafell-digital": { "name": "Mafell FM 1000 (Digital Control)", "category": "router", "type": "pwm", "value": 0, "port": 0 },
+        "mafell-manual": { "name": "Mafell FM 1000 (Manual Control)", "category": "router", "type": "pwm", "value": 0, "port": 0 },
+        "vfd-0-10v": { "name": "VFD (0-10v)", "category": "spindle", "type": "vfd-analog", "value": 32, "port": 0 },
+        "vfd-modbus": { "name": "VFD (Modbus)", "category": "vfd-modbus", "type": "vfd-modbus", "value": 48, "port": 0 },
+        "laser-pwm": { "name": "PWM Laser Module", "category": "laser", "type": "laser", "value": 1, "port": 1 }
+    },
+    "modbusProtocols": {
+        "huanyang-v1": { "name": "Huanyang v1", "$396": 0 },
+        "huanyang-p2a": { "name": "Huanyang P2A", "$396": 1 },
+        "durapulse-gs20": { "name": "Durapulse GS20", "$396": 2 },
+        "yalang-ys620": { "name": "Yalang YS620", "$396": 3 },
+        "modvfd": { "name": "MODVFD", "$396": 4 },
+        "h-100": { "name": "H-100", "$396": 5 },
+        "nowforever": { "name": "Nowforever", "$396": 6 }
+    }
+}

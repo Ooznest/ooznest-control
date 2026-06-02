@@ -42,6 +42,9 @@ class LineProcessor {
             return;
         }
 
+        // $I+ version/board info (captured by config wizard)
+        if (window.configWizard && window.configWizard.handleLine(line)) return;
+
         // SD card handler
         if (window.sdHandler.processLine(line)) return;
 
