@@ -8,9 +8,9 @@ export class DROHandler {
         this.isMm = this.store.get('general.units') === 'mm';
 
         // Coordinate State
-        this.wco = [0, 0, 0, 0];
-        this.wpos = [0, 0, 0, 0];
-        this.mpos = [0, 0, 0, 0];
+        this.wco = [];
+        this.wpos = [];
+        this.mpos = [];
 
         this.spindleSpeed = 0;
         this.accessoryState = "";

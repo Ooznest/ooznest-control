@@ -408,6 +408,7 @@ export class TroubleshootingHandler {
         if (line === 'ok') {
             this._collectingSpindles = false;
             this._renderSpindles();
+            if (window.updateLaserMode) setTimeout(window.updateLaserMode, 100);
             return;
         }
         const m = line.match(/^\[SPINDLE:([^\]]+)\]$/);

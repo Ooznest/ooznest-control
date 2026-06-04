@@ -95,6 +95,11 @@ class UIManager {
             setDisabled(macroControls, true);
             setDisabled(txtConsole, true);
             setDisabled(unlockBtn, true);
+            const btn = document.querySelector(unlockBtn);
+            if (btn) {
+                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
+                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
+            }
             
             // Completely disable specific outer blocks remaining from previous UI styles
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => {
@@ -110,8 +115,8 @@ class UIManager {
             setDisabled(unlockBtn, false);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
-                btn.classList.remove('btn-secondary');
-                btn.classList.add('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
+                btn.classList.remove('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
+                btn.classList.add('!bg-red-600', '!text-white', 'shockwave', '!border-red-500');
             }
             
             // Clean up general offline locks if they were present
@@ -126,8 +131,8 @@ class UIManager {
             setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
-                btn.classList.remove('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
-                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
+                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
             }
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
@@ -140,8 +145,8 @@ class UIManager {
             setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
-                btn.classList.remove('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
-                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
+                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
             }
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
@@ -151,11 +156,11 @@ class UIManager {
             setDisabled(macroControls, false);
             setDisabled(txtConsole, false);
             
-            setDisabled(unlockBtn, false);
+            setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
-                btn.classList.remove('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
-                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
+                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
             }
             
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));

@@ -142,30 +142,6 @@ export class ConfigWizard {
         }
         html += '</div></div>';
 
-        // Axes card
-        if (this.axsInfo) {
-            html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-            html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-            html += '<i class="bi bi-arrows-move text-primary text-xs"></i>';
-            html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Axes & Travel</h3>';
-            html += '</div><div class="p-4">';
-            const axsContent = this.axsInfo.slice(1, -1).split(':')[1] || '';
-            const parts = axsContent.split(',');
-            if (parts.length >= 4) {
-                const axes = parts[0];
-                html += '<div class="grid grid-cols-2 gap-2">';
-                for (let i = 0; i < axes.length && (i + 1) * 3 + 1 <= parts.length; i++) {
-                    const axis = axes[i];
-                    const travel = parts[i * 3 + 1];
-                    if (travel) {
-                        html += `<div class="flex justify-between"><span class="text-xs text-grey">${axis} Max Travel</span><span class="text-xs font-bold text-secondary-dark">${parseFloat(travel).toFixed(0)} mm</span></div>`;
-                    }
-                }
-                html += '</div>';
-            }
-            html += '</div></div>';
-        }
-
         // App version card
         html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
         html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';

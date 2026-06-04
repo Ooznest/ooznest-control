@@ -42,6 +42,8 @@ export function initializeApp(ws, store, viewer, reporter, term) {
         if (e.detail.id === 'settings-view' && ws.isConnected) {
             if (Object.keys(window.grblSettings.settings).length === 0) {
                 window.grblSettings.fetchSettings();
+            } else {
+                window.grblSettings.render();
             }
         }
         if (e.detail.id === 'tools-view') {

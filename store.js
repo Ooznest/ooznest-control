@@ -22,10 +22,12 @@ export class AppStore {
                 travel: 25,
                 retract: 2,
                 clearance: 5,
+                plateClearance: 5,
+                probeClearance: 5,
                 zDepth: 5,
-                bossW: 50,
-                bossH: 50,
-                usePlate: true
+                featureW: 50,
+                featureH: 50,
+                mode: 'plate'
             },
             surfacing: {
                 units: 'mm', // TRACK UNITS for stored values

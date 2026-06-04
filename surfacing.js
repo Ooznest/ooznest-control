@@ -46,7 +46,7 @@ export class SurfacingHandler {
         this.renderSettings();
 
         // Bind Inputs to Store on change
-        const inputs = document.querySelectorAll('#surfacing-view input, #surfacing-view select');
+        const inputs = document.querySelectorAll('#tab-tool-surfacing input, #tab-tool-surfacing select');
         inputs.forEach(input => {
             input.addEventListener('change', () => this.saveSettings());
         });
@@ -90,7 +90,7 @@ export class SurfacingHandler {
         });
 
         // Update Labels (Search and Replace text in labels)
-        const labels = document.querySelectorAll('#surfacing-view label');
+        const labels = document.querySelectorAll('#tab-tool-surfacing label');
         labels.forEach(lbl => {
             if (toMM) {
                 lbl.innerHTML = lbl.innerHTML.replace('(in)', '(mm)');
@@ -144,7 +144,7 @@ export class SurfacingHandler {
         // Since we synced in constructor, s.units should match this.units.
         // But we need to ensure labels match what's in the input boxes.
         const isMM = (this.units === 'mm');
-        const labels = document.querySelectorAll('#surfacing-view label');
+        const labels = document.querySelectorAll('#tab-tool-surfacing label');
         labels.forEach(lbl => {
             // Reset to base state then apply
             const hasMM = lbl.innerHTML.includes('(mm)');

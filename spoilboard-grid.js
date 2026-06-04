@@ -118,16 +118,20 @@ export class SpoilboardGridHandler {
 
         // 4. Outward-facing rulers
         if (includeRuler) {
+            const isMachine = coordSystem === 'Machine';
+
             // Left edge ruler (along Y axis, ticks point left)
             const totalTicksY = Math.round(Y_grid_max - Y_grid_min);
             for (let i = 0; i <= totalTicksY; i++) {
                 const Y = Y_grid_min + i;
+                const roundedY = Math.round(Y);
                 let tickHeight = gridHightLet * 0.4;
                 let isMajor = false;
-                if (i % 10 === 0) {
+                const idx = isMachine ? roundedY : i;
+                if (idx % 10 === 0) {
                     tickHeight = gridHightLet;
                     isMajor = true;
-                } else if (i % 5 === 0) {
+                } else if (idx % 5 === 0) {
                     tickHeight = gridHightLet * 0.65;
                 }
 
@@ -137,7 +141,7 @@ export class SpoilboardGridHandler {
                 gcode += makeLine(rapide, 'X', X_grid_min - tickHeight, Y, { z: up });
 
                 if (isMajor) {
-                    const labelVal = (coordSystem === 'Work') ? i : Math.round(Y);
+                    const labelVal = isMachine ? roundedY : i;
                     const labelText = labelVal.toString();
                     const labelWidth = getTextWidth(labelText, gridLengthLet, gridSpace);
                     const yBaseline = Y - (gridHightLet / 2);
@@ -150,12 +154,14 @@ export class SpoilboardGridHandler {
             const totalTicksX = Math.round(X_grid_max - X_grid_min);
             for (let i = 0; i <= totalTicksX; i++) {
                 const X = X_grid_min + i;
+                const roundedX = Math.round(X);
                 let tickHeight = gridHightLet * 0.4;
                 let isMajor = false;
-                if (i % 10 === 0) {
+                const idx = isMachine ? roundedX : i;
+                if (idx % 10 === 0) {
                     tickHeight = gridHightLet;
                     isMajor = true;
-                } else if (i % 5 === 0) {
+                } else if (idx % 5 === 0) {
                     tickHeight = gridHightLet * 0.65;
                 }
 
@@ -165,7 +171,7 @@ export class SpoilboardGridHandler {
                 gcode += makeLine(rapide, 'X', X, Y_grid_min - tickHeight, { z: up });
 
                 if (isMajor) {
-                    const labelVal = (coordSystem === 'Work') ? i : Math.round(X);
+                    const labelVal = isMachine ? roundedX : i;
                     const labelText = labelVal.toString();
                     const labelWidth = getTextWidth(labelText, gridLengthLet, gridSpace);
                     const xStart = X - (labelWidth / 2);
