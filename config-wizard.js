@@ -271,7 +271,7 @@ export class ConfigWizard {
 
         const cats = {
             'z1+': { label: 'WorkBee Z1+', icon: 'bi-tools', items: [] },
-            'z2+': { label: 'WorkBee Z2+', icon: 'bi-tools', items: [] },
+            'z2': { label: 'WorkBee Z2', icon: 'bi-tools', items: [] },
             custom: { label: 'Other', icon: 'bi-gear', items: [] }
         };
         this.machines.forEach(m => {
@@ -280,7 +280,7 @@ export class ConfigWizard {
 
         let html = '<p class="text-sm text-grey mb-4">Select your CNC machine model:</p>';
 
-        ['z1+', 'z2+', 'custom'].forEach(catKey => {
+        ['z1+', 'z2', 'custom'].forEach(catKey => {
             const cat = cats[catKey];
             if (!cat.items.length) return;
 
@@ -356,8 +356,8 @@ export class ConfigWizard {
                     }
                 });
 
-                // Z2+ custom size option
-                if (catKey === 'z2+') {
+                // Z2 custom size option
+                if (catKey === 'z2') {
                     const isCustomSize = this.wizardData.machine && this.wizardData.machine.id === 'z2-custom';
                     html += `<div class="machine-select-item flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer" data-machine-id="z2-custom">`;
                     html += `<div class="w-4 h-4 rounded-full border-2 ${isCustomSize ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${isCustomSize ? 'bg-white' : ''}"></div></div>`;
@@ -489,7 +489,7 @@ export class ConfigWizard {
         if (!machine) return '';
         if (machine.grblConfig) return machine.grblConfig;
 
-        // Z2+ fixed size: find matching Z1+ machine and patch Z travel
+        // Z2 fixed size: find matching Z1+ machine and patch Z travel
         if (machine.id && machine.id.startsWith('z2-') && machine.id !== 'z2-custom') {
             const z1Id = 'z1-' + machine.id.slice(3);
             const z1 = this.machines.find(m => m.id === z1Id);
@@ -501,7 +501,7 @@ export class ConfigWizard {
             }
         }
 
-        // Custom or Z2+ custom size: use any Z1+ config as template, replace all travel
+        // Custom or Z2 custom size: use any Z1+ config as template, replace all travel
         const template = this.machines.find(m => m.grblConfig);
         if (template) {
             let cfg = template.grblConfig;
@@ -679,11 +679,11 @@ export class ConfigWizard {
                 if (id === 'z2-custom') {
                     this.wizardData.customWidth = this.wizardData.customWidth || 500;
                     this.wizardData.customLength = this.wizardData.customLength || 500;
-                    const z2Template = this.machines.find(m => m.category === 'z2+');
+                    const z2Template = this.machines.find(m => m.category === 'z2');
                     this.wizardData.machine = {
                         id: 'z2-custom',
                         name: 'Custom Size',
-                        category: 'z2+',
+                        category: 'z2',
                         travel: { x: 0, y: 0, z: 88 },
                         routers: z2Template ? [...z2Template.routers] : []
                     };
