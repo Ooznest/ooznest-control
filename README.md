@@ -17,7 +17,7 @@ A modern, cross-platform control interface for **grblHAL CNC controllers** — p
 | Ooznest WorkBee Z2 | Ooznest Motion Control Core (ESP32, grblHAL) | Web Serial, WebSocket, Telnet |
 | Any grblHAL machine | Any grblHAL board (ESP32, STM32, etc.) | Web Serial, WebSocket, Telnet |
 
-Ooznest-specific board detection: automatically detects Ooznest Core from `$I+` output and applies custom spindle labels (Spindle Analog VFD10V, Laser, RS485 VFD).
+Ooznest-specific board detection: automatically detects Ooznest Motion Control Core from `$I+` output and applies custom spindle labels (Spindle Analog VFD10V, Laser, RS485 VFD).
 
 ## Features
 

@@ -112,6 +112,13 @@ class UIManager {
             setDisabled(macroControls, true);
             setDisabled(txtConsole, false); // Keep console alive to query settings out of alarm
             
+            // Keep HOME button enabled during alarm (needed for homing-lock recovery)
+            setDisabled('#home-all-btn', false);
+            document.querySelectorAll('.dro-home-btn').forEach(el => {
+                el.disabled = false;
+                el.classList.remove('opacity-50', 'pointer-events-none');
+            });
+            
             setDisabled(unlockBtn, false);
             const btn = document.querySelector(unlockBtn);
             if (btn) {

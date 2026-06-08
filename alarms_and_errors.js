@@ -283,6 +283,16 @@ export class AlarmsAndErrors {
                     this.domFooter.appendChild(btnCancel);
                     this.domFooter.appendChild(btnClear);
                 }
+            } else if (code === '46') {
+                // Error 46: Homing required — machine won't unlock until homed
+                this.domBody.textContent = 'Homing is required before the machine can be used.\n\nRun the homing cycle to clear this state.';
+                const btnCancel = this.createBtn('Cancel', 'bg-white border border-grey-light text-grey-dark hover:text-black', () => this.closeModal());
+                const btnHome = this.createBtn('Home Now', 'bg-primary text-black hover:bg-primary-dark border border-primary-dark', () => {
+                    if (window.dro && window.dro.home) window.dro.home();
+                    this.closeModal();
+                });
+                this.domFooter.appendChild(btnCancel);
+                this.domFooter.appendChild(btnHome);
             } else {
                 // Regular error - just OK button
                 const btnOk = this.createBtn('OK', 'bg-secondary text-white hover:bg-secondary-dark', () => this.closeModal());

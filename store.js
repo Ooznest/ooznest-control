@@ -20,7 +20,7 @@ export class AppStore {
                 feed: 100,
                 feedLatch: 25,
                 travel: 25,
-                retract: 2,
+                retract: 10,
                 clearance: 5,
                 plateClearance: 5,
                 probeClearance: 5,

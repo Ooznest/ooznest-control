@@ -91,6 +91,19 @@ export class ConfigWizard {
         return true;
     }
 
+    _isUnconfigured(name) {
+        return name && name.toUpperCase() === 'UNCONFIGURED';
+    }
+
+    _onVerComplete() {
+        console.log('[ConfigWizard] _onVerComplete', this.verInfo);
+        if (!this.verInfo) return;
+        this.renderInfoTab();
+        if (this._isUnconfigured(this.verInfo.configName)) {
+            setTimeout(() => this.showWizard(), 500);
+        }
+    }
+
     _parseVerLine(line) {
         this._verLines.push(line);
         const content = line.slice(1, -1);
@@ -107,15 +120,6 @@ export class ConfigWizard {
             configName = rest.slice(secondColon + 1);
         }
         this.verInfo = { version, configName };
-    }
-
-    _onVerComplete() {
-        console.log('[ConfigWizard] _onVerComplete', this.verInfo);
-        if (!this.verInfo) return;
-        this.renderInfoTab();
-        if (this.verInfo.configName === 'UNCONFIGURED') {
-            setTimeout(() => this.showWizard(), 500);
-        }
     }
 
     // --- Info Tab Rendering ---
@@ -135,7 +139,7 @@ export class ConfigWizard {
         html += '</div><div class="p-4 space-y-2">';
         if (v) {
             html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${v.version || 'Unknown'}</span></div>`;
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine Config</span><span class="text-xs font-bold ${v.configName === 'UNCONFIGURED' ? 'text-red-500' : 'text-secondary-dark'}">${v.configName || 'None'}</span></div>`;
+            html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine Config</span><span class="text-xs font-bold ${this._isUnconfigured(v.configName) ? 'text-red-500' : 'text-secondary-dark'}">${v.configName || 'None'}</span></div>`;
         }
         if (this.boardInfo) {
             html += `<div class="flex justify-between"><span class="text-xs text-grey">Board</span><span class="text-xs font-bold text-secondary-dark">${this.boardInfo}</span></div>`;
@@ -163,7 +167,7 @@ export class ConfigWizard {
             html += '</div></div>';
         }
 
-        if (v && v.configName === 'UNCONFIGURED') {
+        if (v && this._isUnconfigured(v.configName)) {
             html += '<button onclick="window.configWizard.showWizard()" class="w-full py-3 rounded-lg font-bold text-sm bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm">Run Configuration Wizard</button>';
         }
 
@@ -401,7 +405,8 @@ export class ConfigWizard {
 
         machine.routers.forEach(r => {
             const def = spindleDefs[r.id] || {};
-            const cat = def.category || 'spindle';
+            let cat = def.category || 'spindle';
+            if (cat === 'router') cat = 'spindle';
             if (cats[cat]) cats[cat].items.push(r);
         });
 
@@ -485,38 +490,32 @@ export class ConfigWizard {
         this._renderWizardStep();
     }
 
+    _calcStepsPerMM(axis, machine) {
+        if (machine.category !== 'custom') return 400;
+        const drive = (machine.customDrives || {})[axis] || 'belt';
+        if (drive === 'leadscrew') {
+            const lead = (machine.customLead || {})[axis] || 5;
+            return Math.round(1600 / lead);
+        }
+        const pitch = (machine.customBeltPitch || {})[axis] || 2;
+        const teeth = (machine.customPulleyTeeth || {})[axis] || 20;
+        return Math.round(1600 / (pitch * teeth)) || 40;
+    }
+
     _getMachineConfig(machine) {
-        if (!machine) return '';
-        if (machine.grblConfig) return machine.grblConfig;
-
-        // Z2 fixed size: find matching Z1+ machine and patch Z travel
-        if (machine.id && machine.id.startsWith('z2-') && machine.id !== 'z2-custom') {
-            const z1Id = 'z1-' + machine.id.slice(3);
-            const z1 = this.machines.find(m => m.id === z1Id);
-            if (z1 && z1.grblConfig) {
-                return z1.grblConfig
-                    .replace(/\$132=[\d.]+/g, `$132=${machine.travel.z.toFixed(3)}`)
-                    .replace(/\$135=[\d.]+/g, `$135=${machine.travel.z.toFixed(3)}`)
-                    .replace(/\$138=[\d.]+/g, `$138=${machine.travel.z.toFixed(3)}`);
-            }
-        }
-
-        // Custom or Z2 custom size: use any Z1+ config as template, replace all travel
-        const template = this.machines.find(m => m.grblConfig);
-        if (template) {
-            let cfg = template.grblConfig;
-            cfg = cfg.replace(/\$130=[\d.]+/g, `$130=${(machine.travel.x || 0).toFixed(3)}`);
-            cfg = cfg.replace(/\$131=[\d.]+/g, `$131=${(machine.travel.y || 0).toFixed(3)}`);
-            cfg = cfg.replace(/\$132=[\d.]+/g, `$132=${(machine.travel.z || 0).toFixed(3)}`);
-            cfg = cfg.replace(/\$133=[\d.]+/g, `$133=${(machine.travel.x || 0).toFixed(3)}`);
-            cfg = cfg.replace(/\$134=[\d.]+/g, `$134=${(machine.travel.y || 0).toFixed(3)}`);
-            cfg = cfg.replace(/\$135=[\d.]+/g, `$135=${(machine.travel.z || 0).toFixed(3)}`);
-            cfg = cfg.replace(/\$136=[\d.]+/g, `$136=${(machine.travel.x || 0).toFixed(3)}`);
-            cfg = cfg.replace(/\$137=[\d.]+/g, `$137=${(machine.travel.y || 0).toFixed(3)}`);
-            cfg = cfg.replace(/\$138=[\d.]+/g, `$138=${(machine.travel.z || 0).toFixed(3)}`);
-            return cfg;
-        }
-        return '';
+        if (!machine || !machine.travel) return '';
+        const t = machine.travel;
+        const axes = ['x','y','z'];
+        const lines = [];
+        axes.forEach((axis, i) => {
+            const s = this._calcStepsPerMM(axis, machine);
+            lines.push(`$${100 + i}=${s.toFixed(3)}`);
+        });
+        axes.forEach((axis, i) => {
+            const val = t[axis] || 0;
+            lines.push(`$${130 + i}=${val.toFixed(3)}`);
+        });
+        return lines.join('\n');
     }
 
     _computeToolheadAssignments() {
@@ -648,7 +647,7 @@ export class ConfigWizard {
         }
 
         html += '<div class="border-t border-grey-light pt-2"></div>';
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe</span><span class="text-xs font-bold text-secondary-dark">${this.wizardData.probeType === 'ooznest' ? 'Ooznest XYZ Probe' : `Custom (${this.wizardData.plateThickness}mm / ${this.wizardData.xyPlateOffset}mm offset)`}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe</span><span class="text-xs font-bold text-secondary-dark">${this.wizardData.probeType === 'ooznest' ? 'Ooznest XYZ Probe' : 'Custom'}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Dust Shoe</span><span class="text-xs font-bold ${this.wizardData.dustShoe ? 'text-green-600' : 'text-grey'}">${this.wizardData.dustShoe ? 'Yes' : 'No'}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold ${this.wizardData.enclosure ? 'text-green-600' : 'text-grey'}">${this.wizardData.enclosure ? 'WorkBee Enclosure' : 'Open frame'}</span></div>`;
 
@@ -658,8 +657,7 @@ export class ConfigWizard {
             const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
             html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${configLines.length} settings)</p>`;
             html += `<div class="bg-white border border-grey-light rounded-lg p-2 max-h-32 overflow-y-auto text-[10px] font-mono text-grey-dark leading-relaxed">`;
-            html += configLines.slice(0, 20).map(l => `<div>${l}</div>`).join('');
-            if (configLines.length > 20) html += `<div class="text-grey italic">... and ${configLines.length - 20} more</div>`;
+            html += configLines.map(l => `<div>${l}</div>`).join('');
             html += '</div></div>';
         }
 
@@ -715,26 +713,16 @@ export class ConfigWizard {
         // Dust shoe selection
         document.querySelectorAll('.dust-shoe-option').forEach(el => {
             el.onclick = () => {
-                document.querySelectorAll('.dust-shoe-option').forEach(e => {
-                    e.classList.remove('border-primary', 'bg-primary-light/20', 'ring-1', 'ring-primary/30');
-                    e.classList.add('border-grey-light');
-                });
-                el.classList.remove('border-grey-light');
-                el.classList.add('border-primary', 'bg-primary-light/20', 'ring-1', 'ring-primary/30');
                 this.wizardData.dustShoe = el.dataset.value === 'true';
+                this._renderWizardStep();
             };
         });
 
         // Enclosure selection
         document.querySelectorAll('.enclosure-option').forEach(el => {
             el.onclick = () => {
-                document.querySelectorAll('.enclosure-option').forEach(e => {
-                    e.classList.remove('border-primary', 'bg-primary-light/20', 'ring-1', 'ring-primary/30');
-                    e.classList.add('border-grey-light');
-                });
-                el.classList.remove('border-grey-light');
-                el.classList.add('border-primary', 'bg-primary-light/20', 'ring-1', 'ring-primary/30');
                 this.wizardData.enclosure = el.dataset.value === 'true';
+                this._renderWizardStep();
             };
         });
     }
@@ -864,6 +852,10 @@ export class ConfigWizard {
                 await this._sleep(15);
             }
 
+            // Enable probe ($6=1)
+            await this.ws.sendCommand('$6=1');
+            await this._sleep(15);
+
             // Apply modbus protocol $396 setting
             const modbusKey = this.wizardData.toolheads.vfdModbus;
             if (modbusKey) {
@@ -894,8 +886,7 @@ export class ConfigWizard {
             const th = this.wizardData.toolheads;
             const configSummary = {
                 machine: machine.id,
-                router: th.router,
-                vfd: th.vfd,
+                spindle: th.spindle,
                 vfdModbus: th.vfdModbus,
                 laser: th.laser,
                 probe: this.wizardData.probeType,
@@ -903,19 +894,8 @@ export class ConfigWizard {
                 enclosure: this.wizardData.enclosure
             };
             await this.ws.sendCommand(`$I=${JSON.stringify(configSummary)}`);
-            await this._sleep(15);
 
-            await this._sleep(2000);
-
-            // Re-fetch settings to refresh the UI
-            setTimeout(() => {
-                if (window.grblSettings) window.grblSettings.fetchSettings();
-            }, 2000);
-
-            this._showWizardStatus('Configuration complete!', 'success');
-
-            // Close wizard after delay
-            setTimeout(() => this.hideWizard(), 2500);
+            this.hideWizard();
 
         } catch (e) {
             this._showWizardStatus(`Error applying config: ${e.message}`, 'error');

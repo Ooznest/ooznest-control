@@ -275,7 +275,7 @@
                             </div>
                         </div>
                         <div class="col-span-3 flex gap-1">
-                            <button class="dro-sub-btn px-1 flex-col shadow-sm" onclick="window.dro.home()" aria-label="Home all axes">
+                            <button id="home-all-btn" class="dro-sub-btn px-1 flex-col shadow-sm" onclick="window.dro.home()" aria-label="Home all axes">
                                 <i class="bi bi-house-door-fill"></i> <span>HOME</span>
                             </button>
                             <button class="dro-sub-btn px-1 shadow-sm" onclick="window.dro.setZero('XYZ')">
@@ -1745,7 +1745,7 @@
                                                         class="input-field font-mono text-xs h-8">
                                                 </div>
                                                 <div><label class="text-[10px] font-bold text-grey block mb-1"
-                                                        for="prb-feed-latch">Latch
+                                                        for="prb-feed-latch">Seek
                                                         Feed</label>
                                                     <input type="number" id="prb-feed-latch"
                                                         class="input-field font-mono text-xs h-8">
@@ -1771,15 +1771,9 @@
                                                 <input type="number" id="prb-edge-dist"
                                                     class="input-field font-mono text-xs h-8">
                                             </div>
-                                            <div class="prb-probe-only"><label class="text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-probe-dist">Probe
-                                                    Clearance (XY)</label>
-                                                <input type="number" id="prb-probe-dist"
-                                                    class="input-field font-mono text-xs h-8">
-                                            </div>
                                             <div><label class="text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-z-depth">Z Depth
-                                                    (Edges)</label>
+                                                    for="prb-z-depth">Probe
+                                                    Depth</label>
                                                 <input type="number" id="prb-z-depth"
                                                     class="input-field font-mono text-xs h-8">
                                             </div>
@@ -1789,6 +1783,16 @@
 
                                 <!-- RIGHT COLUMN: Tabbed Interface -->
                                 <div class="lg:col-span-8 xl:col-span-9 order-1 lg:order-2 flex flex-col">
+
+                                    <!-- Probe Safety Test Bar -->
+                                    <div id="probe-safety-bar" class="mb-3 p-2 rounded-lg border flex items-center gap-3 text-xs font-bold bg-red-50 border-red-200 text-red-700">
+                                        <i class="bi bi-shield-exclamation text-base"></i>
+                                        <span id="probe-safety-msg">Probe not tested — test required before any operation</span>
+                                        <button id="probe-test-btn" class="btn btn-primary !py-1 !px-3 !text-[10px] ml-auto whitespace-nowrap" onclick="window.probeHandler.runProbeTest()">
+                                            <i class="bi bi-hand-index-thumb"></i> Test Probe
+                                        </button>
+                                        <span id="probe-safety-status" class="hidden text-green-600"><i class="bi bi-check-circle-fill"></i> Probe OK</span>
+                                    </div>
 
                                     <!-- Internal Tabs -->
                                     <div class="flex border-b border-grey-light mb-4 overflow-x-auto no-scrollbar">
@@ -1810,6 +1814,12 @@
                                             data-target="tab-rotation"
                                             onclick="window.probeHandler.switchProbeTab('tab-rotation', this)">
                                             Rotation
+                                        </button>
+                                        <button
+                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn"
+                                            data-target="tab-inside-corners"
+                                            onclick="window.probeHandler.switchProbeTab('tab-inside-corners', this)">
+                                            Inside Corners
                                         </button>
                                         <button
                                             class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn"
@@ -1866,11 +1876,11 @@
 
                                                     <!-- Button 1: Reference (Height set to auto to prevent overflow) -->
                                                     <button
-                                                        class="btn btn-secondary h-auto py-3 flex-col items-center justify-center gap-1 border-2"
+                                                        class="btn btn-secondary h-auto py-3 flex-col items-center justify-center gap-1 border-2 probe-btn"
                                                         onclick="window.probeHandler.runTLO('reference')">
                                                         <i class="bi bi-1-circle-fill text-2xl text-primary-dark"></i>
                                                         <span class="text-sm font-bold">1. Establish Reference</span>
-                                                        <span class="text-[10px] text-grey font-normal">Probe First
+                                                        <span class="text-[10px] text-white font-normal">Probe First
                                                             Tool</span>
                                                     </button>
 
@@ -1880,11 +1890,11 @@
 
                                                     <!-- Button 2: Measure (Height set to auto) -->
                                                     <button
-                                                        class="btn btn-primary h-auto py-3 flex-col items-center justify-center gap-1 shadow-md"
+                                                        class="btn btn-primary h-auto py-3 flex-col items-center justify-center gap-1 shadow-md probe-btn"
                                                         onclick="window.probeHandler.runTLO('measure')">
                                                         <i class="bi bi-rulers text-2xl"></i>
                                                         <span class="text-sm font-bold">2. Measure New Tool</span>
-                                                        <span class="text-[10px] text-black/60 font-normal">Adjusts WCS
+                                                        <span class="text-[10px] text-white/80 font-normal">Adjusts WCS
                                                             Z
                                                             Zero</span>
                                                     </button>
@@ -1937,46 +1947,23 @@
                                                             onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"
                                                             aria-label="Front-right outside corner"></button>
                                                     </div>
-                                                    <button class="btn btn-primary flex-1 h-auto"
+                                                    <button class="btn btn-primary flex-1 h-auto probe-btn"
                                                         onclick="window.probeHandler.runCornerProbe('Outside')">Start</button>
                                                 </div>
+                                                <button class="btn btn-secondary w-full mt-2 probe-btn"
+                                                    onclick="window.probeHandler.runAutoCorner()">
+                                                    <i class="bi bi-lightning-fill"></i> Auto (Z + XY)
+                                                </button>
                                             </div>
 
-                                            <!-- Inside Corner -->
-                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
-                                                <div class="flex justify-between items-start mb-2">
-                                                    <h3 class="font-bold text-secondary-dark text-sm"><i
-                                                            class="bi bi-bounding-box"></i> Inside Corner</h3>
-                                                    <span class="text-[9px] text-grey font-bold plate-status-text">Mode:
-                                                        Plate</span>
-                                                </div>
-                                                <p class="text-xs text-grey leading-relaxed mb-3">
-                                                    Probe two edges of an inside corner to set work zero.
-                                                </p>
-                                                <div class="flex gap-4">
-                                                    <div
-                                                        class="w-24 h-24 grid grid-cols-2 gap-1 flex-shrink-0 p-1 bg-grey-light rounded-lg">
-                                                        <button class="corner-sel-btn rounded-tl bg-white h-full"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'RL')"
-                                                            aria-label="Rear-left inside corner"></button>
-                                                        <button class="corner-sel-btn rounded-tr bg-white h-full"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'RR')"
-                                                            aria-label="Rear-right inside corner"></button>
-                                                        <button
-                                                            class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 h-full"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'FL')"
-                                                            aria-label="Front-left inside corner"></button>
-                                                        <button class="corner-sel-btn rounded-br bg-white h-full"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Inside', 'FR')"
-                                                            aria-label="Front-right inside corner"></button>
-                                                    </div>
-                                                    <button class="btn btn-secondary flex-1 h-auto"
-                                                        onclick="window.probeHandler.runCornerProbe('Inside')">Start</button>
-                                                </div>
+                                            <!-- Probe plate diagram (visible in Plate mode) -->
+                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex items-center justify-center prb-plate-only">
+                                                <img src="themes/probe.svg" alt="Probe plate diagram" style="max-width:100%;height:auto;max-height:160px;">
                                             </div>
+
                                         </div>
 
-                                        <!-- Single Axis -->
+                                        <!-- Single Surface (rows: X, Y, Z) -->
                                         <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
                                             <div class="flex justify-between items-center mb-2">
                                                 <h3
@@ -1988,37 +1975,36 @@
                                             <p class="text-xs text-grey leading-relaxed mb-3">
                                                 Find the location of a single edge or surface in X, Y, or Z.
                                             </p>
-                                            <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                                                <button
-                                                    class="btn btn-secondary flex-1 py-3 flex-col gap-1 min-w-[70px]"
-                                                    onclick="window.probeHandler.runSingleAxis('X', 1)">
-                                                    <i class="bi bi-arrow-bar-right text-xl"></i><span
-                                                        class="text-[10px]">X+</span>
-                                                </button>
-                                                <button
-                                                    class="btn btn-secondary flex-1 py-3 flex-col gap-1 min-w-[70px]"
-                                                    onclick="window.probeHandler.runSingleAxis('X', -1)">
-                                                    <i class="bi bi-arrow-bar-left text-xl"></i><span
-                                                        class="text-[10px]">X-</span>
-                                                </button>
-                                                <button
-                                                    class="btn btn-secondary flex-1 py-3 flex-col gap-1 min-w-[70px]"
-                                                    onclick="window.probeHandler.runSingleAxis('Y', 1)">
-                                                    <i class="bi bi-arrow-bar-up text-xl"></i><span
-                                                        class="text-[10px]">Y+</span>
-                                                </button>
-                                                <button
-                                                    class="btn btn-secondary flex-1 py-3 flex-col gap-1 min-w-[70px]"
-                                                    onclick="window.probeHandler.runSingleAxis('Y', -1)">
-                                                    <i class="bi bi-arrow-bar-down text-xl"></i><span
-                                                        class="text-[10px]">Y-</span>
-                                                </button>
-                                                <button class="btn btn-primary flex-1 py-3 flex-col gap-1 min-w-[70px]"
-                                                    onclick="window.probeHandler.runZProbe()">
-                                                    <i class="bi bi-arrow-bar-down text-xl"></i><span
-                                                        class="text-[10px]">Z
-                                                        Surface</span>
-                                                </button>
+                                            <div class="space-y-2">
+                                                <div class="text-[10px] font-bold text-grey mb-0.5">X Axis</div>
+                                                <div class="flex gap-2">
+                                                    <button class="btn btn-secondary flex-1 py-3 flex-col gap-1 probe-btn"
+                                                        onclick="window.probeHandler.runSingleAxis('X', 1)">
+                                                        <i class="bi bi-arrow-bar-right text-xl"></i><span class="text-[10px]">X+</span>
+                                                    </button>
+                                                    <button class="btn btn-secondary flex-1 py-3 flex-col gap-1 probe-btn"
+                                                        onclick="window.probeHandler.runSingleAxis('X', -1)">
+                                                        <i class="bi bi-arrow-bar-left text-xl"></i><span class="text-[10px]">X-</span>
+                                                    </button>
+                                                </div>
+                                                <div class="text-[10px] font-bold text-grey mb-0.5 mt-1">Y Axis</div>
+                                                <div class="flex gap-2">
+                                                    <button class="btn btn-secondary flex-1 py-3 flex-col gap-1 probe-btn"
+                                                        onclick="window.probeHandler.runSingleAxis('Y', 1)">
+                                                        <i class="bi bi-arrow-bar-up text-xl"></i><span class="text-[10px]">Y+</span>
+                                                    </button>
+                                                    <button class="btn btn-secondary flex-1 py-3 flex-col gap-1 probe-btn"
+                                                        onclick="window.probeHandler.runSingleAxis('Y', -1)">
+                                                        <i class="bi bi-arrow-bar-down text-xl"></i><span class="text-[10px]">Y-</span>
+                                                    </button>
+                                                </div>
+                                                <div class="text-[10px] font-bold text-grey mb-0.5 mt-1">Z Axis</div>
+                                                <div>
+                                                    <button class="btn btn-primary w-full py-3 flex-col gap-1 probe-btn"
+                                                        onclick="window.probeHandler.runZProbe()">
+                                                        <i class="bi bi-arrow-bar-down text-xl"></i><span class="text-[10px]">Z Surface</span>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2026,11 +2012,18 @@
                                     <!-- TAB CONTENT: Center Finder -->
                                     <div id="tab-centers" class="probe-tab-content hidden">
                                         <div class="bg-white p-6 rounded-xl shadow-soft border border-grey-light mb-4">
+                                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs text-blue-800 leading-relaxed">
+                                                <p class="font-bold mb-1"><i class="bi bi-info-circle"></i> How it works</p>
+                                                <p>Position the probe tip approximately above the center of the feature you are probing.</p>
+                                                <p class="mt-1"><strong>Approx Size</strong> is how far out the probe will travel before looking for edges. It probes in X and Y to calculate the perfect center.</p>
+                                                <p class="mt-1"><strong>Inside Pockets:</strong> starts from center and moves outward to the approx dimensions, then probes further with extra clearance.</p>
+                                                <p class="mt-1"><strong>Outer Features (Rect/Circular):</strong> moves a little beyond the measurements then probes toward the center. The extra clearance helps if you are slightly off-center.</p>
+                                            </div>
                                             <h3 class="font-bold text-secondary-dark text-sm mb-2">Feature / Stock
                                                 Dimensions
                                             </h3>
                                             <p class="text-xs text-grey leading-relaxed mb-3">
-                                                Approximate size required for feature probing.
+                                                Approximate size of the feature. Extra clearance is added automatically.
                                             </p>
                                             <div class="grid grid-cols-2 gap-4 max-w-sm">
                                                 <div><label class="text-[10px] font-bold text-grey block mb-1">Width
@@ -2051,18 +2044,18 @@
                                                 <i class="bi bi-circle-square text-3xl text-secondary mb-2 block"></i>
                                                 <h4 class="font-bold text-sm">Inside Pocket</h4>
                                                 <p class="text-xs text-grey leading-relaxed mt-1">
-                                                    Find the center of a pocket or hole.
+                                                    Find the center of a pocket or hole. Starts at center, probes outward.
                                                 </p>
-                                                <button class="btn btn-secondary w-full mt-3"
-                                                    onclick="window.probeHandler.runPocketCenter()">Probe</button>
+                                                    <button class="btn btn-secondary w-full mt-3 probe-btn"
+                                                        onclick="window.probeHandler.runPocketCenter()">Probe</button>
                                             </div>
                                             <div class="bg-white p-4 rounded-xl border border-grey-light text-center">
                                                 <i class="bi bi-square-fill text-3xl text-secondary mb-2 block"></i>
                                                 <h4 class="font-bold text-sm">Rect Feature</h4>
                                                 <p class="text-xs text-grey leading-relaxed mt-1">
-                                                    Find the center of a rectangular stock or feature.
+                                                    Find the center of a rectangular stock or feature. Probes from outside in.
                                                 </p>
-                                                <button class="btn btn-secondary w-full mt-3"
+                                                <button class="btn btn-secondary w-full mt-3 probe-btn"
                                                     onclick="window.probeHandler.runFeatureCenter('Rect')">Probe</button>
                                             </div>
                                             <div class="bg-white p-4 rounded-xl border border-grey-light text-center">
@@ -2071,8 +2064,39 @@
                                                 <p class="text-xs text-grey leading-relaxed mt-1">
                                                     Find the center of a round stock or feature.
                                                 </p>
-                                                <button class="btn btn-secondary w-full mt-3"
+                                                <button class="btn btn-secondary w-full mt-3 probe-btn"
                                                     onclick="window.probeHandler.runFeatureCenter('Circ')">Probe</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- TAB CONTENT: Inside Corners -->
+                                    <div id="tab-inside-corners" class="probe-tab-content hidden">
+                                        <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <h3 class="font-bold text-secondary-dark text-sm"><i class="bi bi-bounding-box"></i> Inside Corner</h3>
+                                                <span class="text-[9px] text-grey font-bold plate-status-text">Mode: Plate</span>
+                                            </div>
+                                            <p class="text-xs text-grey leading-relaxed mb-3">
+                                                Probe two edges of an inside corner to set work zero.
+                                            </p>
+                                            <div class="flex gap-4">
+                                                <div class="w-24 h-24 grid grid-cols-2 gap-1 flex-shrink-0 p-1 bg-grey-light rounded-lg">
+                                                    <button class="corner-sel-btn rounded-tl bg-white h-full"
+                                                        onclick="window.probeHandler.selectCorner(this, 'Inside', 'RL')"
+                                                        aria-label="Rear-left inside corner"></button>
+                                                    <button class="corner-sel-btn rounded-tr bg-white h-full"
+                                                        onclick="window.probeHandler.selectCorner(this, 'Inside', 'RR')"
+                                                        aria-label="Rear-right inside corner"></button>
+                                                    <button class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 h-full"
+                                                        onclick="window.probeHandler.selectCorner(this, 'Inside', 'FL')"
+                                                        aria-label="Front-left inside corner"></button>
+                                                    <button class="corner-sel-btn rounded-br bg-white h-full"
+                                                        onclick="window.probeHandler.selectCorner(this, 'Inside', 'FR')"
+                                                        aria-label="Front-right inside corner"></button>
+                                                </div>
+                                                    <button class="btn btn-secondary flex-1 h-auto probe-btn"
+                                                        onclick="window.probeHandler.runCornerProbe('Inside')">Start</button>
                                             </div>
                                         </div>
                                     </div>
@@ -2102,7 +2126,7 @@
                                                     </div>
 
                                                     <div class="flex gap-2">
-                                                        <button class="btn btn-primary flex-1"
+                                                        <button class="btn btn-primary flex-1 probe-btn"
                                                             onclick="window.probeHandler.runRotationProbe()">
                                                             <i class="bi bi-arrow-clockwise"></i> Measure Angle
                                                         </button>
@@ -2412,6 +2436,7 @@
 
                             <!-- INFO SUB-TAB -->
                             <div id="trouble-tab-info" class="trouble-tab-content hidden">
+                                <div id="homing-status-content" class="mb-4"></div>
                                 <div id="trouble-tab-info-content" class="space-y-4">
                                     <div class="text-grey text-center py-8">
                                         <i class="bi bi-arrow-clockwise animate-spin text-2xl"></i>

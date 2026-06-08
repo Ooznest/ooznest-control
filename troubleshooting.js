@@ -24,7 +24,7 @@ export class TroubleshootingHandler {
         });
 
         this.ws.on('line', (line) => {
-            if (line.startsWith('[BOARD:Ooznest-CNC]')) {
+            if (line.startsWith('[BOARD:Ooznest-CNC]') || line.startsWith('[BOARD:Ooznest-Motion-Control-Core]')) {
                 this.isOoznestBoard = true;
             }
             if (this._collectingPinInfo === 'pins') {
@@ -548,6 +548,29 @@ export class TroubleshootingHandler {
             this._initINA219Chart();
             this._updateINA219Chart();
         }
+    }
+
+    updateHoming(mask) {
+        const container = document.getElementById('homing-status-content');
+        if (!container) return;
+        const mapping = ['X', 'Y', 'Z', 'A', 'B', 'C'];
+        let html = '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
+        html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
+        html += '<i class="bi bi-house-gear text-primary text-xs"></i>';
+        html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Homing Status</h3>';
+        html += '</div><div class="divide-y divide-grey-light/60">';
+        let anyHomed = false;
+        mapping.forEach((axis, i) => {
+            const isHomed = (mask >> i) & 1;
+            if (isHomed) anyHomed = true;
+            html += `<div class="flex items-center gap-2 px-3 py-2">
+                <span class="text-xs font-bold text-grey-dark flex-1">${axis} Axis</span>
+                <span class="signal-badge ${isHomed ? 'signal-on' : 'signal-off'}"
+                    style="${isHomed ? 'background:#dcfce7;color:#16a34a;border-color:#86efac;' : ''}">${isHomed ? 'HOMED' : '—'}</span>
+            </div>`;
+        });
+        html += '</div></div>';
+        container.innerHTML = html;
     }
 
     refresh() {

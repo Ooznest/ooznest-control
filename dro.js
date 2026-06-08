@@ -148,8 +148,7 @@ export class DROHandler {
 
         this.spindleSpeed = 0;
         this.feedRate = 0;
-        // this.accessoryState = ""; // Persist last known state to prevent flickering
-        // this.inputPins = "";      // Same for pins
+        this.inputPins = "";
 
         let rawWPos = null;
         let rawMPos = null;
@@ -281,6 +280,7 @@ export class DROHandler {
     // --- New Update Methods ---
 
     _updateHoming(mask) {
+        this.homedMask = mask;
         // X=1, Y=2, Z=4, A=8, B=16, C=32
         const mapping = ['x', 'y', 'z', 'a', 'b', 'c'];
         mapping.forEach((axis, i) => {
@@ -292,19 +292,15 @@ export class DROHandler {
                     btn.classList.remove('text-grey-light', 'text-red-400');
                     btn.title = `${axis.toUpperCase()} Homed`;
                 } else {
-                    // Use Red for unhomed as requested, or Gray?
-                    // User said "green or red". Let's use Red to indicate "Not Homed" if standard.
-                    // But usually unhomed is default state. I'll use Gray (faded) and Red only if we want to warn.
-                    // Let's stick to Gray for "Not Homed" but make it clickable.
-                    // Actually, let's use Red as "Needs Homing" style?
-                    // I will use Gray for now as it's safer UI design, unless user insists on Red.
-                    // User asked "green or red?". I'll implementation Green (Homed) and Gray (Unhomed).
                     btn.classList.remove('text-green-500', 'text-red-400');
                     btn.classList.add('text-grey-light');
                     btn.title = `Home ${axis.toUpperCase()}`;
                 }
             }
         });
+        if (window.troubleshooting) {
+            window.troubleshooting.updateHoming(mask);
+        }
     }
 
     _updatePins() {

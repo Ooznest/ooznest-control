@@ -578,6 +578,34 @@ export class GrblSettings {
             return html;
         }
 
+        // 2: Exclusive bitfield (like bitmask but bit 0 gates all others)
+        if (s.type === 2) {
+            const intVal = parseInt(val) || 0;
+            if (!s.format) return `<input type="number" class="input-field h-7 md:h-8 px-1 text-xs" value="${val}" oninput="window.grblSettings.update('${s.id}', this.value)">`;
+
+            const options = s.format.split(',');
+            const bit0Set = (intVal & 1) !== 0;
+            let html = `<div class="flex flex-col gap-1 border border-grey-light rounded p-1 bg-grey-bg">`;
+
+            options.forEach((label, index) => {
+                if (!label || label.toUpperCase() === 'N/A') return;
+                const bitMask = 1 << index;
+                const isSet = (intVal & bitMask) !== 0;
+                const disabled = index > 0 && !bit0Set ? 'disabled' : '';
+
+                html += `
+                    <label class="inline-flex items-center gap-1 cursor-pointer hover:bg-white rounded px-0.5 transition-colors ${disabled ? 'opacity-40' : ''}">
+                        <input type="checkbox" class="rounded text-primary focus:ring-primary h-3 w-3 border-grey-light"
+                            onchange="window.grblSettings.updateMask('${s.id}', ${bitMask}, this.checked)"
+                            ${isSet ? 'checked' : ''} ${disabled}>
+                        <span class="text-[9px] md:text-[11px] text-grey-dark leading-none pt-0.5 truncate">${label}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+            return html;
+        }
+
         // 4: Axis mask (Checkbox List for X, Y, Z, A, B, C)
         if (s.type === 4) {
             const intVal = parseInt(val) || 0;
