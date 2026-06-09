@@ -16,7 +16,10 @@ export class ProbeHandler {
         // Selected Corners
         this.selections = {
             outsideCorner: 'FL',
-            insideCorner: 'FL'
+            insideCorner: 'FL',
+            singleAxis: 'X',
+            singleDir: 1,
+            mode: 'corner'
         };
 
         // Probe safety test
@@ -56,8 +59,10 @@ export class ProbeHandler {
         const msg = document.getElementById('probe-safety-msg');
         const status = document.getElementById('probe-safety-status');
         const btn = document.getElementById('probe-test-btn');
+        const note = document.getElementById('probe-safety-note');
 
-        bar.className = 'mb-3 p-2 rounded-lg border flex items-center gap-3 text-xs font-bold bg-yellow-50 border-yellow-200 text-yellow-700';
+        bar.className = 'mb-3 rounded-lg border text-xs font-bold bg-yellow-50 border-yellow-200 text-yellow-700';
+        if (note) note.classList.remove('hidden');
         msg.textContent = isPlate
             ? 'Lift the probe plate and gently touch the endmill to the plate, then release'
             : 'Gently press the probe tip by hand, then release';
@@ -82,12 +87,13 @@ export class ProbeHandler {
                     this.probeSafe = true;
                     this._updateProbeButtons();
 
-                    bar.className = 'mb-3 p-2 rounded-lg border flex items-center gap-3 text-xs font-bold safe';
+                    const note = document.getElementById('probe-safety-note');
+                    bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
                     msg.textContent = 'Probe test passed — all operations enabled';
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-hand-index-thumb"></i> Test Probe';
+                    btn.classList.add('hidden');
                     status.className = 'text-green-600';
                     status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
+                    if (note) note.classList.add('hidden');
                     this.term.writeln('\x1b[32m> Probe safety test PASSED.\x1b[0m');
                 }
             }
@@ -101,7 +107,7 @@ export class ProbeHandler {
                 this._testStage = null;
                 this.probeSafe = false;
 
-                bar.className = 'mb-3 p-2 rounded-lg border flex items-center gap-3 text-xs font-bold unsafe';
+                bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
                 msg.textContent = 'Test timed out — try again';
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-hand-index-thumb"></i> Test Probe';
@@ -123,10 +129,13 @@ export class ProbeHandler {
         const msg = document.getElementById('probe-safety-msg');
         const status = document.getElementById('probe-safety-status');
         const btn = document.getElementById('probe-test-btn');
+        const note = document.getElementById('probe-safety-note');
 
-        if (bar) bar.className = 'mb-3 p-2 rounded-lg border flex items-center gap-3 text-xs font-bold unsafe';
+        if (bar) bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
         if (msg) msg.textContent = 'Probe not tested — test required before any operation';
+        if (note) note.classList.add('hidden');
         if (btn) {
+            btn.classList.remove('hidden');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-hand-index-thumb"></i> Test Probe';
         }
@@ -275,11 +284,51 @@ export class ProbeHandler {
                 }
             }
         });
+
+        // Config wizard banner
+        const banner = document.getElementById('probe-config-banner');
+        const label = document.getElementById('probe-config-label');
+        const labelText = document.getElementById('probe-config-label-text');
+        const ran = this.store.get('configWizardRan');
+        if (ran) {
+            if (banner) banner.classList.add('hidden');
+            if (label) label.classList.remove('hidden');
+            const ptype = this.store.get('probe.type') || 'ooznest';
+            if (labelText) labelText.textContent = 'Plate configured as ' + (ptype === 'ooznest' ? 'Ooznest XYZ Probe' : 'Custom Probe');
+        } else {
+            if (banner) banner.classList.remove('hidden');
+            if (label) label.classList.add('hidden');
+        }
+    }
+
+    selectSingleSurface(btn, axis, dir) {
+        this.selections.singleAxis = axis;
+        this.selections.singleDir = dir;
+        this.selections.mode = 'single';
+        const txtClasses = 'text-[9px] font-bold leading-tight';
+        document.querySelectorAll('#single-surface-grid button').forEach(b => {
+            b.className = 'single-sel-btn rounded ' + txtClasses + ' bg-grey-bg border border-grey-light hover:bg-primary px-2 py-1 flex flex-col items-center';
+        });
+        btn.className = 'single-sel-btn rounded ' + txtClasses + ' bg-primary border-2 border-black/20 ring-2 ring-primary/30 px-2 py-1 flex flex-col items-center';
+        const singleImg = document.getElementById('probe-single-diagram');
+        const cornerImg = document.getElementById('probe-corner-diagram');
+        if (singleImg) { singleImg.src = 'themes/SS-' + axis + (dir === 1 ? '+' : '-') + '.svg'; singleImg.classList.remove('hidden'); }
+        if (cornerImg) cornerImg.classList.add('hidden');
+        // Deselect all outside corner buttons
+        document.querySelectorAll('#outside-corner-grid button').forEach(b => {
+            b.className = "corner-sel-btn h-full transition-colors rounded " + txtClasses + " bg-grey-bg border border-grey-light hover:bg-primary";
+        });
+        // Update run button
+        const lbl = document.getElementById('run-probe-label');
+        const desc = document.getElementById('run-probe-desc');
+        if (lbl) lbl.textContent = 'Probe ' + axis + (dir === 1 ? '+' : '-');
+        if (desc) desc.textContent = 'Probe the ' + axis + ' axis in the ' + (dir === 1 ? 'positive' : 'negative') + ' direction to set work zero.';
     }
 
     selectCorner(btn, type, corner) {
         if (type === 'Outside') this.selections.outsideCorner = corner;
         else this.selections.insideCorner = corner;
+        if (type === 'Outside') this.selections.mode = 'corner';
 
         const parent = btn.parentElement;
         // Styles
@@ -287,12 +336,28 @@ export class ProbeHandler {
         const outUnsel = ['bg-grey-bg', 'border', 'border-grey-light'];
         const inUnsel = ['bg-white', 'shadow-inner']; // simplified
 
+        const txtClasses = 'text-[10px] font-bold leading-tight';
         parent.querySelectorAll('button').forEach(b => {
-            b.className = "corner-sel-btn h-full transition-colors rounded " + (type === 'Outside' ? "bg-grey-bg border border-grey-light hover:bg-primary" : "bg-white shadow-inner hover:bg-primary");
+            b.className = "corner-sel-btn h-full transition-colors rounded " + txtClasses + ' ' + (type === 'Outside' ? "bg-grey-bg border border-grey-light hover:bg-primary" : "bg-white shadow-inner hover:bg-primary");
         });
 
         // Apply active style
-        btn.className = "corner-sel-btn h-full rounded " + selClasses.join(' ');
+        btn.className = "corner-sel-btn h-full rounded " + txtClasses + ' ' + selClasses.join(' ');
+
+        // Swap corner diagram
+        const cImg = document.getElementById('probe-corner-diagram');
+        const sImg = document.getElementById('probe-single-diagram');
+        if (cImg) { cImg.src = 'themes/' + corner + '.svg'; cImg.classList.remove('hidden'); }
+        if (sImg) sImg.classList.add('hidden');
+        // Deselect all single surface buttons
+        document.querySelectorAll('#single-surface-grid button').forEach(b => {
+            b.className = 'single-sel-btn rounded ' + txtClasses + ' bg-grey-bg border border-grey-light hover:bg-primary px-2 py-1 flex flex-col items-center';
+        });
+        // Update run button
+        const lbl = document.getElementById('run-probe-label');
+        const desc = document.getElementById('run-probe-desc');
+        if (lbl) lbl.textContent = 'Probe Corner';
+        if (desc) desc.textContent = 'Probe the selected corner to zero work coordinates.';
     }
 
     setTLOFromMachine() {
@@ -508,38 +573,81 @@ export class ProbeHandler {
 
     // ==========================================
     // AUTO CORNER (Z surface + XY corner)
+    // User's proven macro — start above the hole.
     // ==========================================
-    stepAutoCorner(coords) {
-        const s = this.store.data.probe;
-        const isPlate = s.mode === 'plate';
-        const zSet = isPlate ? s.plateThickness : 0;
-        this.ws.sendCommand('G10 L20 P0 Z' + zSet.toFixed(3));
-        this.ws.sendCommand('G0 Z' + s.retract);
-        this.ws.sendCommand('G90');
-        this.term.writeln('\x1b[32m> Z surface set. Starting corner probe...\x1b[0m');
-        // Fall through to corner probe
-        this.activeRoutine = 'OUTSIDE_CORNER';
-        this.routineStep = 1;
-        const corner = this.selections.outsideCorner;
-        let xDirMult = (corner.includes('R')) ? 1 : -1;
-        let yDirMult = (corner.includes('B')) ? 1 : -1;
-        this.tempData = { xDir: xDirMult, yDir: yDirMult };
-        // Start Z plunge for corner (step 1 handled by stepOutsideCorner)
-        this.ws.sendCommand('G91 G38.2 Z-' + s.travel + ' F' + s.feed);
-    }
-
-    // ==========================================
-    // EXISTING ROUTINES (Z, Single, Corner, Center)
-    // ==========================================
-    runZProbe() {
+    runAutoCorner() {
         if (!this._requireProbeSafe()) return;
         this.saveSettings();
+        this.activeRoutine = 'AUTO_CORNER';
+        this.routineStep = 0;
         const s = this.store.data.probe;
-        const isPlate = s.mode === 'plate';
-        this.term.writeln(`\x1b[34m> Starting Z-Probe (${isPlate ? 'Plate' : 'Probe'})...\x1b[0m`);
-        const zSet = isPlate ? s.plateThickness : 0;
-        this.sendBatch(['G91', `G38.2 Z-${s.travel} F${s.feed}`, `G10 L20 P0 Z${zSet.toFixed(3)}`, `G0 Z${s.retract}`, 'G90']);
-        this._resetProbeTest();
+        const rad = s.toolDiameter / 2;
+        const corner = this.selections.outsideCorner;
+        const xDir = corner.charAt(1) === 'R' ? 1 : -1;
+        const yDir = corner.charAt(0) === 'R' ? 1 : -1;
+        this.autoOffsets = {
+            zoffset: s.plateThickness,
+            xoffset: xDir * (rad + s.xyPlateOffset),
+            yoffset: yDir * (rad + s.xyPlateOffset),
+            xDir, yDir
+        };
+        this.term.writeln('\x1b[34m> Auto: zeroing and moving to plate center...\x1b[0m');
+        this.ws.sendCommand('G10 P0 L20 X0 Y0 Z0');
+        this.ws.sendCommand('G90 G0 X' + (-xDir * 22.5) + ' Y' + (-yDir * 22.5));
+        this.ws.sendCommand('G38.2 Z-25 F' + s.feed);
+    }
+
+    stepAutoCorner(coords) {
+        const o = this.autoOffsets;
+        const s = this.store.data.probe;
+        const xDir = o.xDir, yDir = o.yDir;
+
+        if (this.routineStep === 0) {
+            // Z probe done — set Z, retract
+            this.ws.sendCommand('G4 P0.4');
+            this.ws.sendCommand('G10 P0 L20 Z' + o.zoffset.toFixed(3));
+            this.ws.sendCommand('G0 Z' + (o.zoffset + 5).toFixed(3));
+            // Position for X probe: start from -xDir*20, opposite side
+            this.ws.sendCommand('G0 X' + (xDir * 20) + ' Y' + (-yDir * 10));
+            this.ws.sendCommand('G0 Z' + (o.zoffset - 6).toFixed(3));
+            this.term.writeln('\x1b[34m> Auto: probing X edge...\x1b[0m');
+            this.ws.sendCommand('G38.2 X' + (-xDir * 25) + ' F' + s.feed);
+            this.routineStep = 1;
+        } else if (this.routineStep === 1) {
+            // X probe done — set X, retract, clear plate (Y first), then position for Y probe
+            this.ws.sendCommand('G4 P0.4');
+            this.ws.sendCommand('G10 P0 L20 X' + o.xoffset.toFixed(3));
+            this.ws.sendCommand('G0 X' + (o.xoffset + xDir * 2).toFixed(3));
+            this.ws.sendCommand('G0 Z' + (o.zoffset + 15).toFixed(3));
+            this.ws.sendCommand('G0 Y' + (yDir * 20));
+            this.ws.sendCommand('G0 X' + (-xDir * 15));
+            this.ws.sendCommand('G0 Z' + (o.zoffset - 6).toFixed(3));
+            this.term.writeln('\x1b[34m> Auto: probing Y edge...\x1b[0m');
+            this.ws.sendCommand('G38.2 Y' + (-yDir * 25) + ' F' + s.feed);
+            this.routineStep = 2;
+        } else if (this.routineStep === 2) {
+            // Y probe done — set Y, retract, done
+            this.ws.sendCommand('G4 P0.4');
+            this.ws.sendCommand('G10 P0 L20 Y' + o.yoffset.toFixed(3));
+            this.ws.sendCommand('G0 Y' + (o.yoffset + yDir * 2).toFixed(3));
+            this.ws.sendCommand('G0 Z' + (o.zoffset + 5).toFixed(3));
+            this.ws.sendCommand('G0 X0 Y0');
+            this.term.writeln('\x1b[32m> Auto Corner complete!\x1b[0m');
+            this.activeRoutine = null;
+            this._resetProbeTest();
+        }
+    }
+
+    runSelectedOperation() {
+        if (this.selections.mode === 'corner') {
+            this.runAutoCorner();
+        } else {
+            this.runSingleAxis(this.selections.singleAxis, this.selections.singleDir);
+        }
+    }
+
+    runSingleSurface() {
+        this.runSingleAxis(this.selections.singleAxis, this.selections.singleDir);
     }
 
     runSingleAxis(axis, dir) {
@@ -569,8 +677,8 @@ export class ProbeHandler {
         this.saveSettings();
         const corner = this.selections.outsideCorner;
         const s = this.store.data.probe;
-        let xDirMult = (corner.includes('R')) ? 1 : -1;
-        let yDirMult = (corner.includes('B')) ? 1 : -1;
+        let xDirMult = corner.charAt(1) === 'R' ? 1 : -1;
+        let yDirMult = corner.charAt(0) === 'R' ? 1 : -1;
         this.tempData = { xDir: xDirMult, yDir: yDirMult };
         this.activeRoutine = 'OUTSIDE_CORNER';
         this.routineStep = 1;

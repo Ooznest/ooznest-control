@@ -1711,6 +1711,9 @@
                                                         <span class="oz-segmented-option right-opt !text-[10px] font-bold w-1/2 flex items-center justify-center">3D Probe</span>
                                                     </div>
                                                 </label>
+                                                <div id="probe-config-label" class="hidden mt-1.5 text-[10px] font-bold text-green-600">
+                                                    <i class="bi bi-check-circle-fill text-[9px]"></i> <span id="probe-config-label-text">Plate configured as Ooznest XYZ Probe</span>
+                                                </div>
                                             </div>
 
                                             <!-- Basic Params -->
@@ -1784,14 +1787,28 @@
                                 <!-- RIGHT COLUMN: Tabbed Interface -->
                                 <div class="lg:col-span-8 xl:col-span-9 order-1 lg:order-2 flex flex-col">
 
-                                    <!-- Probe Safety Test Bar -->
-                                    <div id="probe-safety-bar" class="mb-3 p-2 rounded-lg border flex items-center gap-3 text-xs font-bold bg-red-50 border-red-200 text-red-700">
-                                        <i class="bi bi-shield-exclamation text-base"></i>
-                                        <span id="probe-safety-msg">Probe not tested — test required before any operation</span>
-                                        <button id="probe-test-btn" class="btn btn-primary !py-1 !px-3 !text-[10px] ml-auto whitespace-nowrap" onclick="window.probeHandler.runProbeTest()">
-                                            <i class="bi bi-hand-index-thumb"></i> Test Probe
+                                    <!-- Config Wizard Banner -->
+                                    <div id="probe-config-banner" class="mb-3 rounded-lg border text-xs font-bold bg-amber-50 border-amber-200 text-amber-700 p-3 items-center gap-3 flex hidden">
+                                        <i class="bi bi-exclamation-triangle text-base"></i>
+                                        <span class="flex-1">Config Wizard has not been run — probe settings may be incomplete.</span>
+                                        <button class="btn btn-warning !py-1 !px-3 !text-[10px] whitespace-nowrap" onclick="window.configWizard.showWizard()">
+                                            <i class="bi bi-magic"></i> Run Config Wizard
                                         </button>
-                                        <span id="probe-safety-status" class="hidden text-green-600"><i class="bi bi-check-circle-fill"></i> Probe OK</span>
+                                    </div>
+
+                                    <!-- Probe Safety Test Bar -->
+                                    <div id="probe-safety-bar" class="mb-3 rounded-lg border text-xs font-bold bg-red-50 border-red-200 text-red-700">
+                                        <div class="flex items-center gap-3 p-2">
+                                            <i class="bi bi-shield-exclamation text-base"></i>
+                                            <span id="probe-safety-msg">Probe not tested — test required before any operation</span>
+                                            <button id="probe-test-btn" class="btn btn-primary !py-1 !px-3 !text-[10px] ml-auto whitespace-nowrap" onclick="window.probeHandler.runProbeTest()">
+                                                <i class="bi bi-hand-index-thumb"></i> Test Probe
+                                            </button>
+                                            <span id="probe-safety-status" class="hidden text-green-600"><i class="bi bi-check-circle-fill"></i> Probe OK</span>
+                                        </div>
+                                        <div id="probe-safety-note" class="hidden px-3 pb-2 text-[10px] text-amber-700">
+                                            <i class="bi bi-info-circle"></i> Lift the probe plate and gently touch the endmill to the plate, then release
+                                        </div>
                                     </div>
 
                                     <!-- Internal Tabs -->
@@ -1909,102 +1926,94 @@
                                         </div>
                                     </div>
 
-                                    <!-- TAB CONTENT: Edges & Corners (Existing logic refined) -->
-                                    <div id="tab-edges" class="probe-tab-content space-y-4 block">
-                                        <!-- Corners -->
+                                    <!-- TAB CONTENT: Edges & Corners -->
+                                    <div id="tab-edges" class="probe-tab-content block">
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <!-- Outside Corner -->
-                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
-                                                <div class="flex justify-between items-start mb-2">
-                                                    <h3 class="font-bold text-secondary-dark text-sm"><i
-                                                            class="bi bi-box"></i> Outside Corner</h3>
-                                                    <span class="text-[9px] text-grey font-bold plate-status-text">Mode:
-                                                        Plate</span>
-                                                </div>
-                                                <p class="text-xs text-grey leading-relaxed mb-3">
-                                                    Probe two edges of an outside corner to set work zero.
-                                                </p>
-                                                <div class="flex gap-4">
-                                                    <div class="w-24 h-24 grid grid-cols-2 gap-1 flex-shrink-0">
-                                                        <button
-                                                            class="corner-sel-btn rounded-tl bg-grey-bg border border-grey-light hover:bg-primary h-full"
+                                            <!-- LEFT COLUMN: Corner + Single Surface + Run Probe -->
+                                            <div class="space-y-4">
+                                                <!-- Outside Corner -->
+                                                <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <h3 class="font-bold text-secondary-dark text-sm"><i class="bi bi-box"></i> Outside Corner</h3>
+                                                        <span class="text-[9px] text-grey font-bold plate-status-text">Mode: Plate</span>
+                                                    </div>
+                                                    <p class="text-xs text-grey leading-relaxed mb-3">
+                                                        Probe two edges of an outside corner to set work zero.
+                                                    </p>
+                                                    <div id="outside-corner-grid" class="w-24 h-24 grid grid-cols-2 gap-1 flex-shrink-0">
+                                                        <button class="corner-sel-btn rounded-tl bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
                                                             data-corner="RL"
                                                             onclick="window.probeHandler.selectCorner(this, 'Outside', 'RL')"
-                                                            aria-label="Rear-left outside corner"></button>
-                                                        <button
-                                                            class="corner-sel-btn rounded-tr bg-grey-bg border border-grey-light hover:bg-primary h-full"
+                                                            aria-label="Rear-left outside corner">Rear<br>Left</button>
+                                                        <button class="corner-sel-btn rounded-tr bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
                                                             data-corner="RR"
                                                             onclick="window.probeHandler.selectCorner(this, 'Outside', 'RR')"
-                                                            aria-label="Rear-right outside corner"></button>
-                                                        <button
-                                                            class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 ring-2 ring-primary/30 h-full"
+                                                            aria-label="Rear-right outside corner">Rear<br>Right</button>
+                                                        <button class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 ring-2 ring-primary/30 h-full text-[10px] font-bold leading-tight"
                                                             data-corner="FL"
                                                             onclick="window.probeHandler.selectCorner(this, 'Outside', 'FL')"
-                                                            aria-label="Front-left outside corner"></button>
-                                                        <button
-                                                            class="corner-sel-btn rounded-br bg-grey-bg border border-grey-light hover:bg-primary h-full"
+                                                            aria-label="Front-left outside corner">Front<br>Left</button>
+                                                        <button class="corner-sel-btn rounded-br bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
                                                             data-corner="FR"
                                                             onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"
-                                                            aria-label="Front-right outside corner"></button>
+                                                            aria-label="Front-right outside corner">Front<br>Right</button>
                                                     </div>
-                                                    <button class="btn btn-primary flex-1 h-auto probe-btn"
-                                                        onclick="window.probeHandler.runCornerProbe('Outside')">Start</button>
                                                 </div>
-                                                <button class="btn btn-secondary w-full mt-2 probe-btn"
-                                                    onclick="window.probeHandler.runAutoCorner()">
-                                                    <i class="bi bi-lightning-fill"></i> Auto (Z + XY)
-                                                </button>
+
+                                                <!-- Single Surface -->
+                                                <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
+                                                    <div class="flex justify-between items-center mb-2">
+                                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Single Surface</h3>
+                                                        <span class="text-[10px] text-grey font-bold plate-status-text">Mode: Plate</span>
+                                                    </div>
+                                                    <p class="text-xs text-grey leading-relaxed mb-3">
+                                                        Find the location of a single edge or surface in X, Y, or Z.
+                                                    </p>
+                                                    <div id="single-surface-grid" class="flex flex-wrap gap-3">
+                                                        <div class="flex-1 min-w-[130px] bg-grey-bg rounded-lg p-2">
+                                                            <div class="text-[9px] font-bold text-grey mb-1 text-center">X Axis</div>
+                                                            <div class="flex gap-1 justify-center">
+                                                                <button class="single-sel-btn rounded bg-primary border-2 border-black/20 ring-2 ring-primary/30 text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)"><i class="bi bi-arrow-bar-right text-base"></i><span>Right</span><span>X+</span></button>
+                                                                <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)"><i class="bi bi-arrow-bar-left text-base"></i><span>Left</span><span>X-</span></button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex-1 min-w-[130px] bg-grey-bg rounded-lg p-2">
+                                                            <div class="text-[9px] font-bold text-grey mb-1 text-center">Y Axis</div>
+                                                            <div class="flex gap-1 justify-center">
+                                                                <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Y', 1)"><i class="bi bi-arrow-bar-up text-base"></i><span>Front</span><span>Y+</span></button>
+                                                                <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Y', -1)"><i class="bi bi-arrow-bar-down text-base"></i><span>Back</span><span>Y-</span></button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex-1 min-w-[130px] bg-grey-bg rounded-lg p-2">
+                                                            <div class="text-[9px] font-bold text-grey mb-1 text-center">Z Axis</div>
+                                                            <div class="flex gap-1 justify-center">
+                                                                <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)"><i class="bi bi-arrow-bar-down text-base"></i><span>Down</span><span>Z-</span></button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Run Probe -->
+                                                <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
+                                                    <div class="flex justify-between items-center mb-2">
+                                                        <h3 class="font-bold text-secondary-dark text-sm"><i class="bi bi-play-fill"></i> Run Probe</h3>
+                                                    </div>
+                                                    <p class="text-xs text-grey leading-relaxed mb-3" id="run-probe-desc">Probe the selected corner to zero work coordinates.</p>
+                                                    <button class="btn btn-primary w-full py-3 probe-btn" onclick="window.probeHandler.runSelectedOperation()">
+                                                        <i class="bi bi-lightning-fill"></i> <span id="run-probe-label">Probe Corner</span>
+                                                    </button>
+                                                </div>
                                             </div>
 
-                                            <!-- Probe plate diagram (visible in Plate mode) -->
-                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex items-center justify-center prb-plate-only">
-                                                <img src="themes/probe.svg" alt="Probe plate diagram" style="max-width:100%;height:auto;max-height:160px;">
-                                            </div>
-
-                                        </div>
-
-                                        <!-- Single Surface (rows: X, Y, Z) -->
-                                        <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
-                                            <div class="flex justify-between items-center mb-2">
-                                                <h3
-                                                    class="font-bold text-secondary-dark text-xs uppercase tracking-wider">
-                                                    Single Surface</h3>
-                                                <span class="text-[10px] text-grey font-bold plate-status-text">Mode:
-                                                    Plate</span>
-                                            </div>
-                                            <p class="text-xs text-grey leading-relaxed mb-3">
-                                                Find the location of a single edge or surface in X, Y, or Z.
-                                            </p>
-                                            <div class="space-y-2">
-                                                <div class="text-[10px] font-bold text-grey mb-0.5">X Axis</div>
-                                                <div class="flex gap-2">
-                                                    <button class="btn btn-secondary flex-1 py-3 flex-col gap-1 probe-btn"
-                                                        onclick="window.probeHandler.runSingleAxis('X', 1)">
-                                                        <i class="bi bi-arrow-bar-right text-xl"></i><span class="text-[10px]">X+</span>
-                                                    </button>
-                                                    <button class="btn btn-secondary flex-1 py-3 flex-col gap-1 probe-btn"
-                                                        onclick="window.probeHandler.runSingleAxis('X', -1)">
-                                                        <i class="bi bi-arrow-bar-left text-xl"></i><span class="text-[10px]">X-</span>
-                                                    </button>
-                                                </div>
-                                                <div class="text-[10px] font-bold text-grey mb-0.5 mt-1">Y Axis</div>
-                                                <div class="flex gap-2">
-                                                    <button class="btn btn-secondary flex-1 py-3 flex-col gap-1 probe-btn"
-                                                        onclick="window.probeHandler.runSingleAxis('Y', 1)">
-                                                        <i class="bi bi-arrow-bar-up text-xl"></i><span class="text-[10px]">Y+</span>
-                                                    </button>
-                                                    <button class="btn btn-secondary flex-1 py-3 flex-col gap-1 probe-btn"
-                                                        onclick="window.probeHandler.runSingleAxis('Y', -1)">
-                                                        <i class="bi bi-arrow-bar-down text-xl"></i><span class="text-[10px]">Y-</span>
-                                                    </button>
-                                                </div>
-                                                <div class="text-[10px] font-bold text-grey mb-0.5 mt-1">Z Axis</div>
-                                                <div>
-                                                    <button class="btn btn-primary w-full py-3 flex-col gap-1 probe-btn"
-                                                        onclick="window.probeHandler.runZProbe()">
-                                                        <i class="bi bi-arrow-bar-down text-xl"></i><span class="text-[10px]">Z Surface</span>
-                                                    </button>
-                                                </div>
+                                            <!-- RIGHT COLUMN: SVG Diagram -->
+                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex items-center justify-center min-h-[400px]">
+                                                <img id="probe-corner-diagram" src="themes/FL.svg" alt="Probe corner diagram" style="max-width:100%;height:auto;max-height:360px;">
+                                                <img id="probe-single-diagram" src="themes/SS-X+.svg" alt="Single surface diagram" style="max-width:100%;height:auto;max-height:360px;" class="hidden">
                                             </div>
                                         </div>
                                     </div>

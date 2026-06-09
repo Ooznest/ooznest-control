@@ -2,6 +2,7 @@ export class AppStore {
     constructor() {
         // Default Configuration
         this.defaults = {
+            configWizardRan: false,
             general: {
                 units: 'mm', // 'mm' or 'in'
             },
@@ -15,7 +16,7 @@ export class AppStore {
             },
             probe: {
                 toolDiameter: 6.0,
-                plateThickness: 10,
+                plateThickness: 5,
                 xyPlateOffset: 10,
                 feed: 100,
                 feedLatch: 25,

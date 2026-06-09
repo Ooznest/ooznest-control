@@ -26,7 +26,7 @@ export class ConfigWizard {
                 laser: false
             },
             probeType: 'ooznest',
-            plateThickness: 10,
+            plateThickness: 5,
             xyPlateOffset: 10,
             dustShoe: false,
             enclosure: false
@@ -563,7 +563,7 @@ export class ConfigWizard {
         html += `<div id="wizard-custom-probe-dims" class="${showCustom} grid grid-cols-2 gap-4">`;
         html += '<div>';
         html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
-        html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 10}" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+        html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
         html += '</div>';
         html += '<div>';
         html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">XY Plate Offset (mm)</label>';
@@ -759,7 +759,7 @@ export class ConfigWizard {
     _onProbeTypeChange(value) {
         this.wizardData.probeType = value;
         if (value === 'ooznest') {
-            this.wizardData.plateThickness = 10;
+            this.wizardData.plateThickness = 5;
             this.wizardData.xyPlateOffset = 10;
         }
         this._renderWizardStep();
@@ -795,10 +795,10 @@ export class ConfigWizard {
             if (this.wizardData.probeType === 'custom') {
                 const thick = document.getElementById('wizard-plate-thickness');
                 const offset = document.getElementById('wizard-plate-offset');
-                if (thick) this.wizardData.plateThickness = parseFloat(thick.value) || 10;
+                if (thick) this.wizardData.plateThickness = parseFloat(thick.value) || 5;
                 if (offset) this.wizardData.xyPlateOffset = parseFloat(offset.value) || 10;
             } else {
-                this.wizardData.plateThickness = 10;
+                this.wizardData.plateThickness = 5;
                 this.wizardData.xyPlateOffset = 10;
             }
         }
@@ -823,6 +823,8 @@ export class ConfigWizard {
         // Save probe plate settings
         this.store.set('probe.plateThickness', this.wizardData.plateThickness);
         this.store.set('probe.xyPlateOffset', this.wizardData.xyPlateOffset);
+        this.store.set('probe.type', this.wizardData.probeType || 'ooznest');
+        this.store.set('configWizardRan', true);
         if (window.probeHandler) window.probeHandler.renderSettings();
 
         // Save dust shoe and enclosure for future use
@@ -871,6 +873,32 @@ export class ConfigWizard {
             this.store.set('machine.name', machine.name);
             this.store.set('machine.toolheads', JSON.stringify(this.wizardData.toolheads));
 
+            // Mark configured — send short WB code before soft reset so GRBL saves it to flash
+            // WB code format: WB{size}{dust}{encl}{spindle}{laser}{probe}{cat}
+            //   Pos 1-2: "WB" prefix
+            //   Pos 3 (size):  A=500x500, B=750x750, C=750x1000, D=1000x1000, E=1000x1500, F=1500x1500, G=Custom
+            //   Pos 4 (dust):  A=with dust shoe, B=without
+            //   Pos 5 (encl):  A=with enclosure, B=without
+            //   Pos 6 (spindle): A=WorkBee Router Head, B=Mafell FM 1000 (Digital), C=Mafell FM 1000 (Manual),
+            //                    D=VFD (0-10v), E=VFD (Modbus), F=PWM Laser Module
+            //   Pos 7 (laser): A=yes, B=no
+            //   Pos 8 (probe): A=Ooznest XYZ Probe, B=Custom Probe
+            //   Pos 9 (cat):   A=Z1+, B=Z2, C=Custom
+            const th = this.wizardData.toolheads;
+            const sizeCodes = { '500x500':'A', '750x750':'B', '750x1000':'C', '1000x1000':'D', '1000x1500':'E', '1500x1500':'F' };
+            const catCodes = { 'z1+':'A', 'z2':'B', 'custom':'C' };
+            const spindleCodes = { 'workbee-router-head':'A', 'mafell-digital':'B', 'mafell-manual':'C', 'vfd-0-10v':'D', 'vfd-modbus':'E', 'laser-pwm':'F' };
+            const sizePart = machine.id.split('-').slice(1).join('-') || 'custom';
+            const szCode = sizeCodes[sizePart] || 'G';
+            const catCode = catCodes[machine.category] || 'C';
+            const spCode = spindleCodes[th.spindle] || 'A';
+            const dustCode = this.wizardData.dustShoe ? 'A' : 'B';
+            const encCode = this.wizardData.enclosure ? 'A' : 'B';
+            const lasCode = th.laser ? 'A' : 'B';
+            const prbCode = this.wizardData.probeType === 'ooznest' ? 'A' : 'B';
+            const wbCode = `WB${szCode}${dustCode}${encCode}${spCode}${lasCode}${prbCode}${catCode}`;
+            await this.ws.sendCommand(`$I=${wbCode}`);
+
             this._showWizardStatus('All settings applied! Performing soft reset...', 'success');
 
             // Soft reset
@@ -881,19 +909,6 @@ export class ConfigWizard {
             if (window.viewer) {
                 window.viewer.setMachineLimits(machine.travel.x, machine.travel.y, machine.travel.z);
             }
-
-            // Mark configured — send $I=json so $I+ no longer returns UNCONFIGURED
-            const th = this.wizardData.toolheads;
-            const configSummary = {
-                machine: machine.id,
-                spindle: th.spindle,
-                vfdModbus: th.vfdModbus,
-                laser: th.laser,
-                probe: this.wizardData.probeType,
-                dustShoe: this.wizardData.dustShoe,
-                enclosure: this.wizardData.enclosure
-            };
-            await this.ws.sendCommand(`$I=${JSON.stringify(configSummary)}`);
 
             this.hideWizard();
 
