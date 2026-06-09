@@ -1801,10 +1801,17 @@
                                         <div class="flex items-center gap-3 p-2">
                                             <i class="bi bi-shield-exclamation text-base"></i>
                                             <span id="probe-safety-msg">Probe not tested — test required before any operation</span>
-                                            <button id="probe-test-btn" class="btn btn-primary !py-1 !px-3 !text-[10px] ml-auto whitespace-nowrap" onclick="window.probeHandler.runProbeTest()">
-                                                <i class="bi bi-hand-index-thumb"></i> Test Probe
+                                            <span id="probe-safety-status" class="hidden text-green-600 ml-auto"><i class="bi bi-check-circle-fill"></i> Probe OK</span>
+                                        </div>
+                                        <div class="flex gap-2 px-3 pb-4" id="probe-safety-actions">
+                                            <button id="probe-test-btn" class="btn btn-primary flex-1 flex flex-col items-center gap-0 !py-2 !px-2 !text-[10px] leading-tight" onclick="window.probeHandler.runProbeTest()">
+                                                <span><i class="bi bi-hand-index-thumb"></i> Test Probe</span>
+                                                <span class="text-[8px] font-normal opacity-75">Touch endmill to plate</span>
                                             </button>
-                                            <span id="probe-safety-status" class="hidden text-green-600"><i class="bi bi-check-circle-fill"></i> Probe OK</span>
+                                            <button id="probe-skip-btn" class="btn btn-secondary flex-1 flex flex-col items-center gap-0 !py-2 !px-2 !text-[10px] leading-tight" onclick="window.probeHandler.skipSafetyCheck()">
+                                                <span><i class="bi bi-check-lg"></i> Bypass</span>
+                                                <span class="text-[8px] font-normal opacity-75">I confirm clip is attached</span>
+                                            </button>
                                         </div>
                                         <div id="probe-safety-note" class="hidden px-3 pb-2 text-[10px] text-amber-700">
                                             <i class="bi bi-info-circle"></i> Lift the probe plate and gently touch the endmill to the plate, then release

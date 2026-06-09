@@ -62,13 +62,15 @@ export class ProbeHandler {
         const note = document.getElementById('probe-safety-note');
 
         bar.className = 'mb-3 rounded-lg border text-xs font-bold bg-yellow-50 border-yellow-200 text-yellow-700';
-        if (note) note.classList.remove('hidden');
+        if (note) note.classList.add('hidden');
         msg.textContent = isPlate
             ? 'Lift the probe plate and gently touch the endmill to the plate, then release'
             : 'Gently press the probe tip by hand, then release';
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Waiting...';
         status.className = 'hidden';
+        const skipBtn = document.getElementById('probe-skip-btn');
+        if (skipBtn) skipBtn.classList.add('hidden');
 
         this._testStage = 'trigger';
         this._probeTestInterval = setInterval(() => {
@@ -88,9 +90,10 @@ export class ProbeHandler {
                     this._updateProbeButtons();
 
                     const note = document.getElementById('probe-safety-note');
+                    const actions = document.getElementById('probe-safety-actions');
                     bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
                     msg.textContent = 'Probe test passed — all operations enabled';
-                    btn.classList.add('hidden');
+                    if (actions) actions.classList.add('hidden');
                     status.className = 'text-green-600';
                     status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
                     if (note) note.classList.add('hidden');
@@ -111,9 +114,30 @@ export class ProbeHandler {
                 msg.textContent = 'Test timed out — try again';
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-hand-index-thumb"></i> Test Probe';
+                const skipBtn = document.getElementById('probe-skip-btn');
+                if (skipBtn) skipBtn.classList.remove('hidden');
                 this.term.writeln('\x1b[31m> Probe safety test TIMED OUT.\x1b[0m');
             }
         }, 15000);
+    }
+
+    skipSafetyCheck() {
+        this.probeSafe = true;
+        this._updateProbeButtons();
+
+        const bar = document.getElementById('probe-safety-bar');
+        const msg = document.getElementById('probe-safety-msg');
+        const actions = document.getElementById('probe-safety-actions');
+        const status = document.getElementById('probe-safety-status');
+        const note = document.getElementById('probe-safety-note');
+
+        bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
+        msg.textContent = 'Probe test passed — all operations enabled';
+        if (actions) actions.classList.add('hidden');
+        status.className = 'text-green-600';
+        status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
+        if (note) note.classList.add('hidden');
+        this.term.writeln('\x1b[32m> Probe safety check skipped (confirmed by user).\x1b[0m');
     }
 
     _resetProbeTest() {
@@ -128,17 +152,13 @@ export class ProbeHandler {
         const bar = document.getElementById('probe-safety-bar');
         const msg = document.getElementById('probe-safety-msg');
         const status = document.getElementById('probe-safety-status');
-        const btn = document.getElementById('probe-test-btn');
         const note = document.getElementById('probe-safety-note');
+        const actions = document.getElementById('probe-safety-actions');
 
         if (bar) bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
         if (msg) msg.textContent = 'Probe not tested — test required before any operation';
         if (note) note.classList.add('hidden');
-        if (btn) {
-            btn.classList.remove('hidden');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-hand-index-thumb"></i> Test Probe';
-        }
+        if (actions) actions.classList.remove('hidden');
         if (status) status.className = 'hidden';
     }
 
