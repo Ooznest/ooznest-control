@@ -1940,23 +1940,25 @@
                                                     <p class="text-xs text-grey leading-relaxed mb-3">
                                                         Probe two edges of an outside corner to set work zero.
                                                     </p>
-                                                    <div id="outside-corner-grid" class="w-24 h-24 grid grid-cols-2 gap-1 flex-shrink-0">
-                                                        <button class="corner-sel-btn rounded-tl bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
-                                                            data-corner="RL"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'RL')"
-                                                            aria-label="Rear-left outside corner">Rear<br>Left</button>
-                                                        <button class="corner-sel-btn rounded-tr bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
-                                                            data-corner="RR"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'RR')"
-                                                            aria-label="Rear-right outside corner">Rear<br>Right</button>
-                                                        <button class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 ring-2 ring-primary/30 h-full text-[10px] font-bold leading-tight"
-                                                            data-corner="FL"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'FL')"
-                                                            aria-label="Front-left outside corner">Front<br>Left</button>
-                                                        <button class="corner-sel-btn rounded-br bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
-                                                            data-corner="FR"
-                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"
-                                                            aria-label="Front-right outside corner">Front<br>Right</button>
+                                                    <div class="bg-grey-light border border-grey-light/50 rounded-lg p-2 flex justify-center">
+                                                        <div id="outside-corner-grid" class="w-24 h-24 grid grid-cols-2 flex-shrink-0">
+                                                            <button class="corner-sel-btn rounded-tl bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
+                                                                data-corner="RL"
+                                                                onclick="window.probeHandler.selectCorner(this, 'Outside', 'RL')"
+                                                                aria-label="Rear-left outside corner">Rear<br>Left</button>
+                                                            <button class="corner-sel-btn rounded-tr bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
+                                                                data-corner="RR"
+                                                                onclick="window.probeHandler.selectCorner(this, 'Outside', 'RR')"
+                                                                aria-label="Rear-right outside corner">Rear<br>Right</button>
+                                                            <button class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 ring-2 ring-primary/30 h-full text-[10px] font-bold leading-tight"
+                                                                data-corner="FL"
+                                                                onclick="window.probeHandler.selectCorner(this, 'Outside', 'FL')"
+                                                                aria-label="Front-left outside corner">Front<br>Left</button>
+                                                            <button class="corner-sel-btn rounded-br bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
+                                                                data-corner="FR"
+                                                                onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"
+                                                                aria-label="Front-right outside corner">Front<br>Right</button>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -1970,16 +1972,16 @@
                                                         Find the location of a single edge or surface in X, Y, or Z.
                                                     </p>
                                                     <div id="single-surface-grid" class="flex flex-wrap gap-3">
-                                                        <div class="flex-1 min-w-[130px] bg-grey-bg rounded-lg p-2">
+                                                        <div class="flex-1 min-w-[130px] bg-grey-light border border-grey-light/50 rounded-lg p-2">
                                                             <div class="text-[9px] font-bold text-grey mb-1 text-center">X Axis</div>
                                                             <div class="flex gap-1 justify-center">
                                                                 <button class="single-sel-btn rounded bg-primary border-2 border-black/20 ring-2 ring-primary/30 text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)"><i class="bi bi-arrow-bar-right text-base"></i><span>Right</span><span>X+</span></button>
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)"><i class="bi bi-arrow-bar-right text-base"></i><span>Left</span><span>X+</span></button>
                                                                 <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)"><i class="bi bi-arrow-bar-left text-base"></i><span>Left</span><span>X-</span></button>
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)"><i class="bi bi-arrow-bar-left text-base"></i><span>Right</span><span>X-</span></button>
                                                             </div>
                                                         </div>
-                                                        <div class="flex-1 min-w-[130px] bg-grey-bg rounded-lg p-2">
+                                                        <div class="flex-1 min-w-[130px] bg-grey-light border border-grey-light/50 rounded-lg p-2">
                                                             <div class="text-[9px] font-bold text-grey mb-1 text-center">Y Axis</div>
                                                             <div class="flex gap-1 justify-center">
                                                                 <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
@@ -1988,11 +1990,11 @@
                                                                     onclick="window.probeHandler.selectSingleSurface(this, 'Y', -1)"><i class="bi bi-arrow-bar-down text-base"></i><span>Back</span><span>Y-</span></button>
                                                             </div>
                                                         </div>
-                                                        <div class="flex-1 min-w-[130px] bg-grey-bg rounded-lg p-2">
+                                                        <div class="flex-1 min-w-[130px] bg-grey-light border border-grey-light/50 rounded-lg p-2">
                                                             <div class="text-[9px] font-bold text-grey mb-1 text-center">Z Axis</div>
                                                             <div class="flex gap-1 justify-center">
                                                                 <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)"><i class="bi bi-arrow-bar-down text-base"></i><span>Down</span><span>Z-</span></button>
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)"><i class="bi bi-arrow-bar-down text-base"></i><span>Top</span><span>Z-</span></button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2013,7 +2015,7 @@
                                             <!-- RIGHT COLUMN: SVG Diagram -->
                                             <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex items-center justify-center min-h-[400px]">
                                                 <img id="probe-corner-diagram" src="themes/FL.svg" alt="Probe corner diagram" style="max-width:100%;height:auto;max-height:360px;">
-                                                <img id="probe-single-diagram" src="themes/SS-X+.svg" alt="Single surface diagram" style="max-width:100%;height:auto;max-height:360px;" class="hidden">
+                                                <img id="probe-single-diagram" src="themes/SS-RIGHT.svg" alt="Single surface diagram" style="max-width:100%;height:auto;max-height:360px;" class="hidden">
                                             </div>
                                         </div>
                                     </div>

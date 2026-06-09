@@ -312,7 +312,8 @@ export class ProbeHandler {
         btn.className = 'single-sel-btn rounded ' + txtClasses + ' bg-primary border-2 border-black/20 ring-2 ring-primary/30 px-2 py-1 flex flex-col items-center';
         const singleImg = document.getElementById('probe-single-diagram');
         const cornerImg = document.getElementById('probe-corner-diagram');
-        if (singleImg) { singleImg.src = 'themes/SS-' + axis + (dir === 1 ? '+' : '-') + '.svg'; singleImg.classList.remove('hidden'); }
+        const svgMap = { 'X1':'SS-RIGHT.svg', 'X-1':'SS-LEFT.svg', 'Y1':'SS-FRONT.svg', 'Y-1':'SS-REAR.svg', 'Z-1':'SS-TOP.svg' };
+        if (singleImg) { singleImg.src = 'themes/' + (svgMap[axis + dir] || 'SS-TOP.svg'); singleImg.classList.remove('hidden'); }
         if (cornerImg) cornerImg.classList.add('hidden');
         // Deselect all outside corner buttons
         document.querySelectorAll('#outside-corner-grid button').forEach(b => {
