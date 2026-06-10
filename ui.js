@@ -84,7 +84,7 @@ class UIManager {
 
         // UI Control Selectors
         const jogControls = '.jog-btn, .jog-btn-extra, .dro-zero-btn, .dro-sub-btn, #stepSize, #jogContinuous';
-        const runControls = '#run-job-btn, #run-sd-btn';
+        const runControls = '#run-job-btn';
         const macroControls = '#macros-view button, #probe-panel-content, #probe-panel-content button, #probe-panel-content input, #sd-tools button';
         const txtConsole = '#console-input-area, #cmdInput, #btnSend';
         const unlockBtn = 'button[title="Unlock ($X)"]';
@@ -180,33 +180,21 @@ class UIManager {
      * Update Run button states based on SD file context
      */
     updateRunButtonsState() {
-        const runJobBtn = document.getElementById('run-job-btn');
-        const runSdBtn = document.getElementById('run-sd-btn');
+        const runJobContainer = document.getElementById('run-job-btn');
+        const runJobBtn = runJobContainer?.querySelector('button');
 
         if (window.currentSDFile) {
-            if (runJobBtn) {
-                runJobBtn.classList.add('opacity-50', 'pointer-events-none');
-                runJobBtn.disabled = true;
-                runJobBtn.title = "Streaming disabled for SD files. Use 'Run from SD'";
+            if (runJobContainer) {
+                runJobContainer.classList.add('opacity-50', 'pointer-events-none');
+                runJobContainer.title = "Streaming disabled for SD files. Use SD option in dropdown";
             }
-            if (runSdBtn) {
-                runSdBtn.classList.remove('opacity-50', 'pointer-events-none');
-                runSdBtn.disabled = false;
-                runSdBtn.classList.replace('!bg-secondary', '!bg-primary');
-                runSdBtn.classList.replace('!text-white', '!text-secondary-dark');
-                runSdBtn.innerHTML = `<i class="bi bi-sd-card-fill text-lg"></i> Run from SD`;
-            }
+            if (runJobBtn) runJobBtn.disabled = true;
         } else {
-            if (window.ws && window.ws.isConnected && runJobBtn) {
-                runJobBtn.classList.remove('opacity-50', 'pointer-events-none');
-                runJobBtn.disabled = false;
-                runJobBtn.title = "Run Job (Stream)";
+            if (window.ws && window.ws.isConnected && runJobContainer) {
+                runJobContainer.classList.remove('opacity-50', 'pointer-events-none');
+                runJobContainer.title = "Run Job (Stream)";
             }
-            if (runSdBtn) {
-                runSdBtn.classList.replace('!bg-primary', '!bg-secondary');
-                runSdBtn.classList.replace('!text-secondary-dark', '!text-white');
-                runSdBtn.innerHTML = `<i class="bi bi-sd-card-fill text-lg"></i> Run from SD`;
-            }
+            if (runJobBtn) runJobBtn.disabled = false;
         }
     }
 }

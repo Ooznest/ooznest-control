@@ -595,9 +595,24 @@
 
                     <div class="viewer-controls">
                         <!-- Job control button group -->
-                        <button id="run-job-btn" class="overlay-btn !bg-primary !text-white" onclick="runCurrentJob()">
-                            <i class="bi bi-play-fill text-lg"></i> Run Job
-                        </button>
+                        <div class="relative" id="run-job-btn">
+                            <button class="overlay-btn !bg-primary !text-white" onclick="toggleRunJobDropdown()">
+                                <i class="bi bi-play-fill text-lg"></i> Run Job
+                            </button>
+                            <div class="absolute right-0 top-full mt-1 w-72 bg-white rounded-lg shadow-xl border border-grey-light hidden z-[100] overflow-hidden">
+                                <button class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
+                                    onclick="closeRunJobDropdown(); runCurrentJob();">
+                                    <i class="bi bi-play-fill text-lg" style="color:#FF6600"></i>
+                                    <span><span class="font-medium">Run (Streaming)</span><br><span class="text-[11px] text-grey">Stream lines directly from your browser</span></span>
+                                </button>
+                                <div class="border-t border-grey-light"></div>
+                                <button id="run-job-sd-option" class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
+                                    onclick="closeRunJobDropdown(); runJobFromSD();">
+                                    <i class="bi bi-sd-card-fill text-lg" style="color:#FF6600"></i>
+                                    <span><span class="font-medium">Run (From SD Card)</span><br><span class="text-[11px] text-grey">Upload then run from controller SD</span></span>
+                                </button>
+                            </div>
+                        </div>
                         <div id="job-active-controls" class="hidden flex gap-1.5">
                             <button id="pause-job-btn" class="overlay-btn !bg-yellow-100 !text-yellow-800 flex-1" onclick="pauseJob()">
                                 <i class="bi bi-pause-fill text-lg"></i> Pause
@@ -2794,7 +2809,60 @@
             const dd = document.getElementById('open-file-dropdown');
             if (dd && !dd.contains(e.target))
                 dd.querySelector('div:last-child')?.classList.add('hidden');
+            const rj = document.getElementById('run-job-btn');
+            if (rj && !rj.contains(e.target))
+                rj.querySelector('div:last-child')?.classList.add('hidden');
         });
+
+        function toggleRunJobDropdown() {
+            const menu = document.querySelector('#run-job-btn > div');
+            menu.classList.toggle('hidden');
+            // Show/hide SD option based on guards
+            const sdOpt = document.getElementById('run-job-sd-option');
+            if (sdOpt) {
+                const isSerial = window.ws && (window.ws.type === 'webserial' || window.ws.type === 'usb');
+                sdOpt.classList.toggle('hidden', !(window.sdMounted && isSerial));
+            }
+        }
+
+        function closeRunJobDropdown() {
+            const el = document.querySelector('#run-job-btn > div');
+            if (el) el.classList.add('hidden');
+        }
+
+        function runJobFromSD() {
+            closeRunJobDropdown();
+            // Already on SD — run directly
+            if (window.currentSDFile) {
+                window.reporter.showConfirm('Run from SD',
+                    `Run ${window.currentSDFile} directly from SD card?`,
+                    () => window.ws.sendCommand(`$F=${window.currentSDFile}`)
+                );
+                return;
+            }
+            // Need to upload first
+            if (!window.currentGCodeContent && !window.editor?.getValue()) {
+                window.reporter.showAlert('No Content', 'No G-Code loaded to upload.');
+                return;
+            }
+            const content = window.currentGCodeContent || window.editor.getValue();
+            const defaultName = document.getElementById('editor-file-name')?.innerText || 'job.gcode';
+            window.reporter.showConfirm('Upload & Run from SD',
+                'Upload the current job to the SD card and start running it?',
+                () => {
+                    const file = new File([content], defaultName, { type: 'text/plain' });
+                    window.switchTab('sd-view');
+                    window.sdHandler.startUpload(file, (uploadedName) => {
+                        const fullPath = window.sdHandler.path === '/'
+                            ? uploadedName
+                            : `${window.sdHandler.path}/${uploadedName}`;
+                        setTimeout(() => {
+                            window.ws.sendCommand(`$F=${fullPath}`);
+                        }, 500);
+                    });
+                }
+            );
+        }
 
         function switchTab(targetId, btn) {
             // 1. Hide all panes
@@ -2940,6 +3008,7 @@
 
         let currentGCodeContent = null;
         let currentSDFile = null; // Track SD file context
+        window.sdMounted = false; // SD mount state, updated by sd-mount-state event
         let gcodeStreamer = { active: false, lines: [], index: 0, paused: false };
         let commandHistory = [];
         let historyIndex = -1;

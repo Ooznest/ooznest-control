@@ -86,7 +86,9 @@ class JobController {
             this.gcodeStreamer.active = true;
             this.gcodeStreamer.paused = false;
 
-            document.getElementById('run-job-btn').classList.add('hidden');
+            const rj = document.getElementById('run-job-btn');
+            rj.classList.add('hidden');
+            rj.querySelector('div:last-child')?.classList.add('hidden');
             const jac = document.getElementById('job-active-controls');
             if (jac) { jac.classList.remove('hidden'); jac.classList.add('flex'); }
 

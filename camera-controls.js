@@ -94,6 +94,7 @@ class CameraControls {
         window.addEventListener('sd-mount-state', (e) => {
             const state = e.detail.state;
             const isMounted = (state === 1 || state === 3);
+            window.sdMounted = isMounted;
             const sdLink = document.querySelector("button[onclick*='switchTab'][onclick*='sd-view']");
 
             if (isMounted) {
