@@ -98,6 +98,81 @@ ipcMain.handle('get-network-info', async () => {
 let activePort = null;
 let activeSocket = null;
 
+function getActiveControllerHttpTarget () {
+    if (status.comms.type !== 'telnet' || !status.comms.ip) {
+        return null;
+    }
+
+    return {
+        host: status.comms.ip,
+        port: status.comms.httpPort || 80
+    };
+}
+
+function proxyControllerRequest (req, res, controllerPath) {
+    const target = getActiveControllerHttpTarget();
+
+    if (!target) {
+        res.status(503).json({
+            status: 'error',
+            message: 'No active Telnet controller with HTTP file access is available.'
+        });
+        return;
+    }
+
+    const headers = { ...req.headers, host: `${target.host}:${target.port}` };
+    delete headers.connection;
+    delete headers.origin;
+    delete headers.referer;
+
+    const proxyReq = http.request({
+        host: target.host,
+        port: target.port,
+        method: req.method,
+        path: controllerPath,
+        headers
+    }, (proxyRes) => {
+        res.statusCode = proxyRes.statusCode || 502;
+
+        Object.entries(proxyRes.headers).forEach(([key, value]) => {
+            if (value !== undefined) {
+                res.setHeader(key, value);
+            }
+        });
+
+        proxyRes.pipe(res);
+    });
+
+    proxyReq.on('error', (err) => {
+        if (!res.headersSent) {
+            res.status(502).json({
+                status: 'error',
+                message: `Controller HTTP proxy failed: ${err.message}`
+            });
+        } else {
+            res.destroy(err);
+        }
+    });
+
+    req.pipe(proxyReq);
+}
+
+expressApp.use((req, res, next) => {
+    if (req.path === '/sdfiles' || req.path === '/upload' || req.path.startsWith('/sd/')) {
+        const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+        const controllerPath = req.path === '/sdfiles'
+            ? `/sdfiles${query}`
+            : req.path === '/upload'
+                ? `/upload${query}`
+                : `${req.path}${query}`;
+
+        proxyControllerRequest(req, res, controllerPath);
+        return;
+    }
+
+    next();
+});
+
 // Central Machine State (inspired by OpenBuilds CONTROL)
 let status = {
     comms: {

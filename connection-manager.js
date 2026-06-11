@@ -433,6 +433,8 @@ export class ConnectionManager {
                     if (!this.isConnected) {
                         this.handleConnect();
                     }
+                } else {
+                    this._syncHttpBaseUrl();
                 }
                 break;
             case 'gcodeLoaded':
@@ -782,8 +784,20 @@ export class ConnectionManager {
         } catch (e) {}
     }
 
+    _syncHttpBaseUrl() {
+        if (this.isConnected && this.type === 'telnet' && this.hasBackend) {
+            this.httpBaseUrl = window.location.origin;
+            return;
+        }
+
+        if (this.type !== 'websocket') {
+            this.httpBaseUrl = null;
+        }
+    }
+
     handleConnect() {
         this.isConnected = true;
+        this._syncHttpBaseUrl();
         this.emit('connect');
         this._keepAwake(true);
         const sidebar = document.getElementById('machine-sidebar');
@@ -796,6 +810,7 @@ export class ConnectionManager {
 
     handleDisconnect() {
         this.isConnected = false;
+        this._syncHttpBaseUrl();
         this.emit('disconnect');
         this._keepAwake(false);
     }

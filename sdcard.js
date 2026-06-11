@@ -574,6 +574,8 @@ export class SDCardHandler {
 
         const processUpload = async () => {
             const fp = this.path === '/' ? name : `${this.path}/${name}`;
+            this.ymodem.fileName = name;
+            this.ymodem.onComplete = onComplete;
 
             if (this.ws.httpBaseUrl) {
                 const formData = new FormData();
