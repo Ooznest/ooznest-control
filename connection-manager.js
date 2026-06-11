@@ -211,6 +211,7 @@ export class ConnectionManager {
 
     setConnectionType(type) {
         this.type = type;
+        this.updateStreamingDescription();
 
         // Update Tabs
         ['webserial', 'usb', 'telnet', 'websocket'].forEach(t => {
@@ -244,6 +245,15 @@ export class ConnectionManager {
                 this.refreshNodePorts();
             }
         }
+    }
+
+    updateStreamingDescription() {
+        const description = document.getElementById('run-job-streaming-description');
+        if (!description) return;
+
+        description.textContent = this.type === 'webserial'
+            ? 'Stream lines directly from your browser'
+            : 'Stream lines directly from the application';
     }
 
     async _probeSDMode() {
