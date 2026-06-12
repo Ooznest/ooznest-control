@@ -374,7 +374,7 @@ export class AlarmsAndErrors {
         this.domTitle.textContent = title;
         this.domTitle.className = "font-bold text-lg text-secondary-dark";
 
-        this.domBody.textContent = message;
+        this.domBody.innerHTML = message;
         this.domFooter.innerHTML = '';
 
         const btnOk = this.createBtn('OK', 'bg-secondary text-white hover:bg-secondary-dark', async () => {
