@@ -17,10 +17,10 @@
 
         const panels = [
             { name: 'Bottom', w: s.boxW, h: s.boxD, type: 'outer', topSolid: false },
-            { name: 'Front', w: s.boxW, h: s.boxH, type: 'inner', topSolid: true },
-            { name: 'Back', w: s.boxW, h: s.boxH, type: 'inner', topSolid: true },
-            { name: 'Left', w: s.boxD, h: s.boxH, type: 'inner', topSolid: true },
-            { name: 'Right', w: s.boxD, h: s.boxH, type: 'inner', topSolid: true }
+            { name: 'Front',  w: s.boxW, h: s.boxH, type: 'inner', topSolid: true, edgeGap: { left: true, right: true } },
+            { name: 'Back',   w: s.boxW, h: s.boxH, type: 'inner', topSolid: true, edgeGap: { left: false, right: false } },
+            { name: 'Left',   w: s.boxD, h: s.boxH, type: 'inner', topSolid: true, edgeGap: { left: true, right: false } },
+            { name: 'Right',  w: s.boxD, h: s.boxH, type: 'inner', topSolid: true, edgeGap: { left: false, right: true } }
         ];
 
         this._sheets = this._splitSheets(panels, s, limits);
@@ -59,15 +59,15 @@
                 return [];
             }
             let gcode = this._header(s);
-            let cx2 = gap;
+            let cx2 = 0;
             let panelBounds = [];
             let panelContours = [];
             for (const panel of sheetPanels) {
                 gcode += '; --- ' + panel.name + ' Panel ---\n';
                 const contour = this._panelContour(panel, s);
-                this._offsetContour(contour, cx2, gap);
+                this._offsetContour(contour, cx2, 0);
                 gcode += this._cutContour(contour, s);
-                panelBounds.push({ x: cx2, y: gap, w: panel.w + t * 2, h: panel.h + t * 2, name: panel.name });
+                panelBounds.push({ x: cx2, y: 0, w: panel.w + t * 2, h: panel.h + t * 2, name: panel.name });
                 panelContours.push(contour);
                 cx2 += panel.w + t * 2 + gap;
             }
@@ -156,59 +156,184 @@
     _panelContour(panel, s) {
         const t = s.stockThick;
         const fw = s.fingerWidth;
+        const toolR = s.toolDia / 2;
+        let result;
         if (panel.type === 'outer') {
-            return this._outerContour(panel.w, panel.h, t, fw);
+            result = this._outerContour(panel.w, panel.h, t, fw, 0);
+        } else {
+            const edgeGap = panel.edgeGap || { left: true, right: true };
+            result = this._innerContour(panel.w, panel.h, t, fw, panel.topSolid, 0, edgeGap);
         }
-        return this._innerContour(panel.w, panel.h, t, fw, panel.topSolid);
-    }
-
-    _outerContour(w, h, t, fw) {
-        const pts = [];
-        this._buildEdge(pts, [0, 0], [1, 0], [0, 1], w, t, fw, true);
-        this._buildEdge(pts, [w, 0], [0, 1], [-1, 0], h, t, fw, true);
-        this._buildEdge(pts, [w, h], [-1, 0], [0, -1], w, t, fw, true);
-        this._buildEdge(pts, [0, h], [0, -1], [1, 0], h, t, fw, true);
+        let pts = result.pts;
+        const dogbonePositions = result.dogbonePositions;
+        // Expand outward by toolR via Clipper (so tool center cuts at the part boundary)
+        this._expandContour(pts, toolR);
+        // Match original dogbone corner positions to expanded path and insert dogbones
+        if (s.dogbones && toolR > 0 && dogbonePositions.length > 0) {
+            this._addDogbonesAtPositions(pts, dogbonePositions, toolR);
+        }
         return pts;
     }
 
-    _innerContour(w, h, t, fw, topSolid) {
+    _outerContour(w, h, t, fw, toolR) {
         const pts = [];
-        this._buildEdge(pts, [t, t], [1, 0], [0, -1], w - 2*t, t, fw, false);
-        this._buildEdge(pts, [w-t, t], [0, 1], [1, 0], h - 2*t, t, fw, false);
+        const dogbones = [];
+        this._buildEdge(pts, dogbones, [0, 0], [1, 0], [0, 1], w, t, fw, true, false);
+        this._buildEdge(pts, dogbones, [w, 0], [0, 1], [-1, 0], h, t, fw, true, false);
+        this._buildEdge(pts, dogbones, [w, h], [-1, 0], [0, -1], w, t, fw, true, false);
+        this._buildEdge(pts, dogbones, [0, h], [0, -1], [1, 0], h, t, fw, true, false);
+        const dogbonePositions = dogbones.map(d => [pts[d.idx][0], pts[d.idx][1]]);
+        this._addDogbones(pts, dogbones, toolR);
+        return { pts, dogbonePositions };
+    }
+
+    _innerContour(w, h, t, fw, topSolid, toolR, edgeGap) {
+        const pts = [];
+        const dogbones = [];
+        this._buildEdge(pts, dogbones, [t, t], [1, 0], [0, -1], w - 2*t, t, fw, false, true);
+        this._buildEdge(pts, dogbones, [w-t, t], [0, 1], [1, 0], h - 2*t, t, fw, false, edgeGap.right);
         if (topSolid) {
             this._edgeSolid(pts, [w-t, h-t], [-1, 0], w - 2*t);
         } else {
-            this._buildEdge(pts, [w-t, h-t], [-1, 0], [0, 1], w - 2*t, t, fw, false);
+            this._buildEdge(pts, dogbones, [w-t, h-t], [-1, 0], [0, 1], w - 2*t, t, fw, false, edgeGap.top ?? false);
         }
-        this._buildEdge(pts, [t, h-t], [0, -1], [-1, 0], h - 2*t, t, fw, false);
-        return pts;
+        this._buildEdge(pts, dogbones, [t, h-t], [0, -1], [-1, 0], h - 2*t, t, fw, false, edgeGap.left);
+        const dogbonePositions = dogbones.map(d => [pts[d.idx][0], pts[d.idx][1]]);
+        this._addDogbones(pts, dogbones, toolR);
+        return { pts, dogbonePositions };
     }
 
-    _buildEdge(pts, start, dir, perp, edgeLen, t, fw, isOuter) {
+    _addDogbones(pts, dogboneList, toolR) {
+        if (!dogboneList || dogboneList.length === 0 || toolR <= 0) return;
+        const offset = toolR / Math.sin(Math.PI / 4);
+        const orig = pts.map(p => [p[0], p[1]]);
+        const sorted = [...dogboneList].sort((a, b) => b.idx - a.idx);
+        for (const item of sorted) {
+            const idx = item.idx;
+            if (idx <= 0 || idx >= orig.length - 1) continue;
+            const p = orig[idx];
+            const vx = p[0] - orig[idx - 1][0];
+            const vy = p[1] - orig[idx - 1][1];
+            const vl = Math.sqrt(vx * vx + vy * vy);
+            if (vl < 0.001) continue;
+            const wx = orig[idx + 1][0] - p[0];
+            const wy = orig[idx + 1][1] - p[1];
+            const wl = Math.sqrt(wx * wx + wy * wy);
+            if (wl < 0.001) continue;
+            const dx = vx / vl - wx / wl;
+            const dy = vy / vl - wy / wl;
+            const dl = Math.sqrt(dx * dx + dy * dy);
+            if (dl < 0.001) continue;
+            const dogbone = [
+                p[0] + dx / dl * offset,
+                p[1] + dy / dl * offset
+            ];
+            pts.splice(idx + 1, 0, dogbone, [p[0], p[1]]);
+        }
+    }
+
+    _addDogbonesAtPositions(pts, origPositions, toolR) {
+        if (toolR <= 0 || pts.length < 4 || origPositions.length === 0) return;
+        const offset = toolR / Math.sin(Math.PI / 4);
+        const matchTol = toolR * 4;
+        // Find all 90° corner indices in the expanded path
+        const expanded = pts.map(p => [p[0], p[1]]);
+        const cornerIdxs = [];
+        for (let i = 1; i < expanded.length - 1; i++) {
+            const vx = expanded[i][0] - expanded[i - 1][0];
+            const vy = expanded[i][1] - expanded[i - 1][1];
+            const vl = Math.sqrt(vx * vx + vy * vy);
+            if (vl < 0.001) continue;
+            const wx = expanded[i + 1][0] - expanded[i][0];
+            const wy = expanded[i + 1][1] - expanded[i][1];
+            const wl = Math.sqrt(wx * wx + wy * wy);
+            if (wl < 0.001) continue;
+            const dot = (vx / vl) * (wx / wl) + (vy / vl) * (wy / wl);
+            if (Math.abs(dot) < 0.01) cornerIdxs.push(i);
+        }
+        if (cornerIdxs.length === 0) return;
+        // For each original dogbone position, find the nearest 90° corner in expanded path
+        const matched = [];
+        for (const origPos of origPositions) {
+            let bestIdx = -1;
+            let bestDist = matchTol;
+            for (const ci of cornerIdxs) {
+                const dx = expanded[ci][0] - origPos[0];
+                const dy = expanded[ci][1] - origPos[1];
+                const d = Math.sqrt(dx * dx + dy * dy);
+                if (d < bestDist) { bestDist = d; bestIdx = ci; }
+            }
+            if (bestIdx >= 0 && !matched.includes(bestIdx)) matched.push(bestIdx);
+        }
+        matched.sort((a, b) => b - a);
+        for (const idx of matched) {
+            if (idx <= 0 || idx >= expanded.length - 1) continue;
+            const p = expanded[idx];
+            const vx = p[0] - expanded[idx - 1][0];
+            const vy = p[1] - expanded[idx - 1][1];
+            const vl = Math.sqrt(vx * vx + vy * vy);
+            if (vl < 0.001) continue;
+            const wx = expanded[idx + 1][0] - p[0];
+            const wy = expanded[idx + 1][1] - p[1];
+            const wl = Math.sqrt(wx * wx + wy * wy);
+            if (wl < 0.001) continue;
+            const dx = vx / vl - wx / wl;
+            const dy = vy / vl - wy / wl;
+            const dl = Math.sqrt(dx * dx + dy * dy);
+            if (dl < 0.001) continue;
+            const dogbone = [p[0] + dx / dl * offset, p[1] + dy / dl * offset];
+            pts.splice(idx + 1, 0, dogbone, [p[0], p[1]]);
+        }
+    }
+
+    _buildEdge(pts, dogboneList, start, dir, perp, edgeLen, t, fw, isOuter, gapOffset) {
         const effectiveLen = isOuter ? (edgeLen - 2*t) : edgeLen;
         if (effectiveLen <= 0) {
             pts.push([start[0], start[1]]);
             return;
         }
-        const numSegs = Math.max(1, Math.floor(0.5 * effectiveLen / fw));
-        const space = (effectiveLen - numSegs * fw) / (numSegs + 1);
         let x = start[0], y = start[1];
 
         if (pts.length === 0) pts.push([x, y]);
 
-        const initBead = isOuter ? (t + space) : space;
-        x += dir[0] * initBead; y += dir[1] * initBead;
-        pts.push([x, y]);
-
-        for (let i = 0; i < numSegs; i++) {
-            x += perp[0] * t; y += perp[1] * t; pts.push([x, y]);
-            x += dir[0] * fw; y += dir[1] * fw; pts.push([x, y]);
-            x -= perp[0] * t; y -= perp[1] * t; pts.push([x, y]);
-            x += dir[0] * space; y += dir[1] * space; pts.push([x, y]);
-        }
-
-        if (isOuter) {
-            x += dir[0] * t; y += dir[1] * t; pts.push([x, y]);
+        if (gapOffset) {
+            // Pattern: gap, bead, gap, bead, ..., gap  (01010, start with edge-level void)
+            const numSegs = Math.max(1, Math.floor(0.5 * effectiveLen / fw));
+            const numGaps = numSegs + 1;
+            const gapWidth = (effectiveLen - numSegs * fw) / numGaps;
+            for (let i = 0; i < numSegs; i++) {
+                // Edge-level gap space (void for outer's bead to enter)
+                x += dir[0] * gapWidth; y += dir[1] * gapWidth; pts.push([x, y]);
+                dogboneList.push({ idx: pts.length - 1 });
+                // Bead protrusion (fills outer's gap)
+                x += perp[0] * t; y += perp[1] * t; pts.push([x, y]);
+                x += dir[0] * fw; y += dir[1] * fw; pts.push([x, y]);
+                x -= perp[0] * t; y -= perp[1] * t; pts.push([x, y]);
+                dogboneList.push({ idx: pts.length - 1 });
+            }
+            // Last gap (no bead after it)
+            x += dir[0] * gapWidth; y += dir[1] * gapWidth; pts.push([x, y]);
+        } else {
+            // Pattern: bead, gap, bead, gap, ..., bead
+            const numSegs = Math.max(1, Math.floor(0.5 * effectiveLen / fw));
+            const space = (effectiveLen - numSegs * fw) / (numSegs + 1);
+            const initBead = isOuter ? (t + space) : space;
+            x += dir[0] * initBead; y += dir[1] * initBead;
+            pts.push([x, y]);
+            // Dogbone at bead base internal corners (edge-level LEFT turns, both outer and inner)
+            dogboneList.push({ idx: pts.length - 1 });
+            for (let i = 0; i < numSegs; i++) {
+                x += perp[0] * t; y += perp[1] * t; pts.push([x, y]);
+                x += dir[0] * fw; y += dir[1] * fw; pts.push([x, y]);
+                x -= perp[0] * t; y -= perp[1] * t; pts.push([x, y]);
+                // Bead return (edge-level LEFT turn into base)
+                dogboneList.push({ idx: pts.length - 1 });
+                x += dir[0] * space; y += dir[1] * space; pts.push([x, y]);
+                if (!isOuter && i < numSegs - 1) { dogboneList.push({ idx: pts.length - 1 }); }
+            }
+            if (isOuter) {
+                x += dir[0] * t; y += dir[1] * t; pts.push([x, y]);
+            }
         }
     }
 
@@ -218,6 +343,22 @@
 
     _offsetContour(pts, ox, oy) {
         for (const p of pts) { p[0] += ox; p[1] += oy; }
+    }
+
+    _expandContour(pts, toolR) {
+        if (toolR <= 0 || pts.length < 3) return;
+        const scale = 1000;
+        const clPath = pts.map(p => ({ X: Math.round(p[0] * scale), Y: Math.round(p[1] * scale) }));
+        const co = new ClipperLib.ClipperOffset();
+        co.AddPath(clPath, ClipperLib.JoinType.jtMiter, ClipperLib.EndType.etClosedPolygon);
+        const offsetPaths = new ClipperLib.Paths();
+        co.Execute(offsetPaths, toolR * scale);
+        if (offsetPaths.length === 0) return;
+        const off = offsetPaths[0];
+        pts.length = 0;
+        for (const p of off) {
+            pts.push([p.X / scale, p.Y / scale]);
+        }
     }
 
     _cutContour(pts, s) {
@@ -252,7 +393,8 @@
             toolDia: g('fj-tool') || this.defaults.toolDia,
             fingerWidth: g('fj-finger') || this.defaults.fingerWidth,
             feed: g('fj-feed') || this.defaults.feed,
-            plunge: g('fj-plunge') || this.defaults.plunge
+            plunge: g('fj-plunge') || this.defaults.plunge,
+            dogbones: document.getElementById('fj-dogbones')?.checked ?? true
         };
     }
     _header(s) { return '; Finger Joint Box - Generated by Ooznest Control\nG17 G21 G90\n'; }

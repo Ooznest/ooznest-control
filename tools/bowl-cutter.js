@@ -101,19 +101,19 @@ export class BowlCutter {
         gc += `G1 X${(-hw + cr).toFixed(3)} Y${hl.toFixed(3)} F${feed}\n`;
         gc += `G1 X${(hw - cr).toFixed(3)} Y${hl.toFixed(3)} F${feed}\n`;
         if (cr > 0.01) {
-            gc += `G3 X${hw.toFixed(3)} Y${(hl - cr).toFixed(3)} I${(trCx - (hw - cr)).toFixed(3)} J${(trCy - hl).toFixed(3)} F${feed}\n`;
+            gc += `G2 X${hw.toFixed(3)} Y${(hl - cr).toFixed(3)} I${(trCx - (hw - cr)).toFixed(3)} J${(trCy - hl).toFixed(3)} F${feed}\n`;
         }
         gc += `G1 X${hw.toFixed(3)} Y${(-hl + cr).toFixed(3)} F${feed}\n`;
         if (cr > 0.01) {
-            gc += `G3 X${(hw - cr).toFixed(3)} Y${(-hl).toFixed(3)} I${(brCx - hw).toFixed(3)} J${(brCy - (-hl + cr)).toFixed(3)} F${feed}\n`;
+            gc += `G2 X${(hw - cr).toFixed(3)} Y${(-hl).toFixed(3)} I${(brCx - hw).toFixed(3)} J${(brCy - (-hl + cr)).toFixed(3)} F${feed}\n`;
         }
         gc += `G1 X${(-hw + cr).toFixed(3)} Y${(-hl).toFixed(3)} F${feed}\n`;
         if (cr > 0.01) {
-            gc += `G3 X${(-hw).toFixed(3)} Y${(-hl + cr).toFixed(3)} I${(blCx - (-hw + cr)).toFixed(3)} J${(blCy - (-hl)).toFixed(3)} F${feed}\n`;
+            gc += `G2 X${(-hw).toFixed(3)} Y${(-hl + cr).toFixed(3)} I${(blCx - (-hw + cr)).toFixed(3)} J${(blCy - (-hl)).toFixed(3)} F${feed}\n`;
         }
         gc += `G1 X${(-hw).toFixed(3)} Y${(hl - cr).toFixed(3)} F${feed}\n`;
         if (cr > 0.01) {
-            gc += `G3 X${(-hw + cr).toFixed(3)} Y${hl.toFixed(3)} I${(tlCx - (-hw)).toFixed(3)} J${(tlCy - (hl - cr)).toFixed(3)} F${feed}\n`;
+            gc += `G2 X${(-hw + cr).toFixed(3)} Y${hl.toFixed(3)} I${(tlCx - (-hw)).toFixed(3)} J${(tlCy - (hl - cr)).toFixed(3)} F${feed}\n`;
         }
         return gc;
     }

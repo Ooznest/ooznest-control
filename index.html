@@ -952,41 +952,41 @@
                             </div>
 
                             <!-- Sub-Tabs Navigation -->
-                            <div class="flex border-b border-grey-light mb-6 overflow-x-auto no-scrollbar">
+                            <div class="flex border-b border-grey-light mb-6 overflow-x-auto">
                                 <button
-                                    class="px-6 py-2 text-sm font-bold text-primary-dark border-b-2 border-primary transition-colors hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="px-5 py-2 text-xs font-bold text-primary-dark border-b-2 border-primary hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-calibration', this)">
                                     Calibration
                                 </button>
                                 <button
-                                    class="px-6 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-table', this)">
                                     Tool Table
                                     <span id="tools-badge"
-                                        class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
+                                        class="hidden ml-1 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
                                 </button>
                                 <button
-                                    class="px-6 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-firmware', this)">
                                     Firmware Update
                                 </button>
                                 <button
-                                    class="px-6 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-surfacing', this)">
                                     Surfacing
                                 </button>
                                 <button
-                                    class="px-6 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-spoilboard', this)">
                                     Spoilboard Grid
                                 </button>
                                 <button
-                                    class="px-6 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-finger-joint', this)">
                                     Finger Joint Box
                                 </button>
                                 <button
-                                    class="px-6 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-bowl', this)">
                                     Bowl Cutter
                                 </button>
@@ -1667,6 +1667,7 @@
                                                     <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-finger">Finger Width (mm)</label><input type="number" id="fj-finger" class="input-field font-mono text-sm" value="15"></div>
                                                     <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-feed">Feed Rate (mm/min)</label><input type="number" id="fj-feed" class="input-field font-mono text-sm" value="500"></div>
                                                     <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-plunge">Plunge Rate (mm/min)</label><input type="number" id="fj-plunge" class="input-field font-mono text-sm" value="100"></div>
+                                                    <div class="col-span-2 flex items-center gap-2 mt-1"><input type="checkbox" id="fj-dogbones" checked><label for="fj-dogbones" class="text-xs text-secondary-dark cursor-pointer select-none">Enable dogbone relief at internal corners</label></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -3038,6 +3039,7 @@
         }
     </script>
 
+    <script src="vendor/clipper.js"></script>
     <script type="module">
         import { WebSerial } from './webserial.js';
         import { GCodeViewer } from './3dview.js';

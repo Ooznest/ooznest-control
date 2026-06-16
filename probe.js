@@ -390,15 +390,6 @@ export class ProbeHandler {
         }
     }
 
-    runAutoCorner() {
-        if (!this._requireProbeSafe()) return;
-        this.saveSettings();
-        this.activeRoutine = 'AUTO_CORNER';
-        this.routineStep = 0;
-        this.term.writeln('\x1b[34m> Auto Corner: Probing Z surface first...\x1b[0m');
-        this.ws.sendCommand('G91 G38.2 Z-' + this.store.data.probe.travel + ' F' + this.store.data.probe.feed);
-    }
-
     handleProbeResult(line) {
         // [PRB:0.000,0.000,0.000:1]
         const content = line.substring(5, line.length - 1);
