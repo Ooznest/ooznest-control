@@ -872,7 +872,10 @@ export class ConnectionManager {
             });
             this._cordovaWriting = false;
         } else if (this.backendWs) {
-            this.backendWs.send(JSON.stringify({ type: 'write', data: char }));
+            const bytes = new TextEncoder().encode(char);
+            const binary = String.fromCharCode.apply(null, bytes);
+            const base64 = btoa(binary);
+            this.backendWs.send(JSON.stringify({ type: 'write', data: base64, encoding: 'base64' }));
         }
     }
 

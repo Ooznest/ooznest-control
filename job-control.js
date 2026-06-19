@@ -12,6 +12,7 @@ class JobController {
         };
         this.jobStartTime = 0;
         this.sdJobActive = false;
+        this._elapsedTimer = null;
 
         this.setupEventListeners();
     }
@@ -253,6 +254,7 @@ class JobController {
         const bufBar = document.getElementById('job-buffer-bar');
         if (bufBar) bufBar.style.width = '0%';
 
+        if (this._elapsedTimer) { clearInterval(this._elapsedTimer); this._elapsedTimer = null; }
         this.sdJobActive = false; // Reset SD flag
     }
 
@@ -265,6 +267,16 @@ class JobController {
         if (jac3) { jac3.classList.remove('hidden'); jac3.classList.add('flex'); }
         document.getElementById('job-progress-overlay').classList.remove('hidden');
         this.jobStartTime = Date.now();
+        // Periodic elapsed timer refresh (keeps ticking even when stream is paused/buffered)
+        if (this._elapsedTimer) clearInterval(this._elapsedTimer);
+        this._elapsedTimer = setInterval(() => {
+            if (!this.gcodeStreamer.active && !this.sdJobActive) return;
+            const elapsed = Math.floor((Date.now() - this.jobStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            const el = document.getElementById('job-progress-time');
+            if (el) el.textContent = `Elapsed: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
     }
 
     /**

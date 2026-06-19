@@ -426,18 +426,18 @@
 
                     <!-- Step/Feed -->
                     <div class="grid grid-cols-2 gap-2 mt-3">
-                        <div class="relative">
-                            <span class="absolute left-2 top-2 text-[11px] font-bold text-grey uppercase">Feed</span>
-                            <select id="feedRate" class="input-field pl-10 text-right h-8 py-0"
+                        <div>
+                            <label class="text-[10px] font-bold text-grey uppercase block mb-0.5">Feed</label>
+                            <select id="feedRate" class="input-field text-right h-8 py-0"
                                 aria-label="Jog feed rate mode">
                                 <option value="slow">Slow</option>
                                 <option value="med">Medium</option>
                                 <option value="fast" selected>Fast</option>
                             </select>
                         </div>
-                        <div id="distContainer" class="relative">
-                            <span class="absolute left-2 top-2 text-[11px] font-bold text-grey uppercase">Dist</span>
-                            <select id="stepSize" class="input-field pl-10 text-right h-8 py-0"
+                        <div id="distContainer">
+                            <label class="text-[10px] font-bold text-grey uppercase block mb-0.5">Dist</label>
+                            <select id="stepSize" class="input-field text-right h-8 py-0"
                                 aria-label="Jog distance step size">
                                 <!-- Populated by JS -->
                             </select>
@@ -641,7 +641,8 @@
                             class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light p-3 shadow-lg pointer-events-auto w-72">
                             <div class="flex items-center justify-between gap-1.5 mb-2">
                                 <div class="flex items-center gap-1.5 truncate">
-                                    <i class="bi bi-file-earmark-code-fill text-teal-600 text-xs shrink-0"></i>
+                                    <i class="bi bi-file-earmark-code-fill text-teal-600 text-xs shrink-0" id="stats-file-icon"></i>
+                                    <i class="bi bi-sd-card-fill text-xs shrink-0 hidden" id="stats-sd-icon" style="color:#FF6600"></i>
                                     <span id="viewer-file-name"
                                         class="text-secondary-dark font-bold text-xs truncate leading-none">No file
                                         loaded</span>
@@ -1073,12 +1074,10 @@
                                                         <label
                                                             class="text-[11px] font-bold text-secondary-dark block mb-1">Z
                                                             Offset</label>
-                                                        <div class="relative">
+                                                        <div>
                                                             <input type="number" id="edit-tool-z"
-                                                                class="input-field pl-8 font-mono text-lg" step="0.001"
+                                                                class="input-field font-mono text-lg" step="0.001"
                                                                 placeholder="0.000">
-                                                            <span
-                                                                class="absolute left-3 top-2.5 text-grey font-bold text-xs">Z</span>
                                                         </div>
                                                     </div>
                                                     <button class="btn btn-secondary h-[42px] px-3"
@@ -1091,12 +1090,10 @@
                                                     <div class="flex-1">
                                                         <label
                                                             class="text-[11px] font-bold text-secondary-dark block mb-1">Diameter</label>
-                                                        <div class="relative">
+                                                        <div>
                                                             <input type="number" id="edit-tool-dia"
-                                                                class="input-field pl-8 font-mono text-lg" step="0.01"
+                                                                class="input-field font-mono text-lg" step="0.01"
                                                                 placeholder="0.00">
-                                                            <span
-                                                                class="absolute left-3 top-2.5 text-grey font-bold text-xs">Ø</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1289,18 +1286,18 @@
 
                                                 <div>
                                                     <label class="text-xs font-bold text-secondary-dark block mb-2">Which CNC mark aligns perfectly? (0-100)</label>
-                                                    <div class="relative">
-                                                        <input type="number" id="cal-input-mark" class="input-field pl-20 text-right text-lg font-mono" placeholder="96" min="0" max="100">
-                                                        <span class="absolute left-3 top-2.5 text-grey font-black text-xs">MARK</span>
+                                                    <div>
+                                                        <label class="text-[10px] font-bold text-grey block mb-1">MARK</label>
+                                                        <input type="number" id="cal-input-mark" class="input-field text-right text-lg font-mono" placeholder="96" min="0" max="100">
                                                     </div>
                                                     <p class="text-[10px] text-grey mt-1 italic">Calculated CNC Distance: <span id="cal-cnc-dist-display">0.00</span> mm</p>
                                                 </div>
 
                                                 <div>
                                                     <label class="text-xs font-bold text-secondary-dark block mb-2">What is the Ruler reading at that mark? (mm)</label>
-                                                    <div class="relative">
-                                                        <input type="number" id="cal-input-real" class="input-field pl-20 text-right text-lg font-mono" placeholder="86.0" step="0.1">
-                                                        <span class="absolute left-3 top-2.5 text-grey font-black text-xs">REAL</span>
+                                                    <div>
+                                                        <label class="text-[10px] font-bold text-grey block mb-1">REAL</label>
+                                                        <input type="number" id="cal-input-real" class="input-field text-right text-lg font-mono" placeholder="86.0" step="0.1">
                                                     </div>
                                                 </div>
 
@@ -2611,9 +2608,10 @@
                 <!-- WebSerial Config -->
                 <div id="config-webserial" class="flex flex-col gap-3">
                     <p class="text-xs text-grey">Browser-native direct serial connection (Recommended for web use).</p>
-                    <div class="relative">
-                        <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">Baud</span>
-                        <select id="baud-webserial" class="input-field pl-16 h-10 py-0">
+                    <div>
+                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Baud</label>
+                        <select id="baud-webserial" class="input-field h-10 py-0">
+
                             <option value="115200" selected>115200</option>
                             <option value="250000">250000</option>
                             <option value="500000">500000</option>
@@ -2624,21 +2622,22 @@
                         </select>
                     </div>
                 </div>
+                </div>
 
                 <!-- USB (Node / Cordova) Config -->
                 <div id="config-usb" class="hidden flex flex-col gap-3">
                     <p class="text-xs text-grey">Connect via Native USB OTG (Mobile) or Node.js Backend (Desktop).</p>
-                    <div id="usb-port-container" class="relative">
-                        <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">Port</span>
+                    <div id="usb-port-container">
+                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
                         <div class="flex gap-2">
-                            <select id="port-node" class="input-field pl-12 h-10 py-0 flex-1"></select>
+                            <select id="port-node" class="input-field h-10 py-0 flex-1"></select>
                             <button onclick="refreshNodePorts()" class="hidden btn btn-secondary h-10 w-10"><i
                                     class="bi bi-arrow-clockwise"></i></button>
                         </div>
                     </div>
-                    <div class="relative">
-                        <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">Baud</span>
-                        <select id="baud-node" class="input-field pl-16 h-10 py-0">
+                    <div>
+                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Baud</label>
+                        <select id="baud-node" class="input-field h-10 py-0">
                             <option value="115200" selected>115200</option>
                             <option value="250000">250000</option>
                             <option value="500000">500000</option>
@@ -2651,13 +2650,13 @@
                 <!-- Telnet Config -->
                 <div id="config-telnet" class="hidden flex flex-col gap-3">
                     <p class="text-xs text-grey">Connect to grblHAL over Ethernet or WiFi.</p>
-                    <div class="relative">
-                        <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">IP</span>
-                        <input type="text" id="ip-telnet" class="input-field pl-8 h-10" placeholder="192.168.1.10" aria-label="Telnet IP address">
+                    <div>
+                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">IP Address</label>
+                        <input type="text" id="ip-telnet" class="input-field h-10" placeholder="192.168.1.10" aria-label="Telnet IP address">
                     </div>
-                    <div class="relative">
-                        <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">Port</span>
-                        <input type="number" id="port-telnet" class="input-field pl-12 h-10" value="23" aria-label="Telnet port">
+                    <div>
+                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
+                        <input type="number" id="port-telnet" class="input-field h-10" value="23" aria-label="Telnet port">
                     </div>
                     <div class="flex items-center justify-between -mt-1">
                         <span class="text-[10px] font-bold text-grey uppercase">Scan</span>
@@ -2678,9 +2677,9 @@
                 <!-- WebSocket Config -->
                 <div id="config-websocket" class="hidden flex flex-col gap-3">
                     <p class="text-xs text-grey">Connect to grblHAL WebSocket (Plugin_networking).</p>
-                    <div class="relative">
-                        <span class="absolute left-3 top-2 text-[10px] font-bold text-grey uppercase">URL</span>
-                        <input type="text" id="url-websocket" class="input-field pl-10 h-10"
+                    <div>
+                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">URL</label>
+                        <input type="text" id="url-websocket" class="input-field h-10"
                             placeholder="ws://192.168.1.10:81/ws">
                     </div>
 
@@ -2922,11 +2921,10 @@
         function toggleRunJobDropdown() {
             const menu = document.querySelector('#run-job-btn > div');
             menu.classList.toggle('hidden');
-            // Show/hide SD option based on guards
+            // Show/hide SD option — available when connected and SD is mounted
             const sdOpt = document.getElementById('run-job-sd-option');
             if (sdOpt) {
-                const isSerial = window.ws && (window.ws.type === 'webserial' || window.ws.type === 'usb');
-                sdOpt.classList.toggle('hidden', !(window.sdMounted && isSerial));
+                sdOpt.classList.toggle('hidden', !(window.sdMounted && window.ws?.isConnected));
             }
         }
 
@@ -3708,8 +3706,18 @@
             // Update viewer file name from editor context
             const fileNameEl = document.getElementById('viewer-file-name');
             const editorName = document.getElementById('editor-file-name');
-            if (fileNameEl && editorName && fileNameEl.innerText === 'No file loaded') {
+            if (fileNameEl && editorName) {
                 fileNameEl.innerText = editorName.innerText;
+            }
+            // Toggle SD card icon
+            const sdIcon = document.getElementById('stats-sd-icon');
+            const fileIcon = document.getElementById('stats-file-icon');
+            if (window.currentSDFile) {
+                if (sdIcon) sdIcon.classList.remove('hidden');
+                if (fileIcon) fileIcon.classList.add('hidden');
+            } else {
+                if (sdIcon) sdIcon.classList.add('hidden');
+                if (fileIcon) fileIcon.classList.remove('hidden');
             }
 
             // Dimensions come from the 3D viewer bounding box (available after renderLines)
