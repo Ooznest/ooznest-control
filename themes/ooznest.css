@@ -1104,7 +1104,9 @@ select {
     color: var(--axis-a);
 }
 
-.jog-btn-extra.\!text-axis-z:hover {
+.jog-btn-extra.\!text-axis-z:hover,
+.jog-btn-extra[data-jog="Z+"]:hover,
+.jog-btn-extra[data-jog="Z-"]:hover {
     background: var(--axis-z);
     color: white !important;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
