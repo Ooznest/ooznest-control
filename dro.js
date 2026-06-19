@@ -155,7 +155,7 @@ export class DROHandler {
         let feedOverride = null;
         let spindleOverride = null;
         let rapidOverride = null;
-        let homedMask = 0;
+        let homedMask = this.homedMask || 0;
         let isSdPrinting = false;
         // let foundAccessories = false; // DEBOUNCE REMOVED
 
@@ -181,12 +181,21 @@ export class DROHandler {
                 if (overrides.length >= 2) rapidOverride = parseInt(overrides[1]) || 100;
                 if (overrides.length >= 3) spindleOverride = parseInt(overrides[2]) || 100;
             }
-            // --- NEW: Homing Status (H:mask,...) ---
-            // grblHAL reports H:<homed_mask>,<homing_dir_mask>
+            // Homing Status:
+            // H:0            -> homing not complete
+            // H:1            -> all active axes homed
+            // H:1,<bitmask>  -> single-axis homing enabled, bitmask says which axes are homed
             else if (part.startsWith('H:')) {
                 const hParts = part.substring(2).split(',');
-                homedMask = parseInt(hParts[0]) || 0;
-                // We only care about homed_mask for now
+                const homingComplete = parseInt(hParts[0]) || 0;
+                if (hParts.length > 1) {
+                    homedMask = parseInt(hParts[1]) || 0;
+                } else if (homingComplete) {
+                    const axisCount = Math.max(this.mpos.length, this.wpos.length, 3);
+                    homedMask = (1 << Math.min(axisCount, 6)) - 1;
+                } else {
+                    homedMask = 0;
+                }
             }
             // --- NEW: Input Pins (Pn:PXYZ...) ---
             else if (part.startsWith('Pn:')) {
@@ -287,15 +296,9 @@ export class DROHandler {
             const isHomed = (mask >> i) & 1;
             const btn = document.getElementById(`homing-btn-${axis}`);
             if (btn) {
-                if (isHomed) {
-                    btn.classList.add('text-green-500');
-                    btn.classList.remove('text-grey-light', 'text-red-400');
-                    btn.title = `${axis.toUpperCase()} Homed`;
-                } else {
-                    btn.classList.remove('text-green-500', 'text-red-400');
-                    btn.classList.add('text-grey-light');
-                    btn.title = `Home ${axis.toUpperCase()}`;
-                }
+                btn.classList.remove('text-green-500', 'text-red-400');
+                btn.classList.add('text-grey-light');
+                btn.title = isHomed ? `${axis.toUpperCase()} Homed` : `Home ${axis.toUpperCase()}`;
             }
         });
         if (window.troubleshooting) {

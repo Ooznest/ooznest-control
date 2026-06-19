@@ -567,10 +567,11 @@ export class SDCardHandler {
         }
     }
 
-    async startUpload(file, onComplete = null) {
+    async startUpload(file, onComplete = null, options = {}) {
         if (!file) return;
         const name = file.name.replace(/\s/g, '_');
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+        const skipConfirm = options.skipConfirm === true;
 
         const processUpload = async () => {
             const fp = this.path === '/' ? name : `${this.path}/${name}`;
@@ -647,7 +648,9 @@ export class SDCardHandler {
             console.log("[YMODEM] Sent packet 0, waiting for controller ACK...");
         };
 
-        if (reporter) {
+        if (skipConfirm) {
+            processUpload();
+        } else if (reporter) {
             reporter.showConfirm('SD Upload', `Upload ${name} (${this._formatBytes(file.size)}) to SD card?`, processUpload);
         } else if (confirm(`Upload ${name} (${this._formatBytes(file.size)})?`)) {
             processUpload();

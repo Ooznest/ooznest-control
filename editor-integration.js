@@ -44,7 +44,6 @@ class EditorIntegration {
             if (!filename) return;
 
             const file = new File([content], filename, { type: "text/plain" });
-            window.switchTab('sd-view');
             window.sdHandler.startUpload(file);
         });
     }
@@ -74,9 +73,6 @@ class EditorIntegration {
             if (!filename) return;
             const file = new File([content], filename, { type: "text/plain" });
 
-            // Switch to SD view to show progress
-            window.switchTab('sd-view');
-
             // Start Upload with Callback
             window.sdHandler.startUpload(file, (uploadedName) => {
                 // On Success, Ask to Run
@@ -86,7 +82,7 @@ class EditorIntegration {
                         window.ws.sendCommand(`$F=${fullPath}`);
                     });
                 }, 500);
-            });
+            }, { skipConfirm: true });
         });
     }
 

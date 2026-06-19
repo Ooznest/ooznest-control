@@ -7,6 +7,7 @@
     "start": "electron .",
     "build": "electron-builder",
     "build-windows": "electron-builder --win",
+    "build-windows-local": "electron-builder --win --config.npmRebuild=false --config.win.signAndEditExecutable=false",
     "build-linux": "electron-builder --linux",
     "build-macos": "electron-builder --mac",
     "cordova-sync": "node sync.js",

@@ -88,7 +88,12 @@ ipcMain.handle('get-network-info', async () => {
     for (const name of Object.keys(interfaces)) {
         for (const iface of interfaces[name]) {
             if (iface.family === 'IPv4' && !iface.internal) {
-                results.push(iface.address);
+                results.push({
+                    name,
+                    address: iface.address,
+                    netmask: iface.netmask,
+                    cidr: iface.cidr
+                });
             }
         }
     }
@@ -287,7 +292,10 @@ async function handleMessage(data, ws) {
     switch (data.type) {
         case 'listPorts':
             try {
-                const ports = await SerialPort.list();
+                const ports = (await SerialPort.list()).filter(port => {
+                    const path = (port.path || '').toUpperCase();
+                    return path !== 'COM1' && path !== 'COM2';
+                });
                 ws.send(JSON.stringify({ type: 'ports', data: ports }));
             } catch (err) {
                 ws.send(JSON.stringify({ type: 'error', message: err.message }));
@@ -297,7 +305,7 @@ async function handleMessage(data, ws) {
         case 'scanTelnet':
             try {
                 const scanPort = data.port || 23;
-                const devices = await scanTelnetNetwork(scanPort, ws);
+                const devices = await scanTelnetNetwork(scanPort, ws, data.subnet || null);
                 ws.send(JSON.stringify({ type: 'scanTelnetResult', devices }));
             } catch (err) {
                 ws.send(JSON.stringify({ type: 'scanTelnetResult', devices: [], error: err.message }));
@@ -460,66 +468,95 @@ function _checkTelnetPort(ip, port, timeout) {
         const socket = new net.Socket();
         socket.setTimeout(timeout);
         let settled = false;
+        const finish = (found) => {
+            if (settled) return;
+            settled = true;
+            socket.destroy();
+            resolve(found ? ip : null);
+        };
         socket.on('connect', () => {
             let data = '';
+            try {
+                socket.write('\r\n?\r\n');
+            } catch (e) {}
             socket.on('data', (chunk) => {
                 data += chunk.toString();
-                if (data.includes('Grbl') || data.includes('grbl') || data.includes('Ooznest')) {
-                    settled = true;
-                    socket.destroy();
-                    resolve(ip);
+                if (
+                    data.includes('GrblHAL') ||
+                    data.includes('Grbl') ||
+                    data.includes('grbl') ||
+                    data.includes('Ooznest') ||
+                    data.includes('ok') ||
+                    data.includes('<') ||
+                    data.includes('[MSG:')
+                ) {
+                    finish(true);
                 }
             });
             setTimeout(() => {
-                if (!settled) { socket.destroy(); settled = true; resolve(null); }
-            }, 400);
+                if (!settled) finish(false);
+            }, Math.max(500, timeout - 100));
         });
-        socket.on('error', () => { if (!settled) { socket.destroy(); settled = true; resolve(null); } });
-        socket.on('timeout', () => { if (!settled) { socket.destroy(); settled = true; resolve(null); } });
+        socket.on('error', () => { if (!settled) finish(false); });
+        socket.on('timeout', () => { if (!settled) finish(false); });
         socket.connect(port, ip);
     });
 }
 
 function _scanSubnet(subnet, port, onProgress) {
     return new Promise((resolve) => {
-        let found = null;
         let idx = 0;
         const next = () => {
-            if (found || idx >= 254) return resolve(found);
+            if (idx >= 254) return resolve();
             idx++;
             if (onProgress) onProgress(idx, 254);
             _checkTelnetPort(`${subnet}.${idx}`, port, 300).then(ip => {
-                if (ip) { found = ip; resolve(ip); }
-                else setImmediate(next);
+                if (ip) {
+                    resolve(ip);
+                } else {
+                    setImmediate(next);
+                }
             });
         };
         next();
     });
 }
 
-async function scanTelnetNetwork(port, ws) {
+async function scanTelnetNetwork(port, ws, subnetOverride = null) {
     port = port || 23;
-    const localIP = _getLocalIP();
     const subnets = [];
-    if (localIP) {
-        const parts = localIP.split('.');
-        subnets.push(parts.slice(0, 3).join('.'));
+    if (subnetOverride) {
+        subnets.push(subnetOverride);
     } else {
+        const localIP = _getLocalIP();
+        if (localIP) {
+            const parts = localIP.split('.');
+            subnets.push(parts.slice(0, 3).join('.'));
+        }
+    }
+    if (subnets.length === 0) {
         subnets.push('192.168.0', '192.168.1', '192.168.4', '10.0.0');
     }
     const total = subnets.length * 254;
     let scanned = 0;
+    const found = [];
     for (const subnet of subnets) {
-        const found = await _scanSubnet(subnet, port, (done, of) => {
+        for (let host = 1; host < 255; host++) {
             scanned++;
             const pct = Math.min(Math.round((scanned / total) * 100), 99);
             if (ws && ws.readyState === 1) {
-                ws.send(JSON.stringify({ type: 'scanTelnetProgress', percent: pct }));
+                ws.send(JSON.stringify({ type: 'scanTelnetProgress', percent: pct, message: `Scanning ${subnet}.x  ${pct}%  (port ${port})` }));
             }
-        });
-        if (found) return [found];
+            const ip = await _checkTelnetPort(`${subnet}.${host}`, port, 300);
+            if (ip && !found.includes(ip)) {
+                found.push(ip);
+                if (ws && ws.readyState === 1) {
+                    ws.send(JSON.stringify({ type: 'scanTelnetFound', ip }));
+                }
+            }
+        }
     }
-    return [];
+    return found;
 }
 
 function createWindow() {
@@ -536,6 +573,8 @@ function createWindow() {
         title: "grblHAL Web (Electron)",
         icon: path.join(__dirname, 'cordova', 'resources', 'icon.png')
     });
+
+    mainWindow.maximize();
 
     // Handle beforeunload properly in Electron
     mainWindow.webContents.on('will-prevent-unload', (event) => {

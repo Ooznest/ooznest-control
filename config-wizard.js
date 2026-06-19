@@ -95,6 +95,43 @@ export class ConfigWizard {
         return name && name.toUpperCase() === 'UNCONFIGURED';
     }
 
+    _decodeMachineConfig(configName) {
+        if (!configName || !/^WB[A-Z]{7}$/.test(configName)) return null;
+
+        const sizeMap = {
+            A: '500 x 500',
+            B: '750 x 750',
+            C: '750 x 1000',
+            D: '1000 x 1000',
+            E: '1000 x 1500',
+            F: '1500 x 1500',
+            G: 'Custom'
+        };
+        const spindleMap = {
+            A: 'WorkBee Router Head',
+            B: 'Mafell FM 1000 (Digital)',
+            C: 'Mafell FM 1000 (Manual)',
+            D: 'VFD (0-10V)',
+            E: 'VFD (Modbus)',
+            F: 'PWM Laser Module'
+        };
+        const categoryMap = {
+            A: 'Z1+',
+            B: 'Z2',
+            C: 'Custom'
+        };
+
+        const size = sizeMap[configName[2]] || 'Unknown size';
+        const dust = configName[3] === 'A' ? 'Dust shoe' : 'No dust shoe';
+        const enclosure = configName[4] === 'A' ? 'Enclosure' : 'Open frame';
+        const spindle = spindleMap[configName[5]] || 'Unknown spindle';
+        const laser = configName[6] === 'A' ? 'Laser fitted' : 'No laser';
+        const probe = configName[7] === 'A' ? 'Ooznest XYZ Probe' : 'Custom probe';
+        const category = categoryMap[configName[8]] || 'Unknown machine type';
+
+        return `${category}, ${size}, ${spindle}, ${dust}, ${enclosure}, ${laser}, ${probe}`;
+    }
+
     _onVerComplete() {
         console.log('[ConfigWizard] _onVerComplete', this.verInfo);
         if (!this.verInfo) return;
@@ -124,11 +161,14 @@ export class ConfigWizard {
 
     // --- Info Tab Rendering ---
 
-    renderInfoTab() {
+    async renderInfoTab() {
         const container = document.getElementById('trouble-tab-info-content');
         if (!container) return;
 
         const v = this.verInfo;
+        const computerCardHtml = window.troubleshooting?.getComputerInfo
+            ? window.troubleshooting.renderComputerInfoCard(await window.troubleshooting.getComputerInfo())
+            : '';
         let html = '<div class="space-y-4">';
 
         // Firmware card
@@ -140,6 +180,10 @@ export class ConfigWizard {
         if (v) {
             html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${v.version || 'Unknown'}</span></div>`;
             html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine Config</span><span class="text-xs font-bold ${this._isUnconfigured(v.configName) ? 'text-red-500' : 'text-secondary-dark'}">${v.configName || 'None'}</span></div>`;
+            const decodedConfig = this._decodeMachineConfig(v.configName);
+            if (decodedConfig) {
+                html += `<div class="text-[10px] text-grey leading-relaxed">${decodedConfig}</div>`;
+            }
         }
         if (this.boardInfo) {
             html += `<div class="flex justify-between"><span class="text-xs text-grey">Board</span><span class="text-xs font-bold text-secondary-dark">${this.boardInfo}</span></div>`;
@@ -155,6 +199,8 @@ export class ConfigWizard {
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${document.title.replace('Ooznest Control ', '') || 'Unknown'}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Platform</span><span class="text-xs font-bold text-secondary-dark">${window.electron ? 'Desktop' : window.cordova ? 'Mobile' : 'Web'}</span></div>`;
         html += '</div></div>';
+
+        html += computerCardHtml;
 
         // Options card
         if (this.optInfo) {

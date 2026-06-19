@@ -15,6 +15,7 @@ export class TroubleshootingHandler {
         this._collectingSpindles = false;
         this._chainToSpindles = false;
         this.isOoznestBoard = false;
+        this._computerInfoPromise = null;
 
         this.ws.on('connect', () => {
             setTimeout(() => {
@@ -62,6 +63,7 @@ export class TroubleshootingHandler {
      * @param {string} pins - The Pn: string from grblHAL status report (e.g. "PXYZ")
      */
     updatePins(pins) {
+        this.updateSignalVisibility();
         if (pins === this.lastPins) return;
         this.lastPins = pins;
 
@@ -550,19 +552,91 @@ export class TroubleshootingHandler {
         }
     }
 
+    hasAAxis() {
+        const axisCount = window.dro?.mpos?.length || window.dro?.wpos?.length || 0;
+        return axisCount > 3;
+    }
+
+    updateAxisVisibility() {
+        const aRow = document.getElementById('trouble-limit-row-a');
+        if (!aRow) return;
+        const showA = this.hasAAxis();
+        aRow.classList.toggle('hidden', !showA);
+        aRow.classList.toggle('flex', showA);
+    }
+
+    _setSignalRowVisible(signalKey, visible) {
+        const row = document.getElementById(`trouble-signal-row-${signalKey}`);
+        if (!row) return;
+        row.classList.toggle('hidden', !visible);
+        row.classList.toggle('flex', visible);
+    }
+
+    _resetSignalVisibility() {
+        ['d', 'r', 'h', 's', 'e', 'l', 't', 'q', 'p', 'm', 'f'].forEach(signalKey => {
+            this._setSignalRowVisible(signalKey, true);
+        });
+    }
+
+    _getAvailableControlSignals() {
+        const format = window.grblSettings?.settings?.['14']?.format;
+        if (!format) return null;
+
+        const parts = format.split(',').map(part => part.trim());
+        if (!parts.length) return null;
+
+        // $14 control mask ordering:
+        // 0=Reset, 1=Feed hold, 2=Cycle start, 3=Safety door,
+        // 4=Block delete, 5=Stop disable, 6=E-Stop, 7=Probe connected
+        // Some drivers expose a 9th field for Motor fault in $ES metadata.
+        const hasSignal = (index) => !!parts[index] && parts[index] !== 'N/A';
+
+        return {
+            r: hasSignal(0),
+            h: hasSignal(1),
+            s: hasSignal(2),
+            d: hasSignal(3),
+            l: hasSignal(4),
+            t: hasSignal(5),
+            e: hasSignal(6),
+            p: hasSignal(7),
+            f: hasSignal(8)
+        };
+    }
+
+    updateSignalVisibility() {
+        this._resetSignalVisibility();
+
+        const availability = this._getAvailableControlSignals();
+        if (!availability) return;
+
+        this._setSignalRowVisible('r', availability.r);
+        this._setSignalRowVisible('h', availability.h);
+        this._setSignalRowVisible('s', availability.s);
+        this._setSignalRowVisible('d', availability.d);
+        this._setSignalRowVisible('l', availability.l);
+        this._setSignalRowVisible('t', availability.t);
+        this._setSignalRowVisible('e', availability.e);
+        this._setSignalRowVisible('p', availability.p);
+        this._setSignalRowVisible('f', availability.f);
+
+        // Not represented in $14 metadata here, so hide when driver metadata is available.
+        this._setSignalRowVisible('q', false);
+        this._setSignalRowVisible('m', false);
+    }
+
     updateHoming(mask) {
         const container = document.getElementById('homing-status-content');
         if (!container) return;
-        const mapping = ['X', 'Y', 'Z', 'A', 'B', 'C'];
+        this.updateAxisVisibility();
+        const mapping = this.hasAAxis() ? ['X', 'Y', 'Z', 'A'] : ['X', 'Y', 'Z'];
         let html = '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
         html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
         html += '<i class="bi bi-house-gear text-primary text-xs"></i>';
         html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Homing Status</h3>';
         html += '</div><div class="divide-y divide-grey-light/60">';
-        let anyHomed = false;
         mapping.forEach((axis, i) => {
             const isHomed = (mask >> i) & 1;
-            if (isHomed) anyHomed = true;
             html += `<div class="flex items-center gap-2 px-3 py-2">
                 <span class="text-xs font-bold text-grey-dark flex-1">${axis} Axis</span>
                 <span class="signal-badge ${isHomed ? 'signal-on' : 'signal-off'}"
@@ -573,9 +647,170 @@ export class TroubleshootingHandler {
         container.innerHTML = html;
     }
 
+    _escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    _runtimeLabel() {
+        if (window.electron) return 'Electron Desktop';
+        if (window.cordova) return 'Cordova Mobile';
+        return 'Web Browser';
+    }
+
+    _platformLabel() {
+        const uaPlatform = navigator.userAgentData?.platform || navigator.platform || '';
+        const ua = navigator.userAgent || '';
+        const source = `${uaPlatform} ${ua}`.toLowerCase();
+
+        if (source.includes('windows')) return 'Windows';
+        if (source.includes('mac')) return 'macOS';
+        if (source.includes('android')) return 'Android';
+        if (source.includes('iphone') || source.includes('ipad') || source.includes('ios')) return 'iOS';
+        if (source.includes('linux')) return 'Linux';
+        return uaPlatform || 'Unknown';
+    }
+
+    _browserLabel() {
+        const ua = navigator.userAgent || '';
+        if (window.electron) return 'Electron';
+        if (window.cordova) return 'Cordova WebView';
+        if (ua.includes('Edg/')) return 'Microsoft Edge';
+        if (ua.includes('Chrome/')) return 'Google Chrome';
+        if (ua.includes('Firefox/')) return 'Mozilla Firefox';
+        if (ua.includes('Safari/') && !ua.includes('Chrome/')) return 'Safari';
+        return 'Browser';
+    }
+
+    async _collectComputerInfo() {
+        const locationHost = window.location.hostname || 'local';
+        const locationOrigin = window.location.origin && window.location.origin !== 'null'
+            ? window.location.origin
+            : window.location.href;
+
+        let scanRanges = [];
+        if (window.ws?._getPreferredScanSubnets) {
+            try {
+                scanRanges = await window.ws._getPreferredScanSubnets();
+            } catch (e) {
+                console.error('Failed to load scan ranges for troubleshooting info:', e);
+            }
+        }
+
+        let adapters = [];
+        if (window.electron?.getNetworkInfo) {
+            try {
+                adapters = await window.electron.getNetworkInfo();
+            } catch (e) {
+                console.error('Failed to load native network info for troubleshooting info:', e);
+            }
+        }
+
+        return {
+            runtime: this._runtimeLabel(),
+            os: this._platformLabel(),
+            browser: this._browserLabel(),
+            language: navigator.language || 'Unknown',
+            online: navigator.onLine ? 'Yes' : 'No',
+            screen: window.screen ? `${window.screen.width} x ${window.screen.height}` : 'Unknown',
+            cores: navigator.hardwareConcurrency || null,
+            memory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : null,
+            host: locationHost,
+            origin: locationOrigin,
+            userAgent: navigator.userAgent || 'Unknown',
+            adapters,
+            scanRanges
+        };
+    }
+
+    async getComputerInfo() {
+        if (!this._computerInfoPromise) {
+            this._computerInfoPromise = this._collectComputerInfo().finally(() => {
+                this._computerInfoPromise = null;
+            });
+        }
+        return this._computerInfoPromise;
+    }
+
+    async renderInfoTab() {
+        if (window.configWizard?.renderInfoTab) {
+            await window.configWizard.renderInfoTab();
+        }
+    }
+
+    _infoRow(label, value) {
+        if (value === null || value === undefined || value === '') return '';
+        return `<div class="flex justify-between gap-4">
+            <span class="text-xs text-grey">${this._escapeHtml(label)}</span>
+            <span class="text-xs font-bold text-secondary-dark text-right break-all">${this._escapeHtml(value)}</span>
+        </div>`;
+    }
+
+    renderComputerInfoCard(info) {
+        let html = '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
+        html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
+        html += '<i class="bi bi-pc-display text-primary text-xs"></i>';
+        html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Computer</h3>';
+        html += '</div><div class="p-4 space-y-2">';
+
+        html += this._infoRow('Runtime', info.runtime);
+        html += this._infoRow('OS', info.os);
+        html += this._infoRow('Browser', info.browser);
+        html += this._infoRow('Language', info.language);
+        html += this._infoRow('Online', info.online);
+        html += this._infoRow('Screen', info.screen);
+        html += this._infoRow('CPU Cores', info.cores);
+        html += this._infoRow('Memory', info.memory);
+        html += this._infoRow('Host', info.host);
+
+        if (info.adapters?.length) {
+            html += '<div class="pt-2 border-t border-grey-light/60">';
+            html += '<div class="text-[10px] font-bold text-grey uppercase mb-2">Network Adapters</div>';
+            html += '<div class="space-y-2">';
+            info.adapters.forEach(adapter => {
+                html += `<div class="rounded-lg border border-grey-light bg-grey-bg px-3 py-2">
+                    <div class="text-xs font-bold text-secondary-dark">${this._escapeHtml(adapter.name || 'Adapter')}</div>
+                    <div class="text-[11px] text-grey-dark font-mono break-all">${this._escapeHtml(adapter.address || '')}</div>
+                    <div class="text-[10px] text-grey">Mask ${this._escapeHtml(adapter.netmask || 'Unknown')}${adapter.cidr ? ` • ${this._escapeHtml(adapter.cidr)}` : ''}</div>
+                </div>`;
+            });
+            html += '</div></div>';
+        }
+
+        if (info.scanRanges?.length) {
+            html += '<div class="pt-2 border-t border-grey-light/60">';
+            html += '<div class="text-[10px] font-bold text-grey uppercase mb-2">Scanner Ranges</div>';
+            html += '<div class="space-y-1">';
+            info.scanRanges.forEach(range => {
+                const label = range.label || `${range.subnet}.x`;
+                html += `<div class="text-xs font-mono text-secondary-dark">${this._escapeHtml(label)}</div>`;
+            });
+            html += '</div></div>';
+        }
+
+        if (!info.adapters?.length && !info.scanRanges?.length) {
+            html += '<div class="text-xs text-grey">Local network adapter details are not available in this runtime.</div>';
+        }
+
+        html += '<details class="pt-2 border-t border-grey-light/60">';
+        html += '<summary class="text-[10px] font-bold text-grey uppercase cursor-pointer">User Agent</summary>';
+        html += `<div class="mt-2 text-[10px] text-grey break-all">${this._escapeHtml(info.userAgent)}</div>`;
+        html += '</details>';
+
+        html += '</div></div>';
+        return html;
+    }
+
     refresh() {
         // Troubleshooting is passive (updates from status reports), 
         // but we could request a full status here if needed.
+        this.updateAxisVisibility();
+        this.updateSignalVisibility();
         if (window.requestFullStatus) window.requestFullStatus();
+        this.renderInfoTab().catch(err => console.error('Failed to refresh troubleshooting info tab:', err));
     }
 }

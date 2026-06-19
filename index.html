@@ -637,6 +637,18 @@
 
                     <!-- Stats & Info (Bottom Left) -->
                     <div class="absolute bottom-6 left-6 flex flex-col gap-3 pointer-events-none" style="z-index:25">
+                        <div id="upload-progress-container"
+                            class="hidden bg-white/95 backdrop-blur rounded-lg border border-grey-light p-4 shadow-lg pointer-events-auto w-72">
+                            <div class="flex justify-between text-xs font-bold text-grey mb-2 uppercase">
+                                <span>Transferring...</span>
+                                <span id="upload-pct">0%</span>
+                            </div>
+                            <div class="h-2 w-full bg-grey-bg rounded-full overflow-hidden">
+                                <div id="upload-progress-bar"
+                                    class="h-full bg-primary transition-all duration-300 w-0">
+                                </div>
+                            </div>
+                        </div>
                         <div id="gcode-stats-panel"
                             class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light p-3 shadow-lg pointer-events-auto w-72">
                             <div class="flex items-center justify-between gap-1.5 mb-2">
@@ -895,20 +907,6 @@
                                 <span class="text-grey-light shrink-0">|</span>
                                 <span id="sd-current-path"
                                     class="font-mono font-bold text-grey-dark truncate flex-1 min-w-0">/</span>
-                            </div>
-
-                            <!-- Upload Progress -->
-                            <div id="upload-progress-container"
-                                class="hidden mb-6 bg-white p-4 rounded-lg border border-grey-light shadow-soft">
-                                <div class="flex justify-between text-xs font-bold text-grey mb-2 uppercase">
-                                    <span>Transferring...</span>
-                                    <span id="upload-pct">0%</span>
-                                </div>
-                                <div class="h-2 w-full bg-grey-bg rounded-full overflow-hidden">
-                                    <div id="upload-progress-bar"
-                                        class="h-full bg-primary transition-all duration-300 w-0">
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- File Table (Restored White) -->
@@ -2347,27 +2345,27 @@
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Z Limit</span>
                                                 <div id="pin-indicator-Z" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-limit-row-a" class="hidden items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">A Limit</span>
                                                 <div id="pin-indicator-A" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div class="hidden items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">B Limit</span>
                                                 <div id="pin-indicator-B" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div class="hidden items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">C Limit</span>
                                                 <div id="pin-indicator-C" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div class="hidden items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">U Limit</span>
                                                 <div id="pin-indicator-U" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div class="hidden items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">V Limit</span>
                                                 <div id="pin-indicator-V" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div class="hidden items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">W Limit</span>
                                                 <div id="pin-indicator-W" class="signal-badge signal-off">OFF</div>
                                             </div>
@@ -2380,40 +2378,40 @@
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Control &amp; Probe</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-d" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Door</span>
                                                 <div id="pin-indicator-D" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-r" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Reset</span>
                                                 <div id="pin-indicator-R" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-h" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Hold</span>
                                                 <div id="pin-indicator-H" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-s" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Start</span>
                                                 <div id="pin-indicator-S" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-e" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">E Stop</span>
                                                 <div id="pin-indicator-E" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-l" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Block Delete</span>
                                                 <div id="pin-indicator-L" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-t" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Optional Stop</span>
                                                 <div id="pin-indicator-T" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-q" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Single Step</span>
                                                 <div id="pin-indicator-Q" class="signal-badge signal-off">OFF</div>
                                             </div>
                                             <!-- Probe row -->
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-p" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Probe</span>
                                                 <div class="flex items-center gap-1.5 text-[10px] mr-1">
                                                     <label class="flex items-center gap-0.5 cursor-pointer">
@@ -2445,11 +2443,11 @@
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Motor Status</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-m" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Warning</span>
                                                 <div id="pin-indicator-M" class="signal-badge signal-off">OFF</div>
                                             </div>
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
+                                            <div id="trouble-signal-row-f" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Fault</span>
                                                 <div id="pin-indicator-F" class="signal-badge signal-off">OFF</div>
                                             </div>
@@ -2584,29 +2582,29 @@
     <!-- Connection Modal -->
     <div id="connection-modal"
         class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-grey-light">
-            <div class="bg-secondary-dark p-4 flex justify-between items-center text-white">
-                <h3 class="font-bold text-lg"><i class="bi bi-plug-fill text-primary mr-2"></i>Connect to Machine</h3>
-                <button onclick="toggleConnectionModal()" class="text-white hover:text-primary transition-colors"><i
-                        class="bi bi-x-lg"></i></button>
+        <div class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] w-[400px] max-w-[calc(100vw-2rem)]">
+            <div class="px-6 py-4 border-b border-grey-light flex justify-between items-center bg-grey-bg">
+                <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
+                        class="bi bi-plug-fill text-primary"></i><span>Connect to Machine</span></h3>
+                <button onclick="toggleConnectionModal()" class="btn-ghost"><i class="bi bi-x-lg"></i></button>
             </div>
 
-            <div class="p-6 flex flex-col gap-4">
+            <div class="p-5 overflow-y-auto space-y-4">
                 <!-- Connection Type Tabs -->
-                <div class="flex bg-grey-bg p-1 rounded-xl gap-1">
+                <div class="grid grid-cols-2 gap-2">
                     <button onclick="setConnectionType('webserial')" id="tab-webserial"
-                        class="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white shadow-sm text-secondary-dark">Web
+                        class="tab-btn">Web
                         Serial</button>
                     <button onclick="setConnectionType('usb')" id="tab-usb"
-                        class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-grey hover:text-secondary-dark">USB</button>
+                        class="tab-btn">USB</button>
                     <button onclick="setConnectionType('websocket')" id="tab-websocket"
-                        class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-grey hover:text-secondary-dark">WebSock</button>
+                        class="tab-btn">WebSock</button>
                     <button onclick="setConnectionType('telnet')" id="tab-telnet"
-                        class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-grey hover:text-secondary-dark">Telnet</button>
+                        class="tab-btn">WiFi/Ethernet</button>
                 </div>
 
                 <!-- WebSerial Config -->
-                <div id="config-webserial" class="flex flex-col gap-3">
+                <div id="config-webserial" class="flex flex-col gap-4">
                     <p class="text-xs text-grey">Browser-native direct serial connection (Recommended for web use).</p>
                     <div>
                         <label class="text-[10px] font-bold text-grey uppercase block mb-1">Baud</label>
@@ -2622,10 +2620,9 @@
                         </select>
                     </div>
                 </div>
-                </div>
 
                 <!-- USB (Node / Cordova) Config -->
-                <div id="config-usb" class="hidden flex flex-col gap-3">
+                <div id="config-usb" class="hidden flex flex-col gap-4">
                     <p class="text-xs text-grey">Connect via Native USB OTG (Mobile) or Node.js Backend (Desktop).</p>
                     <div id="usb-port-container">
                         <label class="text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
@@ -2648,34 +2645,53 @@
                 </div>
 
                 <!-- Telnet Config -->
-                <div id="config-telnet" class="hidden flex flex-col gap-3">
+                <div id="config-telnet" class="hidden flex flex-col gap-4">
                     <p class="text-xs text-grey">Connect to grblHAL over Ethernet or WiFi.</p>
-                    <div>
-                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">IP Address</label>
+                    <div id="telnet-manual-ip-wrap">
+                        <div class="flex items-center justify-between mb-1 gap-3">
+                            <label class="text-[10px] font-bold text-grey uppercase block">IP Address</label>
+                            <button id="btn-scan-telnet" onclick="window.openTelnetScanner()"
+                                class="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors whitespace-nowrap">
+                                <i class="bi bi-search mr-1"></i> SCAN NETWORK
+                            </button>
+                        </div>
                         <input type="text" id="ip-telnet" class="input-field h-10" placeholder="192.168.1.10" aria-label="Telnet IP address">
                     </div>
-                    <div>
+                    <div id="discover-panel" class="hidden bg-grey-bg rounded-xl border border-grey-light p-4 space-y-3">
+                        <div class="flex justify-end">
+                            <button type="button" onclick="window.closeTelnetScanner()" class="text-grey hover:text-secondary-dark text-xs">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div id="discover-subnet-wrap" class="space-y-1">
+                            <label for="discover-subnet-select" class="text-[10px] font-bold text-grey uppercase block">Network Adapter</label>
+                            <select id="discover-subnet-select" class="input-field h-10 py-0 !bg-white border-2 border-secondary-dark/20 shadow-sm" onchange="window.updateTelnetScanStartState()"></select>
+                        </div>
+                        <div class="flex justify-end">
+                            <button id="btn-start-telnet-scan" onclick="window.startTelnetScanNetwork()" class="btn btn-primary h-10 px-4 text-xs font-bold" disabled>
+                                Start Scan
+                            </button>
+                        </div>
+                        <div id="discover-progress-wrap" class="hidden">
+                            <div class="h-2 w-full bg-grey-bg rounded-full overflow-hidden border border-grey-light">
+                                <div id="discover-progress-bar" class="h-full bg-primary transition-all duration-300 w-0"></div>
+                            </div>
+                        </div>
+                        <div id="discover-status" class="text-[10px] text-grey italic">Select a network adapter to begin scanning.</div>
+                        <div id="discovered-devices" class="hidden flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-grey uppercase">Controllers</span>
+                            <div id="discovered-list" class="flex flex-col gap-1 max-h-28 overflow-y-auto p-2 border border-grey-light rounded-lg bg-grey-bg">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="telnet-manual-port-wrap">
                         <label class="text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
                         <input type="number" id="port-telnet" class="input-field h-10" value="23" aria-label="Telnet port">
                     </div>
-                    <div class="flex items-center justify-between -mt-1">
-                        <span class="text-[10px] font-bold text-grey uppercase">Scan</span>
-                        <button id="btn-scan-telnet" onclick="window.scanTelnetNetwork()"
-                            class="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors">
-                            <i class="bi bi-search mr-1"></i> SCAN NETWORK
-                        </button>
-                    </div>
-                    <!-- Discovered Devices (Cordova auto-scan) -->
-                    <div id="discovered-devices" class="hidden flex flex-col gap-1">
-                        <span class="text-[10px] font-bold text-grey uppercase">Discovered on Network</span>
-                        <div id="discovered-list" class="flex flex-col gap-1 max-h-28 overflow-y-auto p-2 border border-grey-light rounded-lg bg-grey-bg">
-                        </div>
-                    </div>
-                    <div id="discover-status" class="hidden text-[10px] text-grey animate-pulse italic">Scanning local network for grblHAL controllers...</div>
                 </div>
 
                 <!-- WebSocket Config -->
-                <div id="config-websocket" class="hidden flex flex-col gap-3">
+                <div id="config-websocket" class="hidden flex flex-col gap-4">
                     <p class="text-xs text-grey">Connect to grblHAL WebSocket (Plugin_networking).</p>
                     <div>
                         <label class="text-[10px] font-bold text-grey uppercase block mb-1">URL</label>
@@ -2701,7 +2717,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 flex gap-2">
+                <div class="flex gap-2 pt-2">
                     <button id="btn-modal-connect" class="btn btn-primary flex-1 h-12 font-bold text-base"
                         onclick="handleConnectClick()">Connect</button>
                 </div>
@@ -2954,7 +2970,6 @@
                 'Upload the current job to the SD card and start running it?',
                 () => {
                     const file = new File([content], defaultName, { type: 'text/plain' });
-                    window.switchTab('sd-view');
                     window.sdHandler.startUpload(file, (uploadedName) => {
                         const fullPath = window.sdHandler.path === '/'
                             ? uploadedName
@@ -2962,7 +2977,7 @@
                         setTimeout(() => {
                             window.ws.sendCommand(`$F=${fullPath}`);
                         }, 500);
-                    });
+                    }, { skipConfirm: true });
                 }
             );
         }
@@ -3006,6 +3021,8 @@
             btn.classList.replace('border-transparent', 'border-primary');
             if (targetId === 'trouble-tab-power' && window.troubleshooting) {
                 window.troubleshooting.onPowerTabShown();
+            } else if (targetId === 'trouble-tab-info' && window.troubleshooting) {
+                window.troubleshooting.renderInfoTab();
             }
         }
 
@@ -3106,6 +3123,9 @@
             if (msg.includes("Failed to open serial port")) {
                 msg = "Unable to open serial port. It may be in use by another application or tab.";
                 code = "Port Busy";
+            } else if (msg.includes("Port Error:")) {
+                msg = "Failed to connect on the selected USB port. The controller may be on a different COM port, or that port is busy in another application.";
+                code = "Wrong Port";
             }
             reporter.showModal('ERROR', code, msg);
         });
@@ -3422,7 +3442,6 @@
                 if (!filename) return;
 
                 const file = new File([content], filename, { type: "text/plain" });
-                switchTab('sd-view');
                 window.sdHandler.startUpload(file);
             });
         };
@@ -3448,9 +3467,6 @@
                 if (!filename) return;
                 const file = new File([content], filename, { type: "text/plain" });
 
-                // Switch to SD view to show progress
-                switchTab('sd-view');
-
                 // Start Upload with Callback
                 window.sdHandler.startUpload(file, (uploadedName) => {
                     // On Success, Ask to Run
@@ -3460,7 +3476,7 @@
                             ws.sendCommand(`$F=${fullPath}`);
                         });
                     }, 500);
-                });
+                }, { skipConfirm: true });
             });
         };
 
