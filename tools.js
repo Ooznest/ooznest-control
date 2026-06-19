@@ -8,9 +8,16 @@ export class ToolsHandler {
 
         this.tools = {};
         this.activeToolId = null; // The tool currently loaded in spindle (from status report)
+        this._previousToolId = null; // Previous tool before last change
         this.selectedToolId = null; // The tool selected in the UI for editing
         this.mtcActive = false;
         this.renderTimeout = null;
+
+        // TLO measurement state
+        this.tloReferenceZ = null; // Machine Z of reference tool
+        this.tloReferenceTool = null; // Tool number of reference
+        this.tloPreviousZ = null; // Machine Z of most recently measured tool
+        this.tloPreviousTool = null; // Tool number of previous measurement
 
         this.initUI();
     }
@@ -21,6 +28,28 @@ export class ToolsHandler {
             numInput.addEventListener('input', (e) => {
                 document.getElementById('edit-tool-id-display').textContent = e.target.value || '?';
             });
+        }
+    }
+
+    switchToolsTab(targetId, btn) {
+        // Hide all contents
+        document.querySelectorAll('.tools-tab-content').forEach(el => el.classList.add('hidden'));
+        // Show target
+        document.getElementById(targetId).classList.remove('hidden');
+
+        // Reset buttons
+        document.querySelectorAll('.tools-tab-btn').forEach(el => {
+            el.classList.replace('text-primary-dark', 'text-grey');
+            el.classList.replace('border-primary', 'border-transparent');
+        });
+
+        // Active button
+        btn.classList.replace('text-grey', 'text-primary-dark');
+        btn.classList.replace('border-transparent', 'border-primary');
+
+        // If switching away from calibration, cancel any active wizard logic
+        if (targetId !== 'tab-tool-calibration' && window.calibration) {
+            window.calibration.cancel();
         }
     }
 
@@ -101,6 +130,7 @@ export class ToolsHandler {
             if (activeToolMatch) {
                 const newActiveId = parseInt(activeToolMatch[1]);
                 if (this.activeToolId !== newActiveId) {
+                    this._previousToolId = this.activeToolId;
                     this.activeToolId = newActiveId;
                     this.triggerRender();
                 }
@@ -115,8 +145,8 @@ export class ToolsHandler {
 
     renderTable() {
         const tbody = document.getElementById('tool-table-body');
-        const badge = document.getElementById('tool-count-badge');
-        const navBadge = document.getElementById('tools-badge');
+        const badge = document.getElementById('tools-badge');
+        const libBadge = document.getElementById('tool-count-badge');
 
         if (!tbody) return;
 
@@ -124,10 +154,7 @@ export class ToolsHandler {
         const ids = Object.keys(this.tools).map(Number).sort((a, b) => a - b);
 
         if (badge) badge.textContent = ids.length;
-        if (navBadge) {
-            navBadge.textContent = ids.length;
-            if (ids.length > 0) navBadge.classList.remove('hidden');
-        }
+        if (libBadge) libBadge.textContent = ids.length;
 
         if (ids.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-grey italic">No defined tools found.<br><span class="text-[10px]">Ensure N_TOOLS > 0 in grblHAL config.</span></td></tr>';
@@ -253,6 +280,9 @@ export class ToolsHandler {
         console.log("MTC: Tool State Detected");
         this.mtcActive = true;
 
+        // Show current/next tool info in modal
+        this._updateMTCToolInfo();
+
         document.getElementById('tool-change-modal').classList.remove('hidden');
 
         // SEND ACK (0xA3) to allow jogging/macros
@@ -260,14 +290,137 @@ export class ToolsHandler {
         this.term.writeln(`\x1b[33m[MTC] Tool Change Detected. Sending ACK (0xA3).\x1b[0m`);
     }
 
+    _updateMTCToolInfo() {
+        const infoEl = document.getElementById('mtc-tool-info');
+        const badgeEl = document.getElementById('mtc-tool-badge');
+        if (!infoEl) return;
+        const nextTool = this.activeToolId;
+        const prevTool = this._previousToolId;
+        if (nextTool) {
+            infoEl.classList.remove('hidden');
+            badgeEl.classList.remove('hidden');
+            badgeEl.textContent = `T${nextTool}`;
+            document.getElementById('mtc-current-tool').textContent = prevTool ? `T${prevTool}` : '—';
+            document.getElementById('mtc-next-tool').textContent = `T${nextTool}`;
+        }
+    }
+
     endMTC() {
         if (!this.mtcActive) return;
         this.mtcActive = false;
         document.getElementById('tool-change-modal').classList.add('hidden');
+        // Clear measurement UI
+        const refEl = document.getElementById('tlo-ref-info');
+        if (refEl) refEl.classList.add('hidden');
         this.term.writeln(`\x1b[32m[MTC] Tool Change Complete.\x1b[0m`);
+        // Resume any paused job stream
+        if (window.jobController) window.jobController.resumeMTCStream();
     }
 
     resumeToolChange() {
         this.ws.sendRealtime('~'); // Cycle Start to finish MTC
+    }
+
+    // --- TLO (Tool Length Offset) Measurement ---
+
+    /**
+     * Set the reference tool length. Records current machine Z as the baseline.
+     * Call after probing or jogging the first tool to a known reference surface.
+     */
+    setTLOReference() {
+        if (!window.dro?.mpos) {
+            this.term.writeln(`\x1b[31m[TLO] No machine position available.\x1b[0m`);
+            return;
+        }
+        this.tloReferenceZ = window.dro.mpos[2];
+        this.tloReferenceTool = this.activeToolId;
+        this.tloPreviousZ = this.tloReferenceZ;
+        this.tloPreviousTool = this.tloReferenceTool;
+        const label = this.activeToolId ? `T${this.activeToolId}` : '?';
+        this.term.writeln(`\x1b[32m[TLO] Reference set: ${label} @ Z=${this.tloReferenceZ.toFixed(3)}\x1b[0m`);
+        this._updateTLOUI();
+    }
+
+    /**
+     * Measure the current tool and compute offset from the previous tool.
+     * Call after changing tool and probing/jogging to the same reference surface.
+     * Applies G43.1 Z{offset} for the difference.
+     */
+    measureTLO() {
+        if (!window.dro?.mpos) {
+            this.term.writeln(`\x1b[31m[TLO] No machine position available.\x1b[0m`);
+            return;
+        }
+        if (this.tloPreviousZ === null) {
+            this.term.writeln(`\x1b[33m[TLO] No reference set. Use "Set Ref" first.\x1b[0m`);
+            return;
+        }
+
+        const currentZ = window.dro.mpos[2];
+        const prevZ = this.tloPreviousZ;
+        const prevTool = this.tloPreviousTool;
+
+        // Offset = new tool Z - previous tool Z
+        const offset = currentZ - prevZ;
+        const label = this.activeToolId ? `T${this.activeToolId}` : '?';
+        const prevLabel = prevTool ? `T${prevTool}` : 'ref';
+
+        // Check if this uses the reference tool (first measurement after reference)
+        const isFirst = (this.tloPreviousZ === this.tloReferenceZ && this.tloPreviousTool === this.tloReferenceTool);
+
+        this.term.writeln(`\x1b[36m[TLO] ${label}: Z=${currentZ.toFixed(3)}, offset from ${prevLabel} = ${offset.toFixed(3)}\x1b[0m`);
+
+        if (isFirst) {
+            this.term.writeln(`\x1b[32m[TLO] Reference tool measured. No offset applied (baseline).\x1b[0m`);
+        } else {
+            // Apply dynamic tool length offset via G43.1
+            this.ws.sendCommand(`G43.1 Z${offset.toFixed(3)}`);
+            this.term.writeln(`\x1b[32m[TLO] Applied G43.1 Z${offset.toFixed(3)}\x1b[0m`);
+        }
+
+        // Update state
+        this.tloPreviousZ = currentZ;
+        this.tloPreviousTool = this.activeToolId;
+        this._updateTLOUI();
+    }
+
+    /**
+     * Reset all TLO state and cancel any active offset.
+     */
+    resetTLO() {
+        this.tloReferenceZ = null;
+        this.tloReferenceTool = null;
+        this.tloPreviousZ = null;
+        this.tloPreviousTool = null;
+        // Cancel dynamic offset
+        this.ws.sendCommand('G43.1 Z0');
+        this.term.writeln(`\x1b[33m[TLO] Reset. G43.1 Z0 sent.\x1b[0m`);
+        this._updateTLOUI();
+    }
+
+    /**
+     * Jog the Z axis to a given absolute position at slow feed for touch-off.
+     * @param {number} z - Target Z in machine coordinates
+     * @param {number} [feed=50] - Feed rate
+     */
+    jogToTouchoff(z, feed) {
+        this.ws.sendCommand(`G90 G0 Z${z} F${feed || 50}`);
+    }
+
+    _updateTLOUI() {
+        const infoEl = document.getElementById('tlo-ref-info');
+        if (!infoEl) return;
+        if (this.tloReferenceZ !== null) {
+            infoEl.classList.remove('hidden');
+            const refTool = this.tloReferenceTool ? `T${this.tloReferenceTool}` : '?';
+            const prevTool = this.tloPreviousTool ? `T${this.tloPreviousTool}` : 'ref';
+            const prevZ = this.tloPreviousZ !== null ? this.tloPreviousZ.toFixed(3) : '—';
+            document.getElementById('tlo-ref-tool').textContent = refTool;
+            document.getElementById('tlo-ref-z').textContent = this.tloReferenceZ.toFixed(3);
+            document.getElementById('tlo-prev-tool').textContent = prevTool;
+            document.getElementById('tlo-prev-z').textContent = prevZ;
+        } else {
+            infoEl.classList.add('hidden');
+        }
     }
 }

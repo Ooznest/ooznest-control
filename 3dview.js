@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 import { ViewCube } from './viewcube.js';
+import { buildToolGroup, DEFAULT_PARAMS } from './endmill-generator.js';
 
 // --- Theme Colors ---
 const COLORS = {
@@ -20,16 +20,28 @@ const COLORS = {
 };
 
 const LASER_CONFIG = {
-    color: 0x00aaff, // Blue diode laser
+    color: 0x0030cc, // 445nm blue diode laser — deeper to avoid additive washout
     beamLength: 20,
     beamRadius: 0.2,
-    glowColor: 'rgba(0, 170, 255, 1)'
+    glowColor: 'rgba(0, 48, 204, 1)'
 };
 
 class ParticleSystem {
     constructor(scene) {
         this.scene = scene;
         this.particles = [];
+        this.chipColors = this._loadChipColors();
+    }
+
+    _loadChipColors() {
+        const s = getComputedStyle(document.body);
+        return [
+            s.getPropertyValue('--oz-primary').trim() || '#FF6600',
+            s.getPropertyValue('--oz-primary-light').trim() || '#FF8533',
+            s.getPropertyValue('--oz-primary-dark').trim() || '#D55700',
+            s.getPropertyValue('--oz-grey-dark').trim() || '#2F373C',
+            s.getPropertyValue('--oz-grey-mid').trim() || '#6B7280',
+        ];
     }
 
     emit(pos, count, type) {
@@ -40,7 +52,8 @@ class ParticleSystem {
     }
 
     createChip(pos) {
-        const mat = new THREE.SpriteMaterial({ color: COLORS.tool }); // Uses theme tool color
+        const hex = this.chipColors[Math.floor(Math.random() * this.chipColors.length)];
+        const mat = new THREE.SpriteMaterial({ color: new THREE.Color(hex) });
         const sprite = new THREE.Sprite(mat);
         sprite.position.copy(pos);
         sprite.scale.set(1.5, 1.5, 1.5);
@@ -57,7 +70,7 @@ class ParticleSystem {
 
     createVapor(pos) {
         const mat = new THREE.SpriteMaterial({
-            color: 0x00aaff,
+            color: 0x0030cc,
             transparent: true,
             opacity: 0.6,
             blending: THREE.AdditiveBlending
@@ -152,6 +165,15 @@ export class GCodeViewer {
         this.feedMesh = null;
         this.particleSystem = null; // Instantiated in init()
 
+        this.currentGCode = '';
+
+        // Endmill parameters (persisted via store)
+        this.endmillParams = { ...DEFAULT_PARAMS };
+        if (this.store) {
+            const saved = this.store.get('viewer.endmillParams');
+            if (saved) this.endmillParams = { ...DEFAULT_PARAMS, ...saved };
+        }
+
         // Spindle Animation State
         this.spindleSpeed = 0;
         this.laserPower = 0; // 0-1 range
@@ -192,9 +214,11 @@ export class GCodeViewer {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.0;
+        this.renderer.toneMappingExposure = 1.25;
 
         this.container.appendChild(this.renderer.domElement);
+
+        this._createEnvironment();
 
         // Camera (Z-Up)
         this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 10000);
@@ -233,10 +257,43 @@ export class GCodeViewer {
         // Instantiate Particle System attached to workOffsetsGroup so it uses local Work coordinates
         this.particleSystem = new ParticleSystem(this.workOffsetsGroup);
 
-        this.animate();
-
         // Context Menu Event
         this.renderer.domElement.addEventListener('contextmenu', (e) => this.onContextMenu(e));
+
+        // Start animation loop (viewer tab is default visible)
+        this._active = true;
+        requestAnimationFrame(() => this.animate());
+    }
+
+    startAnim() {
+        if (this._active) return;
+        this._active = true;
+        requestAnimationFrame(() => this.animate());
+    }
+
+    stopAnim() {
+        this._active = false;
+    }
+
+    _createEnvironment() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 512);
+        grad.addColorStop(0, '#c8d8e8');
+        grad.addColorStop(0.45, '#8898a8');
+        grad.addColorStop(0.55, '#586878');
+        grad.addColorStop(1, '#384858');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        const envTexture = new THREE.CanvasTexture(canvas);
+        envTexture.mapping = THREE.EquirectangularReflectionMapping;
+        const pmrem = new THREE.PMREMGenerator(this.renderer);
+        const envMap = pmrem.fromEquirectangular(envTexture).texture;
+        pmrem.dispose();
+        this.scene.environment = envMap;
     }
 
     setUnits(units) {
@@ -250,6 +307,7 @@ export class GCodeViewer {
     }
 
     animate() {
+        if (!this._active) return;
         requestAnimationFrame(() => this.animate());
         const delta = this.clock.getDelta();
 
@@ -336,7 +394,7 @@ export class GCodeViewer {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = COLORS.text;
-        ctx.font = `bold ${fontsize}px "JetBrains Mono", monospace`;
+        ctx.font = `bold ${fontsize}px "Nunito", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, width / 2, height / 2);
@@ -365,7 +423,7 @@ export class GCodeViewer {
         ctx.roundRect(0, 0, canvasWidth, canvasHeight, 16);
         ctx.fill();
         ctx.fillStyle = COLORS.statsText;
-        ctx.font = `bold ${fontsize}px "JetBrains Mono", monospace`;
+        ctx.font = `bold ${fontsize}px "Nunito", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, canvasWidth / 2, canvasHeight / 2);
@@ -568,6 +626,7 @@ export class GCodeViewer {
         if (x && y && z) {
             this.machineLimits = { x, y, z };
             this.renderMachineBox();
+            this._updateFeedEnvelopeColors();
             if (this.gridMode === 'machine') {
                 this.updateGridBounds();
                 this.renderCoolGrid();
@@ -606,6 +665,7 @@ export class GCodeViewer {
                 this.updateGridBounds();
                 this.renderCoolGrid();
             }
+            this._updateFeedEnvelopeColors();
         }
     }
 
@@ -614,10 +674,56 @@ export class GCodeViewer {
         this.wcsGroup.add(new THREE.AxesHelper(20));
     }
 
+    _getEnvelopeBounds() {
+        const { x, y, z } = this.machineLimits || { x: 0, y: 0, z: 0 };
+        let xMin, xMax, yMin, yMax, zMin, zMax;
+        if (this.isPositiveSpace) {
+            if (this.homingDirMask & 1) { xMin = 0; xMax = x; } else { xMin = -x; xMax = 0; }
+            if (this.homingDirMask & 2) { yMin = 0; yMax = y; } else { yMin = -y; yMax = 0; }
+            if (this.homingDirMask & 4) { zMin = 0; zMax = z; } else { zMin = -z; zMax = 0; }
+        } else {
+            xMin = -x; xMax = 0; yMin = -y; yMax = 0; zMin = -z; zMax = 0;
+        }
+        return { xMin, xMax, yMin, yMax, zMin, zMax };
+    }
+
+    _updateFeedEnvelopeColors() {
+        if (!this.feedMesh) return;
+        const posAttr = this.feedMesh.geometry.attributes.position;
+        const colAttr = this.feedMesh.geometry.attributes.color;
+        if (!posAttr || !colAttr || !this.feedColorsCache) return;
+
+        const pos = posAttr.array;
+        const colors = colAttr.array;
+        const cache = this.feedColorsCache;
+        const env = this._getEnvelopeBounds();
+        const wco = this.wco || { x: 0, y: 0, z: 0 };
+
+        const outsideColor = new THREE.Color(0xdc2626);
+
+        for (let i = 0; i < pos.length; i += 3) {
+            const mx = pos[i] + wco.x;
+            const my = pos[i + 1] + wco.y;
+            const mz = pos[i + 2] + wco.z;
+            const inside = mx >= env.xMin && mx <= env.xMax &&
+                           my >= env.yMin && my <= env.yMax &&
+                           mz >= env.zMin && mz <= env.zMax;
+            if (!inside) {
+                colors[i] = outsideColor.r;
+                colors[i + 1] = outsideColor.g;
+                colors[i + 2] = outsideColor.b;
+            } else {
+                colors[i] = cache[i];
+                colors[i + 1] = cache[i + 1];
+                colors[i + 2] = cache[i + 2];
+            }
+        }
+        colAttr.needsUpdate = true;
+    }
+
     renderMachineBox() {
         this.machineGroup.clear();
 
-        // Machine Box is now static at World (0,0,0) -> Machine Home
         const { x, y, z } = this.machineLimits;
 
         // Origin after homing logic ($23 and Z option):
@@ -627,22 +733,11 @@ export class GCodeViewer {
         let xMin, xMax, yMin, yMax, zMin, zMax;
 
         if (this.isPositiveSpace) {
-            // X Axis
-            if (this.homingDirMask & 1) { xMin = 0; xMax = x; } // Home to Min
-            else { xMin = -x; xMax = 0; }                      // Home to Max
-
-            // Y Axis
-            if (this.homingDirMask & 2) { yMin = 0; yMax = y; } // Home to Min
-            else { yMin = -y; yMax = 0; }                      // Home to Max
-
-            // Z Axis
-            if (this.homingDirMask & 4) { zMin = 0; zMax = z; } // Home to Min
-            else { zMin = -z; zMax = 0; }                      // Home to Max
+            if (this.homingDirMask & 1) { xMin = 0; xMax = x; } else { xMin = -x; xMax = 0; }
+            if (this.homingDirMask & 2) { yMin = 0; yMax = y; } else { yMin = -y; yMax = 0; }
+            if (this.homingDirMask & 4) { zMin = 0; zMax = z; } else { zMin = -z; zMax = 0; }
         } else {
-            // Standard CNC (non-Z): Usually Home at Max, Travel is Negative
-            xMin = -x; xMax = 0;
-            yMin = -y; yMax = 0;
-            zMin = -z; zMax = 0;
+            xMin = -x; xMax = 0; yMin = -y; yMax = 0; zMin = -z; zMax = 0;
         }
 
         const vertices = [];
@@ -679,6 +774,19 @@ export class GCodeViewer {
     }
 
     renderTool() {
+        // Dispose old tool geometry/materials
+        if (this._endmillGeneratedGroup) {
+            this._endmillGeneratedGroup.traverse(child => {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                        else child.material.dispose();
+                    }
+                }
+            });
+            this._endmillGeneratedGroup = null;
+        }
         this.toolGroup.clear();
 
         if (this.isLaserMode) {
@@ -718,8 +826,7 @@ export class GCodeViewer {
         const beamMat = new THREE.MeshBasicMaterial({
             color: LASER_CONFIG.color,
             transparent: true,
-            opacity: 0.6,
-            blending: THREE.AdditiveBlending,
+            opacity: 0.5,
             depthWrite: false
         });
         this.laserBeam = new THREE.Mesh(beamGeo, beamMat);
@@ -727,12 +834,24 @@ export class GCodeViewer {
         this.laserBeam.position.z = LASER_CONFIG.beamLength / 2;
         this.toolGroup.add(this.laserBeam);
 
+        // 2b. Idle beam — dim, non-glowing line visible when laser is off
+        const idleMat = new THREE.MeshBasicMaterial({
+            color: LASER_CONFIG.color,
+            transparent: true,
+            opacity: 0.3,
+            depthWrite: false
+        });
+        this.laserBeamIdle = new THREE.Mesh(beamGeo.clone(), idleMat);
+        this.laserBeamIdle.rotation.x = Math.PI / 2;
+        this.laserBeamIdle.position.z = LASER_CONFIG.beamLength / 2;
+        this.toolGroup.add(this.laserBeamIdle);
+
         // 3. Laser Glow Sprite
         // At the tip (Z=0)
         const glowTexture = this.createGlowTexture();
         const glowMat = new THREE.SpriteMaterial({
             map: glowTexture,
-            color: LASER_CONFIG.color,
+            color: 0xffffff,
             transparent: true,
             blending: THREE.AdditiveBlending,
             depthWrite: false
@@ -749,9 +868,9 @@ export class GCodeViewer {
         canvas.height = 64;
         const ctx = canvas.getContext('2d');
         const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
-        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(0, 'rgba(0, 20, 140, 1)');
+        gradient.addColorStop(0.2, 'rgba(0, 40, 200, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(0, 80, 255, 0.35)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 64, 64);
@@ -759,67 +878,51 @@ export class GCodeViewer {
     }
 
     updateLaserVisuals() {
-        if (!this.laserBeam || !this.laserGlow) return;
+        if (!this.laserBeam || !this.laserGlow || !this.laserBeamIdle) return;
 
         // Pulse effect or power-based scaling
         // Min opacity when on: 0.3, Max: 0.9
-        const power = Math.max(this.laserPower, 0.05); // Always show a little bit if 'on' mode but power is low? 
+        const power = Math.max(this.laserPower, 0.05);
         // Actually, if spindle is 0, power is 0. 
 
         if (this.spindleSpeed <= 0) {
             this.laserBeam.visible = false;
             this.laserGlow.visible = false;
+            this.laserBeamIdle.visible = true;
             return;
         } else {
             this.laserBeam.visible = true;
             this.laserGlow.visible = true;
+            this.laserBeamIdle.visible = false;
         }
 
         const flicker = 0.95 + Math.random() * 0.1;
 
-        this.laserBeam.material.opacity = (0.2 + (power * 0.6)) * flicker;
-        this.laserGlow.material.opacity = (0.4 + (power * 0.6)) * flicker;
+        this.laserBeam.material.opacity = (0.15 + (power * 0.3)) * flicker;
+        this.laserGlow.material.opacity = (0.15 + (power * 0.35)) * flicker;
 
-        const scale = (5 + (power * 10)) * flicker;
+        const scale = (4 + (power * 6)) * flicker;
         this.laserGlow.scale.set(scale, scale, 1);
     }
 
     renderEndmill() {
-        const transparency = 0.9;
-        const endmillMat = new THREE.MeshNormalMaterial({
-            transparent: true,
-            opacity: transparency,
-            side: THREE.DoubleSide
-        });
-        const colletNutMat = new THREE.MeshStandardMaterial({
-            color: 0x000000,
-            roughness: 0.4,
-            metalness: 0.6,
-            transparent: true,
-            opacity: transparency,
-        });
-        const colletShaftMat = new THREE.MeshStandardMaterial({
-            color: 0xbdc3c7,
-            roughness: 0.4,
-            metalness: 0.6,
-            transparent: true,
-            opacity: transparency,
-        });
-        const loader = new STLLoader();
-        loader.load('./endmill.stl', (geometry) => {
-            const mesh = new THREE.Mesh(geometry, endmillMat);
-            this.toolGroup.add(mesh);
-        }, undefined, (error) => console.warn('Could not load endmill.stl', error));
-        loader.load('./collet-nut.stl', (geometry) => {
-            const mesh = new THREE.Mesh(geometry, colletNutMat);
-            mesh.position.z = 30;
-            this.toolGroup.add(mesh);
-        }, undefined, (error) => console.warn('Could not load collet-nut.stl', error));
-        loader.load('./collet-shaft.stl', (geometry) => {
-            const mesh = new THREE.Mesh(geometry, colletShaftMat);
-            mesh.position.z = 30;
-            this.toolGroup.add(mesh);
-        }, undefined, (error) => console.warn('Could not load collet-shaft.stl', error));
+        const toolGroup = buildToolGroup(this.endmillParams);
+        this.toolGroup.add(toolGroup);
+        this._endmillGeneratedGroup = toolGroup;
+    }
+
+    updateEndmillParams(params) {
+        this.endmillParams = { ...this.endmillParams, ...params };
+        if (this.store) {
+            this.store.set('viewer.endmillParams', this.endmillParams);
+        }
+        if (!this.isLaserMode) {
+            this.renderTool();
+        }
+    }
+
+    getEndmillParams() {
+        return { ...this.endmillParams };
     }
 
     updateToolPosition(x, y, z) {
@@ -842,6 +945,7 @@ export class GCodeViewer {
     }
 
     sendToWorker(data) {
+        this.currentGCode = data; // Store for tool parsing
         const worker = new Worker('gcview.worker.js', { type: 'module' });
         worker.onmessage = (msg) => {
             const payload = msg.data;
@@ -901,13 +1005,37 @@ export class GCodeViewer {
             const colorG23 = new THREE.Color(cssAppSecondary);
             const feedTypes = payload.feedTypes;
 
-            for (let i = 0; i < colorBuffer.length; i += 3) {
-                const type = (feedTypes && (i/3) < feedTypes.length) ? feedTypes[i / 3] : 1;
-                const c = (type === 2) ? colorG23 : colorG1;
+            // Faked directional light for line volume
+            const lightDir = new THREE.Vector3(1, 1, 1).normalize();
+            const D = new THREE.Vector3();
+            const crossVec = new THREE.Vector3();
+
+            for (let i = 0; i < colorBuffer.length; i += 6) {
+                // Compute direction of this segment
+                D.set(
+                    feedGeo[i + 3] - feedGeo[i],
+                    feedGeo[i + 4] - feedGeo[i + 1],
+                    feedGeo[i + 5] - feedGeo[i + 2]
+                );
                 
-                colorBuffer[i] = c.r;
-                colorBuffer[i + 1] = c.g;
-                colorBuffer[i + 2] = c.b;
+                // If zero length, default to 1
+                if (D.lengthSq() > 0) D.normalize();
+                else D.set(0, 0, 1);
+
+                // Intensity based on cross product (max light when line is perpendicular to light ray)
+                crossVec.crossVectors(D, lightDir);
+                // Base ambient 0.5 + Diffuse 0.5
+                const intensity = 0.5 + 0.5 * crossVec.length();
+
+                for (let v = 0; v < 2; v++) {
+                    const idx = i + v * 3;
+                    const type = (feedTypes && (idx/3) < feedTypes.length) ? feedTypes[idx / 3] : 1;
+                    const c = (type === 2) ? colorG23 : colorG1;
+                    
+                    colorBuffer[idx] = c.r * intensity;
+                    colorBuffer[idx + 1] = c.g * intensity;
+                    colorBuffer[idx + 2] = c.b * intensity;
+                }
             }
             
             this.feedColorsCache = new Float32Array(colorBuffer);
@@ -920,6 +1048,7 @@ export class GCodeViewer {
             });
             this.feedMesh = new THREE.LineSegments(geo, mat);
             this.gcodeGroup.add(this.feedMesh);
+            this._updateFeedEnvelopeColors();
         }
 
         if (rapidGeo && rapidGeo.length > 0) {
@@ -945,39 +1074,61 @@ export class GCodeViewer {
         }
     }
 
+
+
     updateProgress(currentLine) {
         if (!this.feedMesh || !this.lineMap) return;
 
+        const colorAttr = this.feedMesh.geometry.attributes.color;
+
         // If currentLine reset (e.g. restart), reset all colors
         if (currentLine < this.lastRenderedLine) {
-            const colorAttr = this.feedMesh.geometry.attributes.color;
             if (this.feedColorsCache) {
                 for (let i = 0; i < colorAttr.count; i++) {
                     const idx = i * 3;
                     colorAttr.setXYZ(i, this.feedColorsCache[idx], this.feedColorsCache[idx+1], this.feedColorsCache[idx+2]);
                 }
             }
+            colorAttr.updateRange.offset = 0;
+            colorAttr.updateRange.count = -1;
             colorAttr.needsUpdate = true;
             this.lastRenderedLine = 0;
         }
-
-        const colorAttr = this.feedMesh.geometry.attributes.color;
 
         // LineMap is Uint32Array: [start, count, start, count, ...]
         const maxLine = (this.lineMap.length / 2) - 1;
         const targetLine = Math.min(currentLine, maxLine);
 
         if (targetLine > this.lastRenderedLine) {
+            let minStart = Infinity;
+            let maxEnd = 0;
+            
             for (let l = this.lastRenderedLine + 1; l <= targetLine; l++) {
                 const start = this.lineMap[l * 2];
                 const count = this.lineMap[l * 2 + 1];
                 if (count > 0) {
+                    if (start < minStart) minStart = start;
+                    if (start + count > maxEnd) maxEnd = start + count;
+
                     for (let k = 0; k < count; k++) {
                         colorAttr.setXYZ(start + k, 0.2, 0.2, 0.2);
                     }
                 }
             }
-            colorAttr.needsUpdate = true;
+            if (minStart < Infinity) {
+                if (colorAttr.updateRange.count === -1) {
+                    colorAttr.updateRange.offset = minStart * 3;
+                    colorAttr.updateRange.count = (maxEnd - minStart) * 3;
+                } else {
+                    const currentOffset = colorAttr.updateRange.offset;
+                    const currentEnd = currentOffset + colorAttr.updateRange.count;
+                    const newOffset = Math.min(currentOffset, minStart * 3);
+                    const newEnd = Math.max(currentEnd, maxEnd * 3);
+                    colorAttr.updateRange.offset = newOffset;
+                    colorAttr.updateRange.count = newEnd - newOffset;
+                }
+                colorAttr.needsUpdate = true;
+            }
             this.lastRenderedLine = targetLine;
         }
     }
@@ -1152,39 +1303,52 @@ export class GCodeViewer {
     }
 
     toggleCamera() {
-        const currentPos = this.camera.position.clone();
-        const currentTarget = this.controls.target.clone();
+        console.log('[toggleCamera] entered. cameraMode:', this.cameraMode, 'camera type:', this.camera?.constructor?.name);
+        this.cameraMode = 'orbit';
+        const oldPos = this.camera.position.clone();
+        const oldTarget = this.controls.target.clone();
+        console.log('[toggleCamera] oldPos:', oldPos.toArray().map(v=>v.toFixed(2)), 'oldTarget:', oldTarget.toArray().map(v=>v.toFixed(2)));
         const w = this.container.clientWidth;
         const h = this.container.clientHeight;
         if (this.camera instanceof THREE.PerspectiveCamera) {
+            console.log('[toggleCamera] switching TO orthographic');
+            const box = new THREE.Box3().setFromObject(this.gcodeGroup);
+            let maxDim = 100;
+            if (!box.isEmpty()) {
+                const size = box.getSize(new THREE.Vector3());
+                maxDim = Math.max(size.x, size.y);
+                console.log('[toggleCamera] gcode box size:', size.toArray().map(v=>v.toFixed(2)), 'maxDim:', maxDim);
+            } else {
+                console.log('[toggleCamera] gcodeGroup box is EMPTY');
+            }
             const aspect = w / h;
-            const frustumSize = currentPos.distanceTo(currentTarget);
-            this.camera = new THREE.OrthographicCamera(frustumSize * aspect / -2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / -2, 0.1, 10000);
+            const frustumSize = Math.max(maxDim * 0.6, 100);
+            console.log('[toggleCamera] frustumSize:', frustumSize, 'aspect:', aspect);
+            this.camera = new THREE.OrthographicCamera(frustumSize * aspect / -2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / -2, 1, 10000);
             this.camera.up.set(0, 0, 1);
-            this.camera.position.copy(currentPos);
+            this.camera.position.copy(oldPos);
             this.camera.zoom = 1;
             this.controls.object = this.camera;
-            this.controls.target.copy(currentTarget);
-
-            // Update viewcube with new camera reference
-            if (this.viewCube) {
-                this.viewCube.updateCamera(this.camera, this.controls);
-            }
-
-            return 'Orthographic';
+            this.controls.target.copy(oldTarget);
         } else {
+            console.log('[toggleCamera] switching TO perspective');
             this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 10000);
             this.camera.up.set(0, 0, 1);
-            this.camera.position.copy(currentPos);
+            this.camera.position.copy(oldPos);
             this.controls.object = this.camera;
-            this.controls.target.copy(currentTarget);
-            // Update viewcube with new camera reference
-            if (this.viewCube) {
-                this.viewCube.updateCamera(this.camera, this.controls);
-            }
-
-            return 'Perspective';
+            this.controls.target.copy(oldTarget);
         }
+        console.log('[toggleCamera] new camera pos:', this.camera.position.toArray().map(v=>v.toFixed(2)), 'target:', this.controls.target.toArray().map(v=>v.toFixed(2)));
+        if (this.viewCube) {
+            this.viewCube.updateCamera(this.camera, this.controls);
+        }
+        console.log('[toggleCamera] scheduling resetCamera in 50ms');
+        setTimeout(() => {
+            console.log('[toggleCamera] resetCamera firing');
+            this.resetCamera();
+            console.log('[toggleCamera] after resetCamera pos:', this.camera.position.toArray().map(v=>v.toFixed(2)), 'target:', this.controls.target.toArray().map(v=>v.toFixed(2)));
+        }, 50);
+        return this.camera instanceof THREE.PerspectiveCamera ? 'Perspective' : 'Orthographic';
     }
 
     getCameraType() {
@@ -1270,6 +1434,7 @@ export class GCodeViewer {
     setHomingDirMask(mask) {
         this.homingDirMask = mask;
         this.renderMachineBox();
+        this._updateFeedEnvelopeColors();
         this.updateGridBounds();
         this.renderCoolGrid();
     }

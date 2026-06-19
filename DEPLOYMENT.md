@@ -1,6 +1,6 @@
-# Ooznest CNC - Deployment & Architecture Guide
+# Ooznest Motion Control Core - Deployment & Architecture Guide
 
-This document explains the four distinct methods for deploying the Ooznest CNC interface to various platforms, detailing how to build, deploy, and physically connect your device to the grblHAL controller.
+This document explains the four distinct methods for deploying the Ooznest Motion Control Core interface to various platforms, detailing how to build, deploy, and physically connect your device to the grblHAL controller.
 
 ---
 

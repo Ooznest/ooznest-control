@@ -84,9 +84,9 @@ class UIManager {
 
         // UI Control Selectors
         const jogControls = '.jog-btn, .jog-btn-extra, .dro-zero-btn, .dro-sub-btn, #stepSize, #jogContinuous';
-        const runControls = '#run-job-btn, #run-sd-btn';
-        const macroControls = '#macros-view button, #probe-panel-content button, #probe-panel-content input, #sd-tools button';
-        const txtConsole = '#console-input-area input, #console-input';
+        const runControls = '#run-job-btn';
+        const macroControls = '#macros-view button, #probe-panel-content, #probe-panel-content button, #probe-panel-content input, #sd-tools button';
+        const txtConsole = '#console-input-area, #cmdInput, #btnSend';
         const unlockBtn = 'button[title="Unlock ($X)"]';
 
         if (state === 'offline') {
@@ -95,9 +95,14 @@ class UIManager {
             setDisabled(macroControls, true);
             setDisabled(txtConsole, true);
             setDisabled(unlockBtn, true);
+            const btn = document.querySelector(unlockBtn);
+            if (btn) {
+                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
+                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
+            }
             
             // Completely disable specific outer blocks remaining from previous UI styles
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => {
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => {
                 el.classList.add('opacity-50', 'pointer-events-none');
             });
         } 
@@ -107,15 +112,22 @@ class UIManager {
             setDisabled(macroControls, true);
             setDisabled(txtConsole, false); // Keep console alive to query settings out of alarm
             
+            // Keep HOME button enabled during alarm (needed for homing-lock recovery)
+            setDisabled('#home-all-btn', false);
+            document.querySelectorAll('.dro-home-btn').forEach(el => {
+                el.disabled = false;
+                el.classList.remove('opacity-50', 'pointer-events-none');
+            });
+            
             setDisabled(unlockBtn, false);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
-                btn.classList.remove('btn-secondary');
-                btn.classList.add('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
+                btn.classList.remove('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
+                btn.classList.add('!bg-red-600', '!text-white', 'shockwave', '!border-red-500');
             }
             
             // Clean up general offline locks if they were present
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else if (state === 'run' || state === 'jog' || state === 'homing') {
             setDisabled(jogControls, true);
@@ -126,10 +138,10 @@ class UIManager {
             setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
-                btn.classList.remove('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
-                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
+                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
             }
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else if (state === 'hold' || state === 'door' || state === 'sleep') {
             setDisabled(jogControls, true);
@@ -140,10 +152,10 @@ class UIManager {
             setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
-                btn.classList.remove('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
-                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
+                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
             }
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else { 
             // Idle Space
@@ -151,14 +163,14 @@ class UIManager {
             setDisabled(macroControls, false);
             setDisabled(txtConsole, false);
             
-            setDisabled(unlockBtn, false);
+            setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
-                btn.classList.remove('!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500');
-                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
+                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
             }
             
-            document.querySelectorAll('#machine-controls, #settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
 
             this.updateRunButtonsState();
         }
@@ -168,33 +180,21 @@ class UIManager {
      * Update Run button states based on SD file context
      */
     updateRunButtonsState() {
-        const runJobBtn = document.getElementById('run-job-btn');
-        const runSdBtn = document.getElementById('run-sd-btn');
+        const runJobContainer = document.getElementById('run-job-btn');
+        const runJobBtn = runJobContainer?.querySelector('button');
 
         if (window.currentSDFile) {
-            if (runJobBtn) {
-                runJobBtn.classList.add('opacity-50', 'pointer-events-none');
-                runJobBtn.disabled = true;
-                runJobBtn.title = "Streaming disabled for SD files. Use 'Run from SD'";
+            if (runJobContainer) {
+                runJobContainer.classList.add('opacity-50', 'pointer-events-none');
+                runJobContainer.title = "Streaming disabled for SD files. Use SD option in dropdown";
             }
-            if (runSdBtn) {
-                runSdBtn.classList.remove('opacity-50', 'pointer-events-none');
-                runSdBtn.disabled = false;
-                runSdBtn.classList.replace('!bg-secondary', '!bg-primary');
-                runSdBtn.classList.replace('!text-white', '!text-secondary-dark');
-                runSdBtn.innerHTML = `<i class="bi bi-sd-card-fill text-lg"></i> Run from SD`;
-            }
+            if (runJobBtn) runJobBtn.disabled = true;
         } else {
-            if (window.ws && window.ws.isConnected && runJobBtn) {
-                runJobBtn.classList.remove('opacity-50', 'pointer-events-none');
-                runJobBtn.disabled = false;
-                runJobBtn.title = "Run Job (Stream)";
+            if (window.ws && window.ws.isConnected && runJobContainer) {
+                runJobContainer.classList.remove('opacity-50', 'pointer-events-none');
+                runJobContainer.title = "Run Job (Stream)";
             }
-            if (runSdBtn) {
-                runSdBtn.classList.replace('!bg-primary', '!bg-secondary');
-                runSdBtn.classList.replace('!text-secondary-dark', '!text-white');
-                runSdBtn.innerHTML = `<i class="bi bi-sd-card-fill text-lg"></i> Run from SD`;
-            }
+            if (runJobBtn) runJobBtn.disabled = false;
         }
     }
 }

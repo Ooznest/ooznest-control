@@ -33,7 +33,7 @@ export class SDCardHandler {
         };
 
         this.refreshPending = false;
-        
+
         // Listen for machine becoming idle so we can safely refresh if it was deferred (e.g., due to an Alarm on connect)
         window.addEventListener('machine-idle', () => {
             if (this.refreshPending) {
@@ -132,8 +132,8 @@ export class SDCardHandler {
         if (headers.length >= 3) {
             // Header 0 (Filename): Auto width
             headers[0].className = 'px-4 py-3 font-bold text-left w-auto';
-            // Header 1 (Size): Hidden on mobile
-            headers[1].className = 'hidden md:table-cell px-6 py-4 font-bold w-32';
+            // Header 1 (Size)
+            headers[1].className = 'px-6 py-4 font-bold w-32';
             // Header 2 (Actions): Fixed width on mobile (120px) to ensure buttons fit
             headers[2].className = 'px-2 py-3 font-bold text-right w-[120px] md:w-auto';
         }
@@ -261,7 +261,7 @@ export class SDCardHandler {
         } else {
             const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
             if (reporter) {
-                reporter.showConfirm('Download File', `Load ${fileName} for preview and simulation?`, processPreview);
+                reporter.showConfirm('Download File', `Load ${fileName} for 3D preview?`, processPreview);
             } else if (confirm(`Download ${fileName}?`)) {
                 processPreview();
             }
@@ -348,6 +348,7 @@ export class SDCardHandler {
             bytes = parseInt(sizePart.split(':')[1]);
             sizeDisplay = this._formatBytes(bytes);
             this.files[name] = bytes; // Store for progress calculation
+            this.term.writeln(`  \x1b[2m${name}  (${sizeDisplay})\x1b[0m`);
         }
 
         // Update Badge
@@ -362,15 +363,15 @@ export class SDCardHandler {
         if (macroMatch) {
             const pNum = macroMatch[1];
             runActionBtn = `
-            <button class="btn-ghost p-1.5 md:px-3 md:w-36 flex items-center justify-center md:justify-end gap-2 text-grey-dark hover:text-black" onclick="window.sdHandler.runMacro('${pNum}')" title="Run macro">
+            <button class="btn-ghost p-1.5 md:px-3 flex items-center justify-center md:justify-end gap-2 text-grey-dark hover:text-black" onclick="window.sdHandler.runMacro('${pNum}')" title="Run macro">
                 <i class="bi bi-gear-wide-connected text-lg md:text-base"></i>
-                <span class="hidden md:inline">Run macro</span>
+                <span class="hidden sm:inline">Run macro</span>
             </button>`;
         } else {
             runActionBtn = `
-            <button class="btn-ghost p-1.5 md:px-3 md:w-36 flex items-center justify-center md:justify-end gap-2 text-green-600 hover:text-green-800" onclick="window.sdHandler.runFile('${name}')" title="Run">
+            <button class="btn-ghost p-1.5 md:px-3 flex items-center justify-center md:justify-end gap-2 text-green-600 hover:text-green-800" onclick="window.sdHandler.runFile('${name}')" title="Run">
                 <i class="bi bi-play-fill text-xl md:text-base"></i>
-                <span class="hidden md:inline">Run File</span>
+                <span class="hidden sm:inline flex-shrink-0">Run File</span>
             </button>`;
         }
 
@@ -391,22 +392,21 @@ export class SDCardHandler {
                         <div class="bg-primary h-1 rounded-full transition-all duration-200" style="width: 0%"></div>
                       </div>
 
-                      <span class="text-[10px] text-grey opacity-80 font-mono mt-0.5 md:hidden ml-6">${sizeDisplay}</span>
                   </div>
               </td>
 
-              <td class="hidden md:table-cell px-6 py-3 text-grey font-mono text-xs whitespace-nowrap w-32">${sizeDisplay}</td>
+              <td class="px-6 py-3 text-grey font-mono text-xs whitespace-nowrap w-32">${sizeDisplay}</td>
 
               <td class="px-1 md:px-6 py-2 md:py-3 text-right align-middle w-[120px] md:w-auto">
                   <div class="flex justify-end gap-0 md:gap-2">
-                      <button class="btn-ghost p-1.5 md:w-24 flex items-center justify-center md:justify-end gap-2 text-grey-dark hover:text-red-600" onclick="window.sdHandler.delete('${name}')" title="Delete">
+                      <button class="btn-ghost p-1.5 flex items-center justify-center md:justify-end gap-2 text-grey-dark hover:text-red-600" onclick="window.sdHandler.delete('${name}')" title="Delete">
                         <i class="bi bi-trash text-lg md:text-base"></i>
-                        <span class="hidden md:inline">Delete</span>
+                        <span class="hidden sm:inline">Delete</span>
                       </button>
 
-                      <button class="btn-ghost p-1.5 md:w-24 flex items-center justify-center md:justify-end gap-2 text-grey-dark" onclick="window.sdHandler.preview('${name}')" title="Preview">
+                      <button class="btn-ghost p-1.5 flex items-center justify-center md:justify-end gap-2 text-grey-dark" onclick="window.sdHandler.preview('${name}')" title="Preview">
                         <i class="bi bi-eye text-lg md:text-base"></i>
-                        <span class="hidden md:inline">Preview</span>
+                        <span class="hidden sm:inline">Preview</span>
                       </button>
 
                       ${runActionBtn}
@@ -477,7 +477,7 @@ export class SDCardHandler {
               </div>
           </td>
 
-          <td class="hidden md:table-cell px-6 py-3 text-grey text-xs w-32">-</td>
+          <td class="px-6 py-3 text-grey text-xs w-32">-</td>
 
           <td class="px-2 md:px-6 py-3 text-right align-middle w-[120px] md:w-auto">
               <div class="flex justify-end">
@@ -545,6 +545,28 @@ export class SDCardHandler {
 
     // --- YMODEM Upload ---
 
+    format() {
+        const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+
+        const processFormat = () => {
+            this.term.writeln('\x1b[33mFormatting SD card...\x1b[0m');
+            this.ws.sendCommand('$FF=yes');
+            setTimeout(() => this.refresh(), 2000);
+        };
+
+        if (reporter) {
+            reporter.showConfirm('Format SD Card',
+                'This will permanently delete ALL files on the SD card. This cannot be undone.',
+                processFormat,
+                null,
+                'Format',
+                'Cancel'
+            );
+        } else if (confirm('Format the SD card? This will delete ALL files and cannot be undone.')) {
+            processFormat();
+        }
+    }
+
     async startUpload(file, onComplete = null) {
         if (!file) return;
         const name = file.name.replace(/\s/g, '_');
@@ -552,6 +574,8 @@ export class SDCardHandler {
 
         const processUpload = async () => {
             const fp = this.path === '/' ? name : `${this.path}/${name}`;
+            this.ymodem.fileName = name;
+            this.ymodem.onComplete = onComplete;
 
             if (this.ws.httpBaseUrl) {
                 const formData = new FormData();
@@ -602,6 +626,7 @@ export class SDCardHandler {
                 state: 1,
                 fileBytes: bytes,
                 fileName: name,
+                filePath: fp,
                 fileSize: bytes.length,
                 packetNum: 0,
                 offset: 0,
@@ -614,11 +639,12 @@ export class SDCardHandler {
             document.getElementById('upload-progress-bar').style.width = '0%';
             document.getElementById('upload-pct').textContent = '0%';
 
-            this.term.writeln('\x1b[35m[YMODEM] Initializing Transfer...\x1b[0m');
+            this.term.writeln('\x1b[35m[YMODEM] Sending file header...\x1b[0m');
 
-            // Use sendCommand for the initial setup to ensure flow control is respected
-            await this.ws.sendCommand(`$FY=${fp}`);
-            console.log("Sent $FY command, waiting for controller to signal start (C character)...");
+            // Sender-initiated: GrblHAL auto-detects SOH/STX via trap_initial_soh.
+            // Send packet 0 (SOH + filename + filesize) directly — no $FY command needed.
+            await this._sendPacket0();
+            console.log("[YMODEM] Sent packet 0, waiting for controller ACK...");
         };
 
         if (reporter) {
@@ -636,27 +662,25 @@ export class SDCardHandler {
 
     async _processYmodemByte(b) {
         const y = this.ymodem;
+        // State 1: After sending packet 0, wait for ACK (then 'C') or just 'C'
         if (y.state === 1) {
-            console.log(`[YMODEM] State 1: Waiting for C_CHAR. Received byte: ${b}`);
-            if (b === C_CHAR) {
-                console.log("[YMODEM] Received C_CHAR, sending packet 0");
-                await this._sendPacket0();
+            if (b === ACK) {
+                y.state = 10;
+            } else if (b === C_CHAR) {
                 y.state = 2;
-                console.log("[YMODEM] State transition: 1 -> 2");
-            }
-        } else if (y.state === 2) {
-            console.log(`[YMODEM] State 2: Waiting for second C_CHAR. Received byte: ${b}`);
-            if (b === C_CHAR) {
-                console.log("[YMODEM] Received second C_CHAR, sending first data packet");
                 y.packetNum = 1;
                 await this._sendNextDataPacket();
-                y.state = 3;
-                console.log("[YMODEM] State transition: 2 -> 3");
             }
-        } else if (y.state === 3) {
-            console.log(`[YMODEM] State 3: Data transfer. Received byte: ${b}`);
+        // State 10: Got ACK after packet 0, now wait for 'C'
+        } else if (y.state === 10) {
+            if (b === C_CHAR) {
+                y.state = 2;
+                y.packetNum = 1;
+                await this._sendNextDataPacket();
+            }
+        // State 2: Data transfer — wait for ACK/NAK after each data packet
+        } else if (y.state === 2) {
             if (b === ACK) {
-                console.log(`[YMODEM] Received ACK for packet ${y.packetNum}. Offset: ${y.offset}`);
                 y.offset += 1024;
                 const pct = Math.min(100, Math.round((y.offset / y.fileSize) * 100));
                 document.getElementById('upload-progress-bar').style.width = `${pct}%`;
@@ -667,25 +691,28 @@ export class SDCardHandler {
                     await this._sendNextDataPacket();
                 } else {
                     await this.ws.writeRaw(new Uint8Array([EOT]));
-                    y.state = 4;
+                    y.state = 3;
                 }
             } else if (b === NAK) {
                 await this._sendNextDataPacket();
             } else if (b === CAN) {
                 this._abortYmodem('Cancelled');
             }
-        } else if (y.state === 4) {
+        // State 3: After EOT, wait for ACK (then 'C')
+        } else if (y.state === 3) {
             if (b === NAK) {
                 await this.ws.writeRaw(new Uint8Array([EOT]));
             } else if (b === ACK) {
-                y.state = 5;
+                y.state = 30;
             }
-        } else if (y.state === 5) {
+        // State 30: Got ACK after EOT, now wait for 'C' (prompt for next file)
+        } else if (y.state === 30) {
             if (b === C_CHAR) {
                 await this._sendNullPacket();
-                y.state = 6;
+                y.state = 4;
             }
-        } else if (y.state === 6) {
+        // State 4: After null packet, wait for ACK → done
+        } else if (y.state === 4) {
             if (b === ACK) {
                 this._finishYmodem();
             }
@@ -693,7 +720,7 @@ export class SDCardHandler {
     }
 
     async _sendPacket0() {
-        const nameEnc = new TextEncoder().encode(this.ymodem.fileName);
+        const nameEnc = new TextEncoder().encode(this.ymodem.filePath);
         const sizeEnc = new TextEncoder().encode(this.ymodem.fileSize.toString());
         const packet = new Uint8Array(128);
         packet.fill(0);

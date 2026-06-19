@@ -1,5 +1,5 @@
 const fs = require('fs');
-const file = 'c:\\Users\\User\\Documents\\GITHUB\\PETERVANDERWALT\\javascript-webserial-grblhal\\.github\\workflows\\cross-platform-builds.yml';
+const file = 'c:\\Users\\User\\Documents\\GITHUB\\OOZNEST-ENGINEER\\ooznest-control\\.github\\workflows\\cross-platform-builds.yml';
 let lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
 
 let currentJob = null;
@@ -22,7 +22,7 @@ for (let i = 0; i < lines.length; i++) {
     // Fix iOS zip naming
     if (currentJob === 'build-ios:' && line.trim() === 'zip -r Ooznest-iOS.ipa Payload/') {
         newLines.push('          VERSION=$(node -p "require(\'../../package.json\').version")');
-        newLines.push('          zip -r javascript-webserial-grblhal-${VERSION}-iOS.ipa Payload/');
+        newLines.push('          zip -r ooznest-control-${VERSION}-iOS.ipa Payload/');
         continue;
     }
     if (currentJob === 'build-ios:' && line.trim() === 'path: cordova/Ooznest-iOS.ipa') {
@@ -34,7 +34,7 @@ for (let i = 0; i < lines.length; i++) {
     if (currentJob === 'build-android:' && line.trim() === 'cordova build android') {
         newLines.push(line);
         newLines.push('          VERSION=$(node -p "require(\'./package.json\').version")');
-        newLines.push('          mv cordova/platforms/android/app/build/outputs/apk/debug/app-debug.apk cordova/platforms/android/app/build/outputs/apk/debug/javascript-webserial-grblhal-${VERSION}-Android.apk || true');
+        newLines.push('          mv cordova/platforms/android/app/build/outputs/apk/debug/app-debug.apk cordova/platforms/android/app/build/outputs/apk/debug/ooznest-control-${VERSION}-Android.apk || true');
         continue;
     }
 

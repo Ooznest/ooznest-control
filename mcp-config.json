@@ -1,0 +1,20 @@
+﻿{
+    "_comment": "Ooznest Control MCP Server Configuration",
+
+    "backendUrl": "ws://localhost:8081",
+
+    "transports": ["stdio", "http"],
+
+    "httpPort": 3001,
+
+    "mqttBroker": null,
+
+    "mqttTopicPrefix": "ooznest/",
+
+    "apiKey": null,
+
+    "actuatorMap": {
+        "1": { "axis": "z", "feed": 500, "limits": [0, 200], "name": "TV Lift" },
+        "2": { "axis": "a", "feed": 500, "limits": [0, 500], "name": "Bed Lift" }
+    }
+}

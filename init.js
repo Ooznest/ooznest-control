@@ -29,16 +29,21 @@ export function initializeApp(ws, store, viewer, reporter, term) {
     // Setup tab shown handler
     window.addEventListener('tab-shown', (e) => {
         if (e.detail.id === 'viewer-view') {
+            if (window.viewer) window.viewer.startAnim();
             requestAnimationFrame(() => {
                 if (window.viewer) {
                     window.viewer.resize();
                     if (window.viewer.controls.target.length() === 0) window.viewer.resetCamera();
                 }
             });
+        } else {
+            if (window.viewer) window.viewer.stopAnim();
         }
         if (e.detail.id === 'settings-view' && ws.isConnected) {
             if (Object.keys(window.grblSettings.settings).length === 0) {
                 window.grblSettings.fetchSettings();
+            } else {
+                window.grblSettings.render();
             }
         }
         if (e.detail.id === 'tools-view') {
@@ -46,31 +51,44 @@ export function initializeApp(ws, store, viewer, reporter, term) {
         }
     });
 
+    // Handle file opened via Electron file association (from main process)
+    if (window.electron && window.electron.onOpenFile) {
+        window.electron.onOpenFile((data) => {
+            if (data.error) {
+                if (window.reporter) window.reporter.showAlert('Error Opening File', data.error);
+                return;
+            }
+            window.loadGCode(data.content, data.filename);
+        });
+    }
+
     // Setup gcode-loaded event (from surfacing wizard, etc.)
     window.addEventListener('gcode-loaded', (e) => {
-        window.currentGCodeContent = e.detail;
+        const content = typeof e.detail === 'string' ? e.detail : e.detail.content;
+        const filename = typeof e.detail === 'string' ? 'Generated_Job.gcode' : (e.detail.filename || 'Generated_Job.gcode');
+        window.currentGCodeContent = content;
         window.currentSDFile = null;
         window.uiManager.updateRunButtonsState();
 
         if (window.editor) {
-            window.editor.setValue(e.detail);
+            window.editor.setValue(content);
             const lineCount = window.editor.getValue().split('\\n').length;
             document.getElementById('editor-line-count').innerText = lineCount;
-            document.getElementById('editor-file-name').innerText = "Surfacing_Job.gcode";
+            document.getElementById('editor-file-name').innerText = filename;
         }
     });
 
     // Unit syncing
     const unitToggle = document.getElementById('unitToggle');
     unitToggle.addEventListener('change', () => {
-        const units = unitToggle.checked ? 'mm' : 'inch';
+        const units = unitToggle.checked ? 'inch' : 'mm';
         if (window.viewer) window.viewer.setUnits(units);
     });
 
     window.addEventListener('viewer-units-changed', (e) => {
         const isMm = e.detail.units === 'mm';
-        if (unitToggle.checked !== isMm) {
-            unitToggle.checked = isMm;
+        if (unitToggle.checked === isMm) {
+            unitToggle.checked = !isMm;
             window.store.set('general.units', e.detail.units);
         }
     });

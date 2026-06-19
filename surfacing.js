@@ -46,7 +46,7 @@ export class SurfacingHandler {
         this.renderSettings();
 
         // Bind Inputs to Store on change
-        const inputs = document.querySelectorAll('#surfacing-view input, #surfacing-view select');
+        const inputs = document.querySelectorAll('#tab-tool-surfacing input, #tab-tool-surfacing select');
         inputs.forEach(input => {
             input.addEventListener('change', () => this.saveSettings());
         });
@@ -90,7 +90,7 @@ export class SurfacingHandler {
         });
 
         // Update Labels (Search and Replace text in labels)
-        const labels = document.querySelectorAll('#surfacing-view label');
+        const labels = document.querySelectorAll('#tab-tool-surfacing label');
         labels.forEach(lbl => {
             if (toMM) {
                 lbl.innerHTML = lbl.innerHTML.replace('(in)', '(mm)');
@@ -131,6 +131,7 @@ export class SurfacingHandler {
 
         this.store.set('surfacing.useCoolant', val('surf-coolant'));
         this.store.set('surfacing.useFraming', val('surf-framing'));
+        this.store.set('surfacing.useMaxArea', val('surf-dim-toggle'));
 
         // Save the current units context
         this.store.set('surfacing.units', this.units);
@@ -143,7 +144,7 @@ export class SurfacingHandler {
         // Since we synced in constructor, s.units should match this.units.
         // But we need to ensure labels match what's in the input boxes.
         const isMM = (this.units === 'mm');
-        const labels = document.querySelectorAll('#surfacing-view label');
+        const labels = document.querySelectorAll('#tab-tool-surfacing label');
         labels.forEach(lbl => {
             // Reset to base state then apply
             const hasMM = lbl.innerHTML.includes('(mm)');
@@ -178,9 +179,25 @@ export class SurfacingHandler {
 
         setVal('surf-coolant', s.useCoolant);
         setVal('surf-framing', s.useFraming);
+        setVal('surf-dim-toggle', s.useMaxArea);
+        
+        const dimFields = document.getElementById('surf-dim-fields');
+        if (dimFields) {
+            if (s.useMaxArea) {
+                dimFields.style.maxHeight = '0px';
+                dimFields.style.opacity = '0';
+            } else {
+                dimFields.style.maxHeight = '500px';
+                dimFields.style.opacity = '1';
+            }
+        }
     }
 
     generateGCode() {
+        if (document.getElementById('surf-dim-toggle') && document.getElementById('surf-dim-toggle').checked) {
+            this.autoSpoilboard(); // Silent calculation before gen
+        }
+        
         this.saveSettings();
         const s = this.store.data.surfacing;
 
@@ -207,10 +224,10 @@ export class SurfacingHandler {
             }
             return null;
         }
-        if (s.width <= 0 || s.height <= 0) {
+        if (s.width <= s.toolDiameter || s.height <= s.toolDiameter) {
             const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(null) : null);
             if (reporter) {
-                reporter.showAlert('Invalid Dimensions', 'Dimensions must be greater than 0');
+                reporter.showAlert('Invalid Dimensions', 'Dimensions must be greater than Tool Diameter');
             }
             return null;
         }
@@ -247,19 +264,20 @@ export class SurfacingHandler {
         const fmt = (n) => n.toFixed(this.units === 'mm' ? 3 : 4);
 
         cmd(`G0 Z${fmt(s.clearance)}`);
-        cmd('G0 X0 Y0');
 
         // --- Calculations ---
         const stepoverVal = s.toolDiameter * (s.stepover / 100.0);
 
         const isXDir = (s.direction === 'X');
 
-        // STRICT BOUNDS (No Overshoot)
-        const minMain = 0;
-        const maxMain = (isXDir ? s.width : s.height);
+        const radius = s.toolDiameter / 2.0;
 
-        const minCross = 0;
-        const maxCross = (isXDir ? s.height : s.width);
+        // STRICT BOUNDS (No Overshoot toolpath generation)
+        const minMain = radius;
+        const maxMain = (isXDir ? s.width : s.height) - radius;
+
+        const minCross = radius;
+        const maxCross = (isXDir ? s.height : s.width) - radius;
 
         // --- Z Passes Loop ---
         let currentZ = 0;
@@ -331,13 +349,19 @@ export class SurfacingHandler {
             if (s.useFraming) {
                 comment("Framing Pass");
                 cmd(`G0 Z${fmt(s.clearance)}`);
-                cmd(`G0 X0 Y0`);
+                
+                const frameMinX = isXDir ? minMain : minCross;
+                const frameMinY = isXDir ? minCross : minMain;
+                const frameMaxX = isXDir ? maxMain : maxCross;
+                const frameMaxY = isXDir ? maxCross : maxMain;
+
+                cmd(`G0 X${fmt(frameMinX)} Y${fmt(frameMinY)}`);
                 cmd(`G1 Z${fmt(currentZ)} F${s.feed / 2}`);
 
-                cmd(`G1 X${fmt(s.width)} Y0 F${s.feed}`);
-                cmd(`G1 X${fmt(s.width)} Y${fmt(s.height)}`);
-                cmd(`G1 X0 Y${fmt(s.height)}`);
-                cmd(`G1 X0 Y0`);
+                cmd(`G1 X${fmt(frameMaxX)} Y${fmt(frameMinY)} F${s.feed}`);
+                cmd(`G1 X${fmt(frameMaxX)} Y${fmt(frameMaxY)}`);
+                cmd(`G1 X${fmt(frameMinX)} Y${fmt(frameMaxY)}`);
+                cmd(`G1 X${fmt(frameMinX)} Y${fmt(frameMinY)}`);
             }
 
             cmd(`G0 Z${fmt(s.clearance)}`);
@@ -349,7 +373,11 @@ export class SurfacingHandler {
         // --- Footer ---
         cmd('M5');
         if (s.useCoolant) cmd('M9');
-        cmd('G0 X0 Y0');
+        
+        const endX = isXDir ? minMain : minCross;
+        const endY = isXDir ? minCross : minMain;
+        cmd(`G0 X${fmt(endX)} Y${fmt(endY)}`);
+        
         cmd('M30');
 
         return gcode.join('\n');
@@ -374,5 +402,64 @@ export class SurfacingHandler {
             const file = new File([gcode], "surface.nc", { type: "text/plain" });
             this.sdHandler.startUpload(file);
         }
+    }
+
+    toggleDimMode() {
+        const toggle = document.getElementById('surf-dim-toggle');
+        const dimFields = document.getElementById('surf-dim-fields');
+        
+        if (toggle.checked) {
+            dimFields.style.maxHeight = '0px';
+            dimFields.style.opacity = '0';
+            this.autoSpoilboard();
+        } else {
+            dimFields.style.maxHeight = '500px';
+            dimFields.style.opacity = '1';
+            this.saveSettings();
+        }
+    }
+
+    autoSpoilboard() {
+        if (!window.viewer || !window.viewer.machineLimits) {
+            return;
+        }
+
+        this.saveSettings();
+        const s = this.store.data.surfacing;
+
+        let limits = window.viewer.machineLimits;
+        let isPositiveSpace = window.viewer.isPositiveSpace || false;
+        let homingDirMask = window.viewer.homingDirMask || 0;
+        
+        // Find xMin, yMin from how the viewer calculates machine box
+        let xMin, xMax, yMin, yMax, zMax;
+
+        if (isPositiveSpace) {
+            if (homingDirMask & 1) { xMin = 0; xMax = limits.x; }
+            else { xMin = -limits.x; xMax = 0; }
+
+            if (homingDirMask & 2) { yMin = 0; yMax = limits.y; }
+            else { yMin = -limits.y; yMax = 0; }
+            
+            if (homingDirMask & 4) { zMax = limits.z; }
+            else { zMax = 0; }
+        } else {
+            // Standard approach
+            xMin = -limits.x; xMax = 0;
+            yMin = -limits.y; yMax = 0;
+            zMax = 0;
+        }
+
+        let width = (xMax - xMin);
+        let height = (yMax - yMin);
+
+        if (width <= s.toolDiameter || height <= s.toolDiameter) {
+            return;
+        }
+
+        // Set dimensions explicitly
+        document.getElementById('surf-x').value = Number(width.toFixed(2));
+        document.getElementById('surf-y').value = Number(height.toFixed(2));
+        this.saveSettings();
     }
 }

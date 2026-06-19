@@ -42,6 +42,9 @@ class LineProcessor {
             return;
         }
 
+        // $I+ version/board info (captured by config wizard)
+        if (window.configWizard && window.configWizard.handleLine(line)) return;
+
         // SD card handler
         if (window.sdHandler.processLine(line)) return;
 
@@ -72,7 +75,12 @@ class LineProcessor {
         const report = window.reporter.handleLine(line);
         if (report) {
             if (typeof report === 'string') window.term.writeln(report);
-            return;
+            // Don't return for active alarm/error reports — job controller needs to see them
+            if (line.toLowerCase().startsWith('alarm:') || line.toLowerCase().startsWith('error:')) {
+                // Fall through to job controller
+            } else {
+                return;
+            }
         }
 
         // Status reports

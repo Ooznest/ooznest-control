@@ -224,8 +224,9 @@ export class GrblSettings {
     }
 
     setActiveGroup(id) {
+        console.log('[setActiveGroup]', id, 'pending:', Object.keys(this.pendingChanges).length);
         this.activeGroupId = id;
-        this.searchQuery = ""; // Clear search when picking a group
+        this.searchQuery = "";
         requestAnimationFrame(() => this.render());
     }
 
@@ -327,7 +328,7 @@ export class GrblSettings {
         let html = `<div class="flex flex-row h-[calc(100vh-220px)] border border-grey-light rounded-lg bg-white overflow-hidden shadow-sm">`;
 
         // --- Left Sidebar ---
-        html += `<div id="settings-sidebar" class="w-[110px] md:w-1/4 bg-grey-bg border-r border-grey-light flex flex-col shrink-0">`;
+        html += `<div id="settings-sidebar" class="w-[140px] md:w-1/3 bg-grey-bg border-r border-grey-light flex flex-col shrink-0">`;
         html += `
             <div class="p-2 border-b border-grey-light bg-white sticky top-0 z-20">
                 <div class="relative">
@@ -351,11 +352,15 @@ export class GrblSettings {
                     ? 'bg-white text-primary-dark border-l-4 border-primary shadow-sm'
                     : 'text-grey-dark hover:bg-grey-light border-l-4 border-transparent';
                 const isSubGroup = g.parentId && g.parentId !== '0';
-                const indent = isSubGroup ? 'ml-2 md:ml-4' : '';
+                const indent = isSubGroup ? 'ml-4 md:ml-6 pl-4 md:pl-6' : '';
+                const prefix = isSubGroup ? '- ' : '';
+                const pendingCount = this._getPendingCount(g.id);
                 html += `
                     <button onclick="window.grblSettings.setActiveGroup('${g.id}')"
-                        class="w-full text-left px-2 py-2 text-[10px] md:text-xs font-bold rounded-r transition-all truncate ${activeClass} ${indent}" title="${g.label}">
-                        ${g.label}
+                        class="w-full text-left px-2 py-2 text-[10px] md:text-xs font-bold rounded-r transition-all relative ${activeClass}"
+                        title="${g.label}">
+                        <span class="truncate pr-6 ${indent}">${prefix}${g.label}</span>
+                        ${pendingCount > 0 ? `<span class="absolute right-1 top-1/2 -translate-y-3/4 bg-primary text-white text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">${pendingCount}</span>` : ''}
                     </button>
                 `;
             });
@@ -365,10 +370,12 @@ export class GrblSettings {
         if (hasUngrouped) {
             const isActive = ('ungrouped' == this.activeGroupId) && (this.searchQuery === "");
             const activeClass = isActive ? 'bg-white text-primary-dark border-l-4 border-primary shadow-sm' : 'text-grey-dark hover:bg-grey-light border-l-4 border-transparent';
+            const pendingCount = this._getPendingCount('ungrouped');
             html += `
                 <button onclick="window.grblSettings.setActiveGroup('ungrouped')"
-                    class="w-full text-left px-2 py-2 text-[10px] md:text-xs font-bold rounded-r transition-all ${activeClass} border-t border-grey-light mt-1">
-                    Other
+                    class="w-full text-left px-2 py-2 text-[10px] md:text-xs font-bold rounded-r transition-all relative ${activeClass} border-t border-grey-light mt-1">
+                    <span class="truncate pr-6">Other</span>
+                    ${pendingCount > 0 ? `<span class="absolute right-1 top-1/2 -translate-y-1/2 bg-primary text-white text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">${pendingCount}</span>` : ''}
                 </button>
             `;
         }
@@ -401,11 +408,13 @@ export class GrblSettings {
                 let metaText = `${stats.settings} Settings`;
                 if (stats.subgroups > 0) metaText = `${stats.subgroups} Subgroups • ` + metaText;
 
+                const subPending = this._getPendingCount(g.id);
                 html += `
                     <button onclick="window.grblSettings.setActiveGroup('${g.id}')"
                         class="flex flex-col items-start p-3 bg-white border border-grey-light rounded-lg hover:border-primary hover:shadow-md hover:-translate-y-0.5 transition-all text-left group">
                         <span class="font-bold text-secondary-dark group-hover:text-primary-dark text-xs flex items-center gap-2">
                             <i class="bi bi-folder-fill text-primary"></i> ${g.label}
+                            ${subPending > 0 ? `<span class="bg-primary text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full">${subPending}</span>` : ''}
                         </span>
                         <span class="text-[9px] font-bold text-grey uppercase mt-1">${metaText}</span>
                     </button>
@@ -434,12 +443,20 @@ export class GrblSettings {
                 const displayValue = isModified ? this.pendingChanges[s.id] : s.val;
                 const rowClass = isModified ? 'bg-yellow-50' : 'hover:bg-grey-bg';
 
+                // Enrichment for Event Plugin settings ($760-$769)
+                let enrichmentHtml = '';
+                const idNum = parseInt(s.id);
+                if (idNum >= 760 && idNum <= 769) {
+                    enrichmentHtml = this._getEventPluginEnrichment(s);
+                }
+
                 html += `
                     <tr class="${rowClass} transition-colors group">
                         <td class="px-0.5 md:px-4 py-2 md:py-3 font-mono text-secondary-dark font-bold text-[10px] md:text-xs align-top pt-3 md:pt-4 text-center md:text-left break-all">$${s.id}</td>
                         <td class="px-1 md:px-4 py-2 md:py-3 align-top">
                             <div class="text-grey-dark font-bold text-[11px] md:text-xs leading-tight">${s.label}</div>
                             ${s.desc ? `<div class="hidden md:block text-[10px] text-grey mt-1 leading-tight max-w-md">${s.desc.replace(/\\n/g, '<br>')}</div>` : ''}
+                            ${enrichmentHtml}
                         </td>
                         <td class="px-0.5 md:px-4 py-2 md:py-3 align-top">
                             ${this._renderInput(s, displayValue)}
@@ -471,6 +488,51 @@ export class GrblSettings {
             const sbContainer = newSidebar.querySelector('.overflow-y-auto');
             if (sbContainer) sbContainer.scrollTop = prevSidebarScroll;
         }
+
+        this._updateSaveButton();
+    }
+
+    _updateSaveButton() {
+        const btn = document.querySelector('#settings-view .btn-primary');
+        if (!btn) return;
+        const count = Object.keys(this.pendingChanges).length;
+        btn.innerHTML = count > 0
+            ? `<i class="bi bi-save"></i> Save (${count})`
+            : `<i class="bi bi-save"></i> Save`;
+        btn.disabled = count === 0;
+    }
+
+    _getEventPluginEnrichment(s) {
+        // Cross-reference Event Plugin settings ($760-$769) with pin data from troubleshooting
+        const trouble = window.troubleshooting;
+        if (!trouble || !trouble.pinDefsByPin || Object.keys(trouble.pinDefsByPin).length === 0) return '';
+
+        const val = s.val;
+        if (!val || val === '-1' || val === '') return '';
+
+        // Check if the value is a pin number
+        const pinDef = trouble.pinDefsByPin[val];
+        if (!pinDef) return '';
+
+        // Check if this function is already assigned to another pin
+        const assignedElsewhere = Object.entries(trouble.pinDefsByPin)
+            .filter(([pin, def]) => pin !== val && def.label === pinDef.label)
+            .map(([pin]) => `P${pin}`);
+
+        let html = `<div class="flex flex-wrap gap-1 mt-1.5 text-[10px]">`;
+        html += `<span class="font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">${pinDef.hw}</span>`;
+        html += `<span class="font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">P${val}</span>`;
+        if (pinDef.func) {
+            html += `<span class="font-bold px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">${pinDef.func}</span>`;
+        }
+        if (pinDef.label !== s.label) {
+            html += `<span class="text-grey italic">as ${pinDef.label}</span>`;
+        }
+        if (assignedElsewhere.length) {
+            html += `<span class="font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Also assigned: ${assignedElsewhere.join(', ')}</span>`;
+        }
+        html += '</div>';
+        return html;
     }
 
     _renderInput(s, val) {
@@ -481,7 +543,7 @@ export class GrblSettings {
                 <div class="flex justify-end md:justify-start">
                 <label class="inline-flex items-center cursor-pointer">
                     <input type="checkbox" class="sr-only peer"
-                        onchange="window.grblSettings.update('${s.id}', this.checked ? 1 : 0)"
+                        oninput="window.grblSettings.update('${s.id}', this.checked ? 1 : 0)"
                         ${checked ? 'checked' : ''}>
                     <div class="relative w-7 md:w-9 h-4 md:h-5 bg-grey-light peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 md:after:h-4 after:w-3 md:after:w-4 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
@@ -492,7 +554,7 @@ export class GrblSettings {
         // 1: Bitmask (Checkbox List)
         if (s.type === 1 || s.type === 'mask') {
             const intVal = parseInt(val) || 0;
-            if (!s.format) return `<input type="number" class="input-field h-7 md:h-8 px-1 text-xs" value="${val}" onchange="window.grblSettings.update('${s.id}', this.value)">`;
+            if (!s.format) return `<input type="number" class="input-field h-7 md:h-8 px-1 text-xs" value="${val}" oninput="window.grblSettings.update('${s.id}', this.value)">`;
 
             const options = s.format.split(',');
             // Stacked vertical on mobile
@@ -516,10 +578,69 @@ export class GrblSettings {
             return html;
         }
 
+        // 2: Exclusive bitfield (like bitmask but bit 0 gates all others)
+        if (s.type === 2) {
+            const intVal = parseInt(val) || 0;
+            if (!s.format) return `<input type="number" class="input-field h-7 md:h-8 px-1 text-xs" value="${val}" oninput="window.grblSettings.update('${s.id}', this.value)">`;
+
+            const options = s.format.split(',');
+            const bit0Set = (intVal & 1) !== 0;
+            let html = `<div class="flex flex-col gap-1 border border-grey-light rounded p-1 bg-grey-bg">`;
+
+            options.forEach((label, index) => {
+                if (!label || label.toUpperCase() === 'N/A') return;
+                const bitMask = 1 << index;
+                const isSet = (intVal & bitMask) !== 0;
+                const disabled = index > 0 && !bit0Set ? 'disabled' : '';
+
+                html += `
+                    <label class="inline-flex items-center gap-1 cursor-pointer hover:bg-white rounded px-0.5 transition-colors ${disabled ? 'opacity-40' : ''}">
+                        <input type="checkbox" class="rounded text-primary focus:ring-primary h-3 w-3 border-grey-light"
+                            onchange="window.grblSettings.updateMask('${s.id}', ${bitMask}, this.checked)"
+                            ${isSet ? 'checked' : ''} ${disabled}>
+                        <span class="text-[9px] md:text-[11px] text-grey-dark leading-none pt-0.5 truncate">${label}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+            return html;
+        }
+
+        // 4: Axis mask (Checkbox List for X, Y, Z, A, B, C)
+        if (s.type === 4) {
+            const intVal = parseInt(val) || 0;
+            let labels;
+            if (s.format) {
+                if (/^\d+$/.test(s.format)) {
+                    labels = ['X', 'Y', 'Z', 'A', 'B', 'C'].slice(0, parseInt(s.format));
+                } else {
+                    labels = s.format.split(',').map(l => l.trim());
+                }
+            } else {
+                labels = ['X', 'Y', 'Z', 'A', 'B', 'C'];
+            }
+            let html = `<div class="flex flex-col gap-1 border border-grey-light rounded p-1 bg-grey-bg">`;
+            labels.forEach((label, index) => {
+                if (!label || label.toUpperCase() === 'N/A') return;
+                const bitMask = 1 << index;
+                const isSet = (intVal & bitMask) !== 0;
+                html += `
+                    <label class="inline-flex items-center gap-1 cursor-pointer hover:bg-white rounded px-0.5 transition-colors">
+                        <input type="checkbox" class="rounded text-primary focus:ring-primary h-3 w-3 border-grey-light"
+                            onchange="window.grblSettings.updateMask('${s.id}', ${bitMask}, this.checked)"
+                            ${isSet ? 'checked' : ''}>
+                        <span class="text-[9px] md:text-[11px] text-grey-dark leading-none pt-0.5 truncate font-mono font-bold">${label}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+            return html;
+        }
+
         // 3: Enum (Select)
         if (s.type === 3 && s.format) {
             const options = s.format.split(',');
-            let html = `<select class="input-field h-7 md:h-8 text-[10px] md:text-xs w-full bg-white border-grey-light shadow-sm px-0.5" onchange="window.grblSettings.update('${s.id}', this.value)">`;
+            let html = `<select class="input-field h-7 md:h-8 text-[10px] md:text-xs w-full bg-white border-grey-light shadow-sm px-0.5" oninput="window.grblSettings.update('${s.id}', this.value)">`;
 
             options.forEach((label, index) => {
                 html += `<option value="${index}" ${val == index ? 'selected' : ''}>${label}</option>`;
@@ -536,7 +657,7 @@ export class GrblSettings {
                     step="any"
                     ${s.min ? `min="${s.min}"` : ''}
                     ${s.max ? `max="${s.max}"` : ''}
-                    onchange="window.grblSettings.update('${s.id}', this.value)">
+                    oninput="window.grblSettings.update('${s.id}', this.value)">
             `;
         }
 
@@ -544,8 +665,43 @@ export class GrblSettings {
         return `
             <input type="text" class="input-field h-7 md:h-8 text-[11px] md:text-xs font-mono w-full px-1"
                 value="${val}"
-                onchange="window.grblSettings.update('${s.id}', this.value)">
+                oninput="window.grblSettings.update('${s.id}', this.value)">
         `;
+    }
+
+    _getPendingCount(groupId) {
+        let count = 0;
+        for (const sid of Object.keys(this.pendingChanges)) {
+            if (this.settings[sid] && String(this.settings[sid].groupId) === String(groupId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    _updateSidebarBadges() {
+        const sidebar = document.getElementById('settings-sidebar');
+        if (!sidebar) return;
+        const buttons = sidebar.querySelectorAll('button');
+        buttons.forEach(btn => {
+            const match = btn.getAttribute('onclick')?.match(/setActiveGroup\('(\w+)'\)/);
+            if (!match) return;
+            const groupId = match[1];
+            const count = this._getPendingCount(groupId);
+            const existingBadge = btn.querySelector('.absolute.right-1');
+            if (count > 0) {
+                if (existingBadge) {
+                    existingBadge.textContent = String(count);
+                } else {
+                    const badge = document.createElement('span');
+                    badge.className = 'absolute right-1 top-1/2 -translate-y-1/2 bg-primary text-white text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded-full leading-none';
+                    badge.textContent = String(count);
+                    btn.appendChild(badge);
+                }
+            } else {
+                if (existingBadge) existingBadge.remove();
+            }
+        });
     }
 
     update(id, newVal) {
@@ -554,7 +710,8 @@ export class GrblSettings {
         } else {
             delete this.pendingChanges[id];
         }
-        this.render();
+        this._updateSaveButton();
+        this._updateSidebarBadges();
     }
 
     updateMask(id, bitMask, isChecked) {

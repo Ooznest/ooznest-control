@@ -148,7 +148,7 @@ export class AlarmsAndErrors {
 
         const overlay = document.createElement('div');
         overlay.id = 'cnc-modal-overlay';
-        overlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] hidden flex items-center justify-center';
+        overlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[1200] hidden flex items-center justify-center';
 
         overlay.innerHTML = `
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 p-0 border border-grey-light">
@@ -283,6 +283,16 @@ export class AlarmsAndErrors {
                     this.domFooter.appendChild(btnCancel);
                     this.domFooter.appendChild(btnClear);
                 }
+            } else if (code === '46') {
+                // Error 46: Homing required — machine won't unlock until homed
+                this.domBody.textContent = 'Homing is required before the machine can be used.\n\nRun the homing cycle to clear this state.';
+                const btnCancel = this.createBtn('Cancel', 'bg-white border border-grey-light text-grey-dark hover:text-black', () => this.closeModal());
+                const btnHome = this.createBtn('Home Now', 'bg-primary text-black hover:bg-primary-dark border border-primary-dark', () => {
+                    if (window.dro && window.dro.home) window.dro.home();
+                    this.closeModal();
+                });
+                this.domFooter.appendChild(btnCancel);
+                this.domFooter.appendChild(btnHome);
             } else {
                 // Regular error - just OK button
                 const btnOk = this.createBtn('OK', 'bg-secondary text-white hover:bg-secondary-dark', () => this.closeModal());
@@ -364,7 +374,7 @@ export class AlarmsAndErrors {
         this.domTitle.textContent = title;
         this.domTitle.className = "font-bold text-lg text-secondary-dark";
 
-        this.domBody.textContent = message;
+        this.domBody.innerHTML = message;
         this.domFooter.innerHTML = '';
 
         const btnOk = this.createBtn('OK', 'bg-secondary text-white hover:bg-secondary-dark', async () => {

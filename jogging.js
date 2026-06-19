@@ -36,11 +36,11 @@ class JoggingController {
         const btns = document.querySelectorAll('[data-jog]');
         const toggle = document.getElementById('jogContinuous');
         toggle.checked = window.store.get('jog.continuous');
-        document.getElementById('stepSize').disabled = toggle.checked;
+        document.getElementById('distContainer').classList.toggle('hidden', toggle.checked);
 
         toggle.addEventListener('change', () => {
             window.store.set('jog.continuous', toggle.checked);
-            document.getElementById('stepSize').disabled = toggle.checked;
+            document.getElementById('distContainer').classList.toggle('hidden', toggle.checked);
         });
 
         document.getElementById('stepSize').addEventListener('change', (e) => {
@@ -63,12 +63,55 @@ class JoggingController {
                 const f = this.getFeedForDirection(dir, speedMode);
                 const isMm = window.store.get('general.units') === 'mm';
                 const unit = isMm ? 'G21' : 'G20';
-                const dist = isMm ? '1000' : '50';
+                
+                let dist = isMm ? 10000 : 400;
+
+                const viewer = window.viewer;
+                const dro = window.dro;
+
+                if (viewer && viewer.machineLimits && dro && dro.mpos && dro.mpos.length >= 3) {
+                    const limits = viewer.machineLimits;
+                    const mpos = dro.mpos; // Always in mm natively from GRBL
+                    const isPos = viewer.isPositiveSpace || false;
+                    const dirMask = viewer.homingDirMask || 0;
+
+                    let travels = [];
+
+                    if (dir.includes('X')) {
+                        const boundPos = (isPos && (dirMask & 1)) ? (limits.x || 10000) : 0;
+                        const boundNeg = (isPos && (dirMask & 1)) ? 0 : -(limits.x || 10000);
+                        travels.push(dir.includes('X+') ? (boundPos - mpos[0]) : (mpos[0] - boundNeg));
+                    }
+                    if (dir.includes('Y')) {
+                        const boundPos = (isPos && (dirMask & 2)) ? (limits.y || 10000) : 0;
+                        const boundNeg = (isPos && (dirMask & 2)) ? 0 : -(limits.y || 10000);
+                        travels.push(dir.includes('Y+') ? (boundPos - mpos[1]) : (mpos[1] - boundNeg));
+                    }
+                    if (dir.includes('Z')) {
+                        const boundPos = (isPos && (dirMask & 4)) ? (limits.z || 10000) : 0;
+                        const boundNeg = (isPos && (dirMask & 4)) ? 0 : -(limits.z || 10000);
+                        travels.push(dir.includes('Z+') ? (boundPos - mpos[2]) : (mpos[2] - boundNeg));
+                    }
+                    if (dir.includes('A') && limits.a && mpos.length >= 4) {
+                        const boundPos = (isPos && (dirMask & 8)) ? (limits.a || 10000) : 0;
+                        const boundNeg = (isPos && (dirMask & 8)) ? 0 : -(limits.a || 10000);
+                        travels.push(dir.includes('A+') ? (boundPos - mpos[3]) : (mpos[3] - boundNeg));
+                    }
+
+                    if (travels.length > 0) {
+                        let maxTravelMm = Math.min(...travels) - 0.5; // Back off by 0.5mm buffer
+                        if (maxTravelMm <= 0) return; // Already at or past soft limit
+                        dist = isMm ? maxTravelMm : (maxTravelMm / 25.4);
+                    }
+                }
+
                 let move = "";
-                if (dir.includes('X')) move += `X${dir.includes('X-') ? '-' : ''}${dist} `;
-                if (dir.includes('Y')) move += `Y${dir.includes('Y-') ? '-' : ''}${dist} `;
-                if (dir.includes('Z')) move += `Z${dir.includes('Z-') ? '-' : ''}${dist} `;
-                if (dir.includes('A')) move += `A${dir.includes('A-') ? '-' : ''}${dist} `;
+                const distStr = dist.toFixed(isMm ? 2 : 4);
+
+                if (dir.includes('X')) move += `X${dir.includes('X-') ? '-' : ''}${distStr} `;
+                if (dir.includes('Y')) move += `Y${dir.includes('Y-') ? '-' : ''}${distStr} `;
+                if (dir.includes('Z')) move += `Z${dir.includes('Z-') ? '-' : ''}${distStr} `;
+                if (dir.includes('A')) move += `A${dir.includes('A-') ? '-' : ''}${distStr} `;
 
                 // Visual feedback
                 btn.classList.add('bg-black/20', 'shadow-inner');
@@ -104,16 +147,25 @@ class JoggingController {
                 window.ws.sendCommand(`$J=G91 ${unit} ${move}F${f}`);
             };
 
-            btn.addEventListener('mousedown', startJog);
-            btn.addEventListener('mouseup', stopJog);
-            btn.addEventListener('mouseleave', stopJog);
-            btn.addEventListener('touchstart', (e) => {
-                if (toggle.checked) e.preventDefault();
-                startJog(e);
-            }, { passive: false });
-            btn.addEventListener('touchend', (e) => {
-                if (toggle.checked) e.preventDefault();
-                stopJog(e);
+            btn.addEventListener('pointerdown', (e) => {
+                if (toggle.checked) {
+                    if (e.cancelable) e.preventDefault();
+                    btn.setPointerCapture(e.pointerId);
+                    startJog(e);
+                }
+            });
+            btn.addEventListener('pointerup', (e) => {
+                if (toggle.checked) {
+                    if (e.cancelable) e.preventDefault();
+                    if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+                    stopJog(e);
+                }
+            });
+            btn.addEventListener('pointercancel', (e) => {
+                if (toggle.checked) {
+                    if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+                    stopJog(e);
+                }
             });
             btn.addEventListener('click', clickJog);
         });

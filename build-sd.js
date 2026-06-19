@@ -49,17 +49,6 @@ async function build() {
 
         console.log('2. Handling External Assets (Lazy Loading)...');
 
-        // Copy STLs to dist instead of inlining them
-        const stlFiles = ['endmill.stl', 'collet-nut.stl', 'collet-shaft.stl'];
-        for (const file of stlFiles) {
-            const src = path.join(rootDir, file);
-            const dest = path.join(distDir, file);
-            if (fs.existsSync(src)) {
-                console.log(`   - Copying ${file} to dist/ (External)`);
-                fs.copyFileSync(src, dest);
-            }
-        }
-
         console.log('3. Internalizing Fonts & Critical CSS...');
 
         function inlineFontsInCss(cssFilePath, seen = new Set()) {
@@ -172,7 +161,6 @@ async function build() {
 
         console.log(`\nDONE!`);
         console.log(`- Main UI Package:  ${(gzip.length / 1024).toFixed(2)} KB (Fast Load)`);
-        console.log(`- Lazy Assets:      ${stlFiles.join(', ')} (Stored Externally)`);
         console.log(`Deployment: Copy ALL files from 'dist/' to your SD Card root.`);
     } catch (err) {
         console.error('Build Error:', err);

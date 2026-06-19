@@ -1,6 +1,6 @@
 {
-  "name": "javascript-webserial-grblhal",
-  "version": "1.0.10",
+  "name": "ooznest-control",
+  "version": "1.0.98",
   "description": "grblHAL Web interface with WebSerial and Electron support",
   "main": "main.js",
   "scripts": {
@@ -14,15 +14,19 @@
     "local-android-build": "node run-android.js",
     "run-android": "node run-android.js",
     "build-ios": "npm run cordova-sync && cd cordova && npx cordova build ios",
-    "build-sd": "node build-sd.js"
+    "build-sd": "node build-sd.js",
+    "build:tailwind": "tailwindcss --input src/tailwind-input.css --output vendor/tailwind.css --minify"
   },
   "dependencies": {
+    "clipper-lib": "^6.4.2",
+    "electron-updater": "6.8.3",
     "express": "^4.18.2",
     "serialport": "^12.0.0",
     "sharp": "^0.34.5",
     "ws": "^8.13.0"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.0",
     "cordova-res": "^0.15.4",
     "electron": "^25.3.0",
     "electron-builder": "^24.4.0",
@@ -30,10 +34,47 @@
     "html-minifier-terser": "^7.2.0",
     "inline-source": "^8.0.3",
     "mkdirp": "^3.0.1",
-    "ncp": "^2.0.0"
+    "ncp": "^2.0.0",
+    "tailwindcss": "^4.3.0"
   },
   "build": {
-    "appId": "com.pvd.grblhal",
+    "appId": "com.ooznest.control",
+    "productName": "Ooznest Control",
+    "publish": {
+      "provider": "github",
+      "owner": "Ooznest",
+      "repo": "ooznest-control"
+    },
+    "fileAssociations": [
+      {
+        "ext": "gcode",
+        "name": "G-Code File",
+        "description": "G-Code File",
+        "mimeType": "text/plain",
+        "role": "Editor"
+      },
+      {
+        "ext": "nc",
+        "name": "G-Code File",
+        "description": "G-Code File",
+        "mimeType": "text/plain",
+        "role": "Editor"
+      },
+      {
+        "ext": "gc",
+        "name": "G-Code File",
+        "description": "G-Code File",
+        "mimeType": "text/plain",
+        "role": "Editor"
+      },
+      {
+        "ext": "ngc",
+        "name": "G-Code File",
+        "description": "G-Code File",
+        "mimeType": "text/plain",
+        "role": "Editor"
+      }
+    ],
     "files": [
       "**/*",
       "!node_modules/*",
@@ -42,7 +83,8 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "cordova/resources/icon.png"
+      "icon": "cordova/resources/icon.png",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
       "target": "dmg",

@@ -30,20 +30,14 @@ export class WebSerial {
         this.rawModeCallback = null;
         this._writeLock = Promise.resolve();
 
-        // --- Grbl v1.1 Character-Counting Flow Control ---
-        this._rxBufSize = 128;    // grblHAL serial RX buffer size
-        this._rxBufUsed = 0;      // Bytes currently occupying grblHAL's RX buffer
-        this._pendingLens = [];   // FIFO of command byte-lengths awaiting ok/error
-        this._sendQueue = [];     // Commands waiting for buffer space: {len, bytes, resolve, reject}
+        // --- Grbl v1.1 Character-Counting Flow Control (OpenBuilds pattern) ---
+        this.rxBufSize = 128;
+        this.sentBuffer = [];
 
-        // Internal flow-control listener - registered first so it fires before UI listeners
+        // Pop sentBuffer on ok/error (must be registered before UI listeners)
         this._onLine = (line) => {
             if (line === 'ok' || line.startsWith('error:')) {
-                const len = this._pendingLens.shift();
-                if (len !== undefined) {
-                    this._rxBufUsed -= len;
-                    this._flushSendQueue();
-                }
+                this.sentBuffer.shift();
             }
         };
         this.on('line', this._onLine);
@@ -51,26 +45,24 @@ export class WebSerial {
 
     // ---- Flow Control Helpers ----
 
-    _resetFlowControl() {
-        this._rxBufUsed = 0;
-        this._pendingLens = [];
-        const queue = this._sendQueue;
-        this._sendQueue = [];
-        queue.forEach(item => item.reject(new Error('Connection reset')));
+    bufferSpace() {
+        let total = 0;
+        for (let i = 0; i < this.sentBuffer.length; i++) {
+            total += this.sentBuffer[i].length;
+        }
+        return (this.rxBufSize - 1) - total;
     }
 
-    _flushSendQueue() {
-        while (this._sendQueue.length > 0) {
-            const item = this._sendQueue[0];
-            if (this._rxBufUsed + item.len < this._rxBufSize) {
-                this._sendQueue.shift();
-                this._rxBufUsed += item.len;
-                this._pendingLens.push(item.len);
-                item.resolve();
-            } else {
-                break; // Next item still doesn't fit
-            }
-        }
+    canSend(line) {
+        return line.length < this.bufferSpace();
+    }
+
+    isDrained() {
+        return this.sentBuffer.length === 0;
+    }
+
+    _resetFlowControl() {
+        this.sentBuffer = [];
     }
 
     // ---- Public API ----
@@ -135,23 +127,11 @@ export class WebSerial {
 
     /**
      * Send a G-code or system command with character-counting flow control.
-     * Waits if grblHAL's RX buffer would overflow.
+     * Uses synchronous buffer tracking (OpenBuilds sentBuffer pattern).
      */
     async sendCommand(line) {
         const bytes = this.encoder.encode(line + '\n');
-        const len = bytes.length;
-
-        // Block until there is room in grblHAL's RX buffer
-        if (this._rxBufUsed + len >= this._rxBufSize) {
-            await new Promise((resolve, reject) => {
-                this._sendQueue.push({ len, resolve, reject });
-            });
-            // Space was claimed by _flushSendQueue when it resolved us
-        } else {
-            // Claim space immediately
-            this._rxBufUsed += len;
-            this._pendingLens.push(len);
-        }
+        this.sentBuffer.push(line);
 
         if (!this.isConnected) return;
 

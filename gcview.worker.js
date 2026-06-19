@@ -54,74 +54,134 @@ function GCodeParser(handlers) {
   this.lastFeedrate = null;
   this.currentTool = null;
 
-  this.parseLine = function (text, info) {
-    if (!text) return;
-    // Strip comments and trim
-    const commentIdx = text.indexOf(';');
-    if (commentIdx !== -1) text = text.substring(0, commentIdx);
-    const parenIdx = text.indexOf('(');
-    if (parenIdx !== -1) {
-      text = text.replace(/\(.*?\)/g, "");
-    }
-    text = text.trim();
-    if (!text) return;
-
-    // Normalization: Remove whitespace between command letters and their numbers (e.g. "X 10" -> "X10")
-    text = text.replace(/([gmtxyzabcijkfst])\s+/ig, "$1");
-
-    // Fast tokenization
-    const tokens = text.match(/([A-Z][\-+]?[0-9.]+)/gi);
-    if (!tokens) return;
-
-    let cmd = tokens[0].toUpperCase();
-    if (!cmd.match(/^(G|M|T|S)/i)) {
-      cmd = this.lastArgs.cmd;
-    } else {
-      tokens.shift();
-    }
-
-    if (!cmd) return;
-
-    const args = { cmd, indx: info };
-    for (let i = 0; i < tokens.length; i++) {
-      const t = tokens[i];
-      const key = t[0].toLowerCase();
-      const val = parseFloat(t.substring(1));
-      args[key] = val;
-      if (key === 'f') this.lastFeedrate = val;
-      if (key === 't') this.currentTool = val;
-    }
-    args.feedrate = this.lastFeedrate;
-    args.tool = this.currentTool;
-
-    const handler = this.handlers[cmd] || this.handlers['default'];
-    if (handler) {
-      this.lastArgs = args;
-      handler(args, info, this);
-    }
-  };
-
   this.parse = function (gcode) {
     let lineCount = 0;
-    for (let i = 0; i < gcode.length; i++) if (gcode[i] === '\n') lineCount++;
+    const len = gcode.length;
+    for (let i = 0; i < len; i++) if (gcode[i] === '\n') lineCount++;
     lineCount++;
 
-    const lineMap = new Uint32Array(lineCount * 2);
-    this.lineMap = lineMap;
+    this.lineMap = new Uint32Array((lineCount + 1) * 2);
 
-    let start = 0;
-    let end = gcode.indexOf('\n');
     let lineIdx = 0;
+    let i = 0;
+    
+    let inParenComment = false;
+    let inSemicolonComment = false;
+    
+    const args = {};
+    
+    while(i < len) {
+       for (const k in args) args[k] = undefined;
+       args.indx = lineIdx;
+       args.cmd = null;
+       args.feedrate = this.lastFeedrate;
+       args.tool = this.currentTool;
+       
+       let hasTokens = false;
+       let cmdSet = false;
+       let currentKey = null;
+       let valStart = -1;
 
-    while (end !== -1) {
-      this.parseLine(gcode.substring(start, end), lineIdx++);
-      start = end + 1;
-      end = gcode.indexOf('\n', start);
-      if (lineIdx % 50000 === 0) {
-        self.postMessage({ progress: Math.floor((lineIdx / lineCount) * 100) });
-      }
+       while(i < len) {
+           const c = gcode[i];
+           
+           if (c === '\n' || c === '\r') {
+               if (c === '\n') {
+                 i++;
+                 break; 
+               }
+               i++;
+               continue;
+           }
+
+           if (inParenComment) {
+               if (c === ')') inParenComment = false;
+               i++;
+               continue;
+           }
+           if (inSemicolonComment) {
+               i++;
+               continue;
+           }
+           if (c === '(') {
+               inParenComment = true;
+               i++;
+               continue;
+           }
+           if (c === ';') {
+               inSemicolonComment = true;
+               i++;
+               continue;
+           }
+           
+           if (c === ' ' || c === '\t') {
+               i++;
+               continue;
+           }
+           
+           const code = c.charCodeAt(0) & ~32; // uppercase
+           const isLetter = code >= 65 && code <= 90;
+
+           if (isLetter) {
+               if (currentKey) {
+                   const valStr = gcode.substring(valStart, i);
+                   const val = parseFloat(valStr);
+                   if (!isNaN(val)) {
+                       if (!cmdSet && (currentKey === 'G' || currentKey === 'M' || currentKey === 'T' || currentKey === 'S')) {
+                            args.cmd = currentKey + val;
+                            cmdSet = true;
+                       } else {
+                            args[currentKey.toLowerCase()] = val;
+                       }
+                       if (currentKey === 'F') this.lastFeedrate = val;
+                       if (currentKey === 'T') this.currentTool = val;
+                   }
+               }
+               currentKey = String.fromCharCode(code);
+               valStart = i + 1;
+               hasTokens = true;
+           }
+           i++;
+       }
+       
+       if (currentKey) {
+           const valStr = gcode.substring(valStart, i);
+           const val = parseFloat(valStr);
+           if (!isNaN(val)) {
+               if (!cmdSet && (currentKey === 'G' || currentKey === 'M' || currentKey === 'T' || currentKey === 'S')) {
+                    args.cmd = currentKey + val;
+                    cmdSet = true;
+               } else {
+                    args[currentKey.toLowerCase()] = val;
+               }
+               if (currentKey === 'F') this.lastFeedrate = val;
+               if (currentKey === 'T') this.currentTool = val;
+           }
+       }
+       
+       inSemicolonComment = false;
+       
+       if (hasTokens) {
+           if (!args.cmd) {
+               args.cmd = this.lastArgs.cmd;
+           }
+           args.feedrate = this.lastFeedrate;
+           args.tool = this.currentTool;
+           
+           if (args.cmd) {
+               const handler = this.handlers[args.cmd] || this.handlers['default'];
+               if (handler) {
+                 this.lastArgs.cmd = args.cmd;
+                 handler(args, lineIdx, this);
+               }
+           }
+       }
+       
+       if (lineIdx % 50000 === 0) {
+           self.postMessage({ progress: Math.floor((lineIdx / lineCount) * 100) });
+       }
+       lineIdx++;
     }
-    this.parseLine(gcode.substring(start), lineIdx);
   };
 }
 

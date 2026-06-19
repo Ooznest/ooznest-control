@@ -16,17 +16,178 @@ export class ProbeHandler {
         // Selected Corners
         this.selections = {
             outsideCorner: 'FL',
-            insideCorner: 'FL'
+            insideCorner: 'FL',
+            singleAxis: 'X',
+            singleDir: 1,
+            mode: 'corner'
         };
+
+        // Probe safety test
+        this.probeSafe = false;
+        this._probeTestInterval = null;
+        this._testStage = null; // null, 'trigger', 'release'
 
         this.initUI();
     }
 
     initUI() {
         this.renderSettings();
+        this._resetProbeTest();
+
+        // Reset safety when probe tab is shown
+        window.addEventListener('tab-shown', (e) => {
+            if (e.detail && e.detail.id === 'probe-view') {
+                this._resetProbeTest();
+            }
+        });
+    }
+
+    // ==========================================
+    // PROBE SAFETY TEST
+    // ==========================================
+    _isProbeTriggered() {
+        const dro = window.dro;
+        return dro && dro.inputPins && dro.inputPins.includes('P');
+    }
+
+    runProbeTest() {
+        if (this._testStage) return; // already testing
+
+        const s = this.store.data.probe;
+        const isPlate = s.mode === 'plate';
+        const bar = document.getElementById('probe-safety-bar');
+        const msg = document.getElementById('probe-safety-msg');
+        const status = document.getElementById('probe-safety-status');
+        const btn = document.getElementById('probe-test-btn');
+        const note = document.getElementById('probe-safety-note');
+
+        bar.className = 'mb-3 rounded-lg border text-xs font-bold bg-yellow-50 border-yellow-200 text-yellow-700';
+        if (note) note.classList.add('hidden');
+        msg.textContent = isPlate
+            ? 'Lift the probe plate and gently touch the endmill to the plate, then release'
+            : 'Gently press the probe tip by hand, then release';
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Waiting...';
+        status.className = 'hidden';
+        const skipBtn = document.getElementById('probe-skip-btn');
+        if (skipBtn) skipBtn.classList.add('hidden');
+
+        this._testStage = 'trigger';
+        this._probeTestInterval = setInterval(() => {
+            if (this._testStage === 'trigger') {
+                if (this._isProbeTriggered()) {
+                    this._testStage = 'release';
+                    msg.textContent = 'Probe detected! Now release the probe...';
+                    // Reset trigger timeout
+                }
+            } else if (this._testStage === 'release') {
+                if (!this._isProbeTriggered()) {
+                    // Test passed!
+                    clearInterval(this._probeTestInterval);
+                    this._probeTestInterval = null;
+                    this._testStage = null;
+                    this.probeSafe = true;
+                    this._updateProbeButtons();
+
+                    const note = document.getElementById('probe-safety-note');
+                    const actions = document.getElementById('probe-safety-actions');
+                    bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
+                    msg.textContent = 'Probe test passed — all operations enabled';
+                    if (actions) actions.classList.add('hidden');
+                    status.className = 'text-green-600';
+                    status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
+                    if (note) note.classList.add('hidden');
+                    this.term.writeln('\x1b[32m> Probe safety test PASSED.\x1b[0m');
+                }
+            }
+        }, 100);
+
+        // Timeout after 15 seconds
+        setTimeout(() => {
+            if (this._testStage) {
+                clearInterval(this._probeTestInterval);
+                this._probeTestInterval = null;
+                this._testStage = null;
+                this.probeSafe = false;
+
+                bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
+                msg.textContent = 'Test timed out — try again';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-hand-index-thumb"></i> Test Probe';
+                const skipBtn = document.getElementById('probe-skip-btn');
+                if (skipBtn) skipBtn.classList.remove('hidden');
+                this.term.writeln('\x1b[31m> Probe safety test TIMED OUT.\x1b[0m');
+            }
+        }, 15000);
+    }
+
+    skipSafetyCheck() {
+        this.probeSafe = true;
+        this._updateProbeButtons();
+
+        const bar = document.getElementById('probe-safety-bar');
+        const msg = document.getElementById('probe-safety-msg');
+        const actions = document.getElementById('probe-safety-actions');
+        const status = document.getElementById('probe-safety-status');
+        const note = document.getElementById('probe-safety-note');
+
+        bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
+        msg.textContent = 'Probe test passed — all operations enabled';
+        if (actions) actions.classList.add('hidden');
+        status.className = 'text-green-600';
+        status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
+        if (note) note.classList.add('hidden');
+        this.term.writeln('\x1b[32m> Probe safety check skipped (confirmed by user).\x1b[0m');
+    }
+
+    _resetProbeTest() {
+        if (this._probeTestInterval) {
+            clearInterval(this._probeTestInterval);
+            this._probeTestInterval = null;
+        }
+        this._testStage = null;
+        this.probeSafe = false;
+        this._updateProbeButtons();
+
+        const bar = document.getElementById('probe-safety-bar');
+        const msg = document.getElementById('probe-safety-msg');
+        const status = document.getElementById('probe-safety-status');
+        const note = document.getElementById('probe-safety-note');
+        const actions = document.getElementById('probe-safety-actions');
+
+        if (bar) bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
+        if (msg) msg.textContent = 'Probe not tested — test required before any operation';
+        if (note) note.classList.add('hidden');
+        if (actions) actions.classList.remove('hidden');
+        if (status) status.className = 'hidden';
+    }
+
+    _updateProbeButtons() {
+        const disabled = !this.probeSafe;
+        document.querySelectorAll('.probe-btn').forEach(el => {
+            if (disabled) {
+                el.classList.add('probe-btn-disabled');
+            } else {
+                el.classList.remove('probe-btn-disabled');
+            }
+        });
+    }
+
+    _requireProbeSafe() {
+        if (!this.probeSafe) {
+            const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+            if (reporter) {
+                reporter.showAlert('Safety Check', 'Please test the probe first using the "Test Probe" button.');
+            }
+            return false;
+        }
+        return true;
     }
 
     switchProbeTab(targetId, btn) {
+        const s = this.store.data.probe;
+        if ((targetId === 'tab-centers' || targetId === 'tab-rotation' || targetId === 'tab-inside-corners') && (!s.mode || s.mode === 'plate')) return;
+
         // Hide all contents
         document.querySelectorAll('.probe-tab-content').forEach(el => el.classList.add('hidden'));
         // Show target
@@ -43,8 +204,20 @@ export class ProbeHandler {
         btn.classList.replace('border-transparent', 'border-primary');
     }
 
+    toggleProbeMode() {
+        // Save current mode's values, then switch
+        this.saveSettings();
+        const s = this.store.data.probe;
+        const newMode = s.mode === 'plate' ? 'probe' : 'plate';
+        this.store.set('probe.mode', newMode);
+        document.body.setAttribute('data-probe-mode', newMode);
+        this.renderSettings();
+        this._resetProbeTest();
+    }
+
     saveSettings() {
         const s = this.store.data.probe;
+        const mode = s.mode || 'plate';
 
         // Basic Config
         if (document.getElementById('prb-tool')) this.store.set('probe.toolDiameter', parseFloat(document.getElementById('prb-tool').value) || 0);
@@ -54,27 +227,35 @@ export class ProbeHandler {
         if (document.getElementById('prb-feed')) this.store.set('probe.feed', parseFloat(document.getElementById('prb-feed').value) || 100);
         if (document.getElementById('prb-feed-latch')) this.store.set('probe.feedLatch', parseFloat(document.getElementById('prb-feed-latch').value) || 25);
         if (document.getElementById('prb-dist')) this.store.set('probe.travel', parseFloat(document.getElementById('prb-dist').value) || 25);
-        if (document.getElementById('prb-retract')) this.store.set('probe.retract', parseFloat(document.getElementById('prb-retract').value) || 2);
-        if (document.getElementById('prb-edge-dist')) this.store.set('probe.clearance', parseFloat(document.getElementById('prb-edge-dist').value) || 5);
+        if (document.getElementById('prb-retract')) this.store.set('probe.retract', parseFloat(document.getElementById('prb-retract').value) || 10);
         if (document.getElementById('prb-z-depth')) this.store.set('probe.zDepth', parseFloat(document.getElementById('prb-z-depth').value) || 5);
 
-        if (document.getElementById('prb-boss-x')) this.store.set('probe.bossW', parseFloat(document.getElementById('prb-boss-x').value) || 0);
-        if (document.getElementById('prb-boss-y')) this.store.set('probe.bossH', parseFloat(document.getElementById('prb-boss-y').value) || 0);
+        // Mode-specific clearance
+        if (document.getElementById('prb-edge-dist')) this.store.set('probe.plateClearance', parseFloat(document.getElementById('prb-edge-dist').value) || 5);
+        if (document.getElementById('prb-probe-dist')) this.store.set('probe.probeClearance', parseFloat(document.getElementById('prb-probe-dist').value) || 5);
+
+        if (document.getElementById('prb-feature-x')) this.store.set('probe.featureW', parseFloat(document.getElementById('prb-feature-x').value) || 0);
+        if (document.getElementById('prb-feature-y')) this.store.set('probe.featureH', parseFloat(document.getElementById('prb-feature-y').value) || 0);
 
         // TLO Settings
         if (document.getElementById('tlo-x')) this.store.set('probe.tloX', parseFloat(document.getElementById('tlo-x').value) || 0);
         if (document.getElementById('tlo-y')) this.store.set('probe.tloY', parseFloat(document.getElementById('tlo-y').value) || 0);
         if (document.getElementById('tlo-z')) this.store.set('probe.tloZ', parseFloat(document.getElementById('tlo-z').value) || -5);
 
-        // Main Toggle
-        const toggle = document.getElementById('prb-use-plate-main');
-        if (toggle) this.store.set('probe.usePlate', toggle.checked);
-
         this.renderSettings();
     }
 
     renderSettings() {
         const s = this.store.data.probe;
+        const mode = s.mode || 'plate';
+        const isPlate = mode === 'plate';
+
+        // Set body attribute for CSS visibility
+        document.body.setAttribute('data-probe-mode', mode);
+
+        // Set toggle state (inverted: unchecked = Plate (left), checked = Probe (right))
+        const toggle = document.getElementById('prb-mode-toggle');
+        if (toggle) toggle.checked = !isPlate;
 
         // Helper to safely set values
         const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
@@ -86,33 +267,89 @@ export class ProbeHandler {
         setVal('prb-feed-latch', s.feedLatch);
         setVal('prb-dist', s.travel);
         setVal('prb-retract', s.retract);
-        setVal('prb-edge-dist', s.clearance);
+        setVal('prb-edge-dist', s.plateClearance);
+        setVal('prb-probe-dist', s.probeClearance);
         setVal('prb-z-depth', s.zDepth);
-        setVal('prb-boss-x', s.bossW);
-        setVal('prb-boss-y', s.bossH);
+        setVal('prb-feature-x', s.featureW);
+        setVal('prb-feature-y', s.featureH);
 
         setVal('tlo-x', s.tloX || 0);
         setVal('tlo-y', s.tloY || 0);
         setVal('tlo-z', s.tloZ || -5);
 
-        const toggle = document.getElementById('prb-use-plate-main');
-        if (toggle) toggle.checked = s.usePlate;
-
         const statusEls = document.querySelectorAll('.plate-status-text');
         statusEls.forEach(el => {
-            if (s.usePlate) {
+            if (isPlate) {
                 el.textContent = "Mode: Plate";
                 el.classList.replace('text-grey', 'text-primary-dark');
             } else {
-                el.textContent = "Mode: Stock";
+                el.textContent = "Mode: Probe";
                 el.classList.replace('text-primary-dark', 'text-grey');
             }
         });
+
+        ['tab-centers', 'tab-rotation', 'tab-inside-corners'].forEach(tab => {
+            const btn = document.querySelector(`.probe-tab-btn[data-target="${tab}"]`);
+            if (btn) {
+                if (isPlate) {
+                    btn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+                    btn.classList.remove('hover:bg-white', 'hover:text-secondary-dark');
+                    if (btn.classList.contains('text-primary-dark')) {
+                        const edgesBtn = document.querySelector('.probe-tab-btn[data-target="tab-edges"]');
+                        if (edgesBtn) this.switchProbeTab('tab-edges', edgesBtn);
+                    }
+                } else {
+                    btn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
+                    btn.classList.add('hover:bg-white', 'hover:text-secondary-dark');
+                }
+            }
+        });
+
+        // Config wizard banner
+        const banner = document.getElementById('probe-config-banner');
+        const label = document.getElementById('probe-config-label');
+        const labelText = document.getElementById('probe-config-label-text');
+        const ran = this.store.get('configWizardRan');
+        if (ran) {
+            if (banner) banner.classList.add('hidden');
+            if (label) label.classList.remove('hidden');
+            const ptype = this.store.get('probe.type') || 'ooznest';
+            if (labelText) labelText.textContent = 'Plate configured as ' + (ptype === 'ooznest' ? 'Ooznest XYZ Probe' : 'Custom Probe');
+        } else {
+            if (banner) banner.classList.remove('hidden');
+            if (label) label.classList.add('hidden');
+        }
+    }
+
+    selectSingleSurface(btn, axis, dir) {
+        this.selections.singleAxis = axis;
+        this.selections.singleDir = dir;
+        this.selections.mode = 'single';
+        const txtClasses = 'text-[9px] font-bold leading-tight';
+        document.querySelectorAll('#single-surface-grid button').forEach(b => {
+            b.className = 'single-sel-btn rounded ' + txtClasses + ' bg-grey-bg border border-grey-light hover:bg-primary px-2 py-1 flex flex-col items-center';
+        });
+        btn.className = 'single-sel-btn rounded ' + txtClasses + ' bg-primary border-2 border-black/20 ring-2 ring-primary/30 px-2 py-1 flex flex-col items-center';
+        const singleImg = document.getElementById('probe-single-diagram');
+        const cornerImg = document.getElementById('probe-corner-diagram');
+        const svgMap = { 'X1':'SS-RIGHT.svg', 'X-1':'SS-LEFT.svg', 'Y1':'SS-FRONT.svg', 'Y-1':'SS-REAR.svg', 'Z-1':'SS-TOP.svg' };
+        if (singleImg) { singleImg.src = 'themes/' + (svgMap[axis + dir] || 'SS-TOP.svg'); singleImg.classList.remove('hidden'); }
+        if (cornerImg) cornerImg.classList.add('hidden');
+        // Deselect all outside corner buttons
+        document.querySelectorAll('#outside-corner-grid button').forEach(b => {
+            b.className = "corner-sel-btn h-full transition-colors rounded " + txtClasses + " bg-grey-bg border border-grey-light hover:bg-primary";
+        });
+        // Update run button
+        const lbl = document.getElementById('run-probe-label');
+        const desc = document.getElementById('run-probe-desc');
+        if (lbl) lbl.textContent = 'Probe ' + axis + (dir === 1 ? '+' : '-');
+        if (desc) desc.textContent = 'Probe the ' + axis + ' axis in the ' + (dir === 1 ? 'positive' : 'negative') + ' direction to set work zero.';
     }
 
     selectCorner(btn, type, corner) {
         if (type === 'Outside') this.selections.outsideCorner = corner;
         else this.selections.insideCorner = corner;
+        if (type === 'Outside') this.selections.mode = 'corner';
 
         const parent = btn.parentElement;
         // Styles
@@ -120,12 +357,28 @@ export class ProbeHandler {
         const outUnsel = ['bg-grey-bg', 'border', 'border-grey-light'];
         const inUnsel = ['bg-white', 'shadow-inner']; // simplified
 
+        const txtClasses = 'text-[10px] font-bold leading-tight';
         parent.querySelectorAll('button').forEach(b => {
-            b.className = "corner-sel-btn h-full transition-colors rounded " + (type === 'Outside' ? "bg-grey-bg border border-grey-light hover:bg-primary" : "bg-white shadow-inner hover:bg-primary");
+            b.className = "corner-sel-btn h-full transition-colors rounded " + txtClasses + ' ' + (type === 'Outside' ? "bg-grey-bg border border-grey-light hover:bg-primary" : "bg-white shadow-inner hover:bg-primary");
         });
 
         // Apply active style
-        btn.className = "corner-sel-btn h-full rounded " + selClasses.join(' ');
+        btn.className = "corner-sel-btn h-full rounded " + txtClasses + ' ' + selClasses.join(' ');
+
+        // Swap corner diagram
+        const cImg = document.getElementById('probe-corner-diagram');
+        const sImg = document.getElementById('probe-single-diagram');
+        if (cImg) { cImg.src = 'themes/' + corner + '.svg'; cImg.classList.remove('hidden'); }
+        if (sImg) sImg.classList.add('hidden');
+        // Deselect all single surface buttons
+        document.querySelectorAll('#single-surface-grid button').forEach(b => {
+            b.className = 'single-sel-btn rounded ' + txtClasses + ' bg-grey-bg border border-grey-light hover:bg-primary px-2 py-1 flex flex-col items-center';
+        });
+        // Update run button
+        const lbl = document.getElementById('run-probe-label');
+        const desc = document.getElementById('run-probe-desc');
+        if (lbl) lbl.textContent = 'Probe Corner';
+        if (desc) desc.textContent = 'Probe the selected corner to zero work coordinates.';
     }
 
     setTLOFromMachine() {
@@ -145,14 +398,16 @@ export class ProbeHandler {
         const success = parts[1] === '1';
 
         if (!success) {
-            // this.term.writeln('\x1b[31mProbe Failed: No Contact.\x1b[0m');
             this.activeRoutine = null;
+            this._resetProbeTest();
+            this.term.writeln('\x1b[31m> Probe Failed: No Contact.\x1b[0m');
             return;
         }
 
-        if (this.activeRoutine === 'OUTSIDE_CORNER') this.stepOutsideCorner(coords);
+        if (this.activeRoutine === 'AUTO_CORNER') this.stepAutoCorner(coords);
+        else if (this.activeRoutine === 'OUTSIDE_CORNER') this.stepOutsideCorner(coords);
         else if (this.activeRoutine === 'POCKET') this.stepPocket(coords);
-        else if (this.activeRoutine === 'BOSS') this.stepBoss(coords);
+        else if (this.activeRoutine === 'FEATURE') this.stepFeature(coords);
         else if (this.activeRoutine === 'TLO') this.stepTLO(coords);
         else if (this.activeRoutine === 'ROTATION') this.stepRotation(coords);
     }
@@ -161,6 +416,7 @@ export class ProbeHandler {
     // TOOL LENGTH OFFSET (TLO)
     // ==========================================
     runTLO(mode) {
+        if (!this._requireProbeSafe()) return;
         this.saveSettings();
         const s = this.store.data.probe;
 
@@ -261,12 +517,14 @@ export class ProbeHandler {
             this.term.writeln(`\x1b[35m> Applied TLO (G43.1) Z${diff.toFixed(3)}\x1b[0m`);
         }
         this.activeRoutine = null;
+        this._resetProbeTest();
     }
 
     // ==========================================
     // ROTATION (Angle Finding)
     // ==========================================
     runRotationProbe() {
+        if (!this._requireProbeSafe()) return;
         this.saveSettings();
         const s = this.store.data.probe;
         this.activeRoutine = 'ROTATION';
@@ -321,67 +579,143 @@ export class ProbeHandler {
             this.term.writeln(`\x1b[35m> Angle Calculated: ${deg.toFixed(4)} degrees.\x1b[0m`);
 
             this.activeRoutine = null;
+            this._resetProbeTest();
         }
     }
 
     // ==========================================
-    // EXISTING ROUTINES (Z, Single, Corner, Center)
+    // AUTO CORNER (Z surface + XY corner)
+    // User's proven macro — start above the hole.
     // ==========================================
-    runZProbe() {
+    runAutoCorner() {
+        if (!this._requireProbeSafe()) return;
         this.saveSettings();
+        this.activeRoutine = 'AUTO_CORNER';
+        this.routineStep = 0;
         const s = this.store.data.probe;
-        this.term.writeln(`\x1b[34m> Starting Z-Probe (Plate: ${s.usePlate})...\x1b[0m`);
-        const zSet = s.usePlate ? s.plateThickness : 0;
-        this.sendBatch(['G91', `G38.2 Z-${s.travel} F${s.feed}`, `G10 L20 P0 Z${zSet.toFixed(3)}`, `G0 Z${s.retract}`, 'G90']);
+        const rad = s.toolDiameter / 2;
+        const corner = this.selections.outsideCorner;
+        const xDir = corner.charAt(1) === 'R' ? 1 : -1;
+        const yDir = corner.charAt(0) === 'R' ? 1 : -1;
+        this.autoOffsets = {
+            zoffset: s.plateThickness,
+            xoffset: xDir * (rad + s.xyPlateOffset),
+            yoffset: yDir * (rad + s.xyPlateOffset),
+            xDir, yDir
+        };
+        this.term.writeln('\x1b[34m> Auto: zeroing and moving to plate center...\x1b[0m');
+        this.ws.sendCommand('G10 P0 L20 X0 Y0 Z0');
+        this.ws.sendCommand('G90 G0 X' + (-xDir * 22.5) + ' Y' + (-yDir * 22.5));
+        this.ws.sendCommand('G38.2 Z-25 F' + s.feed);
+    }
+
+    stepAutoCorner(coords) {
+        const o = this.autoOffsets;
+        const s = this.store.data.probe;
+        const xDir = o.xDir, yDir = o.yDir;
+
+        if (this.routineStep === 0) {
+            // Z probe done — set Z, retract
+            this.ws.sendCommand('G4 P0.4');
+            this.ws.sendCommand('G10 P0 L20 Z' + o.zoffset.toFixed(3));
+            this.ws.sendCommand('G0 Z' + (o.zoffset + 5).toFixed(3));
+            // Position for X probe: start from -xDir*20, opposite side
+            this.ws.sendCommand('G0 X' + (xDir * 20) + ' Y' + (-yDir * 10));
+            this.ws.sendCommand('G0 Z' + (o.zoffset - 6).toFixed(3));
+            this.term.writeln('\x1b[34m> Auto: probing X edge...\x1b[0m');
+            this.ws.sendCommand('G38.2 X' + (-xDir * 25) + ' F' + s.feed);
+            this.routineStep = 1;
+        } else if (this.routineStep === 1) {
+            // X probe done — set X, retract, clear plate (Y first), then position for Y probe
+            this.ws.sendCommand('G4 P0.4');
+            this.ws.sendCommand('G10 P0 L20 X' + o.xoffset.toFixed(3));
+            this.ws.sendCommand('G0 X' + (o.xoffset + xDir * 2).toFixed(3));
+            this.ws.sendCommand('G0 Z' + (o.zoffset + 15).toFixed(3));
+            this.ws.sendCommand('G0 Y' + (yDir * 20));
+            this.ws.sendCommand('G0 X' + (-xDir * 15));
+            this.ws.sendCommand('G0 Z' + (o.zoffset - 6).toFixed(3));
+            this.term.writeln('\x1b[34m> Auto: probing Y edge...\x1b[0m');
+            this.ws.sendCommand('G38.2 Y' + (-yDir * 25) + ' F' + s.feed);
+            this.routineStep = 2;
+        } else if (this.routineStep === 2) {
+            // Y probe done — set Y, retract, done
+            this.ws.sendCommand('G4 P0.4');
+            this.ws.sendCommand('G10 P0 L20 Y' + o.yoffset.toFixed(3));
+            this.ws.sendCommand('G0 Y' + (o.yoffset + yDir * 2).toFixed(3));
+            this.ws.sendCommand('G0 Z' + (o.zoffset + 5).toFixed(3));
+            this.ws.sendCommand('G0 X0 Y0');
+            this.term.writeln('\x1b[32m> Auto Corner complete!\x1b[0m');
+            this.activeRoutine = null;
+            this._resetProbeTest();
+        }
+    }
+
+    runSelectedOperation() {
+        if (this.selections.mode === 'corner') {
+            this.runAutoCorner();
+        } else {
+            this.runSingleAxis(this.selections.singleAxis, this.selections.singleDir);
+        }
+    }
+
+    runSingleSurface() {
+        this.runSingleAxis(this.selections.singleAxis, this.selections.singleDir);
     }
 
     runSingleAxis(axis, dir) {
+        if (!this._requireProbeSafe()) return;
         this.saveSettings();
         const s = this.store.data.probe;
+        const isPlate = s.mode === 'plate';
         const rad = s.toolDiameter / 2;
-        const plateOffset = s.usePlate ? s.xyPlateOffset : 0;
+        const plateOffset = isPlate ? s.xyPlateOffset : 0;
         const totalOffset = rad + plateOffset;
         const setVal = -(dir * totalOffset);
-        this.term.writeln(`\x1b[34m> Probing ${axis}... (Plate: ${s.usePlate})\x1b[0m`);
+        this.term.writeln(`\x1b[34m> Probing ${axis}... (${isPlate ? 'Plate' : 'Probe'})\x1b[0m`);
         this.sendBatch(['G91', `G38.2 ${axis}${dir * s.travel} F${s.feed}`, `G10 L20 P0 ${axis}${setVal.toFixed(3)}`, `G0 ${axis}${-(dir * s.retract)}`, 'G90']);
+        this._resetProbeTest();
     }
 
     runCornerProbe(type) {
+        if (!this._requireProbeSafe()) return;
         if (type === 'Inside') {
             const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
             if (reporter) {
                 reporter.showAlert('Not Implemented', 'Inside corner logic placeholder.');
             }
+            this._resetProbeTest();
             return;
         }
         this.saveSettings();
         const corner = this.selections.outsideCorner;
         const s = this.store.data.probe;
-        let xDirMult = (corner.includes('R')) ? 1 : -1;
-        let yDirMult = (corner.includes('B')) ? 1 : -1;
+        let xDirMult = corner.charAt(1) === 'R' ? 1 : -1;
+        let yDirMult = corner.charAt(0) === 'R' ? 1 : -1;
         this.tempData = { xDir: xDirMult, yDir: yDirMult };
         this.activeRoutine = 'OUTSIDE_CORNER';
-        this.routineStep = 0;
+        this.routineStep = 1;
         this.term.writeln(`\x1b[34m> Outside Corner (${corner})...\x1b[0m`);
         this.ws.sendCommand(`G91 G38.2 Z-${s.travel} F${s.feed}`);
     }
 
     stepOutsideCorner(coords) {
         const s = this.store.data.probe;
+        const isPlate = s.mode === 'plate';
         const rad = s.toolDiameter / 2;
         const xDir = this.tempData.xDir;
         const yDir = this.tempData.yDir;
-        const moveDist = s.clearance + rad + (s.usePlate ? s.xyPlateOffset : 0) + 2;
+        const clearance = isPlate ? (s.plateClearance || s.clearance) : (s.probeClearance || s.clearance);
+        const moveDist = clearance + rad + (isPlate ? s.xyPlateOffset : 0) + 2;
 
         if (this.routineStep === 1) { // Z Done
-            this.ws.sendCommand(`G10 L20 P0 Z${s.usePlate ? s.plateThickness : 0}`);
+            this.ws.sendCommand(`G10 L20 P0 Z${isPlate ? s.plateThickness : 0}`);
             this.ws.sendCommand(`G0 Z${s.retract}`);
             this.ws.sendCommand(`G0 X${(xDir * moveDist).toFixed(3)}`);
             this.ws.sendCommand(`G0 Z-${(s.retract + s.zDepth).toFixed(3)}`);
             setTimeout(() => { this.ws.sendCommand(`G38.2 X${(-xDir * s.travel).toFixed(3)} F${s.feed}`); }, 200);
             this.routineStep = 2; // Fixed step logic
         } else if (this.routineStep === 2) { // X Done
-            const setX = -(-xDir * (rad + (s.usePlate ? s.xyPlateOffset : 0)));
+            const setX = -(-xDir * (rad + (isPlate ? s.xyPlateOffset : 0)));
             this.ws.sendCommand(`G10 L20 P0 X${setX.toFixed(3)}`);
             this.ws.sendCommand(`G0 X${(xDir * s.retract).toFixed(3)}`);
             this.ws.sendCommand(`G0 Z${(s.retract + s.zDepth).toFixed(3)}`);
@@ -391,88 +725,113 @@ export class ProbeHandler {
             setTimeout(() => { this.ws.sendCommand(`G38.2 Y${(-yDir * s.travel).toFixed(3)} F${s.feed}`); }, 200);
             this.routineStep = 3;
         } else if (this.routineStep === 3) { // Y Done
-            const setY = -(-yDir * (rad + (s.usePlate ? s.xyPlateOffset : 0)));
+            const setY = -(-yDir * (rad + (isPlate ? s.xyPlateOffset : 0)));
             this.ws.sendCommand(`G10 L20 P0 Y${setY.toFixed(3)}`);
             this.ws.sendCommand(`G0 Y${(yDir * s.retract).toFixed(3)}`);
             this.ws.sendCommand(`G0 Z${(s.retract + s.zDepth).toFixed(3)}`);
             this.ws.sendCommand(`G90 G0 X0 Y0`);
             this.activeRoutine = null;
+            this._resetProbeTest();
         }
     }
 
-    // Reuse existing Pocket/Boss logic (simplified for brevity, assume previous implementation logic remains)
-    runPocketCenter() { this.activeRoutine = 'POCKET'; this.routineStep = 1; this.probeData = []; this.ws.sendCommand(`G91 G38.2 X${this.store.data.probe.travel} F${this.store.data.probe.feed}`); }
-    runBossCenter(t) {
-        this.activeRoutine = 'BOSS'; this.routineStep = 1; this.probeData = []; this.tempData = { type: t };
+    // ==========================================
+    // CENTER FINDER (Pocket & Feature)
+    // ==========================================
+    runPocketCenter() {
+        if (!this._requireProbeSafe()) return;
+        this.saveSettings();
         const s = this.store.data.probe;
-        const mx = (s.bossW / 2) + s.clearance + s.toolDiameter;
+        const isPlate = s.mode === 'plate';
+        const clearance = isPlate ? (s.plateClearance || s.clearance) : (s.probeClearance || s.clearance);
+        this.activeRoutine = 'POCKET';
+        this.routineStep = 1;
+        this.probeData = [];
+        this.tempData = { clearance: clearance };
+        this.term.writeln(`\x1b[34m> Starting Pocket Center (${s.featureW}x${s.featureH})...\x1b[0m`);
+        // From center, move past expected X+ wall, then probe X- to find it from outside
+        const mx = (s.featureW / 2) + clearance + s.toolDiameter;
         this.ws.sendCommand(`G91 G0 X${mx.toFixed(3)}`);
         this.ws.sendCommand(`G0 Z-${(s.retract + s.zDepth).toFixed(3)}`);
-        setTimeout(() => { this.ws.sendCommand(`G38.2 X-50 F${s.feed}`) }, 200);
+        setTimeout(() => { this.ws.sendCommand(`G38.2 X-${s.travel} F${s.feed}`); }, 200);
     }
-    stepPocket(c) { this.commonCenterStep(c, 'POCKET'); }
-    stepBoss(c) { this.commonCenterStep(c, 'BOSS'); } // Keeping it abstract, implementation details same as previous file
 
-    // Helper for Center steps to reduce code size
+    runFeatureCenter(t) {
+        if (!this._requireProbeSafe()) return;
+        this.saveSettings();
+        const s = this.store.data.probe;
+        const isPlate = s.mode === 'plate';
+        const clearance = isPlate ? (s.plateClearance || s.clearance) : (s.probeClearance || s.clearance);
+        this.activeRoutine = 'FEATURE';
+        this.routineStep = 1;
+        this.probeData = [];
+        this.tempData = { type: t, clearance: clearance };
+        this.term.writeln(`\x1b[34m> Starting ${t === 'Circ' ? 'Circular' : 'Rect'} Feature Center...\x1b[0m`);
+        // Move past expected X+ wall, then probe X- to find it from outside
+        const mx = (s.featureW / 2) + clearance + s.toolDiameter;
+        this.ws.sendCommand(`G91 G0 X${mx.toFixed(3)}`);
+        this.ws.sendCommand(`G0 Z-${(s.retract + s.zDepth).toFixed(3)}`);
+        setTimeout(() => { this.ws.sendCommand(`G38.2 X-${s.travel} F${s.feed}`); }, 200);
+    }
+
+    stepPocket(c) { this.commonCenterStep(c, 'POCKET'); }
+    stepFeature(c) { this.commonCenterStep(c, 'FEATURE'); }
+
     commonCenterStep(coords, type) {
         const s = this.store.data.probe;
+        const isPlate = s.mode === 'plate';
+        const clearance = this.tempData.clearance || (isPlate ? (s.plateClearance || s.clearance) : (s.probeClearance || s.clearance));
         this.probeData.push(coords);
         const len = this.probeData.length;
 
-        if (len === 1 || len === 3) { // Back off and probe opposite
+        if (len === 1 || len === 3) { // Hit a wall, go probe the opposite side
             const axis = (len === 1) ? 'X' : 'Y';
-            const mult = (type === 'BOSS') ? 1 : -1; // Boss moves out, Pocket moves in? Actually heavily depends on logic.
-            // Simplified logic: Assuming implementation from previous file is correct.
-            // Re-implementing explicitly for Boss to ensure it works with new TLO logic structure:
-            if (type === 'BOSS') {
-                if (len === 1) { // Hit X Right side. Retract, go Left, Probe Right
-                    this.ws.sendCommand(`G0 X${s.retract}`);
-                    this.ws.sendCommand(`G0 Z${(s.retract + s.zDepth).toFixed(3)}`);
-                    const traverse = s.bossW + s.clearance * 2 + s.toolDiameter + 2;
-                    this.ws.sendCommand(`G0 X-${traverse}`);
-                    this.ws.sendCommand(`G0 Z-${(s.retract + s.zDepth).toFixed(3)}`);
-                    setTimeout(() => { this.ws.sendCommand(`G38.2 X50 F${s.feed}`) }, 200);
-                } else if (len === 3) { // Hit Y Top. Retract, Go Bottom, Probe Up
-                    this.ws.sendCommand(`G0 Y${s.retract}`);
-                    this.ws.sendCommand(`G0 Z${(s.retract + s.zDepth).toFixed(3)}`);
-                    const traverse = s.bossH + s.clearance * 2 + s.toolDiameter + 2;
-                    this.ws.sendCommand(`G0 Y-${traverse}`);
-                    this.ws.sendCommand(`G0 Z-${(s.retract + s.zDepth).toFixed(3)}`);
-                    setTimeout(() => { this.ws.sendCommand(`G38.2 Y50 F${s.feed}`) }, 200);
-                }
+            const dim = (axis === 'X') ? s.featureW : s.featureH;
+            const retract = s.retract;
+            const backoff = (len === 1) ? `${axis}${retract}` : `${axis}${retract}`;
+
+            if (type === 'FEATURE') {
+                // Feature (outer): we hit the right/top wall, go to left/bottom side
+                this.ws.sendCommand(`G0 ${backoff}`);
+                this.ws.sendCommand(`G0 Z${(retract + s.zDepth).toFixed(3)}`);
+                const traverse = dim + clearance * 2 + s.toolDiameter + 2;
+                this.ws.sendCommand(`G0 ${axis}-${traverse.toFixed(3)}`);
+                this.ws.sendCommand(`G0 Z-${(retract + s.zDepth).toFixed(3)}`);
+                setTimeout(() => {
+                    this.ws.sendCommand(`G38.2 ${axis}${s.travel} F${s.feed}`);
+                }, 200);
             } else {
-                // Pocket Logic (Existing)
-                if (len === 1) { this.ws.sendCommand(`G0 X-${s.retract}`); setTimeout(() => { this.ws.sendCommand(`G38.2 X-${s.travel * 2} F${s.feed}`) }, 200); }
-                else if (len === 3) { this.ws.sendCommand(`G0 Y-${s.retract}`); setTimeout(() => { this.ws.sendCommand(`G38.2 Y-${s.travel * 2} F${s.feed}`) }, 200); }
+                // Pocket (inner): we hit the right/top wall from outside, go to opposite side
+                this.ws.sendCommand(`G0 ${backoff}`);
+                this.ws.sendCommand(`G0 Z${(retract + s.zDepth).toFixed(3)}`);
+                const traverse = dim + clearance * 2 + s.toolDiameter + 2;
+                this.ws.sendCommand(`G0 ${axis}-${traverse.toFixed(3)}`);
+                this.ws.sendCommand(`G0 Z-${(retract + s.zDepth).toFixed(3)}`);
+                setTimeout(() => {
+                    this.ws.sendCommand(`G38.2 ${axis}${s.travel} F${s.feed}`);
+                }, 200);
             }
-        } else if (len === 2) { // Center X Found
+        } else if (len === 2) { // Center X Found, go probe Y sides
             const cx = (this.probeData[0][0] + this.probeData[1][0]) / 2;
-            if (type === 'BOSS') {
-                this.ws.sendCommand(`G0 X-${s.retract}`);
-                this.ws.sendCommand(`G0 Z${(s.retract + s.zDepth).toFixed(3)}`);
-                this.ws.sendCommand(`G90 G0 X${cx.toFixed(3)}`);
-                this.ws.sendCommand(`G91`);
-                const my = (s.bossH / 2) + s.clearance + s.toolDiameter;
-                this.ws.sendCommand(`G0 Y${my.toFixed(3)}`);
-                this.ws.sendCommand(`G0 Z-${(s.retract + s.zDepth).toFixed(3)}`);
-                setTimeout(() => { this.ws.sendCommand(`G38.2 Y-50 F${s.feed}`) }, 200);
-            } else {
-                this.ws.sendCommand(`G90 G0 X${cx.toFixed(3)}`);
-                this.ws.sendCommand(`G91`);
-                setTimeout(() => { this.ws.sendCommand(`G38.2 Y${s.travel} F${s.feed}`) }, 500);
-            }
-        } else if (len === 4) { // Center Y Found
+            this.ws.sendCommand(`G0 X-${s.retract}`);
+            this.ws.sendCommand(`G0 Z${(s.retract + s.zDepth).toFixed(3)}`);
+            this.ws.sendCommand(`G90 G0 X${cx.toFixed(3)}`);
+            this.ws.sendCommand(`G91`);
+            const my = (s.featureH / 2) + clearance + s.toolDiameter;
+            this.ws.sendCommand(`G0 Y${my.toFixed(3)}`);
+            this.ws.sendCommand(`G0 Z-${(s.retract + s.zDepth).toFixed(3)}`);
+            setTimeout(() => {
+                this.ws.sendCommand(`G38.2 Y-${s.travel} F${s.feed}`);
+            }, 200);
+        } else if (len === 4) { // Center Y Found, set WCS
             const cy = (this.probeData[2][1] + this.probeData[3][1]) / 2;
-            if (type === 'BOSS') {
-                this.ws.sendCommand(`G0 Y-${s.retract}`);
-                this.ws.sendCommand(`G0 Z${(s.retract + s.zDepth).toFixed(3)}`);
-            }
+            this.ws.sendCommand(`G0 Y-${s.retract}`);
+            this.ws.sendCommand(`G0 Z${(s.retract + s.zDepth).toFixed(3)}`);
             this.ws.sendCommand(`G90 G0 Y${cy.toFixed(3)}`);
             this.ws.sendCommand(`G10 L20 P0 X0 Y0`);
             this.activeRoutine = null;
             this.term.writeln(`\x1b[32m> Center Found & Set.\x1b[0m`);
         }
     }
-
     sendBatch(cmds) { cmds.forEach(c => this.ws.sendCommand(c)); }
 }

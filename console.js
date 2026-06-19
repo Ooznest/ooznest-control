@@ -7,6 +7,25 @@ class ConsoleManager {
         this.fitAddon = null;
         this.commandHistory = [];
         this.historyIndex = 0;
+        this._loadHistory();
+    }
+
+    _loadHistory() {
+        try {
+            const stored = localStorage.getItem('cnc_command_history');
+            if (stored) {
+                this.commandHistory = JSON.parse(stored);
+                if (!Array.isArray(this.commandHistory)) this.commandHistory = [];
+            }
+        } catch (e) {
+            this.commandHistory = [];
+        }
+    }
+
+    _saveHistory() {
+        try {
+            localStorage.setItem('cnc_command_history', JSON.stringify(this.commandHistory));
+        } catch (e) {}
     }
 
     /**
@@ -68,6 +87,7 @@ class ConsoleManager {
             if (this.commandHistory.length === 0 || this.commandHistory[this.commandHistory.length - 1] !== val) {
                 this.commandHistory.push(val);
                 if (this.commandHistory.length > 50) this.commandHistory.shift();
+                this._saveHistory();
             }
             this.historyIndex = this.commandHistory.length;
 

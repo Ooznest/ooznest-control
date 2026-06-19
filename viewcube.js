@@ -51,11 +51,15 @@ export class ViewCube {
         this.mouse = new THREE.Vector2();
 
         // Bind events
-        this.renderer.domElement.addEventListener('click', this.onClick.bind(this));
-        this.renderer.domElement.addEventListener('mousemove', this.onMouseMove.bind(this));
+        this._boundClick = (e) => this.onClick(e);
+        this._boundMouseMove = (e) => this.onMouseMove(e);
+        this._boundControlsChange = () => this.syncAndRender();
+        this.renderer.domElement.addEventListener('click', this._boundClick);
+        this.renderer.domElement.addEventListener('mousemove', this._boundMouseMove);
+        this.mainControls.addEventListener('change', this._boundControlsChange);
 
-        // Start animation
-        this.animate();
+        // Initial render
+        this.syncAndRender();
     }
 
     createCube() {
@@ -158,7 +162,7 @@ export class ViewCube {
         canvas.height = 256;
 
         context.fillStyle = '#ffffff';
-        context.font = 'bold 62px Arial'; // Reduced slightly so BOTTOM fits
+        context.font = 'bold 62px "Nunito", sans-serif'; // Reduced slightly so BOTTOM fits
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText(text, 128, 128);
@@ -238,6 +242,8 @@ export class ViewCube {
                 }
             }
         }
+
+        this.syncAndRender();
     }
 
     setMainCameraView(view) {
@@ -345,27 +351,25 @@ export class ViewCube {
     }
 
     updateCamera(newCamera, newControls) {
+        this.mainControls.removeEventListener('change', this._boundControlsChange);
         this.mainCamera = newCamera;
         this.mainControls = newControls;
+        this.mainControls.addEventListener('change', this._boundControlsChange);
+        this.syncAndRender();
     }
 
-    animate() {
-        requestAnimationFrame(() => this.animate());
-
-        // Sync cube rotation with main camera
-        // Extract rotation from main camera's view matrix
+    syncAndRender() {
         const matrix = new THREE.Matrix4();
         matrix.extractRotation(this.mainCamera.matrixWorldInverse);
-
-        // Apply inverse rotation to cube so it rotates opposite to camera
         this.cube.rotation.setFromRotationMatrix(matrix);
 
         this.renderer.render(this.scene, this.camera);
     }
 
     dispose() {
-        this.renderer.domElement.removeEventListener('click', this.onClick.bind(this));
-        this.renderer.domElement.removeEventListener('mousemove', this.onMouseMove.bind(this));
+        this.mainControls.removeEventListener('change', this._boundControlsChange);
+        this.renderer.domElement.removeEventListener('click', this._boundClick);
+        this.renderer.domElement.removeEventListener('mousemove', this._boundMouseMove);
         this.container.removeChild(this.renderer.domElement);
         this.renderer.dispose();
     }

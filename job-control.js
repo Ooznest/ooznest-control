@@ -7,15 +7,41 @@ class JobController {
             lines: [],
             index: 0,
             active: false,
-            paused: false
+            paused: false,
+            waitingMTC: false
         };
         this.jobStartTime = 0;
         this.sdJobActive = false;
+        this._elapsedTimer = null;
 
         this.setupEventListeners();
     }
 
+    _getFlow() {
+        const ws = window.ws;
+        if (!ws) return null;
+        return ws.type === 'webserial' ? ws.webSerial : ws.flowControl;
+    }
+
+    _updateBufferUI() {
+        const flow = this._getFlow();
+        if (!flow || !flow.sentBuffer) return;
+        const bufSize = flow.rxBufSize || 128;
+        const used = flow.sentBuffer.reduce((s, l) => s + l.length, 0);
+        const pct = bufSize > 1 ? (Math.min(used, bufSize - 1) / (bufSize - 1)) * 100 : 0;
+        const bar = document.getElementById('job-buffer-bar');
+        if (bar) bar.style.width = `${pct}%`;
+    }
+
     setupEventListeners() {
+        // Listen for alarm being cleared (state transition Alarm → Idle)
+        window.addEventListener('machine-alarm-cleared', () => {
+            if (this.gcodeStreamer.active) {
+                this.abortGCodeStream("Alarm cleared");
+            } else {
+                this.resetJobUI();
+            }
+        });
         // SD Job Progress Listeners
         window.addEventListener('sd-status', (e) => {
             const { pct, filename } = e.detail;
@@ -38,7 +64,7 @@ class JobController {
                 this.resetJobUI();
                 // Also ensure we are not in Hold
                 const pauseBtn = document.getElementById('pause-job-btn');
-                if (pauseBtn.innerText.includes('Resume')) {
+                if (pauseBtn && pauseBtn.innerText.includes('Resume')) {
                     // Reset pause button visual state if it was paused
                     pauseBtn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
                     pauseBtn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
@@ -61,9 +87,11 @@ class JobController {
             this.gcodeStreamer.active = true;
             this.gcodeStreamer.paused = false;
 
-            document.getElementById('run-job-btn').classList.add('hidden');
-            document.getElementById('job-active-controls').classList.remove('hidden');
-            document.getElementById('job-active-controls').classList.add('flex');
+            const rj = document.getElementById('run-job-btn');
+            rj.classList.add('hidden');
+            rj.querySelector('div:last-child')?.classList.add('hidden');
+            const jac = document.getElementById('job-active-controls');
+            if (jac) { jac.classList.remove('hidden'); jac.classList.add('flex'); }
 
             // Show job progress overlay
             document.getElementById('job-progress-overlay').classList.remove('hidden');
@@ -91,6 +119,7 @@ class JobController {
     pauseJob() {
         if (!this.gcodeStreamer.active) return;
         const btn = document.getElementById('pause-job-btn');
+        if (!btn) return;
         this.gcodeStreamer.paused = !this.gcodeStreamer.paused;
 
         if (this.gcodeStreamer.paused) {
@@ -125,29 +154,50 @@ class JobController {
      * Advance to the next line in the G-code stream
      */
     advanceGCodeStream() {
-        if (!this.gcodeStreamer.active) return;
-        if (this.gcodeStreamer.index >= this.gcodeStreamer.lines.length) {
-            this.finishGCodeStream();
-            return;
+        if (!this.gcodeStreamer.active || this.gcodeStreamer.paused) return;
+
+        const flow = this._getFlow();
+        if (!flow) {
+            console.warn("advanceGCodeStream: flow is undefined — sending without limit!");
         }
-        const line = this.gcodeStreamer.lines[this.gcodeStreamer.index];
-        window.ws.sendCommand(line);
-        this.gcodeStreamer.index++;
+        let sentAny = false;
 
-        const pct = Math.round((this.gcodeStreamer.index / this.gcodeStreamer.lines.length) * 100);
-        const label = `Line ${this.gcodeStreamer.index} of ${this.gcodeStreamer.lines.length}`;
+        while (this.gcodeStreamer.index < this.gcodeStreamer.lines.length) {
+            const line = this.gcodeStreamer.lines[this.gcodeStreamer.index];
+            const canSend = flow ? flow.canSend(line) : false;
+            if (flow && !canSend) break;
+            window.ws.sendCommand(line);
+            this.gcodeStreamer.index++;
+            sentAny = true;
+        }
 
-        this.updateJobProgressUI(pct, label);
+        if (sentAny) {
+            this._updateBufferUI();
+            const pct = Math.round((this.gcodeStreamer.index / this.gcodeStreamer.lines.length) * 100);
+            const label = `Line ${this.gcodeStreamer.index} of ${this.gcodeStreamer.lines.length}`;
+            this.updateJobProgressUI(pct, label);
 
-        // Sync with backend if connected
-        if (window.ws.backendWs) {
-            window.ws.backendWs.send(JSON.stringify({
-                type: 'updateJob',
-                active: true,
-                currentLine: this.gcodeStreamer.index,
-                totalLines: this.gcodeStreamer.lines.length,
-                pct: pct
-            }));
+            if (window.ws.backendWs) {
+                window.ws.backendWs.send(JSON.stringify({
+                    type: 'updateJob',
+                    active: true,
+                    currentLine: this.gcodeStreamer.index,
+                    totalLines: this.gcodeStreamer.lines.length,
+                    pct: pct
+                }));
+            }
+        }
+    }
+
+    /**
+     * Check if all sent lines have been acknowledged and finish if so
+     */
+    _checkStreamComplete() {
+        if (this.gcodeStreamer.index < this.gcodeStreamer.lines.length) return;
+        const flow = this._getFlow();
+        if (!flow || flow.isDrained()) {
+            this._updateBufferUI();
+            this.finishGCodeStream();
         }
     }
 
@@ -156,6 +206,7 @@ class JobController {
      */
     finishGCodeStream() {
         this.gcodeStreamer.active = false;
+        this.gcodeStreamer.waitingMTC = false;
         window.term.writeln("\x1b[32m[Job Stream] Complete.\x1b[0m");
         this.resetJobUI();
 
@@ -169,6 +220,7 @@ class JobController {
      */
     abortGCodeStream(error) {
         this.gcodeStreamer.active = false;
+        this.gcodeStreamer.waitingMTC = false;
         window.term.writeln(`\x1b[31m[Job Stream] Aborted: ${error}\x1b[0m`);
         this.resetJobUI();
 
@@ -190,12 +242,19 @@ class JobController {
 
         // Reset buttons
         document.getElementById('run-job-btn').classList.remove('hidden');
-        document.getElementById('job-active-controls').classList.add('hidden');
-        document.getElementById('job-active-controls').classList.remove('flex');
+        const jac2 = document.getElementById('job-active-controls');
+        if (jac2) { jac2.classList.add('hidden'); jac2.classList.remove('flex'); }
         const btn = document.getElementById('pause-job-btn');
-        btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
-        btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
+        if (btn) {
+            btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+            btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
+        }
 
+        // Reset TX buffer
+        const bufBar = document.getElementById('job-buffer-bar');
+        if (bufBar) bufBar.style.width = '0%';
+
+        if (this._elapsedTimer) { clearInterval(this._elapsedTimer); this._elapsedTimer = null; }
         this.sdJobActive = false; // Reset SD flag
     }
 
@@ -204,10 +263,20 @@ class JobController {
      */
     startJobUI() {
         document.getElementById('run-job-btn').classList.add('hidden');
-        document.getElementById('job-active-controls').classList.remove('hidden');
-        document.getElementById('job-active-controls').classList.add('flex');
+        const jac3 = document.getElementById('job-active-controls');
+        if (jac3) { jac3.classList.remove('hidden'); jac3.classList.add('flex'); }
         document.getElementById('job-progress-overlay').classList.remove('hidden');
         this.jobStartTime = Date.now();
+        // Periodic elapsed timer refresh (keeps ticking even when stream is paused/buffered)
+        if (this._elapsedTimer) clearInterval(this._elapsedTimer);
+        this._elapsedTimer = setInterval(() => {
+            if (!this.gcodeStreamer.active && !this.sdJobActive) return;
+            const elapsed = Math.floor((Date.now() - this.jobStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            const el = document.getElementById('job-progress-time');
+            if (el) el.textContent = `Elapsed: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
     }
 
     /**
@@ -231,12 +300,55 @@ class JobController {
      * @returns {boolean} - True if handled
      */
     processLine(line) {
-        if (this.gcodeStreamer.active && (line === 'ok' || line.toLowerCase().startsWith('error:'))) {
-            if (line.toLowerCase().startsWith('error:')) this.abortGCodeStream(line);
-            else this.advanceGCodeStream();
+        if (!this.gcodeStreamer.active) return false;
+
+        // Alarm during streaming → abort immediately, clear planner queue, then unlock
+        if (line.toLowerCase().startsWith('alarm:')) {
+            this._updateBufferUI();
+            this.abortGCodeStream(line);
+            if (window.ws) {
+                window.ws.sendRealtime('\x18');
+                setTimeout(() => {
+                    window.ws.sendCommand('$X');
+                }, 3000);
+            }
             return true;
         }
+
+        if (line === 'ok') {
+            this._updateBufferUI();
+            this.advanceGCodeStream();
+            this._checkStreamComplete();
+            return true;
+        }
+
+        if (line.toLowerCase().startsWith('error:')) {
+            this._updateBufferUI();
+            const isMtcError = line.includes('40') && window.toolsHandler?.mtcActive;
+            if (isMtcError) {
+                this.gcodeStreamer.waitingMTC = true;
+                this.gcodeStreamer.paused = true;
+                // Decrement index to re-send the errored command after MTC resolves
+                this.gcodeStreamer.index = Math.max(0, this.gcodeStreamer.index - 1);
+                window.term.writeln(`\x1b[33m[MTC] Tool change pending — streaming paused, waiting for MTC to complete.\x1b[0m`);
+            } else {
+                this.abortGCodeStream(line);
+                if (window.ws) {
+                    window.ws.sendRealtime('\x18');
+                }
+            }
+            return true;
+        }
+
         return false;
+    }
+
+    resumeMTCStream() {
+        if (!this.gcodeStreamer.active || !this.gcodeStreamer.waitingMTC) return;
+        this.gcodeStreamer.waitingMTC = false;
+        this.gcodeStreamer.paused = false;
+        window.term.writeln(`\x1b[32m[MTC] Resuming G-code stream.\x1b[0m`);
+        this.advanceGCodeStream();
     }
 }
 

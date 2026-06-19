@@ -1,18 +1,67 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const net = require('net');
+const os = require('os');
 const { SerialPort } = require('serialport');
 const { WebSocketServer } = require('ws');
-
-// Express App setup
+const { autoUpdater } = require('electron-updater');
 const expressApp = express();
 const port = 8081; // Pick a port for the internal server
 expressApp.use(express.static(__dirname));
 
 const server = http.createServer(expressApp);
 const wss = new WebSocketServer({ server });
+
+// Queue file paths that arrived before the renderer is ready
+let pendingFile = null;
+
+const GCODE_EXTS = ['.gcode', '.nc', '.gc', '.ngc'];
+
+function isGcodeFile(filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    return GCODE_EXTS.includes(ext);
+}
+
+function sendFileToRenderer(filePath) {
+    const wins = BrowserWindow.getAllWindows();
+    if (wins.length === 0) {
+        pendingFile = filePath;
+        return;
+    }
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const filename = path.basename(filePath);
+        wins[0].webContents.send('open-file', { content, filename, filePath });
+    } catch (err) {
+        console.error('Failed to read file:', filePath, err.message);
+        wins[0].webContents.send('open-file', { error: err.message, filePath });
+    }
+}
+
+// Single instance lock — subsequent launches pass their args to the running instance
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+    app.quit();
+} else {
+    app.on('second-instance', (event, argv) => {
+        const fileArg = argv.find(a => isGcodeFile(a));
+        if (fileArg) sendFileToRenderer(path.resolve(fileArg));
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) {
+            if (win.isMinimized()) win.restore();
+            win.focus();
+        }
+    });
+}
+
+// macOS: file dropped on dock icon when app is already running
+app.on('open-file', (event, filePath) => {
+    event.preventDefault();
+    if (isGcodeFile(filePath)) sendFileToRenderer(filePath);
+});
 
 // IPC Handlers for Window Controls
 ipcMain.on('window-minimize', (event) => {
@@ -34,7 +83,6 @@ ipcMain.on('window-close', (event) => {
 });
 
 ipcMain.handle('get-network-info', async () => {
-    const os = require('os');
     const interfaces = os.networkInterfaces();
     const results = [];
     for (const name of Object.keys(interfaces)) {
@@ -49,6 +97,81 @@ ipcMain.handle('get-network-info', async () => {
 
 let activePort = null;
 let activeSocket = null;
+
+function getActiveControllerHttpTarget () {
+    if (status.comms.type !== 'telnet' || !status.comms.ip) {
+        return null;
+    }
+
+    return {
+        host: status.comms.ip,
+        port: status.comms.httpPort || 80
+    };
+}
+
+function proxyControllerRequest (req, res, controllerPath) {
+    const target = getActiveControllerHttpTarget();
+
+    if (!target) {
+        res.status(503).json({
+            status: 'error',
+            message: 'No active Telnet controller with HTTP file access is available.'
+        });
+        return;
+    }
+
+    const headers = { ...req.headers, host: `${target.host}:${target.port}` };
+    delete headers.connection;
+    delete headers.origin;
+    delete headers.referer;
+
+    const proxyReq = http.request({
+        host: target.host,
+        port: target.port,
+        method: req.method,
+        path: controllerPath,
+        headers
+    }, (proxyRes) => {
+        res.statusCode = proxyRes.statusCode || 502;
+
+        Object.entries(proxyRes.headers).forEach(([key, value]) => {
+            if (value !== undefined) {
+                res.setHeader(key, value);
+            }
+        });
+
+        proxyRes.pipe(res);
+    });
+
+    proxyReq.on('error', (err) => {
+        if (!res.headersSent) {
+            res.status(502).json({
+                status: 'error',
+                message: `Controller HTTP proxy failed: ${err.message}`
+            });
+        } else {
+            res.destroy(err);
+        }
+    });
+
+    req.pipe(proxyReq);
+}
+
+expressApp.use((req, res, next) => {
+    if (req.path === '/sdfiles' || req.path === '/upload' || req.path.startsWith('/sd/')) {
+        const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+        const controllerPath = req.path === '/sdfiles'
+            ? `/sdfiles${query}`
+            : req.path === '/upload'
+                ? `/upload${query}`
+                : `${req.path}${query}`;
+
+        proxyControllerRequest(req, res, controllerPath);
+        return;
+    }
+
+    next();
+});
 
 // Central Machine State (inspired by OpenBuilds CONTROL)
 let status = {
@@ -168,6 +291,16 @@ async function handleMessage(data, ws) {
                 ws.send(JSON.stringify({ type: 'ports', data: ports }));
             } catch (err) {
                 ws.send(JSON.stringify({ type: 'error', message: err.message }));
+            }
+            break;
+
+        case 'scanTelnet':
+            try {
+                const scanPort = data.port || 23;
+                const devices = await scanTelnetNetwork(scanPort, ws);
+                ws.send(JSON.stringify({ type: 'scanTelnetResult', devices }));
+            } catch (err) {
+                ws.send(JSON.stringify({ type: 'scanTelnetResult', devices: [], error: err.message }));
             }
             break;
 
@@ -308,6 +441,87 @@ server.listen(port, '0.0.0.0', () => {
     console.log(`Internal server running at http://0.0.0.0:${port}`);
 });
 
+// --- Telnet Network Scanning (Electron backend) ---
+
+function _getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return null;
+}
+
+function _checkTelnetPort(ip, port, timeout) {
+    return new Promise((resolve) => {
+        const socket = new net.Socket();
+        socket.setTimeout(timeout);
+        let settled = false;
+        socket.on('connect', () => {
+            let data = '';
+            socket.on('data', (chunk) => {
+                data += chunk.toString();
+                if (data.includes('Grbl') || data.includes('grbl') || data.includes('Ooznest')) {
+                    settled = true;
+                    socket.destroy();
+                    resolve(ip);
+                }
+            });
+            setTimeout(() => {
+                if (!settled) { socket.destroy(); settled = true; resolve(null); }
+            }, 400);
+        });
+        socket.on('error', () => { if (!settled) { socket.destroy(); settled = true; resolve(null); } });
+        socket.on('timeout', () => { if (!settled) { socket.destroy(); settled = true; resolve(null); } });
+        socket.connect(port, ip);
+    });
+}
+
+function _scanSubnet(subnet, port, onProgress) {
+    return new Promise((resolve) => {
+        let found = null;
+        let idx = 0;
+        const next = () => {
+            if (found || idx >= 254) return resolve(found);
+            idx++;
+            if (onProgress) onProgress(idx, 254);
+            _checkTelnetPort(`${subnet}.${idx}`, port, 300).then(ip => {
+                if (ip) { found = ip; resolve(ip); }
+                else setImmediate(next);
+            });
+        };
+        next();
+    });
+}
+
+async function scanTelnetNetwork(port, ws) {
+    port = port || 23;
+    const localIP = _getLocalIP();
+    const subnets = [];
+    if (localIP) {
+        const parts = localIP.split('.');
+        subnets.push(parts.slice(0, 3).join('.'));
+    } else {
+        subnets.push('192.168.0', '192.168.1', '192.168.4', '10.0.0');
+    }
+    const total = subnets.length * 254;
+    let scanned = 0;
+    for (const subnet of subnets) {
+        const found = await _scanSubnet(subnet, port, (done, of) => {
+            scanned++;
+            const pct = Math.min(Math.round((scanned / total) * 100), 99);
+            if (ws && ws.readyState === 1) {
+                ws.send(JSON.stringify({ type: 'scanTelnetProgress', percent: pct }));
+            }
+        });
+        if (found) return [found];
+    }
+    return [];
+}
+
 function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 1280,
@@ -341,12 +555,67 @@ function createWindow() {
 
     mainWindow.loadURL(`http://127.0.0.1:${port}`);
 
+    // When the window is ready, send any queued or argv file to the renderer
+    mainWindow.webContents.on('did-finish-load', () => {
+        // File passed as command-line argument (file association / double-click)
+        const fileArg = process.argv.find(a => isGcodeFile(a));
+        const fileToOpen = pendingFile || (fileArg ? path.resolve(fileArg) : null);
+        if (fileToOpen) {
+            sendFileToRenderer(fileToOpen);
+            pendingFile = null;
+        }
+    });
+
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
 }
 
 app.whenReady().then(() => {
     createWindow();
+    
+    // Auto-Updater Logic
+    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+        console.error('Auto-update check failed:', err.message);
+    });
+    autoUpdater.on('update-available', (info) => {
+        BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('update-available', info);
+        });
+    });
+    autoUpdater.on('update-downloaded', (info) => {
+        BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('update-downloaded');
+        });
+    });
+    autoUpdater.on('error', (err) => {
+        console.error('Auto-updater error:', err.message || err);
+    });
+
+    ipcMain.on('install-update', () => {
+        autoUpdater.quitAndInstall();
+    });
+
+    // Renderer asks to open a G-code file via native dialog
+    ipcMain.handle('load-gcode-dialog', async () => {
+        const wins = BrowserWindow.getAllWindows();
+        if (wins.length === 0) return null;
+        const result = await dialog.showOpenDialog(wins[0], {
+            title: 'Open G-Code File',
+            filters: [
+                { name: 'G-Code Files', extensions: ['gcode', 'nc', 'gc', 'ngc'] },
+                { name: 'All Files', extensions: ['*'] }
+            ],
+            properties: ['openFile']
+        });
+        if (result.canceled || result.filePaths.length === 0) return null;
+        const filePath = result.filePaths[0];
+        try {
+            const content = fs.readFileSync(filePath, 'utf-8');
+            return { content, filename: path.basename(filePath), filePath };
+        } catch (err) {
+            return { error: err.message, filePath };
+        }
+    });
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();

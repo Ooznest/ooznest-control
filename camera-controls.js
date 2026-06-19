@@ -21,6 +21,8 @@ class CameraControls {
         if (nextMode === 'Perspective') {
             if (window.viewer.getCameraType() === 'Orthographic') window.viewer.toggleCamera();
             window.viewer.setCameraMode('orbit');
+            console.log('[CameraControls] calling viewer.resetCamera() after spindle->perspective switch');
+            window.viewer.resetCamera();
         }
         else if (nextMode === 'Orthographic') {
             if (window.viewer.getCameraType() === 'Perspective') window.viewer.toggleCamera();
@@ -53,27 +55,6 @@ class CameraControls {
     resetCamera() {
         if (!window.viewer) return;
         window.viewer.resetCamera();
-    }
-
-    /**
-     * Toggle laser mode
-     */
-    toggleLaserMode() {
-        if (!window.viewer) return;
-        const btn = document.getElementById('laser-toggle-btn');
-        const newState = !window.viewer.isLaserMode;
-        window.viewer.setLaserMode(newState);
-
-        if (newState) {
-            btn.innerHTML = '<i class="bi bi-brightness-high-fill text-primary-dark"></i> Laser: ON';
-            btn.classList.add('!bg-primary-light', 'border-primary');
-            btn.classList.remove('text-grey-dark');
-            btn.classList.add('text-primary-dark');
-        } else {
-            btn.innerHTML = '<i class="bi bi-brightness-high-fill text-secondary"></i> Laser Mode';
-            btn.classList.remove('!bg-primary-light', 'border-primary', 'text-primary-dark');
-            btn.classList.add('text-grey-dark');
-        }
     }
 
     /**
@@ -113,6 +94,7 @@ class CameraControls {
         window.addEventListener('sd-mount-state', (e) => {
             const state = e.detail.state;
             const isMounted = (state === 1 || state === 3);
+            window.sdMounted = isMounted;
             const sdLink = document.querySelector("button[onclick*='switchTab'][onclick*='sd-view']");
 
             if (isMounted) {
@@ -135,5 +117,4 @@ window.cameraControls = new CameraControls();
 window.toggleCamera = () => window.cameraControls.toggleCamera();
 window.toggleGridMode = () => window.cameraControls.toggleGridMode();
 window.resetCamera = () => window.cameraControls.resetCamera();
-window.toggleLaserMode = () => window.cameraControls.toggleLaserMode();
 window.setWorkZeroAt = (mX, mY) => window.cameraControls.setWorkZeroAt(mX, mY);
