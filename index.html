@@ -1815,7 +1815,8 @@
                                         <div class="space-y-3">
                                             <!-- Probe Mode Toggle -->
                                             <div
-                                                class="bg-grey-bg p-2 rounded border border-grey-light">
+                                                class="bg-grey-bg p-2 rounded border border-grey-light prb-3d-probe-only"
+                                            >
                                                 <span class="text-xs font-bold text-secondary-dark block mb-1.5">Probe Mode</span>
                                                 <label class="oz-segmented-toggle w-full h-12" for="prb-mode-toggle">
                                                     <input type="checkbox" id="prb-mode-toggle" class="sr-only"
@@ -1943,19 +1944,19 @@
                                             Edge & Corners
                                         </button>
                                         <button
-                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn"
+                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn prb-3d-probe-only"
                                             data-target="tab-centers"
                                             onclick="window.probeHandler.switchProbeTab('tab-centers', this)">
                                             Center Finder
                                         </button>
                                         <button
-                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn"
+                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn prb-3d-probe-only"
                                             data-target="tab-rotation"
                                             onclick="window.probeHandler.switchProbeTab('tab-rotation', this)">
                                             Rotation
                                         </button>
                                         <button
-                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn"
+                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn prb-3d-probe-only"
                                             data-target="tab-inside-corners"
                                             onclick="window.probeHandler.switchProbeTab('tab-inside-corners', this)">
                                             Inside Corners
@@ -2143,7 +2144,7 @@
                                     </div>
 
                                     <!-- TAB CONTENT: Center Finder -->
-                                    <div id="tab-centers" class="probe-tab-content hidden">
+                                    <div id="tab-centers" class="probe-tab-content hidden prb-3d-probe-only">
                                         <div class="bg-white p-6 rounded-xl shadow-soft border border-grey-light mb-4">
                                             <p class="text-xs text-grey leading-relaxed mb-4">Position the probe tip approximately above the center of the feature you are probing. <strong>Approx Size</strong> is how far out the probe will travel before looking for edges. <strong>Inside Pockets</strong> start from center and move outward. <strong>Outer Features (Rect/Circular)</strong> move beyond the measurements then probe toward the center.</p>
                                             <h3 class="font-bold text-secondary-dark text-sm mb-2">Feature / Stock
@@ -2198,7 +2199,7 @@
                                     </div>
 
                                     <!-- TAB CONTENT: Inside Corners -->
-                                    <div id="tab-inside-corners" class="probe-tab-content hidden">
+                                    <div id="tab-inside-corners" class="probe-tab-content hidden prb-3d-probe-only">
                                         <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
                                             <div class="flex justify-between items-start mb-2">
                                                 <h3 class="font-bold text-secondary-dark text-sm"><i class="bi bi-bounding-box"></i> Inside Corner</h3>
@@ -2229,7 +2230,7 @@
                                     </div>
 
                                     <!-- TAB CONTENT: Rotation (New) -->
-                                    <div id="tab-rotation" class="probe-tab-content hidden">
+                                    <div id="tab-rotation" class="probe-tab-content hidden prb-3d-probe-only">
                                         <div class="bg-white p-6 rounded-xl shadow-soft border border-grey-light">
                                             <h3 class="font-bold text-lg text-secondary-dark mb-4">Workpiece Rotation
                                             </h3>

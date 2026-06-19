@@ -1675,6 +1675,7 @@ textarea.xterm-helper-textarea {
 /* Probe mode visibility */
 body[data-probe-mode="plate"] .prb-probe-only { display: none !important; }
 body[data-probe-mode="probe"] .prb-plate-only { display: none !important; }
+body[data-3d-probe-enabled="false"] .prb-3d-probe-only { display: none !important; }
 
 /* Probe safety test bar states */
 #probe-safety-bar.safe {
