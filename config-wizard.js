@@ -561,7 +561,22 @@ export class ConfigWizard {
             const val = t[axis] || 0;
             lines.push(`$${130 + i}=${val.toFixed(3)}`);
         });
-        return lines.join('\n');
+        return this._syncGangedYAxisSteps(lines).join('\n');
+    }
+
+    _syncGangedYAxisSteps(lines = []) {
+        const y1Line = lines.find(line => line.startsWith('$101='));
+        if (!y1Line) return lines;
+
+        const y1Value = y1Line.split('=')[1];
+        const y2Index = lines.findIndex(line => line.startsWith('$103='));
+        if (y2Index >= 0) {
+            lines[y2Index] = `$103=${y1Value}`;
+        } else {
+            lines.splice(2, 0, `$103=${y1Value}`);
+        }
+
+        return lines;
     }
 
     _computeToolheadAssignments() {
