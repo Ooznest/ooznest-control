@@ -561,6 +561,7 @@ export class ConfigWizard {
             const val = t[axis] || 0;
             lines.push(`$${130 + i}=${val.toFixed(3)}`);
         });
+        ['$140=1.400', '$141=1.400', '$142=1.400'].forEach(line => lines.push(line));
         return this._syncGangedYAxisSteps(lines).join('\n');
     }
 
