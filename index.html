@@ -1149,69 +1149,87 @@
                                             <i class="bi bi-bullseye text-4xl text-primary"></i>
                                         </div>
                                         <h3 class="text-2xl font-black text-secondary-dark mb-2">Machine Calibration</h3>
-                                        <p class="text-grey max-w-md mx-auto mb-8">Select an axis to calibrate. Each axis may use a different method to ensure maximum accuracy.</p>
+                                        <p class="text-grey max-w-2xl mx-auto mb-8">Choose a calibration method for the axis you want to tune. Measured Travel works for X, Y, and Z. Vernier remains available for fine X/Y tuning with a cut scale.</p>
 
-                                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-2xl mx-auto">
-                                            <!-- X AXIS -->
-                                            <button onclick="window.calibration.startWizard('X')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                <div class="text-axis-x font-black text-3xl mb-1">X</div>
-                                                <p class="text-[10px] text-grey uppercase font-bold">Vernier Method</p>
-                                            </button>
+                                        <div class="space-y-6 max-w-4xl mx-auto text-left">
+                                            <div>
+                                                <div class="flex items-center justify-between mb-3">
+                                                    <h4 class="text-xs font-black text-grey uppercase tracking-wider">Measured Travel</h4>
+                                                    <span class="text-[10px] text-grey">Command a move, measure the actual travel, then correct steps/mm.</span>
+                                                </div>
+                                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                    <button onclick="window.calibration.startWizard('X', 'distance')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                        <div class="text-axis-x font-black text-3xl mb-1">X</div>
+                                                        <p class="text-[10px] text-grey uppercase font-bold">Measured Travel</p>
+                                                    </button>
+                                                    <button onclick="window.calibration.startWizard('Y', 'distance')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                        <div class="text-axis-y font-black text-3xl mb-1">Y</div>
+                                                        <p class="text-[10px] text-grey uppercase font-bold">Measured Travel</p>
+                                                    </button>
+                                                    <button onclick="window.calibration.startWizard('Z', 'distance')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                        <div class="text-axis-z font-black text-3xl mb-1">Z</div>
+                                                        <p class="text-[10px] text-grey uppercase font-bold">Measured Travel</p>
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                                            <!-- Y AXIS -->
-                                            <button onclick="window.calibration.startWizard('Y')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                <div class="text-axis-y font-black text-3xl mb-1">Y</div>
-                                                <p class="text-[10px] text-grey uppercase font-bold">Vernier Method</p>
-                                            </button>
-
-                                            <!-- Z AXIS -->
-                                            <button onclick="window.calibration.startWizard('Z')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                <div class="text-axis-z font-black text-3xl mb-1">Z</div>
-                                                <p class="text-[10px] text-grey uppercase font-bold">Probe Method</p>
-                                            </button>
-
-                                            <!-- A AXIS -->
-                                            <button id="cal-btn-axis-a" onclick="window.calibration.startWizard('A')" class="hidden group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                <div class="text-secondary font-black text-3xl mb-1">A</div>
-                                                <p class="text-[10px] text-grey uppercase font-bold">Rotary Method</p>
-                                            </button>
+                                            <div>
+                                                <div class="flex items-center justify-between mb-3">
+                                                    <h4 class="text-xs font-black text-grey uppercase tracking-wider">Vernier Scale</h4>
+                                                    <span class="text-[10px] text-grey">Cuts a reference scale for visual alignment against a ruler.</span>
+                                                </div>
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    <button onclick="window.calibration.startWizard('X', 'vernier')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                        <div class="text-axis-x font-black text-3xl mb-1">X</div>
+                                                        <p class="text-[10px] text-grey uppercase font-bold">Vernier Scale</p>
+                                                    </button>
+                                                    <button onclick="window.calibration.startWizard('Y', 'vernier')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                        <div class="text-axis-y font-black text-3xl mb-1">Y</div>
+                                                        <p class="text-[10px] text-grey uppercase font-bold">Vernier Scale</p>
+                                                    </button>
+                                                    <button id="cal-btn-axis-a" onclick="window.calibration.startWizard('A', 'distance')" class="hidden group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
+                                                        <div class="text-secondary font-black text-3xl mb-1">A</div>
+                                                        <p class="text-[10px] text-grey uppercase font-bold">Coming Soon</p>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Step 1: Setup -->
                                     <div id="cal-step-setup" class="hidden bg-white rounded-xl border border-grey-light shadow-soft overflow-hidden">
                                         <div class="bg-grey-bg px-6 py-4 border-b border-grey-light flex justify-between items-center">
-                                            <h3 class="font-black text-secondary-dark uppercase tracking-wider">Step 1: Machine Setup</h3>
-                                            <span class="text-xs font-bold text-primary">AXIS: <span id="cal-axis-display">X</span></span>
+                                            <h3 id="cal-setup-title" class="font-black text-secondary-dark uppercase tracking-wider">Step 1: Machine Setup</h3>
+                                            <span class="text-xs font-bold text-primary">AXIS: <span id="cal-axis-display">X</span> <span id="cal-method-chip" class="ml-2 text-[10px] text-grey">MEASURED TRAVEL</span></span>
                                         </div>
                                         <div class="p-8 flex flex-col md:flex-row gap-8">
                                             <div class="flex-1 space-y-4">
                                                 <div class="flex gap-4 items-start">
                                                     <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">1</div>
-                                                    <p class="text-grey-dark pt-1">Secure a scrap piece of <strong>MDF or Wood</strong> to your wasteboard. Ensure it's at least 120mm long.</p>
+                                                    <p id="cal-setup-step-1" class="text-grey-dark pt-1">Secure a scrap piece of <strong>MDF or Wood</strong> to your wasteboard. Ensure it's at least 120mm long.</p>
                                                 </div>
                                                 <div class="flex gap-4 items-start">
                                                     <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">2</div>
-                                                    <p class="text-grey-dark pt-1">Install a <strong>sharp V-Bit</strong> or engraving tool.</p>
+                                                    <p id="cal-setup-step-2" class="text-grey-dark pt-1">Install a <strong>sharp V-Bit</strong> or engraving tool.</p>
                                                 </div>
                                                 <div class="flex gap-4 items-start">
                                                     <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">3</div>
-                                                    <p class="text-grey-dark pt-1">Jog to the starting position on the scrap material and <strong>Zero the Z Axis</strong> on the surface.</p>
+                                                    <p id="cal-setup-step-3" class="text-grey-dark pt-1">Jog to the starting position on the scrap material and <strong>Zero the Z Axis</strong> on the surface.</p>
                                                 </div>
                                                 <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
                                                     <i class="bi bi-exclamation-triangle-fill text-yellow-600 text-xl"></i>
-                                                    <p class="text-xs text-yellow-800">Ensure there is enough travel in the <span class="cal-axis-name">X</span> direction (approx 100mm) from the current position.</p>
+                                                    <p id="cal-setup-warning" class="text-xs text-yellow-800">Ensure there is enough travel in the <span class="cal-axis-name">X</span> direction (approx 100mm) from the current position.</p>
                                                 </div>
                                             </div>
                                             <div class="w-full md:w-64 bg-grey-bg p-4 rounded-xl border border-grey-light">
                                                 <h4 class="text-[10px] font-black text-grey uppercase mb-3">Quick Control</h4>
                                                 <div class="space-y-2 mb-4">
                                                     <div class="flex justify-between items-center bg-white p-2 rounded border border-grey-light">
-                                                        <span class="text-xs font-bold text-axis-z">Z</span>
-                                                        <span id="cal-z-pos" class="font-mono font-bold">0.000</span>
+                                                        <span id="cal-live-axis-label" class="text-xs font-bold text-axis-z">Z</span>
+                                                        <span id="cal-axis-pos" class="font-mono font-bold">0.000</span>
                                                     </div>
                                                 </div>
-                                                <button onclick="sendCmd('G10 L20 P0 Z0')" class="btn btn-secondary w-full justify-center mb-4">Zero Z Axis</button>
+                                                <button id="cal-zero-axis-btn" onclick="window.calibration.zeroSelectedAxis()" class="btn btn-secondary w-full justify-center mb-4">Zero Z Axis</button>
                                                 <div class="grid grid-cols-2 gap-2">
                                                     <button onclick="window.calibration.cancel()" class="btn btn-secondary justify-center">Cancel</button>
                                                     <button onclick="window.calibration.nextStep()" class="btn btn-primary justify-center">Next Step</button>
@@ -1223,22 +1241,28 @@
                                     <!-- Step 2: Cut -->
                                     <div id="cal-step-cut" class="hidden bg-white rounded-xl border border-grey-light shadow-soft overflow-hidden">
                                         <div class="bg-grey-bg px-6 py-4 border-b border-grey-light flex justify-between items-center">
-                                            <h3 class="font-black text-secondary-dark uppercase tracking-wider">Step 2: Cut Calibration Scale</h3>
+                                            <h3 id="cal-step2-title" class="font-black text-secondary-dark uppercase tracking-wider">Step 2: Cut Calibration Scale</h3>
                                             <span class="text-xs font-bold text-primary">AXIS: <span id="cal-axis-display-2">X</span></span>
                                         </div>
                                         <div class="p-12 text-center">
                                             <div class="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
                                                 <i class="bi bi-play-fill text-5xl text-orange-500"></i>
                                             </div>
-                                            <h4 class="text-xl font-bold text-secondary-dark mb-4">Ready to cut?</h4>
-                                            <p class="text-grey max-w-md mx-auto mb-8">The machine will now cut 100 lines spaced 0.9mm apart. This will take approximately 2 minutes.</p>
+                                            <h4 id="cal-step2-heading" class="text-xl font-bold text-secondary-dark mb-4">Ready to cut?</h4>
+                                            <p id="cal-step2-desc" class="text-grey max-w-md mx-auto mb-8">The machine will now cut 100 lines spaced 0.9mm apart. This will take approximately 2 minutes.</p>
 
-                                            <div class="bg-red-50 border border-red-100 p-4 rounded-lg mb-8 max-w-md mx-auto flex items-center gap-3 text-left">
+                                            <div id="cal-cut-spindle-warning" class="bg-red-50 border border-red-100 p-4 rounded-lg mb-8 max-w-md mx-auto flex items-center gap-3 text-left">
                                                 <i class="bi bi-fan text-red-500 text-2xl animate-spin"></i>
                                                 <div>
                                                     <p class="text-xs font-black text-red-800 uppercase">Warning</p>
                                                     <p class="text-xs text-red-700">Please ensure your <strong>spindle is turned ON</strong> before clicking Start Cut.</p>
                                                 </div>
+                                            </div>
+
+                                            <div id="cal-distance-panel" class="hidden mb-8 max-w-md mx-auto text-left bg-grey-bg border border-grey-light rounded-xl p-4">
+                                                <label class="text-xs font-bold text-secondary-dark block mb-2">Commanded Travel (mm)</label>
+                                                <input type="number" id="cal-input-commanded" class="input-field text-right text-lg font-mono" value="100" min="0.1" step="0.1">
+                                                <p class="text-[10px] text-grey mt-2">The machine will move the selected axis by this amount in the positive direction.</p>
                                             </div>
 
                                             <div id="cal-cut-progress" class="hidden mb-8 max-w-md mx-auto">
@@ -1253,7 +1277,7 @@
 
                                             <div class="flex justify-center gap-4">
                                                 <button id="btn-cal-back-1" onclick="window.calibration.prevStep()" class="btn btn-secondary px-8">Back</button>
-                                                <button id="btn-cal-run" onclick="window.calibration.runCutJob()" class="btn btn-primary px-12 text-lg h-12 shadow-lg">Start Cut</button>
+                                                <button id="btn-cal-run" onclick="window.calibration.runCutJob()" class="btn btn-primary px-12 text-lg h-12 shadow-lg"><span id="cal-run-btn-label">Start Cut</span></button>
                                             </div>
                                         </div>
                                     </div>
@@ -1265,37 +1289,57 @@
                                         </div>
                                         <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-12">
                                             <div>
-                                                <h4 class="font-bold text-secondary-dark mb-4 flex items-center gap-2">
+                                                <h4 id="cal-measure-title" class="font-bold text-secondary-dark mb-4 flex items-center gap-2">
                                                     <i class="bi bi-info-circle-fill text-primary"></i> How to Read
                                                 </h4>
-                                                <div class="space-y-4 text-sm text-grey-dark leading-relaxed">
+                                                <div id="cal-measure-vernier-help" class="space-y-4 text-sm text-grey-dark leading-relaxed">
                                                     <p>1. Place a <strong>standard steel ruler</strong> against the cut marks, aligning the <strong>0 mark</strong> of the ruler with the <strong>first cut mark</strong>.</p>
                                                     <p>2. Look along the ruler and find where a <strong>cut mark</strong> aligns perfectly with a <strong>millimeter mark</strong> on your ruler.</p>
                                                     <div class="p-4 bg-grey-bg rounded-lg border border-grey-light italic text-xs">
                                                         "The CNC marks are 0.9mm apart. By finding where they align with the 1mm marks on your ruler, we can calculate the exact error."
                                                     </div>
                                                 </div>
-                                                <div class="mt-6">
+                                                <div id="cal-measure-distance-help" class="hidden space-y-4 text-sm text-grey-dark leading-relaxed">
+                                                    <p>1. Measure how far the <strong><span class="cal-axis-name">X</span> axis</strong> actually moved after the commanded travel.</p>
+                                                    <p>2. Use the same units as the commanded move. The default expected value is <strong><span id="cal-commanded-display-inline">100.00</span> mm</strong>.</p>
+                                                    <div class="p-4 bg-grey-bg rounded-lg border border-grey-light italic text-xs">
+                                                        "If the machine was told to move 100mm but only moved 99.6mm, the steps/mm need to increase slightly."
+                                                    </div>
+                                                </div>
+                                                <div id="cal-measure-vernier-image" class="mt-6">
                                                     <img src="Calibration/vernier_example.png" alt="Vernier Example" class="rounded-lg border border-grey-light shadow-sm w-full" onerror="this.src='https://placehold.co/400x200?text=Vernier+Reading+Diagram'">
                                                 </div>
                                             </div>
                                             <div class="space-y-6 bg-grey-bg p-6 rounded-xl border border-grey-light">
                                                 <h4 class="text-[10px] font-black text-grey uppercase tracking-wider">Enter Readings</h4>
 
-                                                <div>
-                                                    <label class="text-xs font-bold text-secondary-dark block mb-2">Which CNC mark aligns perfectly? (0-100)</label>
+                                                <div id="cal-measure-vernier-inputs">
                                                     <div>
-                                                        <label class="text-[10px] font-bold text-grey block mb-1">MARK</label>
-                                                        <input type="number" id="cal-input-mark" class="input-field text-right text-lg font-mono" placeholder="96" min="0" max="100">
+                                                        <label class="text-xs font-bold text-secondary-dark block mb-2">Which CNC mark aligns perfectly? (0-100)</label>
+                                                        <div>
+                                                            <label class="text-[10px] font-bold text-grey block mb-1">MARK</label>
+                                                            <input type="number" id="cal-input-mark" class="input-field text-right text-lg font-mono" placeholder="96" min="0" max="100">
+                                                        </div>
+                                                        <p class="text-[10px] text-grey mt-1 italic">Calculated CNC Distance: <span id="cal-cnc-dist-display">0.00</span> mm</p>
                                                     </div>
-                                                    <p class="text-[10px] text-grey mt-1 italic">Calculated CNC Distance: <span id="cal-cnc-dist-display">0.00</span> mm</p>
+
+                                                    <div>
+                                                        <label class="text-xs font-bold text-secondary-dark block mb-2">What is the Ruler reading at that mark? (mm)</label>
+                                                        <div>
+                                                            <label class="text-[10px] font-bold text-grey block mb-1">REAL</label>
+                                                            <input type="number" id="cal-input-real" class="input-field text-right text-lg font-mono" placeholder="86.0" step="0.1">
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                <div>
-                                                    <label class="text-xs font-bold text-secondary-dark block mb-2">What is the Ruler reading at that mark? (mm)</label>
+                                                <div id="cal-measure-distance-inputs" class="hidden space-y-4">
                                                     <div>
-                                                        <label class="text-[10px] font-bold text-grey block mb-1">REAL</label>
-                                                        <input type="number" id="cal-input-real" class="input-field text-right text-lg font-mono" placeholder="86.0" step="0.1">
+                                                        <label class="text-xs font-bold text-secondary-dark block mb-2">Commanded Travel (mm)</label>
+                                                        <input type="text" id="cal-commanded-display" class="input-field text-right text-lg font-mono" value="100.00" readonly>
+                                                    </div>
+                                                    <div>
+                                                        <label class="text-xs font-bold text-secondary-dark block mb-2">Actual Measured Travel (mm)</label>
+                                                        <input type="number" id="cal-input-actual-travel" class="input-field text-right text-lg font-mono" placeholder="99.8" step="0.01">
                                                     </div>
                                                 </div>
 
@@ -1331,7 +1375,7 @@
                                                 <i class="bi bi-info-circle-fill text-blue-500 text-2xl"></i>
                                                 <div class="text-sm text-blue-800 leading-relaxed">
                                                     <p class="font-bold mb-1">Verification</p>
-                                                    <p>Applying this change will update your machine's <strong>$<span id="cal-setting-num">100</span></strong> setting. It is recommended to perform a test cut after applying to verify the accuracy.</p>
+                                                    <p>Applying this change will update your machine's <strong>$<span id="cal-setting-num">100</span></strong> setting. <span id="cal-result-verify-tail">It is recommended to perform a test cut after applying to verify the accuracy.</span></p>
                                                 </div>
                                             </div>
 
@@ -1348,7 +1392,7 @@
                                             <i class="bi bi-check-lg text-4xl"></i>
                                         </div>
                                         <h3 class="text-2xl font-black text-secondary-dark mb-2">Calibration Complete!</h3>
-                                        <p class="text-grey max-w-md mx-auto mb-8">The new steps/mm have been saved to your machine's non-volatile memory. Your <span class="cal-axis-name font-bold">X</span> axis is now perfectly tuned.</p>
+                                        <p id="cal-done-desc" class="text-grey max-w-md mx-auto mb-8">The new steps/mm have been saved to your machine's non-volatile memory. Your <span class="cal-axis-name font-bold">X</span> axis is now perfectly tuned.</p>
 
                                         <div class="flex flex-col sm:flex-row gap-3 justify-center">
                                             <button onclick="window.calibration.cancel()" class="btn btn-primary px-8 h-12 shadow-md">
