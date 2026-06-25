@@ -23,6 +23,7 @@ export class ConnectionManager {
             sent: [],
             error: []
         };
+        this._backendBuffer = '';
 
         // UI element references
         this.modal = document.getElementById('connection-modal');
@@ -883,8 +884,17 @@ export class ConnectionManager {
         }
     }
 
+    clearPendingState() {
+        this._backendBuffer = '';
+        this.flowControl.reset();
+        if (this.webSerial?.clearPendingState) {
+            this.webSerial.clearPendingState();
+        }
+    }
+
     handleConnect() {
         this._setConnectingState(false);
+        this.clearPendingState();
         this.isConnected = true;
         this._syncHttpBaseUrl();
         this.emit('connect');
@@ -899,6 +909,7 @@ export class ConnectionManager {
 
     handleDisconnect() {
         this._setConnectingState(false);
+        this.clearPendingState();
         this.isConnected = false;
         this._syncHttpBaseUrl();
         this.emit('disconnect');
@@ -908,6 +919,10 @@ export class ConnectionManager {
     // --- Data Transmission ---
 
     async sendCommand(line) {
+        if (typeof line === 'string' && line.trim().toUpperCase() === '$X') {
+            this.clearPendingState();
+        }
+
         if (this.type === 'webserial') {
             await this.webSerial.sendCommand(line);
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
@@ -926,6 +941,10 @@ export class ConnectionManager {
     }
 
     async sendRealtime(char) {
+        if (char === '\x18') {
+            this.clearPendingState();
+        }
+
         if (this.type === 'webserial') {
             await this.webSerial.sendRealtime(char);
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {

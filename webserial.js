@@ -29,6 +29,7 @@ export class WebSerial {
 
         this.rawModeCallback = null;
         this._writeLock = Promise.resolve();
+        this._readBuffer = '';
 
         // --- Grbl v1.1 Character-Counting Flow Control (OpenBuilds pattern) ---
         this.rxBufSize = 128;
@@ -65,6 +66,11 @@ export class WebSerial {
         this.sentBuffer = [];
     }
 
+    clearPendingState() {
+        this._resetFlowControl();
+        this._readBuffer = '';
+    }
+
     // ---- Public API ----
 
     on(event, callback) {
@@ -90,7 +96,7 @@ export class WebSerial {
         try {
             this.port = await navigator.serial.requestPort();
             await this.port.open({ baudRate });
-            this._resetFlowControl();
+            this.clearPendingState();
             this.isConnected = true;
             this.listeners.connect.forEach(cb => cb());
             this.readLoop();
@@ -105,7 +111,7 @@ export class WebSerial {
         if (!this.isConnected && !this.port) return;
         const wasConnected = this.isConnected;
         this.isConnected = false;
-        this._resetFlowControl();
+        this.clearPendingState();
 
         try {
             if (this.reader) {
@@ -193,7 +199,7 @@ export class WebSerial {
         navigator.serial.addEventListener('disconnect', onDisconnect);
 
         try {
-            let textBuffer = '';
+            this._readBuffer = '';
             while (true) {
                 const { value, done } = await this.reader.read();
                 if (done) break;
@@ -203,9 +209,9 @@ export class WebSerial {
                         continue;
                     }
                     const chunk = this.decoder.decode(value, { stream: true });
-                    textBuffer += chunk;
-                    const lines = textBuffer.split('\n');
-                    textBuffer = lines.pop();
+                    this._readBuffer += chunk;
+                    const lines = this._readBuffer.split('\n');
+                    this._readBuffer = lines.pop();
                     for (const line of lines) {
                         const trimmed = line.trim();
                         if (trimmed) this.emit('line', trimmed);
@@ -219,6 +225,7 @@ export class WebSerial {
                 this.disconnect();
             }
         } finally {
+            this._readBuffer = '';
             if (this.reader) {
                 try { this.reader.releaseLock(); } catch (e) { }
                 this.reader = null;
