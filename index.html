@@ -966,11 +966,6 @@
                                 </button>
                                 <button
                                     class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
-                                    onclick="window.toolsHandler.switchToolsTab('tab-tool-firmware', this)">
-                                    Firmware Update
-                                </button>
-                                <button
-                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-surfacing', this)">
                                     Surfacing
                                 </button>
@@ -1406,74 +1401,6 @@
                                 </div>
                             </div>
 
-
-                            <!-- Sub-Tab Content: Firmware Update -->
-                            <div id="tab-tool-firmware" class="tools-tab-content hidden">
-                                <div class="flex items-center gap-4 mb-4">
-                                    <div>
-                                        <h3 class="font-bold text-secondary-dark text-sm">Firmware Update</h3>
-                                        <p class="text-[10px] text-grey">Flash grblHAL onto your Ooznest Motion Control Core via USB.</p>
-                                    </div>
-                                </div>
-
-                                <div class="bg-grey-bg rounded-xl border border-grey-light p-4 mb-4 flex items-start gap-6">
-                                    <img src="firmware/diagram.png" alt="Ooznest Core Diagram" loading="lazy" class="w-1/2 max-w-[300px] shrink-0 rounded-lg bg-white p-3 border border-grey-light">
-                                    <div class="flex-1 min-w-0">
-                                        <span class="text-[10px] font-bold text-grey uppercase block mb-3">Prerequisites</span>
-                                        <ol class="text-xs text-grey-dark space-y-1 ml-4 list-decimal">
-                                            <li>Connect <strong>USB-C Cable</strong> to your computer.</li>
-                                            <li>Press and hold the <strong>MODE</strong> button on the Core board.</li>
-                                            <li>Click <strong>RESET</strong>, then release <strong>MODE</strong>.</li>
-                                        </ol>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-3 mb-4 flex-wrap">
-                                    <button id="fw-connect" class="btn btn-secondary h-9 px-4 text-xs"
-                                        onclick="window.firmwareHandler.connectDevice()">
-                                        Connect Device
-                                    </button>
-                                    <button id="fw-settings-toggle" class="btn btn-secondary h-9 w-9 p-0 flex items-center justify-center"
-                                        onclick="window.firmwareHandler.toggleSettings()" title="Settings">
-                                        <i class="bi bi-gear-fill text-sm"></i>
-                                    </button>
-                                    <button id="fw-flash" class="btn btn-primary h-9 px-5 text-xs shadow-md" disabled
-                                        onclick="window.firmwareHandler.flashFirmware()">
-                                        <i class="bi bi-lightning-fill"></i> Flash Firmware
-                                    </button>
-                                </div>
-
-                                <div id="fw-settings" class="hidden bg-white rounded-xl border border-grey-light p-4 mb-4 grid grid-cols-2 gap-4 max-w-md">
-                                    <div>
-                                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Baud Rate</label>
-                                        <select id="fw-baudrate" class="w-full rounded-lg border border-grey-light px-3 py-2 text-xs font-bold text-grey-dark">
-                                            <option value="115200">115200</option>
-                                            <option value="230400">230400</option>
-                                            <option value="460800" selected>460800</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Flash Mode</label>
-                                        <select id="fw-flashmode" class="w-full rounded-lg border border-grey-light px-3 py-2 text-xs font-bold text-grey-dark">
-                                            <option value="dio" selected>DIO</option>
-                                            <option value="qio">QIO</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div id="fw-progress-wrap" class="hidden mb-4">
-                                    <div class="flex justify-between text-[10px] font-bold text-grey mb-1">
-                                        <span>PROGRESS</span>
-                                        <span id="fw-progress-pct">0%</span>
-                                    </div>
-                                    <div class="h-2 bg-grey-light rounded-full overflow-hidden">
-                                        <div id="fw-progress-bar" class="h-full bg-primary rounded-full transition-all duration-100" style="width:0%"></div>
-                                    </div>
-                                </div>
-
-                                <div id="fw-terminal"
-                                    class="bg-black text-[#adbac7] font-mono text-xs p-4 h-48 overflow-y-auto whitespace-pre-wrap rounded-xl border-l-4 border-primary"></div>
-                            </div>
 
                             <!-- Sub-Tab Content: Surfacing -->
                             <div id="tab-tool-surfacing" class="tools-tab-content hidden">
@@ -2926,30 +2853,6 @@
         </div>
     </div>
 
-    <!-- Firmware Flash Success Modal -->
-    <div id="fw-success-modal" class="hidden fixed inset-0 z-[1100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-            <h3 class="font-black text-lg text-secondary-dark mb-2">Flash Complete!</h3>
-            <p class="text-xs text-grey mb-4">Deployment successful. Press <strong>RESET</strong> on the Core to initialize grblHAL.</p>
-            <button class="btn btn-primary h-10 px-8 shadow-lg" onclick="window.firmwareHandler.closeSuccessModal()">Finish</button>
-        </div>
-    </div>
-
-    <!-- Firmware Flash Error Modal -->
-    <div id="fw-error-modal" class="hidden fixed inset-0 z-[1100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-            <h3 id="fw-error-title" class="font-black text-lg text-red-600 mb-2">Deployment Failed</h3>
-            <p id="fw-error-msg" class="text-xs text-grey mb-3"></p>
-            <div class="bg-grey-bg rounded-lg p-4 mb-4 text-xs text-grey-dark leading-relaxed text-left">
-                <p id="fw-error-advice">Please check the USB connection and ensure the device is in Bootloader mode before trying again.</p>
-            </div>
-            <button class="btn btn-primary h-10 px-8 shadow-lg" onclick="window.firmwareHandler.closeErrorModal()">Retry</button>
-        </div>
-    </div>
-
-    <!-- CryptoJS for firmware flash integrity -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" defer></script>
-
     <!-- Chart.js for GCode stats histogram -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
 
@@ -3113,7 +3016,6 @@
         import { MacroHandler } from './macros.js';
         import { ToolsHandler } from './tools.js';
         import { TroubleshootingHandler } from './troubleshooting.js';
-        import { FirmwareHandler } from './firmware.js';
         import { CalibrationHandler } from './calibration.js';
         import { ConfigWizard } from './config-wizard.js';
         import { GCodeEditor } from './editor.js';
@@ -3293,8 +3195,6 @@
 
             const troubleshootingHandler = new TroubleshootingHandler(ws, store);
             window.troubleshooting = troubleshootingHandler;
-            const firmwareHandler = new FirmwareHandler(ws, store);
-            window.firmwareHandler = firmwareHandler;
             const configWizard = new ConfigWizard(ws, store);
             window.configWizard = configWizard;
             const spoilboardGrid = new SpoilboardGridHandler(ws, window.term, store);
@@ -3354,7 +3254,6 @@
             if (e.detail.id === 'tools-view') {
                 window.toolsHandler.refresh();
                 if (window.calibration) window.calibration.refreshA();
-                if (window.firmwareHandler) window.firmwareHandler._checkPlatform();
             }
             if (e.detail.id === 'troubleshooting-view') window.troubleshooting.refresh();
         });
