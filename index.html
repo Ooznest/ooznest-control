@@ -14,8 +14,8 @@
     <link id="theme-stylesheet" rel="stylesheet" href="themes/ooznest.css">
     <!-- Vendor fonts & icons (deferred — not critical for first paint) -->
     <link rel="stylesheet" href="vendor/google-fonts.css" media="print" onload="this.media='all'; this.onload=null">
-    <link rel="stylesheet" href="vendor/bootstrap-icons.css" media="print" onload="this.media='all'; this.onload=null">
-    <noscript><link rel="stylesheet" href="vendor/google-fonts.css"><link rel="stylesheet" href="vendor/bootstrap-icons.css"></noscript>
+    <script src="vendor/lucide.js"></script>
+    <noscript><link rel="stylesheet" href="vendor/google-fonts.css"></noscript>
     <!-- xterm CSS (local vendor copy) -->
     <link rel="stylesheet" href="vendor/xterm.css" media="print" onload="this.media='all'; this.onload=null">
     <noscript><link rel="stylesheet" href="vendor/xterm.css"></noscript>
@@ -92,12 +92,12 @@
         </div>
         <div class="flex items-center window-no-drag">
             <button class="w-11 h-10 flex items-center justify-center hover:bg-white/10 transition-colors"
-                title="Minimize" onclick="window.electron.minimize()"><i class="bi bi-dash-lg"></i></button>
+                title="Minimize" onclick="window.electron.minimize()"><i data-lucide="minus" ></i></button>
             <button class="w-11 h-10 flex items-center justify-center hover:bg-white/10 transition-colors"
-                title="Maximize/Restore" onclick="window.electron.maximize()"><i class="bi bi-app"></i></button>
+                title="Maximize/Restore" onclick="window.electron.maximize()"><i data-lucide="copy" ></i></button>
             <button
                 class="w-11 h-10 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
-                title="Close" onclick="window.electron.close()"><i class="bi bi-x-lg"></i></button>
+                title="Close" onclick="window.electron.close()"><i data-lucide="x" ></i></button>
         </div>
     </div>
 
@@ -115,24 +115,41 @@
                 <div id="sidebar-connect" class="shadow-sm flex gap-1 items-stretch">
                     <button class="md:hidden btn bg-grey-light text-grey-dark" onclick="toggleMachineSidebar()"
                         aria-label="Toggle machine sidebar">
-                        <i class="bi bi-list text-xl"></i>
+                        <i data-lucide="menu" class="text-xl"></i>
                     </button>
-                    <button id="btn-reset" class="btn flex-1 shadow-sm" onclick="sendRealtimeWithToast('\x18', 'Reset sent', 'arrow-clockwise')" title="Soft Reset"
+                    <button id="btn-reset" class="btn flex-1 shadow-sm" onclick="sendRealtimeWithToast('\x18', 'Reset sent', 'refresh-cw')" title="Soft Reset"
                         disabled>
-                        <i class="bi bi-exclamation-octagon-fill"></i>Reset
+                        <i data-lucide="octagon-alert" ></i>Reset
                     </button>
                     <button id="btn-connect" class="btn btn-primary flex-1 shadow-sm">Connect</button>
+                    <button class="btn shadow-sm flex-1 !bg-amber-900/20 !text-amber-400 !border-amber-700/30 hover:!bg-amber-900/30"
+                        onclick="sendCmdWithToast('$X', 'Unlock sent', 'unlock')" title="Unlock ($X)">
+                        <i data-lucide="unlock" style="width:12px;height:12px"></i> Unlock
+                    </button>
                 </div>
 
                 <!-- DRO Panel -->
                 <div class="dro-panel">
+                    <!-- Status Row: machine state + accessory toggles -->
+                    <div class="flex items-center justify-between px-1 pb-1.5 border-b border-white/10 mb-1.5">
+                        <span id="machine-state" class="machine-status-pill text-center">Unknown</span>
+                        <div class="flex items-center gap-2">
+                            <i id="acc-spindle" data-lucide="fan" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
+                                title="Spindle" onclick="window.dro.toggleAccessory('S')" style="width:14px;height:14px"></i>
+                            <i id="acc-flood" data-lucide="droplet" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
+                                title="Toggle Flood Coolant" onclick="window.dro.toggleAccessory('F')" style="width:14px;height:14px"></i>
+                            <i id="acc-mist" data-lucide="cloud-fog" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
+                                title="Toggle Mist Coolant" onclick="window.dro.toggleAccessory('M')" style="width:14px;height:14px"></i>
+                        </div>
+                    </div>
+
                     <!-- Header: WCS & Units -->
                     <div class="flex justify-between items-center mb-1 px-1">
 
                         <!-- Units Toggle (Segmented) -->
-                        <label class="oz-segmented-toggle" for="unitToggle">
+                        <label class="oz-segmented-toggle h-7" for="unitToggle">
                             <input type="checkbox" id="unitToggle" class="sr-only" onchange="window.dro.toggleUnits();">
-                            <div class="oz-segmented-bg">
+                            <div class="oz-segmented-bg h-full">
                                 <div class="oz-segmented-slider"></div>
                                 <span class="oz-segmented-option left-opt">MM</span>
                                 <span class="oz-segmented-option right-opt">IN</span>
@@ -140,10 +157,10 @@
                         </label>
 
                         <!-- WCS Select -->
-                        <div class="flex items-center gap-2 bg-white/10 rounded px-2 py-0 shadow-sm">
-                            <span class="text-xs font-black text-white/90 uppercase">WCS</span>
+                        <div class="flex items-center gap-1.5 bg-white/10 rounded px-2 py-0 shadow-sm h-7 min-w-0">
+                            <span class="text-[10px] font-black text-white/90 uppercase leading-none">WCS</span>
                             <select
-                                class="text-xs font-bold text-secondary-dark bg-transparent outline-none cursor-pointer py-0.5"
+                                class="text-xs font-bold text-secondary-dark bg-transparent outline-none cursor-pointer py-0 min-w-0"
                                 onchange="window.dro.setWCS(this.value)" aria-label="Work Coordinate System">
                                 <option value="G54" selected>G54</option>
                                 <option value="G55">G55</option>
@@ -156,8 +173,6 @@
 
 
                     </div>
-
-                    <!-- Accessories Status (Moved to Footer) -->
 
                     <!-- Column Headers -->
                     <div class="dro-card dro-header-row">
@@ -178,7 +193,7 @@
                     <div class="dro-card border-l-4 border-l-axis-x">
                         <button id="homing-btn-x" class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('X')" title="Home X">
-                            <i class="bi bi-house-door-fill"></i> Home X
+                            <i data-lucide="home" ></i> Home X
                         </button>
                         <div class="dro-label-box">
                             <span>X</span>
@@ -199,7 +214,7 @@
                     <div class="dro-card border-l-4 border-l-axis-y">
                         <button id="homing-btn-y" class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('Y')" title="Home Y">
-                            <i class="bi bi-house-door-fill"></i> Home Y
+                            <i data-lucide="home" ></i> Home Y
                         </button>
                         <div class="dro-label-box">
                             <span>Y</span>
@@ -220,7 +235,7 @@
                     <div class="dro-card border-l-4 border-l-axis-z">
                         <button id="homing-btn-z" class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('Z')" title="Home Z">
-                            <i class="bi bi-house-door-fill"></i> Home Z
+                            <i data-lucide="home" ></i> Home Z
                         </button>
                         <div class="dro-label-box">
                             <span>Z</span>
@@ -241,7 +256,7 @@
                     <div class="dro-row hidden dro-card border-l-4 border-l-axis-a">
                         <button id="homing-btn-a" class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('A')" title="Home A">
-                            <i class="bi bi-house-door-fill"></i> Home A
+                            <i data-lucide="home" ></i> Home A
                         </button>
                         <div class="dro-label-box">
                             <span>A</span>
@@ -261,40 +276,26 @@
 
 
                     <!-- Footer Actions -->
-                    <div class="grid grid-cols-4 gap-2 mt-2 pt-0">
-                        <div class="col-span-1 flex flex-col gap-1 items-center justify-center">
-                            <span id="machine-state" class="machine-status-pill w-full text-center">Unknown</span>
-                            <!-- Icons Moved Here -->
-                            <div class="flex justify-center gap-3">
-                                <i id="acc-spindle" class="bi bi-fan text-[#B0CACF] text-xs transition-colors"
-                                    title="Spindle"></i>
-                                <i id="acc-flood" class="bi bi-droplet-fill text-[#B0CACF] text-xs transition-colors"
-                                    title="Flood Coolant"></i>
-                                <i id="acc-mist" class="bi bi-cloud-haze-fill text-[#B0CACF] text-xs transition-colors"
-                                    title="Mist Coolant"></i>
-                            </div>
-                        </div>
-                        <div class="col-span-3 flex gap-1">
-                            <button id="home-all-btn" class="dro-sub-btn px-1 flex-col shadow-sm" onclick="window.dro.home()" aria-label="Home all axes">
-                                <i class="bi bi-house-door-fill"></i> <span>HOME</span>
-                            </button>
-                            <button class="dro-sub-btn px-1 shadow-sm" onclick="window.dro.setZero('XYZ')">
-                                SET ZERO ALL
-                            </button>
-                            <button class="dro-sub-btn px-1 shadow-sm" onclick="window.dro.goXY0()">
-                                GO TO XY ZERO
-                            </button>
-                            <button class="dro-sub-btn px-1 shadow-sm" onclick="window.dro.goZ0()">
-                                GO TO Z ZERO
-                            </button>
-                        </div>
+                    <div class="flex gap-1 mt-2 pt-0">
+                        <button id="home-all-btn" class="dro-sub-btn px-1 flex-col shadow-sm flex-1" onclick="window.dro.home()" aria-label="Home all axes">
+                            <i data-lucide="home" style="width:12px;height:12px"></i> <span>HOME</span>
+                        </button>
+                        <button class="dro-sub-btn px-1 shadow-sm flex-1" onclick="window.dro.setZero('XYZ')">
+                            SET ZERO ALL
+                        </button>
+                        <button class="dro-sub-btn px-1 shadow-sm flex-1" onclick="window.dro.goXY0()">
+                            GO TO XY ZERO
+                        </button>
+                        <button class="dro-sub-btn px-1 shadow-sm flex-1" onclick="window.dro.goZ0()">
+                            GO TO Z ZERO
+                        </button>
                     </div>
 
                     <!-- Overrides (merged into DRO card) -->
                     <div class="mt-2 pt-2 border-t border-white/20 flex flex-col gap-1">
                         <div class="flex items-center justify-between text-[10px]">
                             <div class="flex items-center gap-1.5 font-bold text-white/80 uppercase tracking-wide">
-                                <i class="bi bi-fan"></i>
+                                <i data-lucide="fan" ></i>
                                 <span>Spindle</span>
                             </div>
                             <div class="flex gap-1 items-center">
@@ -310,7 +311,7 @@
                         </div>
                         <div class="flex items-center justify-between text-[10px]">
                             <div class="flex items-center gap-1.5 font-bold text-white/80 uppercase tracking-wide">
-                                <i class="bi bi-speedometer2"></i>
+                                <i data-lucide="gauge" ></i>
                                 <span>Feed</span>
                             </div>
                             <div class="flex gap-1 items-center">
@@ -326,7 +327,7 @@
                         </div>
                         <div class="flex items-center justify-between text-[10px]">
                             <div class="flex items-center gap-1.5 font-bold text-white/80 uppercase tracking-wide">
-                                <i class="bi bi-lightning-fill"></i>
+                                <i data-lucide="zap" ></i>
                                 <span>Rapids</span>
                             </div>
                             <div class="flex gap-1 items-center">
@@ -353,47 +354,42 @@
                         <div class="jog-pad">
                             <!-- Row 1 -->
                             <button class="jog-btn rounded-tl-xl" data-jog="X-Y+" aria-label="Jog X minus Y plus"><i
-                                    class="bi bi-arrow-up-left"></i></button>
+                                    data-lucide="arrow-up-left" ></i></button>
 
                             <!-- Y+ -->
                             <button class="jog-btn" data-jog="Y+" aria-label="Jog Y plus"><i
-                                    class="bi bi-caret-up-fill text-2xl"></i></button>
+                                    data-lucide="chevron-up" ></i></button>
 
                             <button class="jog-btn rounded-tr-xl" data-jog="X+Y+" aria-label="Jog X plus Y plus"><i
-                                    class="bi bi-arrow-up-right"></i></button>
+                                    data-lucide="arrow-up-right" ></i></button>
 
                             <!-- Row 2 -->
                             <!-- X- -->
                             <button class="jog-btn" data-jog="X-" aria-label="Jog X minus"><i
-                                    class="bi bi-caret-left-fill text-2xl"></i></button>
+                                    data-lucide="chevron-left" ></i></button>
 
                             <div class="w-12 h-12 flex items-center justify-center">
-                                <i class="bi bi-dpad-fill text-2xl text-white opacity-80"></i>
+                                <i data-lucide="crosshair" class="text-2xl text-white opacity-80"></i>
                             </div>
 
                             <!-- X+ -->
                             <button class="jog-btn" data-jog="X+" aria-label="Jog X plus"><i
-                                    class="bi bi-caret-right-fill text-2xl"></i></button>
+                                    data-lucide="chevron-right" ></i></button>
 
                             <!-- Row 3 -->
                             <button class="jog-btn rounded-bl-xl" data-jog="X-Y-" aria-label="Jog X minus Y minus"><i
-                                    class="bi bi-arrow-down-left"></i></button>
+                                    data-lucide="arrow-down-left" ></i></button>
 
                             <!-- Y- -->
                             <button class="jog-btn" data-jog="Y-" aria-label="Jog Y minus"><i
-                                    class="bi bi-caret-down-fill text-2xl"></i></button>
+                                    data-lucide="chevron-down" ></i></button>
 
                             <button class="jog-btn rounded-br-xl" data-jog="X+Y-" aria-label="Jog X plus Y minus"><i
-                                    class="bi bi-arrow-down-right"></i></button>
+                                    data-lucide="arrow-down-right" ></i></button>
                         </div>
 
-                        <!-- Right Column: Unlock + Z & A, CONTINUOUS -->
+                        <!-- Right Column: Z & A, CONTINUOUS -->
                         <div class="flex flex-col gap-2 w-28">
-                            <!-- Unlock Button -->
-                    <button class="w-full h-9 md:h-8 text-xs justify-center !bg-amber-900/20 !text-amber-400/30 !border-amber-700/20 !opacity-100"
-                        onclick="sendCmdWithToast('$X', 'Unlock sent', 'unlock-fill')" title="Unlock ($X)"><i class="bi bi-unlock-fill"></i>
-                        Unlock</button>
-
                             <!-- Z & A Buttons -->
                             <div class="flex gap-1.5 justify-center">
                                 <!-- Z Pad (Blue) -->
@@ -418,7 +414,7 @@
                                 <div class="oz-segmented-bg">
                                     <div class="oz-segmented-slider"></div>
                                     <span class="oz-segmented-option left-opt">INCR</span>
-                                    <span class="oz-segmented-option right-opt">CONT</span>
+                                    <span class="oz-segmented-option right-opt" title="Continuous jog mode">CONT</span>
                                 </div>
                             </label>
                         </div>
@@ -448,17 +444,22 @@
 
             </div> <!-- End Machine Controls (id="machine-controls") -->
 
-            <!-- Console (Light Mode) -->
+            <!-- Console (Light Mode) - Collapsible -->
             <div class="console-outer flex flex-col mb-0">
-                <div class="console-wrapper">
-                    <div id="terminal-container" class="w-full flex-1"></div>
+                <div class="flex items-center justify-between px-2 py-1 bg-white/5 border-t border-white/10 shrink-0 cursor-pointer"
+                    onclick="toggleConsole()" title="Toggle console">
+                    <span class="text-[10px] font-bold text-white/70 uppercase tracking-wider">G-Code</span>
+                    <i data-lucide="chevron-down" id="console-toggle-icon" style="width:12px;height:12px" class="text-white/50 transition-transform duration-200"></i>
+                </div>
+                <div id="console-collapse" class="console-wrapper flex flex-col min-h-0 overflow-hidden transition-all duration-200">
+                    <div id="terminal-container" class="w-full flex-1 min-h-0"></div>
                     <!-- Console Input -->
                     <div id="console-input-area"
                         class="flex gap-2 mt-2 opacity-50 pointer-events-none transition-opacity duration-200">
                         <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
-                        <button id="btnSend" aria-label="Send G-Code"><i class="bi bi-send-fill text-[12px]"></i></button>
+                        <button id="btnSend" aria-label="Send G-Code"><i data-lucide="send" class="text-[12px]"></i></button>
                         <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
-                            class="text-grey hover:text-red-500 transition-colors"><i class="bi bi-trash3 text-[12px]"></i></button>
+                            class="text-grey hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="text-[12px]"></i></button>
                     </div>
                 </div>
             </div>
@@ -478,7 +479,7 @@
                     <button
                         class="md:hidden h-full px-4 text-primary hover:text-secondary border-r border-grey-light flex items-center justify-center transition-colors bg-white"
                         onclick="toggleMachineSidebar()" aria-label="Toggle machine controls">
-                        <i class="bi bi-list text-xl"></i>
+                        <i data-lucide="menu" class="text-xl"></i>
                     </button>
 
                     <div class="flex items-center gap-2 pl-1 md:pl-8 h-full pr-1">
@@ -492,7 +493,7 @@
                     <button
                         class="h-full px-2 text-grey hover:text-grey-dark flex items-center justify-center transition-colors mobile-only"
                         onclick="scrollTabs('left')" aria-label="Scroll tabs left">
-                        <i class="bi bi-chevron-left text-xs"></i>
+                        <i data-lucide="chevron-left" class="text-xs"></i>
                     </button>
 
                 <!-- Scrollable Tabs Container -->
@@ -517,7 +518,7 @@
                     <button
                         class="h-full px-2 text-grey hover:text-grey-dark flex items-center justify-center transition-colors border-r border-grey-light mobile-only"
                         onclick="scrollTabs('right')" aria-label="Scroll tabs right">
-                        <i class="bi bi-chevron-right text-xs"></i>
+                        <i data-lucide="chevron-right" class="text-xs"></i>
                     </button>
 
             </div>
@@ -574,18 +575,18 @@
                         <div class="relative" id="open-file-dropdown">
                             <button class="overlay-btn !bg-primary !text-white hover:!bg-primary-dark shadow-xl cursor-pointer z-[100]"
                                 onclick="toggleOpenFileDropdown()">
-                                <i class="bi bi-folder2-open text-lg"></i> Open File
+                                <i data-lucide="folder-open" class="text-lg"></i> Open File
                             </button>
                             <div class="absolute left-0 top-full mt-1 w-72 bg-white rounded-lg shadow-xl border border-grey-light hidden z-[100] overflow-hidden">
                                 <button class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
                                     onclick="document.getElementById('gcode-file-input').click(); closeOpenFileDropdown();">
-                                    <i class="bi bi-laptop text-lg" style="color:#FF6600"></i>
+                                    <i data-lucide="laptop" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Open File from Computer</span><br><span class="text-[11px] text-grey">Browse files on this device</span></span>
                                 </button>
                                 <div class="border-t border-grey-light"></div>
                                 <button class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
                                     onclick="switchTab('sd-view'); closeOpenFileDropdown();">
-                                    <i class="bi bi-sd-card-fill text-lg" style="color:#FF6600"></i>
+                                    <i data-lucide="sd-card" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Open File from SD Card</span><br><span class="text-[11px] text-grey">Browse files on the controller</span></span>
                                 </button>
                             </div>
@@ -597,42 +598,50 @@
                         <!-- Job control button group -->
                         <div class="relative" id="run-job-btn">
                             <button class="overlay-btn !bg-primary !text-white" onclick="toggleRunJobDropdown()">
-                                <i class="bi bi-play-fill text-lg"></i> Run Job
+                                <i data-lucide="play" class="text-lg"></i> Run Job
                             </button>
                             <div class="absolute right-0 top-full mt-1 w-72 bg-white rounded-lg shadow-xl border border-grey-light hidden z-[100] overflow-hidden">
                                 <button class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
                                     onclick="closeRunJobDropdown(); runCurrentJob();">
-                                    <i class="bi bi-play-fill text-lg" style="color:#FF6600"></i>
+                                    <i data-lucide="play" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Run (Streaming)</span><br><span id="run-job-streaming-description" class="text-[11px] text-grey">Stream lines directly from your browser</span></span>
                                 </button>
                                 <div class="border-t border-grey-light"></div>
                                 <button id="run-job-sd-option" class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
                                     onclick="closeRunJobDropdown(); runJobFromSD();">
-                                    <i class="bi bi-sd-card-fill text-lg" style="color:#FF6600"></i>
+                                    <i data-lucide="sd-card" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Run (From SD Card)</span><br><span class="text-[11px] text-grey">Upload then run from controller SD</span></span>
                                 </button>
                             </div>
                         </div>
                         <div id="job-active-controls" class="hidden flex gap-1.5">
                             <button id="pause-job-btn" class="overlay-btn !bg-yellow-100 !text-yellow-800 flex-1" onclick="pauseJob()">
-                                <i class="bi bi-pause-fill text-lg"></i> Pause
+                                <i data-lucide="pause" class="text-lg"></i> Pause
                             </button>
                             <button id="stop-job-btn" class="overlay-btn !bg-red-100 !text-red-800 flex-1" onclick="stopJob()">
-                                <i class="bi bi-stop-fill text-lg"></i> Stop
+                                <i data-lucide="square" class="text-lg"></i> Stop
                             </button>
                         </div>
                         <button class="overlay-btn" onclick="resetCamera()">
-                            <i class="bi bi-camera-video-fill text-secondary"></i> Reset
+                            <i data-lucide="video" class="text-secondary"></i> Reset
                         </button>
                         <button class="overlay-btn" onclick="toggleCamera()" id="cam-toggle-btn">
-                            <i class="bi bi-eye-fill text-secondary"></i> Perspective
+                            <i data-lucide="eye" class="text-secondary"></i> Perspective
                         </button>
                         <button class="overlay-btn" onclick="toggleGridMode()" id="grid-toggle-btn">
-                            <i class="bi bi-grid-3x3 text-secondary"></i> Grid: Machine
+                            <i data-lucide="grid-3x3" class="text-secondary"></i> Grid: Machine
                         </button>
                         <button class="overlay-btn" onclick="openEndmillSetup()" id="endmill-setup-btn">
-                            <i class="bi bi-tools text-secondary"></i> Endmill
+                            <i data-lucide="wrench" class="text-secondary"></i> Endmill
                         </button>
+                    </div>
+
+                    <!-- Camera mode indicator (bottom right) -->
+                    <div id="camera-mode-badge"
+                        class="hidden absolute bottom-6 right-6 bg-black/60 backdrop-blur rounded-lg px-2.5 py-1.5 shadow-lg flex items-center gap-1.5 pointer-events-none"
+                        style="z-index:26">
+                        <i data-lucide="lock" style="width:11px;height:11px" class="text-amber-400"></i>
+                        <span class="text-[10px] font-bold text-white/90">Locked on Bit</span>
                     </div>
 
                     <!-- Stats & Info (Bottom Left) -->
@@ -653,14 +662,14 @@
                             class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light p-3 shadow-lg pointer-events-auto w-72">
                             <div class="flex items-center justify-between gap-1.5 mb-2">
                                 <div class="flex items-center gap-1.5 truncate">
-                                    <i class="bi bi-file-earmark-code-fill text-teal-600 text-xs shrink-0" id="stats-file-icon"></i>
-                                    <i class="bi bi-sd-card-fill text-xs shrink-0 hidden" id="stats-sd-icon" style="color:#FF6600"></i>
+                                    <i data-lucide="file-code" class="text-teal-600 text-xs shrink-0" id="stats-file-icon"></i>
+                                    <i data-lucide="sd-card" class="text-xs shrink-0 hidden" id="stats-sd-icon" style="color:#FF6600"></i>
                                     <span id="viewer-file-name"
                                         class="text-secondary-dark font-bold text-xs truncate leading-none">No file
                                         loaded</span>
                                 </div>
-                                <button class="text-grey hover:text-secondary-dark text-xs shrink-0 p-0.5" onclick="toggleGcodeStats()" title="Close stats" id="stats-close-btn">
-                                    <i class="bi bi-x-lg"></i>
+                                <button class="text-grey hover:text-secondary-dark text-xs shrink-0 p-0.5" onclick="toggleGcodeStats()" title="Minimise stats" id="stats-close-btn">
+                                    <i data-lucide="minus" ></i>
                                 </button>
                             </div>
                             <div class="grid grid-cols-2 gap-2 text-[11px]">
@@ -684,7 +693,7 @@
                         <button id="stats-reopen-btn"
                             class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light shadow-lg pointer-events-auto px-3 py-2 text-xs font-bold text-secondary-dark hover:bg-white transition-colors items-center gap-2"
                             onclick="toggleGcodeStats()">
-                            <i class="bi bi-bar-chart-fill text-secondary"></i> Show Stats
+                            <i data-lucide="bar-chart-3" class="text-secondary"></i> Show Stats
                         </button>
                     </div>
                 </div>
@@ -693,7 +702,7 @@
                 <div id="endmill-modal-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1200] hidden flex items-center justify-center">
                     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 border border-grey-light max-h-[90vh] flex flex-col">
                         <div class="px-5 py-3 border-b border-grey-light flex items-center justify-between bg-grey-bg shrink-0">
-                            <h3 class="font-bold text-sm text-secondary-dark"><i class="bi bi-tools mr-2"></i>Endmill Setup</h3>
+                            <h3 class="font-bold text-sm text-secondary-dark"><i data-lucide="wrench" class="mr-2"></i>Endmill Setup</h3>
                             <button onclick="closeEndmillSetup()" class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
                         </div>
                         <div class="p-5 overflow-y-auto space-y-4 text-sm">
@@ -781,7 +790,7 @@
                             </div>
                         </div>
                         <div class="px-5 py-3 border-t border-grey-light flex justify-end bg-grey-bg shrink-0">
-                            <button onclick="closeEndmillSetup()" class="px-4 py-2 rounded-lg text-sm font-bold bg-white border border-grey-light text-grey-dark hover:text-black transition-colors">Close</button>
+                            <button onclick="closeEndmillSetup(); if(window.lucide)lucide.createIcons();" class="px-4 py-2 rounded-lg text-sm font-bold bg-white border border-grey-light text-grey-dark hover:text-black transition-colors">Apply</button>
                         </div>
                     </div>
                 </div>
@@ -797,7 +806,7 @@
                                 <div class="flex items-center gap-2 overflow-hidden">
                                     <h2
                                         class="text-xs md:text-sm font-bold text-secondary-dark uppercase tracking-wider flex items-center gap-1 shrink-0">
-                                        <i class="bi bi-code-square"></i> <span class="hidden sm:inline">G-Code
+                                        <i data-lucide="square-code" ></i> <span class="hidden sm:inline">G-Code
                                             Editor</span>
                                     </h2>
                                     <span id="editor-file-name"
@@ -808,17 +817,17 @@
                                 <div class="flex gap-1.5 md:gap-2 shrink-0">
                                     <button class="btn btn-secondary text-xs h-8 px-2 md:px-3"
                                         onclick="applyEditorChanges()" title="Update Preview">
-                                        <i class="bi bi-play-circle-fill text-primary-dark"></i>
+                                        <i data-lucide="play-circle" class="text-primary-dark"></i>
                                         <span class="hidden md:inline">Update Preview</span>
                                     </button>
                                     <button class="btn btn-secondary text-xs h-8 px-2 md:px-3"
                                         onclick="downloadFromEditor()" title="Save to PC">
-                                        <i class="bi bi-download"></i>
+                                        <i data-lucide="download" ></i>
                                         <span class="hidden md:inline">Save to PC</span>
                                     </button>
                                     <button class="btn btn-primary text-xs h-8 px-2 md:px-3"
                                         onclick="uploadEditorToSD()" title="Upload to SD">
-                                        <i class="bi bi-sd-card-fill"></i>
+                                        <i data-lucide="sd-card" ></i>
                                         <span class="hidden md:inline">Upload to SD</span>
                                     </button>
                                 </div>
@@ -847,13 +856,13 @@
                                 class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i class="bi bi-lightning-charge-fill"></i> Custom Macros
+                                        <i data-lucide="zap" ></i> Custom Macros
                                     </h2>
                                     <p class="text-sm text-grey">Quickly execute predefined G-code sequences.</p>
                                 </div>
                                 <button class="btn btn-secondary shadow-soft w-full md:w-auto"
                                     onclick="window.macroHandler.openModal(null)">
-                                    <i class="bi bi-plus-lg"></i> Create New
+                                    <i data-lucide="plus" ></i> Create New
                                 </button>
                             </div>
 
@@ -874,7 +883,7 @@
                                 class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i class="bi bi-sd-card-fill"></i> SD Card
+                                        <i data-lucide="sd-card" ></i> SD Card
                                     </h2>
                                     <p class="text-sm text-grey">Manage files stored on your controller.</p>
                                 </div>
@@ -883,15 +892,15 @@
                                     class="flex gap-2 w-full md:w-auto transition-opacity duration-200">
                                     <button class="btn btn-primary shadow-soft flex-1 md:flex-initial"
                                         onclick="document.getElementById('sd-upload-input').click()">
-                                        <i class="bi bi-cloud-upload-fill"></i> Upload
+                                        <i data-lucide="cloud-upload" ></i> Upload
                                     </button>
                                     <button class="btn btn-secondary shadow-soft flex-1 md:flex-initial"
                                         onclick="window.sdHandler.refresh()">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                        <i data-lucide="refresh-cw" ></i> Refresh
                                     </button>
                                     <button class="btn btn-danger shadow-soft flex-1 md:flex-initial"
                                         onclick="window.sdHandler.format()">
-                                        <i class="bi bi-exclamation-triangle-fill"></i> Format
+                                        <i data-lucide="triangle-alert" ></i> Format
                                     </button>
                                 </div>
                                 <input type="file" id="sd-upload-input" hidden>
@@ -902,7 +911,7 @@
                                 class="bg-white border border-grey-light rounded-lg p-3 mb-4 flex items-center gap-3 shadow-card opacity-50 pointer-events-none transition-opacity duration-200 overflow-hidden">
                                 <button class="btn-icon text-grey-dark shrink-0" onclick="window.sdHandler.upLevel()"
                                     aria-label="Go up one directory level">
-                                    <i class="bi bi-arrow-90deg-up"></i>
+                                    <i data-lucide="corner-up-left" ></i>
                                 </button>
                                 <span class="text-grey-light shrink-0">|</span>
                                 <span id="sd-current-path"
@@ -943,7 +952,7 @@
                                 class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i class="bi bi-tools"></i> Tools & Calibration
+                                        <i data-lucide="wrench" ></i> Tools & Calibration
                                     </h2>
                                     <p class="text-sm text-grey">Manage tool library, machine offsets, and calibration.
                                     </p>
@@ -991,11 +1000,11 @@
                                 <div class="flex justify-end gap-2 mb-4">
                                     <button class="btn btn-secondary shadow-soft text-xs"
                                         onclick="window.toolsHandler.refresh()">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh Table ($#)
+                                        <i data-lucide="refresh-cw" ></i> Refresh Table ($#)
                                     </button>
                                     <button class="btn btn-secondary shadow-soft text-xs"
                                         onclick="window.ws.sendCommand('M6')">
-                                        <i class="bi bi-tools"></i> Test M6
+                                        <i data-lucide="wrench" ></i> Test M6
                                     </button>
                                 </div>
 
@@ -1076,7 +1085,7 @@
                                                     <button class="btn btn-secondary h-[42px] px-3"
                                                         onclick="window.toolsHandler.setFromCurrent('Z')"
                                                         title="Teach Z from Machine Position">
-                                                        <i class="bi bi-geo-alt-fill"></i> Teach
+                                                        <i data-lucide="map-pin" ></i> Teach
                                                     </button>
                                                 </div>
                                                 <div class="flex items-end gap-2">
@@ -1113,12 +1122,12 @@
                                                 class="flex flex-col justify-between bg-white p-4 rounded-xl border border-grey-light">
                                                 <div class="space-y-3">
                                                     <p class="text-xs text-grey font-bold uppercase"><i
-                                                            class="bi bi-info-circle-fill"></i> Description</p>
+                                                            data-lucide="info" ></i> Description</p>
                                                     <textarea id="edit-tool-desc"
                                                         class="input-field h-16 resize-none text-xs"
                                                         placeholder="Endmill, Ballnose, etc..."></textarea>
                                                     <p class="text-[10px] text-grey leading-tight">
-                                                        <i class="bi bi-info-circle"></i>
+                                                        <i data-lucide="info" ></i>
                                                         For <strong>manual tool change</strong>, use the TLO buttons in the MTC modal
                                                         (Set Ref + Measure) instead of managing Z offsets here.
                                                         This tool table is primarily for ATC workflows.
@@ -1127,7 +1136,7 @@
                                                 <button
                                                     class="btn btn-primary h-14 text-base shadow-md w-full mt-6 justify-center"
                                                     onclick="window.toolsHandler.saveTool()">
-                                                    <i class="bi bi-save-fill"></i> Save Tool (G10 L1)
+                                                    <i data-lucide="save" class="-fill"></i> Save Tool (G10 L1)
                                                 </button>
                                             </div>
                                         </div>
@@ -1141,7 +1150,7 @@
                                     <!-- Initial State -->
                                     <div id="cal-step-intro" class="bg-white p-8 rounded-xl border border-grey-light shadow-soft text-center">
                                         <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <i class="bi bi-bullseye text-4xl text-primary"></i>
+                                            <i data-lucide="crosshair" class="text-4xl text-primary"></i>
                                         </div>
                                         <h3 class="text-2xl font-black text-secondary-dark mb-2">Machine Calibration</h3>
                                         <p class="text-grey max-w-2xl mx-auto mb-8">Choose a calibration method for the axis you want to tune. Measured Travel works for X, Y, and Z. Vernier remains available for fine X/Y tuning with a cut scale.</p>
@@ -1212,7 +1221,7 @@
                                                     <p id="cal-setup-step-3" class="text-grey-dark pt-1">Jog to the starting position on the scrap material and <strong>Zero the Z Axis</strong> on the surface.</p>
                                                 </div>
                                                 <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
-                                                    <i class="bi bi-exclamation-triangle-fill text-yellow-600 text-xl"></i>
+                                                    <i data-lucide="triangle-alert" class="text-yellow-600 text-xl"></i>
                                                     <p id="cal-setup-warning" class="text-xs text-yellow-800">Ensure there is enough travel in the <span class="cal-axis-name">X</span> direction (approx 100mm) from the current position.</p>
                                                 </div>
                                             </div>
@@ -1241,13 +1250,13 @@
                                         </div>
                                         <div class="p-12 text-center">
                                             <div class="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                                                <i class="bi bi-play-fill text-5xl text-orange-500"></i>
+                                                <i data-lucide="play" class="text-5xl text-orange-500"></i>
                                             </div>
                                             <h4 id="cal-step2-heading" class="text-xl font-bold text-secondary-dark mb-4">Ready to cut?</h4>
                                             <p id="cal-step2-desc" class="text-grey max-w-md mx-auto mb-8">The machine will now cut 100 lines spaced 0.9mm apart. This will take approximately 2 minutes.</p>
 
                                             <div id="cal-cut-spindle-warning" class="bg-red-50 border border-red-100 p-4 rounded-lg mb-8 max-w-md mx-auto flex items-center gap-3 text-left">
-                                                <i class="bi bi-fan text-red-500 text-2xl animate-spin"></i>
+                                                <i data-lucide="fan" class="text-red-500 text-2xl animate-spin"></i>
                                                 <div>
                                                     <p class="text-xs font-black text-red-800 uppercase">Warning</p>
                                                     <p class="text-xs text-red-700">Please ensure your <strong>spindle is turned ON</strong> before clicking Start Cut.</p>
@@ -1285,7 +1294,7 @@
                                         <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-12">
                                             <div>
                                                 <h4 id="cal-measure-title" class="font-bold text-secondary-dark mb-4 flex items-center gap-2">
-                                                    <i class="bi bi-info-circle-fill text-primary"></i> How to Read
+                                                    <i data-lucide="info" class="-fill text-primary"></i> How to Read
                                                 </h4>
                                                 <div id="cal-measure-vernier-help" class="space-y-4 text-sm text-grey-dark leading-relaxed">
                                                     <p>1. Place a <strong>standard steel ruler</strong> against the cut marks, aligning the <strong>0 mark</strong> of the ruler with the <strong>first cut mark</strong>.</p>
@@ -1367,7 +1376,7 @@
                                             </div>
 
                                             <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl mb-8 flex items-start gap-4">
-                                                <i class="bi bi-info-circle-fill text-blue-500 text-2xl"></i>
+                                                <i data-lucide="info" class="-fill text-blue-500 text-2xl"></i>
                                                 <div class="text-sm text-blue-800 leading-relaxed">
                                                     <p class="font-bold mb-1">Verification</p>
                                                     <p>Applying this change will update your machine's <strong>$<span id="cal-setting-num">100</span></strong> setting. <span id="cal-result-verify-tail">It is recommended to perform a test cut after applying to verify the accuracy.</span></p>
@@ -1384,17 +1393,17 @@
                                     <!-- Step: Done -->
                                     <div id="cal-step-done" class="hidden bg-white p-12 rounded-xl border border-grey-light shadow-soft text-center animate-in fade-in zoom-in duration-300">
                                         <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <i class="bi bi-check-lg text-4xl"></i>
+                                            <i data-lucide="check" class="text-4xl"></i>
                                         </div>
                                         <h3 class="text-2xl font-black text-secondary-dark mb-2">Calibration Complete!</h3>
                                         <p id="cal-done-desc" class="text-grey max-w-md mx-auto mb-8">The new steps/mm have been saved to your machine's non-volatile memory. Your <span class="cal-axis-name font-bold">X</span> axis is now perfectly tuned.</p>
 
                                         <div class="flex flex-col sm:flex-row gap-3 justify-center">
                                             <button onclick="window.calibration.cancel()" class="btn btn-primary px-8 h-12 shadow-md">
-                                                <i class="bi bi-arrow-repeat"></i> Calibrate Another Axis
+                                                <i data-lucide="repeat" ></i> Calibrate Another Axis
                                             </button>
                                             <button onclick="window.toolsHandler.switchToolsTab('tab-tool-table', document.querySelector('.tools-tab-btn'))" class="btn btn-secondary px-8 h-12">
-                                                <i class="bi bi-table"></i> Back to Tool Table
+                                                <i data-lucide="table" ></i> Back to Tool Table
                                             </button>
                                         </div>
                                     </div>
@@ -1408,11 +1417,11 @@
                                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                         <div>
                                             <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i
-                                                    class="bi bi-layers-fill"></i> Surfacing Wizard</h2>
+                                                    data-lucide="layers" ></i> Surfacing Wizard</h2>
                                         </div>
                                         <div class="flex gap-2 w-full md:w-auto">
                                             <button class="btn btn-primary shadow-soft w-full"
-                                                onclick="window.surfacing.loadToViewer()"><i class="bi bi-check-lg"></i>
+                                                onclick="window.surfacing.loadToViewer()"><i data-lucide="check" ></i>
                                                 Generate G-Code</button>
                                         </div>
                                     </div>
@@ -1524,13 +1533,13 @@
                                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                         <div>
                                             <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i
-                                                    class="bi bi-grid-3x3-gap-fill"></i> Spoilboard Grid</h2>
+                                                    data-lucide="grid-3x3" ></i> Spoilboard Grid</h2>
                                         </div>
                                         <div class="flex gap-2 w-full md:w-auto">
                                             <button class="btn btn-secondary shadow-soft text-xs"
-                                                onclick="window.spoilboardGrid.autoSpoilboard()"><i class="bi bi-arrows-fullscreen"></i> Auto</button>
+                                                onclick="window.spoilboardGrid.autoSpoilboard()"><i data-lucide="maximize" ></i> Auto</button>
                                             <button class="btn btn-primary shadow-soft w-full"
-                                                onclick="window.spoilboardGrid.generateGrid()"><i class="bi bi-check-lg"></i>
+                                                onclick="window.spoilboardGrid.generateGrid()"><i data-lucide="check" ></i>
                                                 Generate G-Code</button>
                                         </div>
                                     </div>
@@ -1609,10 +1618,10 @@
                                 <div class="w-full">
                                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                         <div>
-                                            <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i class="bi bi-box-seam"></i> Finger Joint Box</h2>
+                                            <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i data-lucide="package" ></i> Finger Joint Box</h2>
                                         </div>
                                         <div class="flex gap-2 w-full md:w-auto">
-                                            <button class="btn btn-primary shadow-soft w-full" onclick="window.fingerJointBox.generate()"><i class="bi bi-check-lg"></i> Generate G-Code</button>
+                                            <button class="btn btn-primary shadow-soft w-full" onclick="window.fingerJointBox.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1639,11 +1648,11 @@
                                         </div>
                                         <div id="fj-sheets-panel" class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                             <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2 flex items-center gap-2">
-                                                <i class="bi bi-layers"></i> Generated Sheets
+                                                <i data-lucide="layers" ></i> Generated Sheets
                                             </h3>
                                             <div id="fj-sheets-list" class="space-y-3 min-h-[200px]">
                                                 <div class="flex flex-col items-center justify-center text-grey py-8">
-                                                    <i class="bi bi-box-seam text-4xl text-grey-light block mb-2"></i>
+                                                    <i data-lucide="package" class="text-4xl text-grey-light block mb-2"></i>
                                                     <p class="text-xs text-center leading-relaxed">Adjust dimensions and tool settings,<br>then click Generate G-Code.</p>
                                                 </div>
                                             </div>
@@ -1657,10 +1666,10 @@
                                 <div class="w-full">
                                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                         <div>
-                                            <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i class="bi bi-circle"></i> Bowl Cutter</h2>
+                                            <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i data-lucide="circle" ></i> Bowl Cutter</h2>
                                         </div>
                                         <div class="flex gap-2 w-full md:w-auto">
-                                            <button class="btn btn-primary shadow-soft w-full" onclick="window.bowlCutter.generate()"><i class="bi bi-check-lg"></i> Generate G-Code</button>
+                                            <button class="btn btn-primary shadow-soft w-full" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1693,7 +1702,7 @@
                                             </div>
                                         </div>
                                         <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft flex items-center justify-center text-grey text-xs">
-                                            <div class="text-center"><i class="bi bi-circle text-5xl text-grey-light block mb-3"></i><p>Bowl cutter generates concentric toolpaths from the center outward.<br>Origin is set to the center of the bowl.</p></div>
+                                            <div class="text-center"><i data-lucide="circle" class="text-5xl text-grey-light block mb-3"></i><p>Bowl cutter generates concentric toolpaths from the center outward.<br>Origin is set to the center of the bowl.</p></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1711,30 +1720,30 @@
                                 class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i class="bi bi-sliders"></i> Machine Settings
+                                        <i data-lucide="sliders-horizontal" ></i> Machine Settings
                                     </h2>
                                     <p class="text-sm text-grey">Configure GrblHAL firmware parameters.</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2 w-full md:w-auto" id="settings-toolbar">
                                     <button class="btn btn-secondary flex-1"
                                         onclick="window.grblSettings.fetchSettings()">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                        <i data-lucide="refresh-cw" ></i> Refresh
                                     </button>
                                     <button class="btn btn-secondary flex-1" onclick="window.grblSettings.backup()">
-                                        <i class="bi bi-download"></i> Backup
+                                        <i data-lucide="download" ></i> Backup
                                     </button>
                                     <button class="btn btn-secondary flex-1"
                                         onclick="document.getElementById('settings-restore-input').click()">
-                                        <i class="bi bi-upload"></i> Restore
+                                        <i data-lucide="upload" ></i> Restore
                                     </button>
                                     <input type="file" id="settings-restore-input" hidden
                                         onchange="window.grblSettings.restore(this.files[0])">
 
                                     <button class="btn btn-primary flex-1 whitespace-nowrap" onclick="window.grblSettings.saveChanges()">
-                                        <i class="bi bi-save"></i> Save
+                                        <i data-lucide="save" ></i> Save
                                     </button>
                                     <button class="btn btn-secondary flex-1" onclick="window.configWizard.showWizard()">
-                                        <i class="bi bi-magic"></i> Wizard
+                                        <i data-lucide="wand" ></i> Wizard
                                     </button>
                                 </div>
                             </div>
@@ -1760,14 +1769,14 @@
                                 class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i class="bi bi-bullseye"></i> Probing
+                                        <i data-lucide="crosshair" ></i> Probing
                                     </h2>
                                     <p class="text-sm text-grey">Tool offsets, edge finding, and alignment.</p>
                                 </div>
                                 <div class="flex gap-2">
                                     <button class="btn btn-secondary shadow-soft"
                                         onclick="window.probeHandler.saveSettings(); window.showToast('Settings saved', 'save')">
-                                        <i class="bi bi-save"></i> Save Settings
+                                        <i data-lucide="save" ></i> Save Settings
                                     </button>
                                 </div>
                             </div>
@@ -1781,7 +1790,7 @@
                                         class="bg-white p-4 rounded-xl border border-grey-light shadow-soft sticky top-4">
                                         <h3
                                             class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
-                                            <i class="bi bi-gear-fill"></i> Probe Config
+                                            <i data-lucide="settings" ></i> Probe Config
                                         </h3>
                                         <div class="space-y-3">
                                             <!-- Probe Mode Toggle -->
@@ -1799,7 +1808,7 @@
                                                     </div>
                                                 </label>
                                                 <div id="probe-config-label" class="hidden mt-1.5 text-[10px] font-bold text-green-600">
-                                                    <i class="bi bi-check-circle-fill text-[9px]"></i> <span id="probe-config-label-text">Plate configured as Ooznest XYZ Probe</span>
+                                                    <i data-lucide="check-circle" class="text-[9px]"></i> <span id="probe-config-label-text">Plate configured as Ooznest XYZ Probe</span>
                                                 </div>
                                             </div>
 
@@ -1876,32 +1885,32 @@
 
                                     <!-- Config Wizard Banner -->
                                     <div id="probe-config-banner" class="mb-3 rounded-lg border text-xs font-bold bg-amber-50 border-amber-200 text-amber-700 p-3 items-center gap-3 flex hidden">
-                                        <i class="bi bi-exclamation-triangle text-base"></i>
+                                        <i data-lucide="triangle-alert" class="text-base"></i>
                                         <span class="flex-1">Config Wizard has not been run — probe settings may be incomplete.</span>
                                         <button class="btn btn-warning !py-1 !px-3 !text-[10px] whitespace-nowrap" onclick="window.configWizard.showWizard()">
-                                            <i class="bi bi-magic"></i> Run Config Wizard
+                                            <i data-lucide="wand" ></i> Run Config Wizard
                                         </button>
                                     </div>
 
                                     <!-- Probe Safety Test Bar -->
                                     <div id="probe-safety-bar" class="mb-3 rounded-lg border text-xs font-bold bg-red-50 border-red-200 text-red-700">
                                         <div class="flex items-center gap-3 p-2">
-                                            <i class="bi bi-shield-exclamation text-base"></i>
+                                            <i data-lucide="shield-alert" class="text-base"></i>
                                             <span id="probe-safety-msg">Probe not tested — test required before any operation</span>
-                                            <span id="probe-safety-status" class="hidden text-green-600 ml-auto"><i class="bi bi-check-circle-fill"></i> Probe OK</span>
+                                            <span id="probe-safety-status" class="hidden text-green-600 ml-auto"><i data-lucide="check-circle" ></i> Probe OK</span>
                                         </div>
                                         <div class="flex gap-2 px-3 pb-4" id="probe-safety-actions">
                                             <button id="probe-test-btn" class="btn btn-primary flex-1 flex flex-col items-center gap-0 !py-2 !px-2 !text-[10px] leading-tight" onclick="window.probeHandler.runProbeTest()">
-                                                <span><i class="bi bi-hand-index-thumb"></i> Test Probe</span>
+                                                <span><i data-lucide="pointer" ></i> Test Probe</span>
                                                 <span class="text-[8px] font-normal opacity-75">Touch endmill to plate</span>
                                             </button>
                                             <button id="probe-skip-btn" class="btn btn-secondary flex-1 flex flex-col items-center gap-0 !py-2 !px-2 !text-[10px] leading-tight" onclick="window.probeHandler.skipSafetyCheck()">
-                                                <span><i class="bi bi-check-lg"></i> Bypass</span>
+                                                <span><i data-lucide="check" ></i> Bypass</span>
                                                 <span class="text-[8px] font-normal opacity-75">I confirm clip is attached</span>
                                             </button>
                                         </div>
                                         <div id="probe-safety-note" class="hidden px-3 pb-2 text-[10px] text-amber-700">
-                                            <i class="bi bi-info-circle"></i> Lift the probe plate and gently touch the endmill to the plate, then release
+                                            <i data-lucide="info" ></i> Lift the probe plate and gently touch the endmill to the plate, then release
                                         </div>
                                     </div>
 
@@ -1975,7 +1984,7 @@
                                                         <div class="flex gap-2 mt-2">
                                                             <button class="btn btn-secondary text-[10px] w-full"
                                                                 onclick="window.probeHandler.setTLOFromMachine()">
-                                                                <i class="bi bi-geo-alt"></i> Get Current Pos
+                                                                <i data-lucide="map-pin" ></i> Get Current Pos
                                                             </button>
                                                         </div>
                                                     </div>
@@ -1989,21 +1998,21 @@
                                                     <button
                                                         class="btn btn-secondary h-auto py-3 flex-col items-center justify-center gap-1 border-2 probe-btn"
                                                         onclick="window.probeHandler.runTLO('reference')">
-                                                        <i class="bi bi-1-circle-fill text-2xl text-primary-dark"></i>
+                                                        <i data-lucide="circle" class="text-2xl text-primary-dark"></i>
                                                         <span class="text-sm font-bold">1. Establish Reference</span>
                                                         <span class="text-[10px] text-white font-normal">Probe First
                                                             Tool</span>
                                                     </button>
 
                                                     <div class="flex items-center justify-center text-grey-light">
-                                                        <i class="bi bi-arrow-down text-xl"></i>
+                                                        <i data-lucide="arrow-down" class="text-xl"></i>
                                                     </div>
 
                                                     <!-- Button 2: Measure (Height set to auto) -->
                                                     <button
                                                         class="btn btn-primary h-auto py-3 flex-col items-center justify-center gap-1 shadow-md probe-btn"
                                                         onclick="window.probeHandler.runTLO('measure')">
-                                                        <i class="bi bi-rulers text-2xl"></i>
+                                                        <i data-lucide="ruler" class="text-2xl"></i>
                                                         <span class="text-sm font-bold">2. Measure New Tool</span>
                                                         <span class="text-[10px] text-white/80 font-normal">Adjusts WCS
                                                             Z
@@ -2028,7 +2037,7 @@
                                                 <!-- Outside Corner -->
                                                 <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
                                                     <div class="flex justify-between items-start mb-2">
-                                                        <h3 class="font-bold text-secondary-dark text-sm"><i class="bi bi-box"></i> Outside Corner</h3>
+                                                        <h3 class="font-bold text-secondary-dark text-sm"><i data-lucide="box" ></i> Outside Corner</h3>
                                                         <span class="text-[9px] text-grey font-bold plate-status-text">Mode: Plate</span>
                                                     </div>
                                                     <p class="text-xs text-grey leading-relaxed mb-3">
@@ -2070,25 +2079,25 @@
                                                             <div class="text-[9px] font-bold text-grey mb-1 text-center">X Axis</div>
                                                             <div class="flex gap-1 justify-center">
                                                                  <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                     onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)"><i class="bi bi-arrow-bar-right text-base"></i><span>Right</span><span>X+</span></button>
+                                                                     onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)"><i data-lucide="chevrons-right" class="text-base"></i><span>Right</span><span>X+</span></button>
                                                                  <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                     onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)"><i class="bi bi-arrow-bar-left text-base"></i><span>Left</span><span>X-</span></button>
+                                                                     onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)"><i data-lucide="chevrons-left" class="text-base"></i><span>Left</span><span>X-</span></button>
                                                             </div>
                                                         </div>
                                                         <div class="flex-1 min-w-[130px] bg-grey-light border border-grey-light/50 rounded-lg p-2">
                                                             <div class="text-[9px] font-bold text-grey mb-1 text-center">Y Axis</div>
                                                             <div class="flex gap-1 justify-center">
                                                                 <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Y', 1)"><i class="bi bi-arrow-bar-up text-base"></i><span>Front</span><span>Y+</span></button>
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Y', 1)"><i data-lucide="chevrons-up" class="text-base"></i><span>Front</span><span>Y+</span></button>
                                                                 <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Y', -1)"><i class="bi bi-arrow-bar-down text-base"></i><span>Back</span><span>Y-</span></button>
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Y', -1)"><i data-lucide="chevrons-down" class="text-base"></i><span>Back</span><span>Y-</span></button>
                                                             </div>
                                                         </div>
                                                         <div class="flex-1 min-w-[130px] bg-grey-light border border-grey-light/50 rounded-lg p-2">
                                                             <div class="text-[9px] font-bold text-grey mb-1 text-center">Z Axis</div>
                                                             <div class="flex gap-1 justify-center">
                                                                 <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)"><i class="bi bi-arrow-bar-down text-base"></i><span>Top</span><span>Z-</span></button>
+                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)"><i data-lucide="chevrons-down" class="text-base"></i><span>Top</span><span>Z-</span></button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2097,11 +2106,11 @@
                                                 <!-- Run Probe -->
                                                 <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
                                                     <div class="flex justify-between items-center mb-2">
-                                                        <h3 class="font-bold text-secondary-dark text-sm"><i class="bi bi-play-fill"></i> Run Probe</h3>
+                                                        <h3 class="font-bold text-secondary-dark text-sm"><i data-lucide="play" ></i> Run Probe</h3>
                                                     </div>
                                                     <p class="text-xs text-grey leading-relaxed mb-3" id="run-probe-desc">Probe the selected corner to zero work coordinates.</p>
                                                     <button class="btn btn-primary w-full py-3 probe-btn" onclick="window.probeHandler.runSelectedOperation()">
-                                                        <i class="bi bi-lightning-fill"></i> <span id="run-probe-label">Probe Corner</span>
+                                                        <i data-lucide="zap" ></i> <span id="run-probe-label">Probe Corner</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -2140,7 +2149,7 @@
 
                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div class="bg-white p-4 rounded-xl border border-grey-light text-center">
-                                                <i class="bi bi-circle-square text-3xl text-secondary mb-2 block"></i>
+                                                <i data-lucide="circle-dot" class="text-3xl text-secondary mb-2 block"></i>
                                                 <h4 class="font-bold text-sm">Inside Pocket</h4>
                                                 <p class="text-xs text-grey leading-relaxed mt-1">
                                                     Find the center of a pocket or hole. Starts at center, probes outward.
@@ -2149,7 +2158,7 @@
                                                         onclick="window.probeHandler.runPocketCenter()">Probe</button>
                                             </div>
                                             <div class="bg-white p-4 rounded-xl border border-grey-light text-center">
-                                                <i class="bi bi-square-fill text-3xl text-secondary mb-2 block"></i>
+                                                <i data-lucide="square" class="text-3xl text-secondary mb-2 block"></i>
                                                 <h4 class="font-bold text-sm">Rect Feature</h4>
                                                 <p class="text-xs text-grey leading-relaxed mt-1">
                                                     Find the center of a rectangular stock or feature. Probes from outside in.
@@ -2158,7 +2167,7 @@
                                                     onclick="window.probeHandler.runFeatureCenter('Rect')">Probe</button>
                                             </div>
                                             <div class="bg-white p-4 rounded-xl border border-grey-light text-center">
-                                                <i class="bi bi-circle-fill text-3xl text-secondary mb-2 block"></i>
+                                                <i data-lucide="circle" class="-fill text-3xl text-secondary mb-2 block"></i>
                                                 <h4 class="font-bold text-sm">Circular Feature</h4>
                                                 <p class="text-xs text-grey leading-relaxed mt-1">
                                                     Find the center of a round stock or feature.
@@ -2173,7 +2182,7 @@
                                     <div id="tab-inside-corners" class="probe-tab-content hidden prb-3d-probe-only">
                                         <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
                                             <div class="flex justify-between items-start mb-2">
-                                                <h3 class="font-bold text-secondary-dark text-sm"><i class="bi bi-bounding-box"></i> Inside Corner</h3>
+                                                <h3 class="font-bold text-secondary-dark text-sm"><i data-lucide="crop" ></i> Inside Corner</h3>
                                                 <span class="text-[9px] text-grey font-bold plate-status-text">Mode: Plate</span>
                                             </div>
                                             <p class="text-xs text-grey leading-relaxed mb-3">
@@ -2227,7 +2236,7 @@
                                                     <div class="flex gap-2">
                                                         <button class="btn btn-primary flex-1 probe-btn"
                                                             onclick="window.probeHandler.runRotationProbe()">
-                                                            <i class="bi bi-arrow-clockwise"></i> Measure Angle
+                                                            <i data-lucide="refresh-cw" ></i> Measure Angle
                                                         </button>
                                                     </div>
                                                 </div>
@@ -2260,7 +2269,7 @@
                                 class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i class="bi bi-tools"></i> Troubleshooting
+                                        <i data-lucide="wrench" ></i> Troubleshooting
                                     </h2>
                                     <p class="text-sm text-grey mt-1">Diagnostics and live signal monitoring.</p>
                                 </div>
@@ -2301,7 +2310,7 @@
                                     <!-- LEFT: Limits -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
                                         <div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                            <i class="bi bi-arrows-fullscreen text-primary text-xs"></i>
+                                            <i data-lucide="maximize" class="text-primary text-xs"></i>
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Limits</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
@@ -2346,7 +2355,7 @@
                                     <!-- MIDDLE: Control + Probe -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
                                         <div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                            <i class="bi bi-diagram-3 text-primary text-xs"></i>
+                                            <i data-lucide="git-branch" class="text-primary text-xs"></i>
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Control &amp; Probe</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
@@ -2430,11 +2439,11 @@
                                 <!-- PIN CONFIG & STATE CARD -->
                                 <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
                                     <div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">
-                                        <i class="bi bi-cpu text-primary text-xs"></i>
+                                        <i data-lucide="cpu" class="text-primary text-xs"></i>
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Pin Configuration &amp; State</h3>
                                         <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
                                             onclick="window.troubleshooting.refreshPinInfo()">
-                                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                                            <i data-lucide="refresh-cw" ></i> Refresh
                                         </button>
                                     </div>
                                     <div id="pin-info-content" class="p-3 text-[11px] font-mono text-secondary-dark max-h-96 overflow-y-auto">
@@ -2475,7 +2484,7 @@
                                     </div>
                                     <button class="btn btn-secondary h-7 text-[10px] px-3"
                                         onclick="window.troubleshooting.refreshSpindles()">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                        <i data-lucide="refresh-cw" ></i> Refresh
                                     </button>
                                 </div>
                                 <div id="spindles-content" class="text-[11px] font-mono text-secondary-dark">
@@ -2516,7 +2525,7 @@
                                         onclick="window.troubleshooting.sendLEDCommand('#ffffff')"></button>
                                     <button class="btn btn-secondary h-9 px-3 text-[10px]"
                                         onclick="window.troubleshooting.sendLEDCommand('#000000')">
-                                        <i class="bi bi-lightbulb-off"></i> Off
+                                        <i data-lucide="lightbulb-off" ></i> Off
                                     </button>
                                 </div>
                                 <div class="flex items-center gap-3 bg-grey-bg rounded-xl p-3 border border-grey-light">
@@ -2538,7 +2547,7 @@
                                 <div id="homing-status-content" class="mb-4"></div>
                                 <div id="trouble-tab-info-content" class="space-y-4">
                                     <div class="text-grey text-center py-8">
-                                        <i class="bi bi-arrow-clockwise animate-spin text-2xl"></i>
+                                        <i data-lucide="refresh-cw" class="animate-spin text-2xl"></i>
                                         <p class="text-xs mt-2">Waiting for firmware info...</p>
                                     </div>
                                 </div>
@@ -2557,8 +2566,8 @@
         <div class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] w-[400px] max-w-[calc(100vw-2rem)]">
             <div class="px-6 py-4 border-b border-grey-light flex justify-between items-center bg-grey-bg">
                 <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
-                        class="bi bi-plug-fill text-primary"></i><span>Connect to Machine</span></h3>
-                <button onclick="toggleConnectionModal()" class="btn-ghost"><i class="bi bi-x-lg"></i></button>
+                        data-lucide="plug" class="text-primary"></i><span>Connect to Machine</span></h3>
+                <button onclick="toggleConnectionModal()" class="btn-ghost"><i data-lucide="x" ></i></button>
             </div>
 
             <div class="p-5 overflow-y-auto space-y-4">
@@ -2601,7 +2610,7 @@
                         <div class="flex gap-2">
                             <select id="port-node" class="input-field h-10 py-0 flex-1"></select>
                             <button onclick="refreshNodePorts()" class="hidden btn btn-secondary h-10 w-10"><i
-                                    class="bi bi-arrow-clockwise"></i></button>
+                                    data-lucide="refresh-cw" ></i></button>
                         </div>
                     </div>
                     <div>
@@ -2624,7 +2633,7 @@
                             <label class="text-[10px] font-bold text-grey uppercase block">IP Address</label>
                             <button id="btn-scan-telnet" onclick="window.openTelnetScanner()"
                                 class="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors whitespace-nowrap">
-                                <i class="bi bi-search mr-1"></i> SCAN NETWORK
+                                <i data-lucide="search" class="mr-1"></i> SCAN NETWORK
                             </button>
                         </div>
                         <input type="text" id="ip-telnet" class="input-field h-10" placeholder="192.168.1.10" aria-label="Telnet IP address">
@@ -2632,7 +2641,7 @@
                     <div id="discover-panel" class="hidden bg-grey-bg rounded-xl border border-grey-light p-4 space-y-3">
                         <div class="flex justify-end">
                             <button type="button" onclick="window.closeTelnetScanner()" class="text-grey hover:text-secondary-dark text-xs">
-                                <i class="bi bi-x-lg"></i>
+                                <i data-lucide="x" ></i>
                             </button>
                         </div>
                         <div id="discover-subnet-wrap" class="space-y-1">
@@ -2677,7 +2686,7 @@
                             <span class="text-[10px] font-bold text-grey uppercase">Network Scanner</span>
                             <button id="btn-scan-network" onclick="window.ws.scanNetwork()"
                                 class="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors">
-                                <i class="bi bi-search mr-1"></i> SCAN LOCAL NETWORK
+                                <i data-lucide="search" class="mr-1"></i> SCAN LOCAL NETWORK
                             </button>
                         </div>
                         <div id="scan-results"
@@ -2703,9 +2712,9 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-[600px] overflow-hidden flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-grey-light flex justify-between items-center bg-grey-bg">
                 <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
-                        class="bi bi-lightning-charge-fill"></i> <span id="macro-modal-title">Create New Macro</span>
+                        data-lucide="zap" ></i> <span id="macro-modal-title">Create New Macro</span>
                 </h3>
-                <button id="btn-close-macro" class="btn-ghost"><i class="bi bi-x-lg"></i></button>
+                <button id="btn-close-macro" class="btn-ghost"><i data-lucide="x" ></i></button>
             </div>
 
             <div class="p-6 overflow-y-auto space-y-4">
@@ -2760,7 +2769,7 @@
             <!-- Header -->
             <div class="bg-primary p-4 flex justify-between items-center">
                 <h3 class="text-xl font-black text-black uppercase flex items-center gap-2">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Manual Tool Change
+                    <i data-lucide="triangle-alert" ></i> Manual Tool Change
                 </h3>
                 <div class="flex items-center gap-2">
                     <span id="mtc-tool-badge" class="bg-black/20 text-black px-2 py-0.5 rounded text-xs font-bold hidden">T?</span>
@@ -2821,13 +2830,13 @@
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <button class="btn btn-secondary text-xs h-9" onclick="window.toolsHandler.setTLOReference()">
-                            <i class="bi bi-geo-alt-fill text-sm"></i> Set Ref
+                            <i data-lucide="map-pin" class="text-sm"></i> Set Ref
                         </button>
                         <button class="btn btn-secondary text-xs h-9" onclick="window.toolsHandler.measureTLO()">
-                            <i class="bi bi-rulers text-sm"></i> Measure
+                            <i data-lucide="ruler" class="text-sm"></i> Measure
                         </button>
                         <button class="btn btn-secondary text-xs h-9" onclick="window.toolsHandler.resetTLO()">
-                            <i class="bi bi-arrow-counterclockwise text-sm"></i> Reset
+                            <i data-lucide="refresh-ccw" class="text-sm"></i> Reset
                         </button>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
@@ -2847,7 +2856,7 @@
                     Click Resume only after tool is set.<br>Machine will return to previous pos.
                 </div>
                 <button class="btn btn-primary px-8 shadow-lg" onclick="window.toolsHandler.resumeToolChange()">
-                    <i class="bi bi-play-fill text-xl"></i> RESUME
+                    <i data-lucide="play" class="text-xl"></i> RESUME
                 </button>
             </div>
         </div>
@@ -3101,7 +3110,7 @@
             // Sync Grid Toggle Button Text on Init
             const gridBtn = document.getElementById('grid-toggle-btn');
             if (gridBtn) {
-                gridBtn.innerHTML = `<i class="bi bi-grid-3x3 text-secondary"></i> Grid: ${viewer.gridMode === 'machine' ? 'Machine' : 'Job'}`;
+                gridBtn.innerHTML = `<i data-lucide="grid-3x3" class="text-secondary"></i> Grid: ${viewer.gridMode === 'machine' ? 'Machine' : 'Job'}`;
             }
 
             // Initialize Editor
@@ -3306,7 +3315,7 @@
         // New Grid Toggle Function
         window.toggleGridMode = function () {
             const label = viewer.toggleGridMode();
-            document.getElementById('grid-toggle-btn').innerHTML = `<i class="bi bi-grid-3x3 text-secondary"></i> ${label}`;
+            document.getElementById('grid-toggle-btn').innerHTML = `<i data-lucide="grid-3x3" class="text-secondary"></i> ${label}`;
         };
 
         window.resetCamera = function () { viewer.resetCamera(); };
@@ -3314,18 +3323,38 @@
         window.sendRealtime = function (c) { ws.sendRealtime(c); };
         window.sendRealtimeWithToast = function (c, msg, icon) { ws.sendRealtime(c); window.showToast(msg, icon); };
         window.sendCmdWithToast = function (cmd, msg, icon) { ws.sendCommand(cmd); window.showToast(msg, icon); };
-        window.showToast = function (msg, icon) {
+        window.showToast = function (msg, icon, severity) {
             var container = document.getElementById('toast-container');
             if (!container) return;
             var el = document.createElement('div');
             el.className = 'toast-msg';
-            el.innerHTML = '<i class="bi bi-' + (icon || 'check-circle-fill') + '"></i> ' + msg;
+            if (severity) el.classList.add(severity);
+            var iconName = icon || 'check-circle';
+            el.innerHTML = '<i data-lucide="' + iconName + '" style="flex-shrink:0"></i> ' + msg;
             container.appendChild(el);
+            if (window.lucide) lucide.createIcons();
             setTimeout(function () {
                 el.classList.add('out');
                 setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
-            }, 2000);
+            }, severity === 'error' ? 4000 : 2500);
         };
+        // Console collapse toggle
+        var _consoleOpen = true;
+        window.toggleConsole = function () {
+            var container = document.getElementById('console-collapse');
+            var icon = document.getElementById('console-toggle-icon');
+            if (!container) return;
+            _consoleOpen = !_consoleOpen;
+            container.style.display = _consoleOpen ? 'flex' : 'none';
+            if (icon) {
+                icon.style.transform = _consoleOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+            }
+            // Refresh terminal layout after toggle
+            if (window.term && window.term.fitAddon) {
+                setTimeout(function () { window.term.fitAddon.fit(); }, 50);
+            }
+        };
+
         window.requestFullStatus = function () {
             window.userRequestedStatus = true;
             ws.sendRealtime('\x87');
@@ -3452,7 +3481,7 @@
                 const pauseBtn = document.getElementById('pause-job-btn');
                 if (pauseBtn && pauseBtn.innerText.includes('Resume')) {
                     // Reset pause button visual state if it was paused
-                    pauseBtn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+                    pauseBtn.innerHTML = '<i data-lucide="pause" class="text-lg"></i> Pause';
                     pauseBtn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
                 }
             }
@@ -3490,12 +3519,12 @@
             window.viewer.setLaserMode(newState);
 
             if (newState) {
-                btn.innerHTML = '<i class="bi bi-brightness-high-fill text-primary-dark"></i> Laser: ON';
+                btn.innerHTML = '<i data-lucide="sun" class="text-primary-dark"></i> Laser: ON';
                 btn.classList.add('!bg-primary-light', 'border-primary');
                 btn.classList.remove('text-grey-dark');
                 btn.classList.add('text-primary-dark');
             } else {
-                btn.innerHTML = '<i class="bi bi-brightness-high-fill text-secondary"></i> Laser Mode';
+                btn.innerHTML = '<i data-lucide="sun" class="text-secondary"></i> Laser Mode';
                 btn.classList.remove('!bg-primary-light', 'border-primary', 'text-primary-dark');
                 btn.classList.add('text-grey-dark');
             }
@@ -3509,28 +3538,20 @@
 
         // Context Menu Handler: Set Work Zero at Machine X,Y
         window.setWorkZeroAt = function (mX, mY) {
-            let activeP = 1; // Default to G54 (P1)
-            // Try to determine active WCS from DRO handler status string if possible,
-            // but simpler is to assume G54 OR assume the user knows.
-            // Actually, we can get it from the last status report or droHandler if exposed.
-
-            // Best Effort: If we have window.dro (the DroHandler instance)
-            // Check if it has activeWCS (it sends 'G54', 'G55' etc in update?)
-            // Let's check window.droHandler (it's initialized in init())
-
-            if (window.droHandler && window.droHandler.wcs) {
-                // wcs might be 'G54', 'G55'...
-                const wcsMap = { 'G54': 1, 'G55': 2, 'G56': 3, 'G57': 4, 'G58': 5, 'G59': 6 };
-                if (wcsMap[window.droHandler.activeWCS]) activeP = wcsMap[window.droHandler.activeWCS];
-                // Note: droHandler probably doesn't expose 'activeWCS' publicly as a property...
-                // It only seems to log it or use it internally.
-                // Let's check dro.js again? Steps revealed it parses status string but maybe not exposed.
-                // We can parse the laststatus string: window.lastStatus
+            // Bounds check: only allow if click is within the work area
+            if (window.viewer) {
+                var box = window.viewer.getLocalGCodeBox ? window.viewer.getLocalGCodeBox() : null;
+                if (box) {
+                    var pad = 10; // mm tolerance
+                    if (mX < box.min.x - pad || mX > box.max.x + pad ||
+                        mY < box.min.y - pad || mY > box.max.y + pad) {
+                        window.showToast('Outside work area', 'triangle-alert', 'warning');
+                        return;
+                    }
+                }
             }
 
-            // Simpler fallback: just use G10 L2 P0 (which in some firmwares is active coordinate system)
-            // Spec says L2 P0 is not valid usually (1-9).
-            // Let's try to parse from window.lastStatus if available.
+            let activeP = 1;
             if (window.lastStatus) {
                 const match = window.lastStatus.match(/WCS:G(\d+)/);
                 if (match) {
@@ -3539,7 +3560,6 @@
                 }
             }
 
-            // Command: G10 L2 P<active> X<mX> Y<mY>
             window.sendCmd(`G10 L2 P${activeP} X${mX} Y${mY}`);
             window.reporter.showToast(`Set Work Zero (G${53 + activeP}) to X${mX} Y${mY}`);
         };
@@ -3822,7 +3842,12 @@
             if (overlay) overlay.classList.add('hidden');
         };
 
-        // Wire up form controls after DOM ready
+
+        // Initialize Lucide icons
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+                // Wire up form controls after DOM ready
         document.addEventListener('DOMContentLoaded', function() {
             const formIds = ['em-toolType', 'em-diameter', 'em-flutes', 'em-helixAngle',
                 'em-fluteDepth', 'em-cutLength', 'em-vAngle', 'em-exposedShank',
@@ -3885,13 +3910,13 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all scale-100 border border-grey-light max-h-[90vh] flex flex-col">
             <div class="px-5 py-3 border-b border-grey-light flex items-center justify-between bg-grey-bg shrink-0">
                 <h3 class="font-bold text-sm text-secondary-dark flex items-center gap-2">
-                    <i class="bi bi-magic text-primary"></i> Machine Configuration Wizard
+                    <i data-lucide="wand" class="text-primary"></i> Machine Configuration Wizard
                 </h3>
                 <button onclick="window.configWizard.hideWizard()" class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
             </div>
             <div id="config-wizard-body" class="p-5 overflow-y-auto">
                 <div class="text-center py-8">
-                    <i class="bi bi-arrow-clockwise animate-spin text-2xl text-grey"></i>
+                    <i data-lucide="refresh-cw" class="animate-spin text-2xl text-grey"></i>
                     <p class="text-xs text-grey mt-2">Loading...</p>
                 </div>
             </div>

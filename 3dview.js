@@ -1414,20 +1414,21 @@ export class GCodeViewer {
             </div>
             <button class="text-left px-4 py-2 hover:bg-primary-light hover:text-primary-dark transition-colors"
                 onclick="window.sendCmd('G53 G0 X${mX.toFixed(3)} Y${mY.toFixed(3)}');">
-                <i class="bi bi-cursor-fill mr-2"></i> Jog Here (Rapid)
+                <i data-lucide="pointer" style="width:14px;height:14px;margin-right:8px"></i> Jog Here (Rapid)
             </button>
             <button class="text-left px-4 py-2 hover:bg-primary-light hover:text-primary-dark transition-colors"
                 onclick="window.sendCmd('G53 G1 X${mX.toFixed(3)} Y${mY.toFixed(3)} F1000');">
-                <i class="bi bi-cursor mr-2"></i> Jog Here (Feed)
+                <i data-lucide="pointer" style="width:14px;height:14px;margin-right:8px"></i> Jog Here (Feed)
             </button>
             <div class="border-t border-grey-light my-1"></div>
             <button class="text-left px-4 py-2 hover:bg-primary-light hover:text-primary-dark transition-colors"
                 onclick="window.setWorkZeroAt(${mX.toFixed(3)}, ${mY.toFixed(3)});">
-                <i class="bi bi-crosshair mr-2"></i> Set XY Zero Here
+                <i data-lucide="crosshair" style="width:14px;height:14px;margin-right:8px"></i> Set XY Zero Here
             </button>
         `;
         menu.style.left = `${x}px`;
         menu.style.top = `${y}px`;
+        if (window.lucide) lucide.createIcons();
         menu.classList.remove('hidden');
     }
 

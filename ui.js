@@ -23,7 +23,14 @@ class UIManager {
             }
 
             // Update Connect Button to Disconnect
-            btn.innerHTML = '<i class="bi bi-usb-plug-fill"></i> Disconnect';
+            if (window.lucide) {
+                var plugIcon = lucide.createElement('plug');
+                btn.innerHTML = '';
+                btn.appendChild(plugIcon);
+                btn.appendChild(document.createTextNode(' Disconnect'));
+            } else {
+                btn.innerHTML = '<i data-lucide="plug"></i> Disconnect';
+            }
             btn.className = "btn btn-secondary flex-1 h-9 text-xs shadow-none border border-white/10 px-2 py-0 !bg-red-500 !text-white hover:!bg-red-600";
 
             // Update Status Pill

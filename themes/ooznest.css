@@ -4,6 +4,21 @@
 @media (min-width: 768px) {
     .mobile-only { display: none !important; }
 }
+
+/* Lucide icon sizing — inherit font-size so text-* classes control SVG size */
+[data-lucide] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+}
+[data-lucide] svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 /* Toast notification */
 #toast-container {
     position: fixed;
@@ -18,20 +33,32 @@
 .toast-msg {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(8px);
-    padding: 10px 18px;
+    padding: 14px 22px;
     border-radius: 12px;
     border: 1px solid var(--oz-grey-light);
     box-shadow: var(--oz-shadow-lg, 0 10px 25px rgba(0,0,0,0.12));
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--oz-secondary-dark);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     animation: toast-in 0.25s ease-out;
     pointer-events: auto;
+    min-width: 200px;
 }
-.toast-msg i { color: var(--oz-primary); font-size: 16px; }
+.toast-msg.error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+.toast-msg.error > [data-lucide] { color: #dc2626; }
+.toast-msg.warning {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+.toast-msg.warning > [data-lucide] { color: #f59e0b; }
 .toast-msg.out { animation: toast-out 0.3s ease-in forwards; }
 @keyframes toast-in {
     from { opacity: 0; transform: translateY(16px) scale(0.95); }
@@ -934,7 +961,7 @@ select {
     border-radius: 0;
     border: none;
     box-shadow: var(--oz-shadow-md);
-    padding: 12px;
+    padding: 10px;
     position: relative;
     overflow: visible;
 }
@@ -1552,7 +1579,7 @@ table [id^="pin-indicator-"] {
 .viewer-controls-left {
     position: absolute;
     top: 12px;
-    left: 12px;
+    left: 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;

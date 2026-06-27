@@ -22,6 +22,7 @@
     "clipper-lib": "^6.4.2",
     "electron-updater": "6.8.3",
     "express": "^4.18.2",
+    "lucide": "^1.21.0",
     "serialport": "^12.0.0",
     "sharp": "^0.34.5",
     "ws": "^8.13.0"

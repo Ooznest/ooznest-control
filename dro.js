@@ -352,6 +352,36 @@ export class DROHandler {
         });
     }
 
+    toggleAccessory(type) {
+        if (!this.ws || !this.ws.isConnected) return;
+        var isActive = this.accessoryState ? this.accessoryState.includes(type) : false;
+        if (type === 'F') {
+            if (isActive) {
+                this.ws.sendCommand('M9');
+                if (window.showToast) window.showToast('Coolant off', 'droplet', 'info');
+            } else {
+                this.ws.sendCommand('M8');
+                if (window.showToast) window.showToast('Flood on', 'droplet', 'info');
+            }
+        } else if (type === 'M') {
+            if (isActive) {
+                this.ws.sendCommand('M9');
+                if (window.showToast) window.showToast('Coolant off', 'cloud-fog', 'info');
+            } else {
+                this.ws.sendCommand('M7');
+                if (window.showToast) window.showToast('Mist on', 'cloud-fog', 'info');
+            }
+        } else if (type === 'S') {
+            if (isActive) {
+                this.ws.sendCommand('M5');
+                if (window.showToast) window.showToast('Spindle off', 'fan', 'info');
+            } else {
+                this.ws.sendCommand('M3');
+                if (window.showToast) window.showToast('Spindle on', 'fan', 'info');
+            }
+        }
+    }
+
     homeAxis(axis) {
         if (!this.ws || !this.ws.isConnected) return;
         this.ws.sendCommand(`$H${axis}`);

@@ -16,28 +16,32 @@ class CameraControls {
         if (currentText === 'Spindle View') nextMode = 'Perspective';
 
         let label = nextMode;
-        let icon = 'bi-eye-fill';
+        let icon = 'eye';
+        var badge = document.getElementById('camera-mode-badge');
 
         if (nextMode === 'Perspective') {
             if (window.viewer.getCameraType() === 'Orthographic') window.viewer.toggleCamera();
             window.viewer.setCameraMode('orbit');
-            console.log('[CameraControls] calling viewer.resetCamera() after spindle->perspective switch');
             window.viewer.resetCamera();
+            if (badge) badge.classList.add('hidden');
         }
         else if (nextMode === 'Orthographic') {
             if (window.viewer.getCameraType() === 'Perspective') window.viewer.toggleCamera();
             window.viewer.setCameraMode('orbit');
             label = 'Orthographic';
-            icon = 'bi-box-fill';
+            icon = 'box';
+            if (badge) badge.classList.add('hidden');
         }
         else if (nextMode === 'Spindle View') {
             if (window.viewer.getCameraType() === 'Orthographic') window.viewer.toggleCamera();
             window.viewer.setCameraMode('spindle');
             label = 'Spindle View';
-            icon = 'bi-camera-video';
+            icon = 'video';
+            if (badge) badge.classList.remove('hidden');
         }
 
-        document.getElementById('cam-toggle-btn').innerHTML = `<i class="bi ${icon} text-secondary"></i> ${label}`;
+        document.getElementById('cam-toggle-btn').innerHTML = `<i data-lucide="${icon}" class="text-secondary"></i> ${label}`;
+        if (window.lucide) lucide.createIcons();
     }
 
     /**
@@ -46,7 +50,8 @@ class CameraControls {
     toggleGridMode() {
         if (!window.viewer) return;
         const label = window.viewer.toggleGridMode();
-        document.getElementById('grid-toggle-btn').innerHTML = `<i class="bi bi-grid-3x3 text-secondary"></i> ${label}`;
+        document.getElementById('grid-toggle-btn').innerHTML = `<i data-lucide="grid-3x3" class="text-secondary"></i> ${label}`;
+        if (window.lucide) lucide.createIcons();
     }
 
     /**

@@ -278,7 +278,7 @@ export class GrblSettings {
     renderEmpty() {
         this.tableContainer.innerHTML = `
             <div class="flex flex-col items-center justify-center h-64 text-grey">
-                <i class="bi bi-sliders text-4xl mb-2"></i>
+                <i data-lucide="sliders-horizontal" style="width:14px;height:14px"></i>
                 <p>Click "Refresh" to load settings.</p>
             </div>
         `;
@@ -332,7 +332,7 @@ export class GrblSettings {
         html += `
             <div class="p-2 border-b border-grey-light bg-white sticky top-0 z-20">
                 <div class="relative">
-                    <i class="bi bi-search absolute left-1.5 top-1.5 text-grey text-[10px] md:text-xs"></i>
+                    <i data-lucide="search" style="width:14px;height:14px"></i>
                     <input type="text" id="settings-search-input"
                         class="w-full pl-6 pr-1 py-1 text-[10px] md:text-xs border border-grey-light rounded bg-grey-bg focus:bg-white focus:border-primary outline-none transition-colors"
                         placeholder="Search..."
@@ -387,7 +387,7 @@ export class GrblSettings {
         // Header
         html += `
             <div class="bg-grey-bg px-2 md:px-4 py-2 border-b border-grey-light font-bold text-secondary-dark sticky top-0 z-20 shadow-sm flex items-center gap-2 text-xs md:text-sm">
-                ${this.searchQuery ? '<i class="bi bi-search"></i>' : '<i class="bi bi-folder2-open"></i>'}
+                ${this.searchQuery ? '<i data-lucide="search" style="width:14px;height:14px"></i>' : '<i data-lucide="folder-open" style="width:14px;height:14px"></i>'}
                 <span class="truncate">${displayTitle}</span>
             </div>
         `;
@@ -413,7 +413,7 @@ export class GrblSettings {
                     <button onclick="window.grblSettings.setActiveGroup('${g.id}')"
                         class="flex flex-col items-start p-3 bg-white border border-grey-light rounded-lg hover:border-primary hover:shadow-md hover:-translate-y-0.5 transition-all text-left group">
                         <span class="font-bold text-secondary-dark group-hover:text-primary-dark text-xs flex items-center gap-2">
-                            <i class="bi bi-folder-fill text-primary"></i> ${g.label}
+                            <i data-lucide="folder" style="width:14px;height:14px"></i> ${g.label}
                             ${subPending > 0 ? `<span class="bg-primary text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full">${subPending}</span>` : ''}
                         </span>
                         <span class="text-[9px] font-bold text-grey uppercase mt-1">${metaText}</span>
@@ -473,7 +473,7 @@ export class GrblSettings {
         if (!hasContent) {
             html += `
                 <div class="flex flex-col items-center justify-center h-64 text-grey opacity-50">
-                    <i class="bi bi-inbox-fill text-4xl mb-2"></i>
+                    <i data-lucide="inbox" style="width:14px;height:14px"></i>
                     <p class="text-sm">No settings or subcategories found here.</p>
                 </div>`;
         }
@@ -497,8 +497,8 @@ export class GrblSettings {
         if (!btn) return;
         const count = Object.keys(this.pendingChanges).length;
         btn.innerHTML = count > 0
-            ? `<i class="bi bi-save"></i> Save (${count})`
-            : `<i class="bi bi-save"></i> Save`;
+            ? `<i data-lucide="save" style="width:14px;height:14px"></i> Save (${count})`
+            : `<i data-lucide="save" style="width:14px;height:14px"></i> Save`;
         btn.disabled = count === 0;
     }
 

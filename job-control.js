@@ -71,7 +71,7 @@ class JobController {
                 const pauseBtn = document.getElementById('pause-job-btn');
                 if (pauseBtn && pauseBtn.innerText.includes('Resume')) {
                     // Reset pause button visual state if it was paused
-                    pauseBtn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+                    pauseBtn.innerHTML = '<i data-lucide="pause" style="width:14px;height:14px"></i> Pause';
                     pauseBtn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
                 }
             }
@@ -129,7 +129,7 @@ class JobController {
 
         if (this.gcodeStreamer.paused) {
             window.ws.sendRealtime('!');
-            btn.innerHTML = '<i class="bi bi-play-fill text-lg"></i> Resume';
+            btn.innerHTML = '<i data-lucide="play" style="width:14px;height:14px"></i> Resume';
             btn.classList.replace('!bg-yellow-100', '!bg-green-100');
             btn.classList.replace('!text-yellow-800', '!text-green-800');
             btn.classList.replace('border-yellow-300', 'border-green-300');
@@ -138,7 +138,7 @@ class JobController {
                 : "\x1b[33m[Job Stream] Paused.\x1b[0m");
         } else {
             window.ws.sendRealtime('~');
-            btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+            btn.innerHTML = '<i data-lucide="pause" style="width:14px;height:14px"></i> Pause';
             btn.classList.replace('!bg-green-100', '!bg-yellow-100');
             btn.classList.replace('!text-green-800', '!text-yellow-800');
             btn.classList.replace('border-green-300', 'border-yellow-300');
@@ -262,7 +262,7 @@ class JobController {
         if (jac2) { jac2.classList.add('hidden'); jac2.classList.remove('flex'); }
         const btn = document.getElementById('pause-job-btn');
         if (btn) {
-            btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+            btn.innerHTML = '<i data-lucide="pause" style="width:14px;height:14px"></i> Pause';
             btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
         }
 

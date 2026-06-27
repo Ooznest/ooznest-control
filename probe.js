@@ -69,7 +69,7 @@ export class ProbeHandler {
             ? 'Lift the probe plate and gently touch the endmill to the plate, then release'
             : 'Gently press the probe tip by hand, then release';
         btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Waiting...';
+        btn.innerHTML = '<i data-lucide="hourglass" style="width:14px;height:14px"></i> Waiting...';
         status.className = 'hidden';
         const skipBtn = document.getElementById('probe-skip-btn');
         if (skipBtn) skipBtn.classList.add('hidden');
@@ -97,7 +97,7 @@ export class ProbeHandler {
                     msg.textContent = 'Probe test passed — all operations enabled';
                     if (actions) actions.classList.add('hidden');
                     status.className = 'text-green-600';
-                    status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
+                    status.innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px"></i> Probe OK';
                     if (note) note.classList.add('hidden');
                     this.term.writeln('\x1b[32m> Probe safety test PASSED.\x1b[0m');
                 }
@@ -115,7 +115,7 @@ export class ProbeHandler {
                 bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
                 msg.textContent = 'Test timed out — try again';
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-hand-index-thumb"></i> Test Probe';
+                btn.innerHTML = '<i data-lucide="pointer" style="width:14px;height:14px"></i> Test Probe';
                 const skipBtn = document.getElementById('probe-skip-btn');
                 if (skipBtn) skipBtn.classList.remove('hidden');
                 this.term.writeln('\x1b[31m> Probe safety test TIMED OUT.\x1b[0m');
@@ -137,7 +137,7 @@ export class ProbeHandler {
         msg.textContent = 'Probe test passed — all operations enabled';
         if (actions) actions.classList.add('hidden');
         status.className = 'text-green-600';
-        status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
+        status.innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px"></i> Probe OK';
         if (note) note.classList.add('hidden');
         this.term.writeln('\x1b[32m> Probe safety check skipped (confirmed by user).\x1b[0m');
     }

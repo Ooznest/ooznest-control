@@ -96,10 +96,10 @@ export class MacroHandler {
                 <!-- Edit Controls (Always visible on mobile, Hover only on Desktop) -->
                 <div class="absolute top-1 right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-1">
                     <button class="edit-btn p-1 bg-black/20 hover:bg-black/40 rounded text-white text-xs" title="Edit">
-                        <i class="bi bi-pencil-fill"></i>
+                        <i data-lucide="pencil" style="width:14px;height:14px"></i>
                     </button>
                     <button class="del-btn p-1 bg-black/20 hover:bg-red-600 rounded text-white text-xs" title="Delete">
-                        <i class="bi bi-trash-fill"></i>
+                        <i data-lucide="trash-2" style="width:14px;height:14px"></i>
                     </button>
                 </div>
             `;
@@ -130,7 +130,7 @@ export class MacroHandler {
         const addBtn = document.createElement('div');
         addBtn.className = "cursor-pointer rounded-xl border-2 border-dashed border-grey-light hover:border-primary hover:bg-white transition-colors flex flex-col items-center justify-center p-4 h-32 text-grey hover:text-primary";
         addBtn.innerHTML = `
-            <i class="bi bi-plus-lg text-4xl mb-1"></i>
+            <i data-lucide="plus" style="width:14px;height:14px"></i>
             <span class="font-bold text-xs uppercase tracking-wider">Add Macro</span>
         `;
         addBtn.addEventListener('click', () => this.openModal(null));

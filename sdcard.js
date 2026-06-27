@@ -364,13 +364,13 @@ export class SDCardHandler {
             const pNum = macroMatch[1];
             runActionBtn = `
             <button class="btn-ghost p-1.5 md:px-3 flex items-center justify-center md:justify-end gap-2 text-grey-dark hover:text-black" onclick="window.sdHandler.runMacro('${pNum}')" title="Run macro">
-                <i class="bi bi-gear-wide-connected text-lg md:text-base"></i>
+                <i data-lucide="settings" style="width:16px;height:16px"></i>
                 <span class="hidden sm:inline">Run macro</span>
             </button>`;
         } else {
             runActionBtn = `
             <button class="btn-ghost p-1.5 md:px-3 flex items-center justify-center md:justify-end gap-2 text-green-600 hover:text-green-800" onclick="window.sdHandler.runFile('${name}')" title="Run">
-                <i class="bi bi-play-fill text-xl md:text-base"></i>
+                <i data-lucide="play" style="width:16px;height:16px"></i>
                 <span class="hidden sm:inline flex-shrink-0">Run File</span>
             </button>`;
         }
@@ -383,7 +383,7 @@ export class SDCardHandler {
               <td class="px-4 py-2 md:px-6 md:py-3 font-medium text-grey-dark align-middle truncate overflow-hidden">
                   <div class="flex flex-col justify-center w-full">
                       <div class="flex items-center gap-2 truncate">
-                          <i class="bi bi-file-earmark-code text-grey shrink-0"></i>
+                          <i data-lucide="file-code" style="width:14px;height:14px" class="text-grey shrink-0"></i>
                           <span class="truncate" title="${name}">${name}</span>
                       </div>
 
@@ -400,12 +400,12 @@ export class SDCardHandler {
               <td class="px-1 md:px-6 py-2 md:py-3 text-right align-middle w-[120px] md:w-auto">
                   <div class="flex justify-end gap-0 md:gap-2">
                       <button class="btn-ghost p-1.5 flex items-center justify-center md:justify-end gap-2 text-grey-dark hover:text-red-600" onclick="window.sdHandler.delete('${name}')" title="Delete">
-                        <i class="bi bi-trash text-lg md:text-base"></i>
+                        <i data-lucide="trash-2" style="width:16px;height:16px"></i>
                         <span class="hidden sm:inline">Delete</span>
                       </button>
 
                       <button class="btn-ghost p-1.5 flex items-center justify-center md:justify-end gap-2 text-grey-dark" onclick="window.sdHandler.preview('${name}')" title="Preview">
-                        <i class="bi bi-eye text-lg md:text-base"></i>
+                        <i data-lucide="eye" style="width:16px;height:16px"></i>
                         <span class="hidden sm:inline">Preview</span>
                       </button>
 
@@ -415,6 +415,7 @@ export class SDCardHandler {
           </tr>`;
 
         document.querySelector('#sd-table tbody').insertAdjacentHTML('beforeend', row);
+        if (window.lucide) lucide.createIcons();
     }
 
     _toggleProgressUI(fileName, show) {
@@ -472,7 +473,7 @@ export class SDCardHandler {
         row.innerHTML = `
           <td class="px-4 py-3 md:px-6 md:py-3 font-bold text-grey-dark align-middle truncate overflow-hidden">
               <div class="flex items-center gap-2 truncate">
-                  <i class="bi bi-folder-fill text-primary opacity-70 shrink-0"></i>
+                  <i data-lucide="folder" style="width:14px;height:14px" class="text-primary opacity-70 shrink-0"></i>
                   <span class="truncate" title="${name}">${name}</span>
               </div>
           </td>

@@ -571,7 +571,14 @@ export class ConnectionManager {
         if (!this.btnConnect) return;
 
         if (isConnecting) {
-            this.btnConnect.innerHTML = '<i class="bi bi-x-circle-fill"></i> Disconnect';
+            if (window.lucide) {
+                var xIcon = lucide.createElement('x-circle');
+                this.btnConnect.innerHTML = '';
+                this.btnConnect.appendChild(xIcon);
+                this.btnConnect.appendChild(document.createTextNode(' Disconnect'));
+            } else {
+                this.btnConnect.innerHTML = '<i data-lucide="x-circle"></i> Disconnect';
+            }
             this.btnConnect.className = "btn btn-secondary flex-1 h-9 text-xs shadow-none border border-white/10 px-2 py-0 !bg-yellow-500 !text-secondary-dark hover:!bg-yellow-400";
         } else if (!this.isConnected) {
             this.btnConnect.textContent = 'Connect';
@@ -1237,7 +1244,7 @@ export class ConnectionManager {
                 <span class="text-xs font-bold text-secondary-dark">${res.ip}</span>
                 <span class="text-[9px] text-grey uppercase font-bold text-primary">${res.name}</span>
             </div>
-            <i class="bi bi-chevron-right text-grey group-hover:text-primary transition-colors"></i>
+            <i data-lucide="chevron-right" style="width:14px;height:14px"></i>
         `;
         div.onclick = () => {
             const urlInput = document.getElementById('url-websocket');
@@ -1294,8 +1301,8 @@ export class ConnectionManager {
 
         if (btn) {
             btn.innerHTML = enabled
-                ? '<i class="bi bi-keyboard mr-1"></i> MANUAL ENTRY'
-                : '<i class="bi bi-search mr-1"></i> SCAN NETWORK';
+                ? '<i data-lucide="keyboard" style="width:14px;height:14px"></i> MANUAL ENTRY'
+                : '<i data-lucide="search" style="width:14px;height:14px"></i> SCAN NETWORK';
             btn.onclick = enabled
                 ? () => this.closeTelnetScanner()
                 : () => this.openTelnetScanner();
