@@ -1359,13 +1359,13 @@ export class GCodeViewer {
 
     setCameraMode(mode) {
         this.cameraMode = mode;
+        var vcEl = this.viewCube && this.viewCube.renderer && this.viewCube.renderer.domElement;
         if (mode === 'spindle') {
-            // Disable controls damping/enable keys if needed, but OrbitControls might fight
-            // Actually, if we update position/target every frame, controls will just follow
-            // But user interaction might be fighting.
             this.controls.enabled = false;
+            if (vcEl) vcEl.style.display = 'none';
         } else {
             this.controls.enabled = true;
+            if (vcEl) vcEl.style.display = '';
         }
     }
 
