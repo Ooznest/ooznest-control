@@ -156,11 +156,10 @@
                             </div>
                         </label>
 
-                        <!-- WCS Select -->
-                        <div class="flex items-center bg-white/10 rounded pl-1.5 pr-0 shadow-sm h-7 ml-auto">
-                            <span class="text-[10px] font-black text-white/90 uppercase leading-none mr-1">WCS</span>
-                            <select
-                                class="text-xs font-bold text-secondary-dark bg-transparent outline-none cursor-pointer"
+                        <!-- WCS Select (styled like MM/IN toggle) -->
+                        <div class="flex items-center rounded-lg px-1.5 py-0 h-7 ml-auto" style="background:var(--oz-teal-xlight)">
+                            <span class="text-[10px] font-black uppercase leading-none" style="color:var(--oz-teal-brand)">WCS</span>
+                            <select class="wcs-select"
                                 onchange="window.dro.setWCS(this.value)" aria-label="Work Coordinate System">
                                 <option value="G54" selected>G54</option>
                                 <option value="G55">G55</option>
@@ -493,6 +492,7 @@
                     </button>
                     <button class="tab-btn" data-tab="settings-view" onclick="switchTab('settings-view', this)">Settings</button>
                     <button class="tab-btn" data-tab="troubleshooting-view" onclick="switchTab('troubleshooting-view', this)">Troubleshooting</button>
+                    <button class="tab-btn" data-tab="console-view" onclick="switchTab('console-view', this)">Console</button>
                 </div>
 
                 <!-- Right Scroll Arrow -->
@@ -669,32 +669,7 @@
                             <i data-lucide="bar-chart-3" class="text-secondary"></i> Show Stats
                         </button>
 
-                        <!-- Console Card (floating, like stats) -->
-                        <div id="console-card"
-                            class="bg-white/90 backdrop-blur rounded-lg border border-grey-light shadow-lg pointer-events-auto w-72 flex flex-col">
-                            <div id="console-card-header" class="flex items-center justify-between px-3 py-2 border-b border-grey-light"
-                                onclick="toggleConsoleCard()">
-                                <span class="text-[10px] font-bold text-grey uppercase tracking-wider"><i data-lucide="square-terminal" class="mr-1.5" style="width:11px;height:11px"></i>G-Code</span>
-                                <button class="text-grey hover:text-secondary-dark text-xs shrink-0 p-0.5" onclick="event.stopPropagation();toggleConsoleCard()" title="Minimise">
-                                    <i data-lucide="minus" ></i>
-                                </button>
-                            </div>
-                            <div class="p-3 flex flex-col flex-1 min-h-0">
-                                <div id="terminal-container" class="w-full" style="min-height:120px;flex:1"></div>
-                                <div id="console-input-area"
-                                    class="flex gap-2 mt-2">
-                                    <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
-                                    <button id="btnSend" aria-label="Send G-Code"><i data-lucide="send" class="text-[12px]"></i></button>
-                                    <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
-                                        class="text-grey hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="text-[12px]"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                        <button id="console-reopen-btn"
-                            class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light shadow-lg pointer-events-auto px-3 py-2 text-xs font-bold text-secondary-dark hover:bg-white transition-colors items-center gap-2"
-                            onclick="toggleConsoleCard()">
-                            <i data-lucide="square-terminal" class="text-secondary"></i> Show Console
-                        </button>
+                        
                     </div>
                 </div>
 
@@ -2556,6 +2531,22 @@
                 </div>
     </div>
     <!-- END TROUBLESHOOTING TAB PANE -->
+
+                <!-- CONSOLE TAB PANE -->
+                <div id="console-view" class="tab-pane hidden w-full h-full flex flex-col bg-grey-bg">
+                    <div class="flex flex-col h-full overflow-hidden p-4">
+                        <div class="flex-1 flex flex-col min-h-0">
+                            <div id="terminal-container" class="w-full flex-1 min-h-0" style="background:var(--oz-teal-light);border-radius:var(--oz-r-xs)"></div>
+                            <div id="console-input-area" class="flex gap-2 mt-3 shrink-0">
+                                <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
+                                <button id="btnSend" aria-label="Send G-Code"><i data-lucide="send" class="text-[12px]"></i></button>
+                                <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
+                                    class="text-grey hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="text-[12px]"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
@@ -3265,6 +3256,9 @@
                 if (window.calibration) window.calibration.refreshA();
             }
             if (e.detail.id === 'troubleshooting-view') window.troubleshooting.refresh();
+            if (e.detail.id === 'console-view') {
+                setTimeout(function () { if (window.term && window.term.fitAddon) window.term.fitAddon.fit(); }, 50);
+            }
         });
 
         // Unit Syncing
@@ -3338,21 +3332,7 @@
                 setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
             }, severity === 'error' ? 4000 : 2500);
         };
-        // Console card toggle (floating card, like stats)
-        var _consoleCardOpen = true;
-        window.toggleConsoleCard = function () {
-            var card = document.getElementById('console-card');
-            var reopenBtn = document.getElementById('console-reopen-btn');
-            if (!card || !reopenBtn) return;
-            _consoleCardOpen = !_consoleCardOpen;
-            card.classList.toggle('hidden');
-            reopenBtn.classList.toggle('hidden');
-            if (window.lucide) lucide.createIcons();
-            // Refresh terminal layout after toggle
-            if (window.term && window.term.fitAddon) {
-                setTimeout(function () { window.term.fitAddon.fit(); }, 50);
-            }
-        };
+        // Console tab: refresh terminal when shown — handled via tab-shown event
 
         window.requestFullStatus = function () {
             window.userRequestedStatus = true;

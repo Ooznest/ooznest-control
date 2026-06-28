@@ -563,19 +563,20 @@ select {
     }
 }
 
-/* Units & WCS row (Inside Orange) */
-.dro-panel select.text-xs {
-    background: white !important;
-    border: none !important;
-    border-radius: 4px;
-    color: var(--oz-teal-brand) !important;
+/* WCS select inside DRO — match MM/IN toggle style */
+.dro-panel .wcs-select {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: var(--oz-teal-brand);
+    font-family: 'Nunito', 'Inter', sans-serif;
+    font-size: 10px;
     font-weight: 800;
-    font-size: 11px;
     margin: 0;
-    padding: 0 0 0 6px;
+    padding: 2px 4px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    max-width: 72px;
+    outline: none;
+    max-width: 66px;
 }
 
 .dro-panel .text-grey,
@@ -1624,42 +1625,6 @@ body[data-3d-probe-enabled="false"] .prb-3d-probe-only { display: none !importan
     pointer-events: none;
     z-index: 100;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-/* Console card on 3D viewer (floating, like stats) */
-#console-card {
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    border-radius: var(--oz-r-sm);
-    border: 1px solid var(--oz-teal-xlight);
-    box-shadow: var(--oz-shadow-md);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    pointer-events: auto;
-    width: 340px;
-    height: 280px;
-}
-#console-card #terminal-container {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    border-radius: var(--oz-r-xs);
-}
-#console-card-header {
-    cursor: pointer;
-    user-select: none;
-}
-#console-card-header:hover {
-    background: rgba(0,0,0,0.03);
-}
-
-/* Console card collapsed state (reopen button) */
-#console-reopen-btn {
-    pointer-events: auto;
-}
-#console-reopen-btn:hover {
-    background: white;
 }
 
 /* Override Tailwind v4 @layer utilities cascade layer issue for tab-pane only */
