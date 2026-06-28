@@ -135,19 +135,19 @@
                         <span id="machine-state" class="machine-status-pill text-center">Unknown</span>
                         <div class="flex items-center gap-2">
                             <i id="acc-spindle" data-lucide="fan" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                title="Spindle" onclick="window.dro.toggleAccessory('S')" style="width:14px;height:14px"></i>
+                                data-tooltip="Spindle" onclick="window.dro.toggleAccessory('S')" style="width:14px;height:14px"></i>
                             <i id="acc-flood" data-lucide="droplet" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                title="Toggle Flood Coolant" onclick="window.dro.toggleAccessory('F')" style="width:14px;height:14px"></i>
+                                data-tooltip="Toggle Flood Coolant" onclick="window.dro.toggleAccessory('F')" style="width:14px;height:14px"></i>
                             <i id="acc-mist" data-lucide="cloud-fog" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                title="Toggle Mist Coolant" onclick="window.dro.toggleAccessory('M')" style="width:14px;height:14px"></i>
+                                data-tooltip="Toggle Mist Coolant" onclick="window.dro.toggleAccessory('M')" style="width:14px;height:14px"></i>
                         </div>
                     </div>
 
                     <!-- Header: WCS & Units -->
-                    <div class="flex justify-between items-center mb-1 px-1">
+                    <div class="flex justify-between items-center mb-1">
 
                         <!-- Units Toggle (Segmented) -->
-                        <label class="oz-segmented-toggle h-7" for="unitToggle">
+                        <label class="oz-segmented-toggle h-7 ml-0.5" for="unitToggle">
                             <input type="checkbox" id="unitToggle" class="sr-only" onchange="window.dro.toggleUnits();">
                             <div class="oz-segmented-bg h-full">
                                 <div class="oz-segmented-slider"></div>
@@ -157,7 +157,7 @@
                         </label>
 
                         <!-- WCS Select -->
-                        <div class="flex items-center gap-1.5 bg-white/10 rounded px-2 py-0 shadow-sm h-7 min-w-0">
+                        <div class="flex items-center gap-1.5 bg-white/10 rounded px-2 py-0 shadow-sm h-7 w-fit ml-auto">
                             <span class="text-[10px] font-black text-white/90 uppercase leading-none">WCS</span>
                             <select
                                 class="text-xs font-bold text-secondary-dark bg-transparent outline-none cursor-pointer py-0 min-w-0"
@@ -349,6 +349,37 @@
                 <!-- Jog Controls (Compact) -->
                 <div id="jog-panel">
 
+                    <!-- Feed/Dist/Mode row (above jog pad) -->
+                    <div class="grid grid-cols-3 gap-1.5 mb-2">
+                        <div>
+                            <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Feed</label>
+                            <select id="feedRate" class="input-field text-right h-7 py-0 text-[11px]"
+                                aria-label="Jog feed rate mode">
+                                <option value="slow">Slow</option>
+                                <option value="med">Medium</option>
+                                <option value="fast" selected>Fast</option>
+                            </select>
+                        </div>
+                        <div id="distContainer">
+                            <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Dist</label>
+                            <select id="stepSize" class="input-field text-right h-7 py-0 text-[11px]"
+                                aria-label="Jog distance step size">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-grey uppercase block mb-0.5 opacity-0">_</label>
+                            <label class="oz-segmented-toggle h-7 w-full" for="jogContinuous">
+                                <input type="checkbox" id="jogContinuous" class="sr-only">
+                                <div class="oz-segmented-bg h-full w-full">
+                                    <div class="oz-segmented-slider"></div>
+                                    <span class="oz-segmented-option left-opt">INCR</span>
+                                    <span class="oz-segmented-option right-opt" title="Continuous jog mode">CONT</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="jog-wrapper">
                         <!-- XY Pad -->
                         <div class="jog-pad">
@@ -388,7 +419,7 @@
                                     data-lucide="arrow-down-right" ></i></button>
                         </div>
 
-                        <!-- Right Column: Z & A, CONTINUOUS -->
+                        <!-- Right Column: Z & A -->
                         <div class="flex flex-col gap-2 w-28">
                             <!-- Z & A Buttons -->
                             <div class="flex gap-1.5 justify-center">
@@ -407,62 +438,12 @@
                                         aria-label="Jog A minus">A-</button>
                                 </div>
                             </div>
-
-                            <!-- Continuous Toggle (Segmented) -->
-                            <label class="oz-segmented-toggle mt-1" for="jogContinuous">
-                                <input type="checkbox" id="jogContinuous" class="sr-only">
-                                <div class="oz-segmented-bg">
-                                    <div class="oz-segmented-slider"></div>
-                                    <span class="oz-segmented-option left-opt">INCR</span>
-                                    <span class="oz-segmented-option right-opt" title="Continuous jog mode">CONT</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Step/Feed -->
-                    <div class="grid grid-cols-2 gap-2 mt-3">
-                        <div>
-                            <label class="text-[10px] font-bold text-grey uppercase block mb-0.5">Feed</label>
-                            <select id="feedRate" class="input-field text-right h-8 py-0"
-                                aria-label="Jog feed rate mode">
-                                <option value="slow">Slow</option>
-                                <option value="med">Medium</option>
-                                <option value="fast" selected>Fast</option>
-                            </select>
-                        </div>
-                        <div id="distContainer">
-                            <label class="text-[10px] font-bold text-grey uppercase block mb-0.5">Dist</label>
-                            <select id="stepSize" class="input-field text-right h-8 py-0"
-                                aria-label="Jog distance step size">
-                                <!-- Populated by JS -->
-                            </select>
                         </div>
                     </div>
                 </div>
 
 
             </div> <!-- End Machine Controls (id="machine-controls") -->
-
-            <!-- Console (Light Mode) - Collapsible -->
-            <div class="console-outer flex flex-col mb-0">
-                <div class="flex items-center justify-between px-2 py-1 bg-white/5 border-t border-white/10 shrink-0 cursor-pointer"
-                    onclick="toggleConsole()" title="Toggle console">
-                    <span class="text-[10px] font-bold text-white/70 uppercase tracking-wider">G-Code</span>
-                    <i data-lucide="chevron-down" id="console-toggle-icon" style="width:12px;height:12px" class="text-white/50 transition-transform duration-200"></i>
-                </div>
-                <div id="console-collapse" class="console-wrapper flex flex-col min-h-0 overflow-hidden transition-all duration-200">
-                    <div id="terminal-container" class="w-full flex-1 min-h-0"></div>
-                    <!-- Console Input -->
-                    <div id="console-input-area"
-                        class="flex gap-2 mt-2 opacity-50 pointer-events-none transition-opacity duration-200">
-                        <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
-                        <button id="btnSend" aria-label="Send G-Code"><i data-lucide="send" class="text-[12px]"></i></button>
-                        <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
-                            class="text-grey hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="text-[12px]"></i></button>
-                    </div>
-                </div>
-            </div>
 
         </aside>
 
@@ -482,7 +463,7 @@
                         <i data-lucide="menu" class="text-xl"></i>
                     </button>
 
-                    <div class="flex items-center gap-2 pl-1 md:pl-8 h-full pr-1">
+                    <div class="flex items-center gap-2 pl-1 md:pl-5 h-full pr-1">
                         <!-- Hidden elements kept for JS compatibility -->
                         <div id="connection-dot" class="hidden"></div>
                         <span id="connection-text" class="hidden"></span>
@@ -686,6 +667,33 @@
                             class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light shadow-lg pointer-events-auto px-3 py-2 text-xs font-bold text-secondary-dark hover:bg-white transition-colors items-center gap-2"
                             onclick="toggleGcodeStats()">
                             <i data-lucide="bar-chart-3" class="text-secondary"></i> Show Stats
+                        </button>
+
+                        <!-- Console Card (floating, like stats) -->
+                        <div id="console-card"
+                            class="bg-white/90 backdrop-blur rounded-lg border border-grey-light shadow-lg pointer-events-auto w-72 flex flex-col">
+                            <div id="console-card-header" class="flex items-center justify-between px-3 py-2 border-b border-grey-light"
+                                onclick="toggleConsoleCard()">
+                                <span class="text-[10px] font-bold text-grey uppercase tracking-wider"><i data-lucide="square-terminal" class="mr-1.5" style="width:11px;height:11px"></i>G-Code</span>
+                                <button class="text-grey hover:text-secondary-dark text-xs shrink-0 p-0.5" onclick="event.stopPropagation();toggleConsoleCard()" title="Minimise">
+                                    <i data-lucide="minus" ></i>
+                                </button>
+                            </div>
+                            <div class="p-3 flex flex-col flex-1 min-h-0">
+                                <div id="terminal-container" class="w-full" style="min-height:120px;flex:1"></div>
+                                <div id="console-input-area"
+                                    class="flex gap-2 mt-2">
+                                    <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
+                                    <button id="btnSend" aria-label="Send G-Code"><i data-lucide="send" class="text-[12px]"></i></button>
+                                    <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
+                                        class="text-grey hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="text-[12px]"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="console-reopen-btn"
+                            class="hidden bg-white/90 backdrop-blur rounded-lg border border-grey-light shadow-lg pointer-events-auto px-3 py-2 text-xs font-bold text-secondary-dark hover:bg-white transition-colors items-center gap-2"
+                            onclick="toggleConsoleCard()">
+                            <i data-lucide="square-terminal" class="text-secondary"></i> Show Console
                         </button>
                     </div>
                 </div>
@@ -3330,17 +3338,16 @@
                 setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
             }, severity === 'error' ? 4000 : 2500);
         };
-        // Console collapse toggle
-        var _consoleOpen = true;
-        window.toggleConsole = function () {
-            var container = document.getElementById('console-collapse');
-            var icon = document.getElementById('console-toggle-icon');
-            if (!container) return;
-            _consoleOpen = !_consoleOpen;
-            container.style.display = _consoleOpen ? 'flex' : 'none';
-            if (icon) {
-                icon.style.transform = _consoleOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
-            }
+        // Console card toggle (floating card, like stats)
+        var _consoleCardOpen = true;
+        window.toggleConsoleCard = function () {
+            var card = document.getElementById('console-card');
+            var reopenBtn = document.getElementById('console-reopen-btn');
+            if (!card || !reopenBtn) return;
+            _consoleCardOpen = !_consoleCardOpen;
+            card.classList.toggle('hidden');
+            reopenBtn.classList.toggle('hidden');
+            if (window.lucide) lucide.createIcons();
             // Refresh terminal layout after toggle
             if (window.term && window.term.fitAddon) {
                 setTimeout(function () { window.term.fitAddon.fit(); }, 50);

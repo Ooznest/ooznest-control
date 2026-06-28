@@ -18,29 +18,22 @@ class CameraControls {
         let label = nextMode;
         let icon = 'eye';
 
-        // Show/hide view cube based on mode
-        var vcEl = window.viewer.viewCube && window.viewer.viewCube.renderer && window.viewer.viewCube.renderer.domElement;
-        var vcParent = vcEl && vcEl.parentNode;
-
         if (nextMode === 'Perspective') {
             if (window.viewer.getCameraType() === 'Orthographic') window.viewer.toggleCamera();
             window.viewer.setCameraMode('orbit');
             window.viewer.resetCamera();
-            if (vcParent) vcEl.style.display = '';
         }
         else if (nextMode === 'Orthographic') {
             if (window.viewer.getCameraType() === 'Perspective') window.viewer.toggleCamera();
             window.viewer.setCameraMode('orbit');
             label = 'Orthographic';
             icon = 'box';
-            if (vcParent) vcEl.style.display = '';
         }
         else if (nextMode === 'Spindle View') {
             if (window.viewer.getCameraType() === 'Orthographic') window.viewer.toggleCamera();
             window.viewer.setCameraMode('spindle');
             label = 'Spindle View';
             icon = 'video';
-            if (vcParent) vcEl.style.display = 'none';
         }
 
         document.getElementById('cam-toggle-btn').innerHTML = `<i data-lucide="${icon}" class="text-secondary"></i> ${label}`;

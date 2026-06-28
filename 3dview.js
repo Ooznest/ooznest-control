@@ -342,17 +342,10 @@ export class GCodeViewer {
         this.lastToolPos.copy(this.currentToolPos);
         // --- Camera: Spindle View ---
         if (this.cameraMode === 'spindle') {
-            // Camera position: Above tool (Z+100), slightly back (Y-50)
-            const offset = new THREE.Vector3(0, -50, 100);
-
-            // Note: currentToolPos is local to workOffsetsGroup
-            // We need the world position of the tool to position the camera correctly
+            // Keep the camera looking at the spindle position
+            // User can still orbit/zoom freely — only the target follows the tool
             const worldToolPos = new THREE.Vector3();
             this.toolGroup.getWorldPosition(worldToolPos);
-
-            // We want to look AT the tool world position
-            this.camera.position.copy(worldToolPos).add(offset);
-            this.camera.lookAt(worldToolPos);
             this.controls.target.copy(worldToolPos);
         }
 
@@ -1359,20 +1352,21 @@ export class GCodeViewer {
 
     setCameraMode(mode) {
         this.cameraMode = mode;
-        var vcEl = this.viewCube && this.viewCube.renderer && this.viewCube.renderer.domElement;
-        if (mode === 'spindle') {
-            this.controls.enabled = false;
-            if (vcEl) vcEl.style.display = 'none';
-        } else {
-            this.controls.enabled = true;
-            if (vcEl) vcEl.style.display = '';
-        }
     }
 
     onContextMenu(event) {
         event.preventDefault();
 
-        // Raycast to find position
+        // Only honor clicks inside the machine's valid workspace
+        const { x, y } = this.machineLimits;
+        let xMin, xMax, yMin, yMax;
+        if (this.isPositiveSpace) {
+            xMin = (this.homingDirMask & 1) ? 0 : -x; xMax = (this.homingDirMask & 1) ? x : 0;
+            yMin = (this.homingDirMask & 2) ? 0 : -y; yMax = (this.homingDirMask & 2) ? y : 0;
+        } else {
+            xMin = -x; xMax = 0; yMin = -y; yMax = 0;
+        }
+
         const mouse = new THREE.Vector2();
         const rect = this.container.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1381,16 +1375,12 @@ export class GCodeViewer {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, this.camera);
 
-        // Intersect with Grid or Machine Bed (approximate with plane at Z=0)
         const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
         const target = new THREE.Vector3();
 
         if (raycaster.ray.intersectPlane(plane, target)) {
-            // target is World Pos (Machine Coordinates)
-            // We want to pass this directly to the context menu to use for G53 or G10 calculations
-
-            // Visual feedback (optional? maybe later)
-
+            // Clamp to workspace bounds
+            if (target.x < xMin || target.x > xMax || target.y < yMin || target.y > yMax) return;
             this.showContextMenu(event.clientX, event.clientY, target.x, target.y);
         }
     }
