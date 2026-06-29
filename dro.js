@@ -155,7 +155,7 @@ export class DROHandler {
         let feedOverride = null;
         let spindleOverride = null;
         let rapidOverride = null;
-        let homedMask = 0;
+        let homedMask = this.homedMask || 0;
         let isSdPrinting = false;
         // let foundAccessories = false; // DEBOUNCE REMOVED
 
@@ -181,12 +181,21 @@ export class DROHandler {
                 if (overrides.length >= 2) rapidOverride = parseInt(overrides[1]) || 100;
                 if (overrides.length >= 3) spindleOverride = parseInt(overrides[2]) || 100;
             }
-            // --- NEW: Homing Status (H:mask,...) ---
-            // grblHAL reports H:<homed_mask>,<homing_dir_mask>
+            // Homing Status:
+            // H:0            -> homing not complete
+            // H:1            -> all active axes homed
+            // H:1,<bitmask>  -> single-axis homing enabled, bitmask says which axes are homed
             else if (part.startsWith('H:')) {
                 const hParts = part.substring(2).split(',');
-                homedMask = parseInt(hParts[0]) || 0;
-                // We only care about homed_mask for now
+                const homingComplete = parseInt(hParts[0]) || 0;
+                if (hParts.length > 1) {
+                    homedMask = parseInt(hParts[1]) || 0;
+                } else if (homingComplete) {
+                    const axisCount = Math.max(this.mpos.length, this.wpos.length, 3);
+                    homedMask = (1 << Math.min(axisCount, 6)) - 1;
+                } else {
+                    homedMask = 0;
+                }
             }
             // --- NEW: Input Pins (Pn:PXYZ...) ---
             else if (part.startsWith('Pn:')) {
@@ -287,15 +296,9 @@ export class DROHandler {
             const isHomed = (mask >> i) & 1;
             const btn = document.getElementById(`homing-btn-${axis}`);
             if (btn) {
-                if (isHomed) {
-                    btn.classList.add('text-green-500');
-                    btn.classList.remove('text-grey-light', 'text-red-400');
-                    btn.title = `${axis.toUpperCase()} Homed`;
-                } else {
-                    btn.classList.remove('text-green-500', 'text-red-400');
-                    btn.classList.add('text-grey-light');
-                    btn.title = `Home ${axis.toUpperCase()}`;
-                }
+                btn.classList.remove('text-green-500', 'text-red-400');
+                btn.classList.add('text-grey-light');
+                btn.title = isHomed ? `${axis.toUpperCase()} Homed` : `Home ${axis.toUpperCase()}`;
             }
         });
         if (window.troubleshooting) {
@@ -349,6 +352,36 @@ export class DROHandler {
         });
     }
 
+    toggleAccessory(type) {
+        if (!this.ws || !this.ws.isConnected) return;
+        var isActive = this.accessoryState ? this.accessoryState.includes(type) : false;
+        if (type === 'F') {
+            if (isActive) {
+                this.ws.sendCommand('M9');
+                if (window.showToast) window.showToast('Coolant off', 'droplet', 'info');
+            } else {
+                this.ws.sendCommand('M8');
+                if (window.showToast) window.showToast('Flood on', 'droplet', 'info');
+            }
+        } else if (type === 'M') {
+            if (isActive) {
+                this.ws.sendCommand('M9');
+                if (window.showToast) window.showToast('Coolant off', 'cloud-fog', 'info');
+            } else {
+                this.ws.sendCommand('M7');
+                if (window.showToast) window.showToast('Mist on', 'cloud-fog', 'info');
+            }
+        } else if (type === 'S') {
+            if (isActive) {
+                this.ws.sendCommand('M5');
+                if (window.showToast) window.showToast('Spindle off', 'fan', 'info');
+            } else {
+                this.ws.sendCommand('M3');
+                if (window.showToast) window.showToast('Spindle on', 'fan', 'info');
+            }
+        }
+    }
+
     homeAxis(axis) {
         if (!this.ws || !this.ws.isConnected) return;
         this.ws.sendCommand(`$H${axis}`);
@@ -363,7 +396,7 @@ export class DROHandler {
         if (!stateEl) return;
         const cleanState = state.split(':')[0];
         stateEl.textContent = cleanState;
-        stateEl.className = "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase text-white transition-all duration-300";
+        stateEl.className = "machine-status-pill text-center transition-all duration-300";
         const s = cleanState.toLowerCase();
 
         // Detect alarm → non-alarm transition (alarm cleared via $X or reset)
@@ -376,13 +409,13 @@ export class DROHandler {
         const isAlarmed = s.startsWith('alarm');
 
         if (isAlarmed) {
-            stateEl.classList.add('bg-red-600', 'animate-pulse', 'shadow-lg', 'shadow-red-500/50');
+            stateEl.classList.add('status-alarm', 'animate-pulse');
         } else if (s.startsWith('hold') || s.startsWith('door') || s.startsWith('sleep')) {
-            stateEl.classList.add('bg-yellow-600');
+            stateEl.classList.add('status-warn');
         } else if (s.startsWith('run') || s.startsWith('jog') || s.startsWith('homing')) {
-            stateEl.classList.add('bg-green-600');
+            stateEl.classList.add('status-run');
         } else {
-            stateEl.classList.add('bg-secondary');
+            stateEl.classList.add('status-idle');
         }
 
         if (window.uiManager && window.uiManager.applyStateLock) {

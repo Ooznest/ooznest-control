@@ -97,12 +97,6 @@ Ooznest-specific board detection: automatically detects Ooznest Motion Control C
 - Two-column layout with grouped settings and inline editing
 - Descriptions loaded from controller at runtime
 
-### Firmware Update
-- Flash ESP32-based controllers (Ooznest Core) via Web Serial using esptool-js
-- Bootloader, partition, and firmware binary selection
-- Progress bar, terminal output, success/error modals
-- Platform detection (browser vs Electron vs Cordova)
-
 ### Connection
 - **Web Serial API** — Browser and Electron 25+
 - **WebSocket** — grblHAL WiFi/ethernet modules
@@ -129,8 +123,8 @@ Ooznest-specific board detection: automatically detects Ooznest Motion Control C
 │  │  SD Card  │ │  Tools   │ │ Settings │ │Troubleshooting│   │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │
 │  ┌──────────┐ ┌────────────────────────────────────────┐    │
-│  │  Probe   │ │        Firmware Update (esptool-js)     │    │
-│  └──────────┘ └────────────────────────────────────────┘    │
+│  │  Probe   │                                            │
+│  └──────────┘                                            │
 │                          │                                  │
 │           ┌──────────────┴──────────────┐                   │
 │           │     Connection Manager      │                   │

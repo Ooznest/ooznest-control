@@ -1,12 +1,13 @@
 {
   "name": "ooznest-control",
-  "version": "1.0.99",
+  "version": "1.0.111",
   "description": "grblHAL Web interface with WebSerial and Electron support",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
     "build-windows": "electron-builder --win",
+    "build-windows-local": "electron-builder --win --config.npmRebuild=false --config.win.signAndEditExecutable=false",
     "build-linux": "electron-builder --linux",
     "build-macos": "electron-builder --mac",
     "cordova-sync": "node sync.js",
@@ -21,6 +22,7 @@
     "clipper-lib": "^6.4.2",
     "electron-updater": "6.8.3",
     "express": "^4.18.2",
+    "lucide": "^1.21.0",
     "serialport": "^12.0.0",
     "sharp": "^0.34.5",
     "ws": "^8.13.0"

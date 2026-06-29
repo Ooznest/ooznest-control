@@ -95,6 +95,43 @@ export class ConfigWizard {
         return name && name.toUpperCase() === 'UNCONFIGURED';
     }
 
+    _decodeMachineConfig(configName) {
+        if (!configName || !/^WB[A-Z]{7}$/.test(configName)) return null;
+
+        const sizeMap = {
+            A: '500 x 500',
+            B: '750 x 750',
+            C: '750 x 1000',
+            D: '1000 x 1000',
+            E: '1000 x 1500',
+            F: '1500 x 1500',
+            G: 'Custom'
+        };
+        const spindleMap = {
+            A: 'WorkBee Router Head',
+            B: 'Mafell FM 1000 (Digital)',
+            C: 'Mafell FM 1000 (Manual)',
+            D: 'VFD (0-10V)',
+            E: 'VFD (Modbus)',
+            F: 'PWM Laser Module'
+        };
+        const categoryMap = {
+            A: 'Z1+',
+            B: 'Z2',
+            C: 'Custom'
+        };
+
+        const size = sizeMap[configName[2]] || 'Unknown size';
+        const dust = configName[3] === 'A' ? 'Dust shoe' : 'No dust shoe';
+        const enclosure = configName[4] === 'A' ? 'Enclosure' : 'Open frame';
+        const spindle = spindleMap[configName[5]] || 'Unknown spindle';
+        const laser = configName[6] === 'A' ? 'Laser fitted' : 'No laser';
+        const probe = configName[7] === 'A' ? 'Ooznest XYZ Probe' : 'Custom probe';
+        const category = categoryMap[configName[8]] || 'Unknown machine type';
+
+        return `${category}, ${size}, ${spindle}, ${dust}, ${enclosure}, ${laser}, ${probe}`;
+    }
+
     _onVerComplete() {
         console.log('[ConfigWizard] _onVerComplete', this.verInfo);
         if (!this.verInfo) return;
@@ -124,22 +161,29 @@ export class ConfigWizard {
 
     // --- Info Tab Rendering ---
 
-    renderInfoTab() {
+    async renderInfoTab() {
         const container = document.getElementById('trouble-tab-info-content');
         if (!container) return;
 
         const v = this.verInfo;
+        const computerCardHtml = window.troubleshooting?.getComputerInfo
+            ? window.troubleshooting.renderComputerInfoCard(await window.troubleshooting.getComputerInfo())
+            : '';
         let html = '<div class="space-y-4">';
 
         // Firmware card
         html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
         html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-        html += '<i class="bi bi-cpu text-primary text-xs"></i>';
+        html += '<i data-lucide="cpu" style="width:14px;height:14px"></i>';
         html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Firmware</h3>';
         html += '</div><div class="p-4 space-y-2">';
         if (v) {
             html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${v.version || 'Unknown'}</span></div>`;
             html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine Config</span><span class="text-xs font-bold ${this._isUnconfigured(v.configName) ? 'text-red-500' : 'text-secondary-dark'}">${v.configName || 'None'}</span></div>`;
+            const decodedConfig = this._decodeMachineConfig(v.configName);
+            if (decodedConfig) {
+                html += `<div class="text-[10px] text-grey leading-relaxed">${decodedConfig}</div>`;
+            }
         }
         if (this.boardInfo) {
             html += `<div class="flex justify-between"><span class="text-xs text-grey">Board</span><span class="text-xs font-bold text-secondary-dark">${this.boardInfo}</span></div>`;
@@ -149,18 +193,20 @@ export class ConfigWizard {
         // App version card
         html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
         html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-        html += '<i class="bi bi-phone text-primary text-xs"></i>';
+        html += '<i data-lucide="smartphone" style="width:14px;height:14px"></i>';
         html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Application</h3>';
         html += '</div><div class="p-4 space-y-2">';
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${document.title.replace('Ooznest Control ', '') || 'Unknown'}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Platform</span><span class="text-xs font-bold text-secondary-dark">${window.electron ? 'Desktop' : window.cordova ? 'Mobile' : 'Web'}</span></div>`;
         html += '</div></div>';
 
+        html += computerCardHtml;
+
         // Options card
         if (this.optInfo) {
             html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
             html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-            html += '<i class="bi bi-gear text-primary text-xs"></i>';
+            html += '<i data-lucide="settings" style="width:14px;height:14px"></i>';
             html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Options</h3>';
             html += '</div><div class="p-4">';
             html += `<span class="text-xs text-grey">${this.optInfo.slice(1, -1)}</span>`;
@@ -227,7 +273,7 @@ export class ConfigWizard {
             }
             html += `<div class="flex items-center gap-1.5 px-2 py-1 rounded-lg ${isActive ? 'bg-primary text-white' : isDone ? 'text-primary' : 'text-grey'} transition-colors whitespace-nowrap">`;
             if (isDone) {
-                html += '<i class="bi bi-check-circle-fill text-xs"></i>';
+                html += '<i data-lucide="check-circle" style="width:14px;height:14px"></i>';
             } else {
                 html += `<span class="w-5 h-5 rounded-full ${isActive ? 'bg-white/20' : 'bg-grey-light'} flex items-center justify-center text-[10px] font-bold ${isActive ? 'text-white' : 'text-grey'}">${i + 1}</span>`;
             }
@@ -270,7 +316,7 @@ export class ConfigWizard {
 
     _renderMachineStep() {
         if (!this.machines.length) {
-            return '<div class="text-center py-8"><i class="bi bi-arrow-clockwise animate-spin text-2xl text-grey"></i><p class="text-sm text-grey mt-2">Loading machines...</p></div>';
+            return '<div class="text-center py-8"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i><p class="text-sm text-grey mt-2">Loading machines...</p></div>';
         }
 
         const cats = {
@@ -296,7 +342,7 @@ export class ConfigWizard {
             html += `<div class="flex items-center gap-2"><i class="${cat.icon} text-xs text-primary"></i><span class="font-bold text-xs text-secondary-dark">${cat.label}</span></div>`;
             html += `<div class="flex items-center gap-2">`;
             if (hasSelection) {
-                html += `<span class="text-[10px] text-green-600 font-bold"><i class="bi bi-check-circle-fill"></i> Selected</span>`;
+                html += `<span class="text-[10px] text-green-600 font-bold"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Selected</span>`;
             }
             html += `<i class="bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} text-xs text-grey"></i>`;
             html += `</div></div>`;
@@ -427,7 +473,7 @@ export class ConfigWizard {
             html += `<div class="flex items-center gap-2"><i class="${cat.icon} text-xs text-primary"></i><span class="font-bold text-xs text-secondary-dark">${cat.label}</span></div>`;
             html += `<div class="flex items-center gap-2">`;
             if (hasSelection) {
-                html += `<span class="text-[10px] text-green-600 font-bold"><i class="bi bi-check-circle-fill"></i> Selected</span>`;
+                html += `<span class="text-[10px] text-green-600 font-bold"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Selected</span>`;
             }
             html += `<i class="bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} text-xs text-grey"></i>`;
             html += `</div></div>`;
@@ -515,7 +561,23 @@ export class ConfigWizard {
             const val = t[axis] || 0;
             lines.push(`$${130 + i}=${val.toFixed(3)}`);
         });
-        return lines.join('\n');
+        ['$140=1.400', '$141=1.400', '$142=1.400'].forEach(line => lines.push(line));
+        return this._syncGangedYAxisSteps(lines).join('\n');
+    }
+
+    _syncGangedYAxisSteps(lines = []) {
+        const y1Line = lines.find(line => line.startsWith('$101='));
+        if (!y1Line) return lines;
+
+        const y1Value = y1Line.split('=')[1];
+        const y2Index = lines.findIndex(line => line.startsWith('$103='));
+        if (y2Index >= 0) {
+            lines[y2Index] = `$103=${y1Value}`;
+        } else {
+            lines.splice(2, 0, `$103=${y1Value}`);
+        }
+
+        return lines;
     }
 
     _computeToolheadAssignments() {
@@ -573,9 +635,9 @@ export class ConfigWizard {
 
         // Description
         if (selected === 'ooznest') {
-            html += '<p class="text-[10px] text-grey mt-3"><i class="bi bi-info-circle"></i> Ooznest XYZ Probe: thickness 10mm, XY offset 10mm. These will be set automatically in your probe settings.</p>';
+            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Ooznest XYZ Probe: thickness 10mm, XY offset 10mm. These will be set automatically in your probe settings.</p>';
         } else {
-            html += '<p class="text-[10px] text-grey mt-3"><i class="bi bi-info-circle"></i> Enter your custom probe plate dimensions above.</p>';
+            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Enter your custom probe plate dimensions above.</p>';
         }
 
         return html;
@@ -662,7 +724,7 @@ export class ConfigWizard {
         }
 
         html += '<div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">';
-        html += '<i class="bi bi-exclamation-triangle text-amber-500 text-sm mt-0.5"></i>';
+        html += '<i data-lucide="triangle-alert" style="width:14px;height:14px"></i>';
         html += '<p class="text-[10px] text-amber-700">This will overwrite your current Grbl settings and perform a soft reset. Make sure you have a backup of your current configuration.</p>';
         html += '</div>';
 
@@ -921,11 +983,11 @@ export class ConfigWizard {
         const el = document.getElementById('config-wizard-status');
         if (!el) return;
         if (type === 'error') {
-            el.innerHTML = `<div class="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-2"><i class="bi bi-x-circle-fill"></i> ${msg}</div>`;
+            el.innerHTML = `<div class="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-2"><i data-lucide="x-circle" style="width:14px;height:14px"></i> ${msg}</div>`;
         } else if (type === 'success') {
-            el.innerHTML = `<div class="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700 flex items-center gap-2"><i class="bi bi-check-circle-fill"></i> ${msg}</div>`;
+            el.innerHTML = `<div class="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700 flex items-center gap-2"><i data-lucide="check-circle" style="width:14px;height:14px"></i> ${msg}</div>`;
         } else {
-            el.innerHTML = `<div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-center gap-2"><i class="bi bi-info-circle-fill"></i> ${msg}</div>`;
+            el.innerHTML = `<div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-center gap-2"><i data-lucide="info" style="width:14px;height:14px"></i> ${msg}</div>`;
         }
     }
 

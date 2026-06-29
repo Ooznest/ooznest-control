@@ -23,8 +23,9 @@ class UIManager {
             }
 
             // Update Connect Button to Disconnect
-            btn.innerHTML = '<i class="bi bi-usb-plug-fill"></i> Disconnect';
+            btn.innerHTML = '<i data-lucide="plug"></i> Disconnect';
             btn.className = "btn btn-secondary flex-1 h-9 text-xs shadow-none border border-white/10 px-2 py-0 !bg-red-500 !text-white hover:!bg-red-600";
+            if (window.lucide) window.lucide.createIcons();
 
             // Update Status Pill
             document.getElementById('connection-dot').classList.replace('bg-red-500', 'bg-green-500');
@@ -48,7 +49,7 @@ class UIManager {
             }, 4500);
         } else {
             if (this.statusInterval) clearInterval(this.statusInterval);
-            btn.textContent = 'Connect';
+            btn.innerHTML = 'Connect';
             btn.className = "btn btn-primary flex-1 h-9 text-xs shadow-none border border-white/10 px-2 py-0";
 
             document.getElementById('connection-dot').classList.replace('bg-green-500', 'bg-red-500');

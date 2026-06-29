@@ -3,6 +3,7 @@ export class ProbeHandler {
         this.ws = ws;
         this.term = term;
         this.store = store;
+        this.enable3DProbe = false;
 
         // State Machine
         this.activeRoutine = null;
@@ -33,6 +34,7 @@ export class ProbeHandler {
     initUI() {
         this.renderSettings();
         this._resetProbeTest();
+        document.body.setAttribute('data-3d-probe-enabled', String(this.enable3DProbe));
 
         // Reset safety when probe tab is shown
         window.addEventListener('tab-shown', (e) => {
@@ -54,7 +56,7 @@ export class ProbeHandler {
         if (this._testStage) return; // already testing
 
         const s = this.store.data.probe;
-        const isPlate = s.mode === 'plate';
+        const isPlate = this._getProbeMode(s) === 'plate';
         const bar = document.getElementById('probe-safety-bar');
         const msg = document.getElementById('probe-safety-msg');
         const status = document.getElementById('probe-safety-status');
@@ -67,7 +69,7 @@ export class ProbeHandler {
             ? 'Lift the probe plate and gently touch the endmill to the plate, then release'
             : 'Gently press the probe tip by hand, then release';
         btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Waiting...';
+        btn.innerHTML = '<i data-lucide="hourglass" style="width:14px;height:14px"></i> Waiting...';
         status.className = 'hidden';
         const skipBtn = document.getElementById('probe-skip-btn');
         if (skipBtn) skipBtn.classList.add('hidden');
@@ -95,7 +97,7 @@ export class ProbeHandler {
                     msg.textContent = 'Probe test passed — all operations enabled';
                     if (actions) actions.classList.add('hidden');
                     status.className = 'text-green-600';
-                    status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
+                    status.innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px"></i> Probe OK';
                     if (note) note.classList.add('hidden');
                     this.term.writeln('\x1b[32m> Probe safety test PASSED.\x1b[0m');
                 }
@@ -113,7 +115,7 @@ export class ProbeHandler {
                 bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
                 msg.textContent = 'Test timed out — try again';
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-hand-index-thumb"></i> Test Probe';
+                btn.innerHTML = '<i data-lucide="pointer" style="width:14px;height:14px"></i> Test Probe';
                 const skipBtn = document.getElementById('probe-skip-btn');
                 if (skipBtn) skipBtn.classList.remove('hidden');
                 this.term.writeln('\x1b[31m> Probe safety test TIMED OUT.\x1b[0m');
@@ -135,7 +137,7 @@ export class ProbeHandler {
         msg.textContent = 'Probe test passed — all operations enabled';
         if (actions) actions.classList.add('hidden');
         status.className = 'text-green-600';
-        status.innerHTML = '<i class="bi bi-check-circle-fill"></i> Probe OK';
+        status.innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px"></i> Probe OK';
         if (note) note.classList.add('hidden');
         this.term.writeln('\x1b[32m> Probe safety check skipped (confirmed by user).\x1b[0m');
     }
@@ -186,7 +188,8 @@ export class ProbeHandler {
 
     switchProbeTab(targetId, btn) {
         const s = this.store.data.probe;
-        if ((targetId === 'tab-centers' || targetId === 'tab-rotation' || targetId === 'tab-inside-corners') && (!s.mode || s.mode === 'plate')) return;
+        if (!this.enable3DProbe && ['tab-centers', 'tab-rotation', 'tab-inside-corners'].includes(targetId)) return;
+        if ((targetId === 'tab-centers' || targetId === 'tab-rotation' || targetId === 'tab-inside-corners') && this._getProbeMode(s) === 'plate') return;
 
         // Hide all contents
         document.querySelectorAll('.probe-tab-content').forEach(el => el.classList.add('hidden'));
@@ -205,6 +208,11 @@ export class ProbeHandler {
     }
 
     toggleProbeMode() {
+        if (!this.enable3DProbe) {
+            this.renderSettings();
+            return;
+        }
+
         // Save current mode's values, then switch
         this.saveSettings();
         const s = this.store.data.probe;
@@ -215,9 +223,13 @@ export class ProbeHandler {
         this._resetProbeTest();
     }
 
+    _getProbeMode(settings = this.store.data.probe) {
+        if (!this.enable3DProbe) return 'plate';
+        return settings.mode || 'plate';
+    }
+
     saveSettings() {
         const s = this.store.data.probe;
-        const mode = s.mode || 'plate';
 
         // Basic Config
         if (document.getElementById('prb-tool')) this.store.set('probe.toolDiameter', parseFloat(document.getElementById('prb-tool').value) || 0);
@@ -247,11 +259,12 @@ export class ProbeHandler {
 
     renderSettings() {
         const s = this.store.data.probe;
-        const mode = s.mode || 'plate';
+        const mode = this._getProbeMode(s);
         const isPlate = mode === 'plate';
 
         // Set body attribute for CSS visibility
         document.body.setAttribute('data-probe-mode', mode);
+        document.body.setAttribute('data-3d-probe-enabled', String(this.enable3DProbe));
 
         // Set toggle state (inverted: unchecked = Plate (left), checked = Probe (right))
         const toggle = document.getElementById('prb-mode-toggle');
@@ -291,7 +304,7 @@ export class ProbeHandler {
         ['tab-centers', 'tab-rotation', 'tab-inside-corners'].forEach(tab => {
             const btn = document.querySelector(`.probe-tab-btn[data-target="${tab}"]`);
             if (btn) {
-                if (isPlate) {
+                if (!this.enable3DProbe || isPlate) {
                     btn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
                     btn.classList.remove('hover:bg-white', 'hover:text-secondary-dark');
                     if (btn.classList.contains('text-primary-dark')) {
@@ -329,7 +342,7 @@ export class ProbeHandler {
         document.querySelectorAll('#single-surface-grid button').forEach(b => {
             b.className = 'single-sel-btn rounded ' + txtClasses + ' bg-grey-bg border border-grey-light hover:bg-primary px-2 py-1 flex flex-col items-center';
         });
-        btn.className = 'single-sel-btn rounded ' + txtClasses + ' bg-primary border-2 border-black/20 ring-2 ring-primary/30 px-2 py-1 flex flex-col items-center';
+        btn.className = 'single-sel-btn rounded ' + txtClasses + ' bg-primary-dark text-white border-2 border-primary-dark px-2 py-1 flex flex-col items-center';
         const singleImg = document.getElementById('probe-single-diagram');
         const cornerImg = document.getElementById('probe-corner-diagram');
         const svgMap = { 'X1':'SS-RIGHT.svg', 'X-1':'SS-LEFT.svg', 'Y1':'SS-FRONT.svg', 'Y-1':'SS-REAR.svg', 'Z-1':'SS-TOP.svg' };
@@ -353,7 +366,7 @@ export class ProbeHandler {
 
         const parent = btn.parentElement;
         // Styles
-        const selClasses = ['bg-primary', 'border-2', 'border-black/20', 'ring-2', 'ring-primary/30'];
+        const selClasses = ['bg-primary-dark', 'text-white', 'border-2', 'border-primary-dark'];
         const outUnsel = ['bg-grey-bg', 'border', 'border-grey-light'];
         const inUnsel = ['bg-white', 'shadow-inner']; // simplified
 
@@ -399,8 +412,7 @@ export class ProbeHandler {
 
         if (!success) {
             this.activeRoutine = null;
-            this._resetProbeTest();
-            this.term.writeln('\x1b[31m> Probe Failed: No Contact.\x1b[0m');
+            this._resetProbeTest();      
             return;
         }
 
@@ -666,7 +678,7 @@ export class ProbeHandler {
         if (!this._requireProbeSafe()) return;
         this.saveSettings();
         const s = this.store.data.probe;
-        const isPlate = s.mode === 'plate';
+        const isPlate = this._getProbeMode(s) === 'plate';
         const rad = s.toolDiameter / 2;
         const plateOffset = isPlate ? s.xyPlateOffset : 0;
         const totalOffset = rad + plateOffset;
@@ -700,7 +712,7 @@ export class ProbeHandler {
 
     stepOutsideCorner(coords) {
         const s = this.store.data.probe;
-        const isPlate = s.mode === 'plate';
+        const isPlate = this._getProbeMode(s) === 'plate';
         const rad = s.toolDiameter / 2;
         const xDir = this.tempData.xDir;
         const yDir = this.tempData.yDir;
@@ -742,7 +754,7 @@ export class ProbeHandler {
         if (!this._requireProbeSafe()) return;
         this.saveSettings();
         const s = this.store.data.probe;
-        const isPlate = s.mode === 'plate';
+        const isPlate = this._getProbeMode(s) === 'plate';
         const clearance = isPlate ? (s.plateClearance || s.clearance) : (s.probeClearance || s.clearance);
         this.activeRoutine = 'POCKET';
         this.routineStep = 1;
@@ -760,7 +772,7 @@ export class ProbeHandler {
         if (!this._requireProbeSafe()) return;
         this.saveSettings();
         const s = this.store.data.probe;
-        const isPlate = s.mode === 'plate';
+        const isPlate = this._getProbeMode(s) === 'plate';
         const clearance = isPlate ? (s.plateClearance || s.clearance) : (s.probeClearance || s.clearance);
         this.activeRoutine = 'FEATURE';
         this.routineStep = 1;
@@ -779,7 +791,7 @@ export class ProbeHandler {
 
     commonCenterStep(coords, type) {
         const s = this.store.data.probe;
-        const isPlate = s.mode === 'plate';
+        const isPlate = this._getProbeMode(s) === 'plate';
         const clearance = this.tempData.clearance || (isPlate ? (s.plateClearance || s.clearance) : (s.probeClearance || s.clearance));
         this.probeData.push(coords);
         const len = this.probeData.length;

@@ -227,8 +227,7 @@ export class GCodeViewer {
 
         // Controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
+        this.controls.enableDamping = false;
 
         // ViewCube
         this.viewCube = new ViewCube(this.camera, this.controls, this.container);
@@ -342,17 +341,10 @@ export class GCodeViewer {
         this.lastToolPos.copy(this.currentToolPos);
         // --- Camera: Spindle View ---
         if (this.cameraMode === 'spindle') {
-            // Camera position: Above tool (Z+100), slightly back (Y-50)
-            const offset = new THREE.Vector3(0, -50, 100);
-
-            // Note: currentToolPos is local to workOffsetsGroup
-            // We need the world position of the tool to position the camera correctly
+            // Keep the camera looking at the spindle position
+            // User can still orbit/zoom freely — only the target follows the tool
             const worldToolPos = new THREE.Vector3();
             this.toolGroup.getWorldPosition(worldToolPos);
-
-            // We want to look AT the tool world position
-            this.camera.position.copy(worldToolPos).add(offset);
-            this.camera.lookAt(worldToolPos);
             this.controls.target.copy(worldToolPos);
         }
 
@@ -1192,30 +1184,9 @@ export class GCodeViewer {
 
         // Target View: Front-Facing, Tilted back
         const targetPos = new THREE.Vector3(center.x, center.y - maxDim * 1.5, center.z + maxDim);
-        const startPos = this.camera.position.clone();
-        const startTarget = this.controls.target.clone();
-
-        const duration = 600;
-        const startTime = Date.now();
-
-        const anim = () => {
-            const now = Date.now();
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            // Ease-out cubic
-            const ease = 1 - Math.pow(1 - progress, 3);
-
-            this.camera.position.lerpVectors(startPos, targetPos, ease);
-            this.controls.target.lerpVectors(startTarget, center, ease);
-            this.controls.update();
-
-            if (progress < 1) {
-                requestAnimationFrame(anim);
-            }
-        };
-
-        requestAnimationFrame(anim);
+        this.camera.position.copy(targetPos);
+        this.controls.target.copy(center);
+        this.controls.update();
     }
 
     setCameraView(view) {
@@ -1267,39 +1238,14 @@ export class GCodeViewer {
                 break;
         }
 
-        // Animate camera to target position
+        // Snap camera to target position without tweening
         this.animateCamera(targetPosition, targetUp);
     }
 
     animateCamera(targetPosition, targetUp) {
-        const startPosition = this.camera.position.clone();
-        const startUp = this.camera.up.clone();
-        const duration = 600; // milliseconds
-        const startTime = Date.now();
-
-        const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-
-            // Easing function (easeInOutCubic)
-            const eased = progress < 0.5
-                ? 4 * progress * progress * progress
-                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-            // Interpolate position
-            this.camera.position.lerpVectors(startPosition, targetPosition, eased);
-
-            // Interpolate up vector
-            this.camera.up.lerpVectors(startUp, targetUp, eased);
-
-            this.controls.update();
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-
-        animate();
+        this.camera.position.copy(targetPosition);
+        this.camera.up.copy(targetUp);
+        this.controls.update();
     }
 
     toggleCamera() {
@@ -1359,20 +1305,21 @@ export class GCodeViewer {
 
     setCameraMode(mode) {
         this.cameraMode = mode;
-        if (mode === 'spindle') {
-            // Disable controls damping/enable keys if needed, but OrbitControls might fight
-            // Actually, if we update position/target every frame, controls will just follow
-            // But user interaction might be fighting.
-            this.controls.enabled = false;
-        } else {
-            this.controls.enabled = true;
-        }
     }
 
     onContextMenu(event) {
         event.preventDefault();
 
-        // Raycast to find position
+        // Only honor clicks inside the machine's valid workspace
+        const { x, y } = this.machineLimits;
+        let xMin, xMax, yMin, yMax;
+        if (this.isPositiveSpace) {
+            xMin = (this.homingDirMask & 1) ? 0 : -x; xMax = (this.homingDirMask & 1) ? x : 0;
+            yMin = (this.homingDirMask & 2) ? 0 : -y; yMax = (this.homingDirMask & 2) ? y : 0;
+        } else {
+            xMin = -x; xMax = 0; yMin = -y; yMax = 0;
+        }
+
         const mouse = new THREE.Vector2();
         const rect = this.container.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1381,16 +1328,12 @@ export class GCodeViewer {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, this.camera);
 
-        // Intersect with Grid or Machine Bed (approximate with plane at Z=0)
         const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
         const target = new THREE.Vector3();
 
         if (raycaster.ray.intersectPlane(plane, target)) {
-            // target is World Pos (Machine Coordinates)
-            // We want to pass this directly to the context menu to use for G53 or G10 calculations
-
-            // Visual feedback (optional? maybe later)
-
+            // Clamp to workspace bounds
+            if (target.x < xMin || target.x > xMax || target.y < yMin || target.y > yMax) return;
             this.showContextMenu(event.clientX, event.clientY, target.x, target.y);
         }
     }
@@ -1414,20 +1357,21 @@ export class GCodeViewer {
             </div>
             <button class="text-left px-4 py-2 hover:bg-primary-light hover:text-primary-dark transition-colors"
                 onclick="window.sendCmd('G53 G0 X${mX.toFixed(3)} Y${mY.toFixed(3)}');">
-                <i class="bi bi-cursor-fill mr-2"></i> Jog Here (Rapid)
+                <i data-lucide="pointer" style="width:14px;height:14px;margin-right:8px"></i> Jog Here (Rapid)
             </button>
             <button class="text-left px-4 py-2 hover:bg-primary-light hover:text-primary-dark transition-colors"
                 onclick="window.sendCmd('G53 G1 X${mX.toFixed(3)} Y${mY.toFixed(3)} F1000');">
-                <i class="bi bi-cursor mr-2"></i> Jog Here (Feed)
+                <i data-lucide="pointer" style="width:14px;height:14px;margin-right:8px"></i> Jog Here (Feed)
             </button>
             <div class="border-t border-grey-light my-1"></div>
             <button class="text-left px-4 py-2 hover:bg-primary-light hover:text-primary-dark transition-colors"
                 onclick="window.setWorkZeroAt(${mX.toFixed(3)}, ${mY.toFixed(3)});">
-                <i class="bi bi-crosshair mr-2"></i> Set XY Zero Here
+                <i data-lucide="crosshair" style="width:14px;height:14px;margin-right:8px"></i> Set XY Zero Here
             </button>
         `;
         menu.style.left = `${x}px`;
         menu.style.top = `${y}px`;
+        if (window.lucide) lucide.createIcons();
         menu.classList.remove('hidden');
     }
 

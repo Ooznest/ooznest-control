@@ -5,13 +5,13 @@ export class MacroHandler {
         this.macros = [];
         this.editingId = null; // null = new, number = editing index
 
-        // Predefined list of useful Bootstrap Icons for CNC
+        // Predefined list of useful Lucide icons for CNC
         this.icons = [
-            'bi-play-fill', 'bi-stop-fill', 'bi-pause-fill', 'bi-house-door-fill',
-            'bi-fan', 'bi-droplet-fill', 'bi-lightning-fill', 'bi-tools',
-            'bi-bullseye', 'bi-arrows-move', 'bi-arrow-clockwise', 'bi-arrow-counterclockwise',
-            'bi-lightbulb-fill', 'bi-box-seam', 'bi-rulers', 'bi-gear-fill',
-            'bi-wind', 'bi-thermometer-half', 'bi-speedometer2', 'bi-trash'
+            'play', 'square', 'pause', 'house',
+            'fan', 'droplets', 'zap', 'wrench',
+            'crosshair', 'move', 'rotate-cw', 'rotate-ccw',
+            'lightbulb', 'package', 'ruler', 'settings',
+            'wind', 'thermometer', 'gauge', 'trash-2'
         ];
 
         // Color options (Tailwind classes)
@@ -90,16 +90,16 @@ export class MacroHandler {
 
             // MODIFIED: Changed opacity classes to be visible by default (mobile), hidden on md+ unless hovered
             btn.innerHTML = `
-                <i class="bi ${macro.icon} text-3xl mb-2"></i>
+                <i data-lucide="${this.normalizeIcon(macro.icon)}" class="text-3xl mb-2"></i>
                 <span class="font-bold text-sm text-center leading-tight select-none">${macro.name}</span>
 
                 <!-- Edit Controls (Always visible on mobile, Hover only on Desktop) -->
                 <div class="absolute top-1 right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-1">
                     <button class="edit-btn p-1 bg-black/20 hover:bg-black/40 rounded text-white text-xs" title="Edit">
-                        <i class="bi bi-pencil-fill"></i>
+                        <i data-lucide="pencil" style="width:14px;height:14px"></i>
                     </button>
                     <button class="del-btn p-1 bg-black/20 hover:bg-red-600 rounded text-white text-xs" title="Delete">
-                        <i class="bi bi-trash-fill"></i>
+                        <i data-lucide="trash-2" style="width:14px;height:14px"></i>
                     </button>
                 </div>
             `;
@@ -130,11 +130,12 @@ export class MacroHandler {
         const addBtn = document.createElement('div');
         addBtn.className = "cursor-pointer rounded-xl border-2 border-dashed border-grey-light hover:border-primary hover:bg-white transition-colors flex flex-col items-center justify-center p-4 h-32 text-grey hover:text-primary";
         addBtn.innerHTML = `
-            <i class="bi bi-plus-lg text-4xl mb-1"></i>
+            <i data-lucide="plus" style="width:14px;height:14px"></i>
             <span class="font-bold text-xs uppercase tracking-wider">Add Macro</span>
         `;
         addBtn.addEventListener('click', () => this.openModal(null));
         container.appendChild(addBtn);
+        if (window.lucide) window.lucide.createIcons();
     }
 
     // --- Modal Logic ---
@@ -149,7 +150,7 @@ export class MacroHandler {
         this.icons.forEach(iconClass => {
             const iBtn = document.createElement('button');
             iBtn.className = "w-10 h-10 flex items-center justify-center rounded border border-grey-light hover:bg-primary hover:text-black hover:border-primary transition-colors text-xl text-grey-dark icon-option";
-            iBtn.innerHTML = `<i class="bi ${iconClass}"></i>`;
+            iBtn.innerHTML = `<i data-lucide="${iconClass}" class="w-5 h-5"></i>`;
             iBtn.dataset.icon = iconClass;
             iBtn.type = "button"; // Prevent form submit
             iBtn.addEventListener('click', () => {
@@ -160,6 +161,7 @@ export class MacroHandler {
             });
             this.iconGrid.appendChild(iBtn);
         });
+        if (window.lucide) window.lucide.createIcons();
 
         // Populate Color Select
         this.colors.forEach(c => {
@@ -200,18 +202,46 @@ export class MacroHandler {
         } else {
             // Edit
             const m = this.macros[index];
+            const normalizedIcon = this.normalizeIcon(m.icon);
             modalTitle.textContent = "Edit Macro";
             nameInput.value = m.name;
             gcodeInput.value = m.gcode;
-            iconInput.value = m.icon;
+            iconInput.value = normalizedIcon;
             this.colorSelect.value = m.color;
 
             // Highlight Icon
-            const iconBtn = this.iconGrid.querySelector(`[data-icon="${m.icon}"]`);
+            const iconBtn = this.iconGrid.querySelector(`[data-icon="${normalizedIcon}"]`);
             if (iconBtn) iconBtn.classList.add('bg-primary', 'text-black', 'border-primary');
         }
 
         this.modal.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    normalizeIcon(icon) {
+        const map = {
+            'bi-play-fill': 'play',
+            'bi-stop-fill': 'square',
+            'bi-pause-fill': 'pause',
+            'bi-house-door-fill': 'house',
+            'bi-fan': 'fan',
+            'bi-droplet-fill': 'droplets',
+            'bi-lightning-fill': 'zap',
+            'bi-tools': 'wrench',
+            'bi-bullseye': 'crosshair',
+            'bi-arrows-move': 'move',
+            'bi-arrow-clockwise': 'rotate-cw',
+            'bi-arrow-counterclockwise': 'rotate-ccw',
+            'bi-lightbulb-fill': 'lightbulb',
+            'bi-box-seam': 'package',
+            'bi-rulers': 'ruler',
+            'bi-gear-fill': 'settings',
+            'bi-wind': 'wind',
+            'bi-thermometer-half': 'thermometer',
+            'bi-speedometer2': 'gauge',
+            'bi-trash': 'trash-2'
+        };
+        return map[icon] || icon || 'play';
     }
 
     saveFromModal() {

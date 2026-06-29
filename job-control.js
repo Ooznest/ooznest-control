@@ -17,6 +17,10 @@ class JobController {
         this.setupEventListeners();
     }
 
+    _hasActiveJob() {
+        return this.gcodeStreamer.active || this.sdJobActive;
+    }
+
     _getFlow() {
         const ws = window.ws;
         if (!ws) return null;
@@ -49,6 +53,7 @@ class JobController {
             // If SD job just started (or we just noticed it)
             if (!this.sdJobActive && !this.gcodeStreamer.active) {
                 this.sdJobActive = true;
+                this.gcodeStreamer.paused = false;
                 this.startJobUI();
                 window.term.writeln("\x1b[35m[SD Job] Detected active SD print.\x1b[0m");
             }
@@ -66,7 +71,7 @@ class JobController {
                 const pauseBtn = document.getElementById('pause-job-btn');
                 if (pauseBtn && pauseBtn.innerText.includes('Resume')) {
                     // Reset pause button visual state if it was paused
-                    pauseBtn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+                    pauseBtn.innerHTML = '<i data-lucide="pause" style="width:14px;height:14px"></i> Pause';
                     pauseBtn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
                 }
             }
@@ -117,25 +122,29 @@ class JobController {
      * Pause or resume the current job
      */
     pauseJob() {
-        if (!this.gcodeStreamer.active) return;
+        if (!this._hasActiveJob()) return;
         const btn = document.getElementById('pause-job-btn');
         if (!btn) return;
         this.gcodeStreamer.paused = !this.gcodeStreamer.paused;
 
         if (this.gcodeStreamer.paused) {
             window.ws.sendRealtime('!');
-            btn.innerHTML = '<i class="bi bi-play-fill text-lg"></i> Resume';
+            btn.innerHTML = '<i data-lucide="play" style="width:14px;height:14px"></i> Resume';
             btn.classList.replace('!bg-yellow-100', '!bg-green-100');
             btn.classList.replace('!text-yellow-800', '!text-green-800');
             btn.classList.replace('border-yellow-300', 'border-green-300');
-            window.term.writeln("\x1b[33m[Job Stream] Paused.\x1b[0m");
+            window.term.writeln(this.sdJobActive
+                ? "\x1b[33m[SD Job] Paused.\x1b[0m"
+                : "\x1b[33m[Job Stream] Paused.\x1b[0m");
         } else {
             window.ws.sendRealtime('~');
-            btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+            btn.innerHTML = '<i data-lucide="pause" style="width:14px;height:14px"></i> Pause';
             btn.classList.replace('!bg-green-100', '!bg-yellow-100');
             btn.classList.replace('!text-green-800', '!text-yellow-800');
             btn.classList.replace('border-green-300', 'border-yellow-300');
-            window.term.writeln("\x1b[32m[Job Stream] Resuming...\x1b[0m");
+            window.term.writeln(this.sdJobActive
+                ? "\x1b[32m[SD Job] Resuming...\x1b[0m"
+                : "\x1b[32m[Job Stream] Resuming...\x1b[0m");
         }
     }
 
@@ -143,10 +152,17 @@ class JobController {
      * Stop the current job
      */
     stopJob() {
-        if (!this.gcodeStreamer.active) return;
+        if (!this._hasActiveJob()) return;
         window.reporter.showConfirm('Stop Job', 'Stop Job? This will reset the machine.', () => {
             window.ws.sendRealtime('\x18');
-            this.abortGCodeStream("User Stopped");
+            if (this.gcodeStreamer.active) {
+                this.abortGCodeStream("User Stopped");
+            } else {
+                this.sdJobActive = false;
+                this.gcodeStreamer.paused = false;
+                this.resetJobUI();
+                window.term.writeln("\x1b[31m[SD Job] Stopped by user.\x1b[0m");
+            }
         });
     }
 
@@ -246,7 +262,7 @@ class JobController {
         if (jac2) { jac2.classList.add('hidden'); jac2.classList.remove('flex'); }
         const btn = document.getElementById('pause-job-btn');
         if (btn) {
-            btn.innerHTML = '<i class="bi bi-pause-fill text-lg"></i> Pause';
+            btn.innerHTML = '<i data-lucide="pause" style="width:14px;height:14px"></i> Pause';
             btn.className = "overlay-btn !bg-yellow-100 !text-yellow-800 border-yellow-300 shadow-lg";
         }
 
