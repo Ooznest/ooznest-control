@@ -117,15 +117,18 @@
                         aria-label="Toggle machine sidebar">
                         <i data-lucide="menu" class="text-xl"></i>
                     </button>
+
+                    <button class="btn shadow-sm flex-1 !bg-amber-900/20 !text-amber-400 !border-amber-700/30 hover:!bg-amber-900/30"
+                      onclick="sendCmdWithToast('$X', 'Unlock sent', 'unlock')" title="Unlock ($X)">
+                      <i data-lucide="unlock" style="width:12px;height:12px"></i> Unlock
+                    </button>
+
                     <button id="btn-reset" class="btn flex-1 shadow-sm" onclick="sendRealtimeWithToast('\x18', 'Reset sent', 'refresh-cw')" title="Soft Reset"
                         disabled>
                         <i data-lucide="octagon-alert" ></i>Reset
                     </button>
                     <button id="btn-connect" class="btn btn-primary flex-1 shadow-sm">Connect</button>
-                    <button class="btn shadow-sm flex-1 !bg-amber-900/20 !text-amber-400 !border-amber-700/30 hover:!bg-amber-900/30"
-                        onclick="sendCmdWithToast('$X', 'Unlock sent', 'unlock')" title="Unlock ($X)">
-                        <i data-lucide="unlock" style="width:12px;height:12px"></i> Unlock
-                    </button>
+
                 </div>
 
                 <!-- DRO Panel -->
@@ -159,7 +162,7 @@
                         <!-- WCS Select (styled like MM/IN toggle) -->
                         <div class="flex items-center rounded-lg px-1.5 py-0 h-7 ml-auto" style="background:var(--oz-teal-xlight)">
                             <span class="text-[10px] font-black uppercase leading-none" style="color:var(--oz-teal-brand)">WCS</span>
-                            <select class="wcs-select"
+                            <select class="wcs-select" style="background:#ffffff;color:#004c5b;border-color:rgba(68,157,159,0.24);"
                                 onchange="window.dro.setWCS(this.value)" aria-label="Work Coordinate System">
                                 <option value="G54" selected>G54</option>
                                 <option value="G55">G55</option>
@@ -199,10 +202,10 @@
                         </div>
                         <div class="dro-readout">
                             <span class="dro-mach-group">
-                                <span id="dro-x-m" class="dro-val-sm">0.000</span>
+                                <span id="dro-x-m" class="dro-val-sm">9999.999</span>
                             </span>
                             <span class="dro-work-group">
-                                <span id="dro-x" class="dro-val-lg">0.000</span>
+                                <span id="dro-x" class="dro-val-lg">9999.999</span>
                             </span>
                         </div>
                         <button class="dro-zero-btn shadow-sm" onclick="window.dro.setZero('X')"
@@ -220,10 +223,10 @@
                         </div>
                         <div class="dro-readout">
                             <span class="dro-mach-group">
-                                <span id="dro-y-m" class="dro-val-sm">0.000</span>
+                                <span id="dro-y-m" class="dro-val-sm">9999.999</span>
                             </span>
                             <span class="dro-work-group">
-                                <span id="dro-y" class="dro-val-lg">0.000</span>
+                                <span id="dro-y" class="dro-val-lg">9999.999</span>
                             </span>
                         </div>
                         <button class="dro-zero-btn shadow-sm" onclick="window.dro.setZero('Y')"
@@ -241,10 +244,10 @@
                         </div>
                         <div class="dro-readout">
                             <span class="dro-mach-group">
-                                <span id="dro-z-m" class="dro-val-sm">0.000</span>
+                                <span id="dro-z-m" class="dro-val-sm">9999.999</span>
                             </span>
                             <span class="dro-work-group">
-                                <span id="dro-z" class="dro-val-lg">0.000</span>
+                                <span id="dro-z" class="dro-val-lg">9999.999</span>
                             </span>
                         </div>
                         <button class="dro-zero-btn shadow-sm" onclick="window.dro.setZero('Z')"
@@ -262,10 +265,10 @@
                         </div>
                         <div class="dro-readout">
                             <span class="dro-mach-group">
-                                <span id="dro-a-m" class="dro-val-sm">0.000</span>
+                                <span id="dro-a-m" class="dro-val-sm">9999.999</span>
                             </span>
                             <span class="dro-work-group">
-                                <span id="dro-a" class="dro-val-lg">0.000</span>
+                                <span id="dro-a" class="dro-val-lg">9999.999</span>
                             </span>
                         </div>
                         <button class="dro-zero-btn shadow-sm" onclick="window.dro.setZero('A')"
@@ -277,7 +280,7 @@
                     <!-- Footer Actions -->
                     <div class="flex gap-1 mt-2 pt-0">
                         <button id="home-all-btn" class="dro-sub-btn px-1 flex-col shadow-sm flex-1" onclick="window.dro.home()" aria-label="Home all axes">
-                            <i data-lucide="home" style="width:12px;height:12px"></i> <span>HOME</span>
+                            <i data-lucide="home" style="width:12px;height:12px"></i> <span>HOME ALL</span>
                         </button>
                         <button class="dro-sub-btn px-1 shadow-sm flex-1" onclick="window.dro.setZero('XYZ')">
                             SET ZERO ALL
@@ -298,13 +301,10 @@
                                 <span>Spindle</span>
                             </div>
                             <div class="flex gap-1 items-center">
-                                <button onclick="sendRealtime('\x9B')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold shadow-sm">-</button>
+                                <button onclick="sendRealtime('\x9B')" class="override-mini-btn">-</button>
                                 <span id="spindle-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
-                                <button onclick="sendRealtime('\x9A')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold shadow-sm">+</button>
-                                <button onclick="sendRealtime('\x99')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px] shadow-sm"
+                                <button onclick="sendRealtime('\x9A')" class="override-mini-btn">+</button>
+                                <button onclick="sendRealtime('\x99')" class="override-preset-btn"
                                     title="Reset to 100%">RST</button>
                             </div>
                         </div>
@@ -314,13 +314,10 @@
                                 <span>Feed</span>
                             </div>
                             <div class="flex gap-1 items-center">
-                                <button onclick="sendRealtime('\x92')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold shadow-sm">-</button>
+                                <button onclick="sendRealtime('\x92')" class="override-mini-btn">-</button>
                                 <span id="feed-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
-                                <button onclick="sendRealtime('\x91')"
-                                    class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold shadow-sm">+</button>
-                                <button onclick="sendRealtime('\x90')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px] shadow-sm"
+                                <button onclick="sendRealtime('\x91')" class="override-mini-btn">+</button>
+                                <button onclick="sendRealtime('\x90')" class="override-preset-btn"
                                     title="Reset to 100%">RST</button>
                             </div>
                         </div>
@@ -331,14 +328,11 @@
                             </div>
                             <div class="flex gap-1 items-center">
                                 <span id="rapid-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
-                                <button onclick="sendRealtime('\x97')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px] shadow-sm"
+                                <button onclick="sendRealtime('\x97')" class="override-preset-btn"
                                     title="Set to 25%">25</button>
-                                <button onclick="sendRealtime('\x96')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px] shadow-sm"
+                                <button onclick="sendRealtime('\x96')" class="override-preset-btn"
                                     title="Set to 50%">50</button>
-                                <button onclick="sendRealtime('\x95')"
-                                    class="px-1.5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-black/40 !text-white transition-colors font-bold text-[8px] shadow-sm"
+                                <button onclick="sendRealtime('\x95')" class="override-preset-btn"
                                     title="Set to 100%">100</button>
                             </div>
                         </div>
@@ -349,10 +343,10 @@
                 <div id="jog-panel">
 
                     <!-- Feed/Dist/Mode row (above jog pad) -->
-                    <div class="grid grid-cols-3 gap-1.5 mb-2">
+                    <div class="grid grid-cols-2 gap-1.5 mb-3">
                         <div>
                             <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Feed</label>
-                            <select id="feedRate" class="input-field text-right h-7 py-0 text-[11px]"
+                            <select id="feedRate" class="input-field text-right h-7 py-0 text-[11px]" style="background:#ffffff;color:#004c5b;border-color:rgba(68,157,159,0.24);"
                                 aria-label="Jog feed rate mode">
                                 <option value="slow">Slow</option>
                                 <option value="med">Medium</option>
@@ -361,19 +355,19 @@
                         </div>
                         <div id="distContainer">
                             <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Dist</label>
-                            <select id="stepSize" class="input-field text-right h-7 py-0 text-[11px]"
+                            <select id="stepSize" class="input-field text-right h-7 py-0 text-[11px]" style="background:#ffffff;color:#004c5b;border-color:rgba(68,157,159,0.24);"
                                 aria-label="Jog distance step size">
                                 <!-- Populated by JS -->
                             </select>
                         </div>
-                        <div>
-                            <label class="text-[9px] font-bold text-grey uppercase block mb-0.5 opacity-0">_</label>
-                            <label class="oz-segmented-toggle h-7 w-full" for="jogContinuous">
+                        <div class="col-span-2">
+                            <label class="text-[9px] font-bold text-grey uppercase block mb-1">Jog Mode</label>
+                            <label class="oz-segmented-toggle h-8 w-full" for="jogContinuous">
                                 <input type="checkbox" id="jogContinuous" class="sr-only">
                                 <div class="oz-segmented-bg h-full w-full">
                                     <div class="oz-segmented-slider"></div>
-                                    <span class="oz-segmented-option left-opt">INCR</span>
-                                    <span class="oz-segmented-option right-opt" title="Continuous jog mode">CONT</span>
+                                    <span class="oz-segmented-option left-opt">Incremental</span>
+                                    <span class="oz-segmented-option right-opt" title="Continuous jog mode">Continuous</span>
                                 </div>
                             </label>
                         </div>
@@ -424,16 +418,16 @@
                             <div class="flex gap-1.5 justify-center">
                                 <!-- Z Pad (Blue) -->
                                 <div class="jog-extra-col">
-                                    <button class="jog-btn-extra !text-axis-z rounded-t-xl" data-jog="Z+"
+                                    <button class="jog-btn-extra rounded-t-xl" data-jog="Z+"
                                         aria-label="Jog Z plus">Z+</button>
-                                    <button class="jog-btn-extra !text-axis-z rounded-b-xl" data-jog="Z-"
+                                    <button class="jog-btn-extra rounded-b-xl" data-jog="Z-"
                                         aria-label="Jog Z minus">Z-</button>
                                 </div>
                                 <!-- A Pad (Orange) -->
                                 <div id="jog-a-pad" class="jog-extra-col" style="display: none;">
-                                    <button class="jog-btn-extra !text-axis-a rounded-t-xl" data-jog="A+"
+                                    <button class="jog-btn-extra rounded-t-xl" data-jog="A+"
                                         aria-label="Jog A plus">A+</button>
-                                    <button class="jog-btn-extra !text-axis-a rounded-b-xl" data-jog="A-"
+                                    <button class="jog-btn-extra rounded-b-xl" data-jog="A-"
                                         aria-label="Jog A minus">A-</button>
                                 </div>
                             </div>
@@ -448,10 +442,8 @@
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col bg-grey-bg relative overflow-hidden h-full">
-            <h1 class="sr-only">Ooznest Machine Control</h1>
-
-            <!-- Navigation (Updated with Logo and Unified Sidebar Trigger) -->
-            <div class="h-10 flex items-center bg-grey-light text-grey-dark justify-between shadow-sm z-20 shrink-0">
+            <!-- Navigation -->
+            <div class="flex items-center bg-grey-light text-grey-dark justify-between z-20 shrink-0">
 
                 <!-- Sidebar Trigger & Logo & Status -->
                 <div class="flex items-center h-full overflow-hidden shrink-0">
@@ -469,38 +461,42 @@
                     </div>
                 </div>
 
-                <!-- Left Scroll Arrow -->
+                <div id="primary-tabs-bar" class="flex-1 min-w-0 flex items-stretch">
+                    <!-- Left Scroll Arrow -->
                     <button
-                        class="h-full px-2 text-grey hover:text-grey-dark flex items-center justify-center transition-colors mobile-only"
+                        id="tabs-scroll-left"
+                        class="tabs-scroll-arrow"
                         onclick="scrollTabs('left')" aria-label="Scroll tabs left">
-                        <i data-lucide="chevron-left" class="text-xs"></i>
+                        <i data-lucide="chevron-left" class="text-sm"></i>
                     </button>
 
-                <!-- Scrollable Tabs Container -->
-                <div id="tabs-scroll-container" class="flex-1 flex overflow-x-auto no-scrollbar scroll-smooth">
-                    <button class="tab-btn active" data-tab="viewer-view" onclick="switchTab('viewer-view', this)">3D Preview</button>
-                    <button class="tab-btn" data-tab="editor-view" onclick="switchTab('editor-view', this)">Editor</button>
-                    <button class="tab-btn" data-tab="probe-view" onclick="switchTab('probe-view', this)">Probe</button>
-                    <button class="tab-btn" data-tab="macros-view" onclick="switchTab('macros-view', this)">Macros</button>
-                    <button class="tab-btn" data-tab="tools-view" onclick="switchTab('tools-view', this)">
-                        Tools
-                    </button>
-                    <button class="tab-btn" data-tab="sd-view" onclick="switchTab('sd-view', this)">
-                        SD Card
-                        <span id="sd-badge"
-                            class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
-                    </button>
-                    <button class="tab-btn" data-tab="settings-view" onclick="switchTab('settings-view', this)">Settings</button>
-                    <button class="tab-btn" data-tab="troubleshooting-view" onclick="switchTab('troubleshooting-view', this)">Troubleshooting</button>
-                    <button class="tab-btn" data-tab="console-view" onclick="switchTab('console-view', this)">Console</button>
-                </div>
+                    <!-- Scrollable Tabs Container -->
+                    <div id="tabs-scroll-container" class="flex-1 flex overflow-x-auto no-scrollbar scroll-smooth">
+                        <button class="tab-btn active" data-tab="viewer-view" onclick="switchTab('viewer-view', this)"><i data-lucide="box"></i>3D Preview</button>
+                        <button class="tab-btn" data-tab="editor-view" onclick="switchTab('editor-view', this)"><i data-lucide="square-code"></i>Editor</button>
+                        <button class="tab-btn" data-tab="probe-view" onclick="switchTab('probe-view', this)"><i data-lucide="crosshair"></i>Probe</button>
+                        <button class="tab-btn" data-tab="macros-view" onclick="switchTab('macros-view', this)"><i data-lucide="zap"></i>Macros</button>
+                        <button class="tab-btn" data-tab="tools-view" onclick="switchTab('tools-view', this)">
+                            <i data-lucide="wrench"></i>Tools
+                        </button>
+                        <button class="tab-btn" data-tab="sd-view" onclick="switchTab('sd-view', this)">
+                            <i data-lucide="hard-drive"></i>SD Card
+                            <span id="sd-badge"
+                                class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
+                        </button>
+                        <button class="tab-btn" data-tab="settings-view" onclick="switchTab('settings-view', this)"><i data-lucide="sliders-horizontal"></i>Settings</button>
+                        <button class="tab-btn" data-tab="troubleshooting-view" onclick="switchTab('troubleshooting-view', this)"><i data-lucide="siren"></i>Troubleshooting</button>
+                        <button class="tab-btn" data-tab="console-view" onclick="switchTab('console-view', this)"><i data-lucide="terminal"></i>Console</button>
+                    </div>
 
-                <!-- Right Scroll Arrow -->
+                    <!-- Right Scroll Arrow -->
                     <button
-                        class="h-full px-2 text-grey hover:text-grey-dark flex items-center justify-center transition-colors border-r border-grey-light mobile-only"
+                        id="tabs-scroll-right"
+                        class="tabs-scroll-arrow"
                         onclick="scrollTabs('right')" aria-label="Scroll tabs right">
-                        <i data-lucide="chevron-right" class="text-xs"></i>
+                        <i data-lucide="chevron-right" class="text-sm"></i>
                     </button>
+                </div>
 
             </div>
 
@@ -669,7 +665,7 @@
                             <i data-lucide="bar-chart-3" class="text-secondary"></i> Show Stats
                         </button>
 
-                        
+
                     </div>
                 </div>
 
@@ -790,20 +786,20 @@
                                 </div>
 
                                 <div class="flex gap-1.5 md:gap-2 shrink-0">
-                                    <button class="btn btn-secondary text-xs h-8 px-2 md:px-3"
+                                    <button class="btn btn-secondary text-xs h-8 px-3 md:px-4"
                                         onclick="applyEditorChanges()" title="Update Preview">
                                         <i data-lucide="play-circle" class="text-primary-dark"></i>
-                                        <span class="hidden md:inline">Update Preview</span>
+                                        <span>Update Preview</span>
                                     </button>
-                                    <button class="btn btn-secondary text-xs h-8 px-2 md:px-3"
+                                    <button class="btn btn-secondary text-xs h-8 px-3 md:px-4"
                                         onclick="downloadFromEditor()" title="Save to PC">
                                         <i data-lucide="download" ></i>
-                                        <span class="hidden md:inline">Save to PC</span>
+                                        <span>Save to PC</span>
                                     </button>
-                                    <button class="btn btn-primary text-xs h-8 px-2 md:px-3"
+                                    <button class="btn btn-primary text-xs h-8 px-3 md:px-4"
                                         onclick="uploadEditorToSD()" title="Upload to SD">
-                                        <i data-lucide="sd-card" ></i>
-                                        <span class="hidden md:inline">Upload to SD</span>
+                                        <i data-lucide="upload" class="!text-white"></i>
+                                        <span>Upload to SD</span>
                                     </button>
                                 </div>
                             </div>
@@ -865,8 +861,8 @@
                                 <!-- SD Actions (Disabled when offline) -->
                                  <div id="sd-tools"
                                     class="flex gap-2 w-full md:w-auto transition-opacity duration-200">
-                                    <button class="btn btn-primary shadow-soft flex-1 md:flex-initial"
-                                        onclick="document.getElementById('sd-upload-input').click()">
+                                    <button id="sd-upload-btn" class="btn btn-primary shadow-soft flex-1 md:flex-initial disabled:opacity-40 disabled:cursor-not-allowed"
+                                        onclick="document.getElementById('sd-upload-input').click()" disabled>
                                         <i data-lucide="cloud-upload" ></i> Upload
                                     </button>
                                     <button class="btn btn-secondary shadow-soft flex-1 md:flex-initial"
@@ -1054,7 +1050,7 @@
                                                         <div>
                                                             <input type="number" id="edit-tool-z"
                                                                 class="input-field font-mono text-lg" step="0.001"
-                                                                placeholder="0.000">
+                                                                placeholder="9999.999">
                                                         </div>
                                                     </div>
                                                     <button class="btn btn-secondary h-[42px] px-3"
@@ -1080,14 +1076,14 @@
                                                             Offset</label>
                                                         <input type="number" id="edit-tool-x"
                                                             class="input-field font-mono text-sm" step="0.001"
-                                                            placeholder="0.000">
+                                                            placeholder="9999.999">
                                                     </div>
                                                     <div>
                                                         <label class="text-[10px] font-bold text-grey block mb-1">Y
                                                             Offset</label>
                                                         <input type="number" id="edit-tool-y"
                                                             class="input-field font-mono text-sm" step="0.001"
-                                                            placeholder="0.000">
+                                                            placeholder="9999.999">
                                                     </div>
                                                 </div>
                                             </div>
@@ -1136,18 +1132,48 @@
                                                     <h4 class="text-xs font-black text-grey uppercase tracking-wider">Measured Travel</h4>
                                                     <span class="text-[10px] text-grey">Command a move, measure the actual travel, then correct steps/mm.</span>
                                                 </div>
-                                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                    <button onclick="window.calibration.startWizard('X', 'distance')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                        <div class="text-axis-x font-black text-3xl mb-1">X</div>
-                                                        <p class="text-[10px] text-grey uppercase font-bold">Measured Travel</p>
+                                                <div class="calibration-choice-grid calibration-choice-grid--compact">
+                                                    <button onclick="window.calibration.startWizard('X', 'distance')" class="calibration-choice-card group text-left">
+                                                        <div class="calibration-choice-card__media">
+                                                            <div class="calibration-choice-card__badges">
+                                                                <span class="calibration-choice-badge calibration-choice-badge--method">Measured Travel</span>
+                                                                <span class="calibration-choice-badge calibration-choice-badge--axis">X Axis</span>
+                                                            </div>
+                                                            <div class="calibration-choice-card__glyph">X</div>
+                                                        </div>
+                                                        <div class="calibration-choice-card__info">
+                                                            <div class="calibration-choice-card__title">X Axis Travel Calibration</div>
+                                                            <p class="calibration-choice-card__text">Command a move, measure the actual travel, then correct steps/mm for X.</p>
+                                                            <div class="calibration-choice-card__footer">Start Measured Travel</div>
+                                                        </div>
                                                     </button>
-                                                    <button onclick="window.calibration.startWizard('Y', 'distance')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                        <div class="text-axis-y font-black text-3xl mb-1">Y</div>
-                                                        <p class="text-[10px] text-grey uppercase font-bold">Measured Travel</p>
+                                                    <button onclick="window.calibration.startWizard('Y', 'distance')" class="calibration-choice-card group text-left">
+                                                        <div class="calibration-choice-card__media">
+                                                            <div class="calibration-choice-card__badges">
+                                                                <span class="calibration-choice-badge calibration-choice-badge--method">Measured Travel</span>
+                                                                <span class="calibration-choice-badge calibration-choice-badge--axis">Y Axis</span>
+                                                            </div>
+                                                            <div class="calibration-choice-card__glyph">Y</div>
+                                                        </div>
+                                                        <div class="calibration-choice-card__info">
+                                                            <div class="calibration-choice-card__title">Y Axis Travel Calibration</div>
+                                                            <p class="calibration-choice-card__text">Command a move, measure the actual travel, then correct steps/mm for Y.</p>
+                                                            <div class="calibration-choice-card__footer">Start Measured Travel</div>
+                                                        </div>
                                                     </button>
-                                                    <button onclick="window.calibration.startWizard('Z', 'distance')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                        <div class="text-axis-z font-black text-3xl mb-1">Z</div>
-                                                        <p class="text-[10px] text-grey uppercase font-bold">Measured Travel</p>
+                                                    <button onclick="window.calibration.startWizard('Z', 'distance')" class="calibration-choice-card group text-left">
+                                                        <div class="calibration-choice-card__media">
+                                                            <div class="calibration-choice-card__badges">
+                                                                <span class="calibration-choice-badge calibration-choice-badge--method">Measured Travel</span>
+                                                                <span class="calibration-choice-badge calibration-choice-badge--axis">Z Axis</span>
+                                                            </div>
+                                                            <div class="calibration-choice-card__glyph">Z</div>
+                                                        </div>
+                                                        <div class="calibration-choice-card__info">
+                                                            <div class="calibration-choice-card__title">Z Axis Travel Calibration</div>
+                                                            <p class="calibration-choice-card__text">Command a move, measure the actual travel, then correct steps/mm for Z.</p>
+                                                            <div class="calibration-choice-card__footer">Start Measured Travel</div>
+                                                        </div>
                                                     </button>
                                                 </div>
                                             </div>
@@ -1157,18 +1183,48 @@
                                                     <h4 class="text-xs font-black text-grey uppercase tracking-wider">Vernier Scale</h4>
                                                     <span class="text-[10px] text-grey">Cuts a reference scale for visual alignment against a ruler.</span>
                                                 </div>
-                                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                    <button onclick="window.calibration.startWizard('X', 'vernier')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                        <div class="text-axis-x font-black text-3xl mb-1">X</div>
-                                                        <p class="text-[10px] text-grey uppercase font-bold">Vernier Scale</p>
+                                                <div class="calibration-choice-grid calibration-choice-grid--compact">
+                                                    <button onclick="window.calibration.startWizard('X', 'vernier')" class="calibration-choice-card group text-left">
+                                                        <div class="calibration-choice-card__media">
+                                                            <div class="calibration-choice-card__badges">
+                                                                <span class="calibration-choice-badge calibration-choice-badge--method">Vernier Scale</span>
+                                                                <span class="calibration-choice-badge calibration-choice-badge--axis">X Axis</span>
+                                                            </div>
+                                                            <div class="calibration-choice-card__glyph">X</div>
+                                                        </div>
+                                                        <div class="calibration-choice-card__info">
+                                                            <div class="calibration-choice-card__title">X Axis Vernier Scale</div>
+                                                            <p class="calibration-choice-card__text">Cut a reference scale for fine X-axis visual calibration against a ruler.</p>
+                                                            <div class="calibration-choice-card__footer">Start Vernier Scale</div>
+                                                        </div>
                                                     </button>
-                                                    <button onclick="window.calibration.startWizard('Y', 'vernier')" class="group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                        <div class="text-axis-y font-black text-3xl mb-1">Y</div>
-                                                        <p class="text-[10px] text-grey uppercase font-bold">Vernier Scale</p>
+                                                    <button onclick="window.calibration.startWizard('Y', 'vernier')" class="calibration-choice-card group text-left">
+                                                        <div class="calibration-choice-card__media">
+                                                            <div class="calibration-choice-card__badges">
+                                                                <span class="calibration-choice-badge calibration-choice-badge--method">Vernier Scale</span>
+                                                                <span class="calibration-choice-badge calibration-choice-badge--axis">Y Axis</span>
+                                                            </div>
+                                                            <div class="calibration-choice-card__glyph">Y</div>
+                                                        </div>
+                                                        <div class="calibration-choice-card__info">
+                                                            <div class="calibration-choice-card__title">Y Axis Vernier Scale</div>
+                                                            <p class="calibration-choice-card__text">Cut a reference scale for fine Y-axis visual calibration against a ruler.</p>
+                                                            <div class="calibration-choice-card__footer">Start Vernier Scale</div>
+                                                        </div>
                                                     </button>
-                                                    <button id="cal-btn-axis-a" onclick="window.calibration.startWizard('A', 'distance')" class="hidden group p-6 bg-grey-bg border-2 border-transparent hover:border-primary hover:bg-white rounded-xl transition-all text-center">
-                                                        <div class="text-secondary font-black text-3xl mb-1">A</div>
-                                                        <p class="text-[10px] text-grey uppercase font-bold">Coming Soon</p>
+                                                    <button id="cal-btn-axis-a" onclick="window.calibration.startWizard('A', 'distance')" class="hidden calibration-choice-card group text-left">
+                                                        <div class="calibration-choice-card__media">
+                                                            <div class="calibration-choice-card__badges">
+                                                                <span class="calibration-choice-badge calibration-choice-badge--method">Rotary</span>
+                                                                <span class="calibration-choice-badge calibration-choice-badge--axis">A Axis</span>
+                                                            </div>
+                                                            <div class="calibration-choice-card__glyph">A</div>
+                                                        </div>
+                                                        <div class="calibration-choice-card__info">
+                                                            <div class="calibration-choice-card__title">A Axis Calibration</div>
+                                                            <p class="calibration-choice-card__text">Reserved for future rotational-axis calibration support.</p>
+                                                            <div class="calibration-choice-card__footer">Coming Soon</div>
+                                                        </div>
                                                     </button>
                                                 </div>
                                             </div>
@@ -1205,7 +1261,7 @@
                                                 <div class="space-y-2 mb-4">
                                                     <div class="flex justify-between items-center bg-white p-2 rounded border border-grey-light">
                                                         <span id="cal-live-axis-label" class="text-xs font-bold text-axis-z">Z</span>
-                                                        <span id="cal-axis-pos" class="font-mono font-bold">0.000</span>
+                                                        <span id="cal-axis-pos" class="font-mono font-bold">9999.999</span>
                                                     </div>
                                                 </div>
                                                 <button id="cal-zero-axis-btn" onclick="window.calibration.zeroSelectedAxis()" class="btn btn-secondary w-full justify-center mb-4">Zero Z Axis</button>
@@ -1338,15 +1394,15 @@
                                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                                 <div class="bg-grey-bg p-4 rounded-xl border border-grey-light text-center">
                                                     <span class="text-[10px] font-black text-grey uppercase block mb-1">Current Steps/mm</span>
-                                                    <span id="cal-old-steps" class="text-2xl font-mono font-bold text-secondary-dark">0.000</span>
+                                                    <span id="cal-old-steps" class="text-2xl font-mono font-bold text-secondary-dark">9999.999</span>
                                                 </div>
                                                 <div class="bg-primary/5 p-4 rounded-xl border border-primary/20 text-center ring-4 ring-primary/5">
                                                     <span class="text-[10px] font-black text-primary uppercase block mb-1">New Steps/mm</span>
-                                                    <span id="cal-new-steps" class="text-3xl font-mono font-black text-primary">0.000</span>
+                                                    <span id="cal-new-steps" class="text-3xl font-mono font-black text-primary">9999.999</span>
                                                 </div>
                                                 <div class="bg-grey-bg p-4 rounded-xl border border-grey-light text-center">
                                                     <span class="text-[10px] font-black text-grey uppercase block mb-1">Error Factor</span>
-                                                    <span id="cal-error-factor" class="text-2xl font-mono font-bold text-secondary-dark">0.0000</span>
+                                                    <span id="cal-error-factor" class="text-2xl font-mono font-bold text-secondary-dark">9999.9990</span>
                                                 </div>
                                             </div>
 
@@ -1689,10 +1745,10 @@
 
                 <!-- Grbl Settings -->
                 <div id="settings-view" class="tab-pane hidden w-full h-full bg-grey-bg">
-                    <div class="w-full h-full p-4 md:p-8 overflow-y-auto">
-                        <div class="w-full pb-20">
+                    <div class="w-full h-full p-4 md:p-8 overflow-hidden flex flex-col min-h-0">
+                        <div class="w-full flex flex-col min-h-0 flex-1">
                             <div
-                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
+                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3 shrink-0">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
                                         <i data-lucide="sliders-horizontal" ></i> Machine Settings
@@ -1724,7 +1780,7 @@
                             </div>
 
                             <!-- Settings Table Container -->
-                            <div id="grbl-settings-container" class="overflow-x-auto">
+                            <div id="grbl-settings-container" class="overflow-hidden flex-1 min-h-0">
                                 <!-- populated by js -->
                             </div>
                         </div>
@@ -1748,12 +1804,6 @@
                                     </h2>
                                     <p class="text-sm text-grey">Tool offsets, edge finding, and alignment.</p>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button class="btn btn-secondary shadow-soft"
-                                        onclick="window.probeHandler.saveSettings(); window.showToast('Settings saved', 'save')">
-                                        <i data-lucide="save" ></i> Save Settings
-                                    </button>
-                                </div>
                             </div>
 
                             <!-- Main Layout: Sidebar Config + Tabbed Content -->
@@ -1762,7 +1812,7 @@
                                 <!-- LEFT COLUMN: Global Configuration (Always Visible) -->
                                 <div class="lg:col-span-4 xl:col-span-3 order-2 lg:order-1">
                                     <div
-                                        class="bg-white p-4 rounded-xl border border-grey-light shadow-soft sticky top-4">
+                                        class="probe-config-card bg-white p-4 rounded-xl border border-grey-light shadow-soft sticky top-4">
                                         <h3
                                             class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                             <i data-lucide="settings" ></i> Probe Config
@@ -1770,7 +1820,7 @@
                                         <div class="space-y-3">
                                             <!-- Probe Mode Toggle -->
                                             <div
-                                                class="bg-grey-bg p-2 rounded border border-grey-light prb-3d-probe-only"
+                                                class="probe-config-subcard bg-grey-bg p-2 rounded border border-grey-light prb-3d-probe-only"
                                             >
                                                 <span class="text-xs font-bold text-secondary-dark block mb-1.5">Probe Mode</span>
                                                 <label class="oz-segmented-toggle w-full h-12" for="prb-mode-toggle">
@@ -1851,6 +1901,10 @@
                                                 <input type="number" id="prb-z-depth"
                                                     class="input-field font-mono text-xs h-8">
                                             </div>
+                                            <button class="btn btn-secondary shadow-soft w-full justify-center mt-2"
+                                                onclick="window.probeHandler.saveSettings(); window.showToast('Settings saved', 'save')">
+                                                <i data-lucide="save" ></i> Save Settings
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -2028,7 +2082,7 @@
                                                                 data-corner="RR"
                                                                 onclick="window.probeHandler.selectCorner(this, 'Outside', 'RR')"
                                                                 aria-label="Rear-right outside corner">Rear<br>Right</button>
-                                                            <button class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 ring-2 ring-primary/30 h-full text-[10px] font-bold leading-tight"
+                                                            <button class="corner-sel-btn rounded-bl bg-primary-dark text-white border-2 border-primary-dark h-full text-[10px] font-bold leading-tight"
                                                                 data-corner="FL"
                                                                 onclick="window.probeHandler.selectCorner(this, 'Outside', 'FL')"
                                                                 aria-label="Front-left outside corner">Front<br>Left</button>
@@ -2164,14 +2218,14 @@
                                                 Probe two edges of an inside corner to set work zero.
                                             </p>
                                             <div class="flex gap-4">
-                                                <div class="w-24 h-24 grid grid-cols-2 gap-1 flex-shrink-0 p-1 bg-grey-light rounded-lg">
+                                                <div id="inside-corner-grid" class="w-24 h-24 grid grid-cols-2 gap-1 flex-shrink-0 p-1 bg-grey-light rounded-lg">
                                                     <button class="corner-sel-btn rounded-tl bg-white h-full"
                                                         onclick="window.probeHandler.selectCorner(this, 'Inside', 'RL')"
                                                         aria-label="Rear-left inside corner"></button>
                                                     <button class="corner-sel-btn rounded-tr bg-white h-full"
                                                         onclick="window.probeHandler.selectCorner(this, 'Inside', 'RR')"
                                                         aria-label="Rear-right inside corner"></button>
-                                                    <button class="corner-sel-btn rounded-bl bg-primary border-2 border-black/20 h-full"
+                                                    <button class="corner-sel-btn rounded-bl bg-primary-dark text-white border-2 border-primary-dark h-full"
                                                         onclick="window.probeHandler.selectCorner(this, 'Inside', 'FL')"
                                                         aria-label="Front-left inside corner"></button>
                                                     <button class="corner-sel-btn rounded-br bg-white h-full"
@@ -2535,8 +2589,8 @@
                 <!-- CONSOLE TAB PANE -->
                 <div id="console-view" class="tab-pane hidden w-full h-full flex flex-col bg-grey-bg">
                     <div class="flex flex-col h-full overflow-hidden p-4">
-                        <div class="flex-1 flex flex-col min-h-0">
-                            <div id="terminal-container" class="w-full flex-1 min-h-0" style="background:var(--oz-teal-light);border-radius:var(--oz-r-xs)"></div>
+                        <div class="console-shell flex-1 flex flex-col min-h-0">
+                            <div id="terminal-container" class="console-terminal w-full flex-1 min-h-0"></div>
                             <div id="console-input-area" class="flex gap-2 mt-3 shrink-0">
                                 <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
                                 <button id="btnSend" aria-label="Send G-Code"><i data-lucide="send" class="text-[12px]"></i></button>
@@ -2990,6 +3044,78 @@
             }
         }
 
+        function initTabDragScroll() {
+            const container = document.getElementById('tabs-scroll-container');
+            if (!container) return;
+
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+            let dragged = false;
+
+            const onStart = (x) => {
+                if (container.scrollWidth <= container.clientWidth) return;
+                isDown = true;
+                startX = x;
+                scrollLeft = container.scrollLeft;
+                dragged = false;
+                container.style.cursor = 'grabbing';
+                container.style.userSelect = 'none';
+            };
+
+            const onMove = (x, e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const walk = x - startX;
+                if (Math.abs(walk) > 5) dragged = true;
+                container.scrollLeft = scrollLeft - walk;
+            };
+
+            const onEnd = () => {
+                if (!isDown) return;
+                isDown = false;
+                container.style.cursor = '';
+                container.style.userSelect = '';
+                if (dragged) {
+                    const handler = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        document.removeEventListener('click', handler, true);
+                    };
+                    document.addEventListener('click', handler, true);
+                    dragged = false;
+                }
+            };
+
+            container.addEventListener('mousedown', (e) => onStart(e.pageX));
+            document.addEventListener('mousemove', (e) => onMove(e.pageX, e));
+            document.addEventListener('mouseup', onEnd);
+            container.addEventListener('mouseleave', onEnd);
+
+            container.addEventListener('touchstart', (e) => onStart(e.touches[0].pageX), { passive: true });
+            container.addEventListener('touchmove', (e) => onMove(e.touches[0].pageX, e), { passive: false });
+            container.addEventListener('touchend', onEnd);
+            container.addEventListener('touchcancel', onEnd);
+        }
+
+        function updateTabsLayout() {
+            const bar = document.getElementById('primary-tabs-bar');
+            const container = document.getElementById('tabs-scroll-container');
+            if (!bar || !container) return;
+
+            bar.classList.remove('tabs-fit', 'tabs-overflow');
+
+            const buttons = Array.from(container.querySelectorAll('.tab-btn'));
+            const tabsNaturalWidth = buttons.reduce((total, button) => {
+                return total + Math.ceil(button.scrollWidth);
+            }, 0);
+            const shouldOverflow = tabsNaturalWidth > container.clientWidth + 2;
+            bar.classList.add(shouldOverflow ? 'tabs-overflow' : 'tabs-fit');
+        }
+
+        window.updateTabsLayout = updateTabsLayout;
+        window.addEventListener('resize', () => window.requestAnimationFrame(updateTabsLayout));
+
         // Apply and save Theme
         window.changeTheme = function (themeName) {
             const link = document.getElementById('theme-stylesheet');
@@ -3103,6 +3229,10 @@
             if (gridBtn) {
                 gridBtn.innerHTML = `<i data-lucide="grid-3x3" class="text-secondary"></i> Grid: ${viewer.gridMode === 'machine' ? 'Machine' : 'Job'}`;
             }
+
+            window.requestAnimationFrame(updateTabsLayout);
+            setTimeout(updateTabsLayout, 0);
+            initTabDragScroll();
 
             // Initialize Editor
             const editor = new GCodeEditor('gcode-editor');
@@ -3280,8 +3410,12 @@
         window.ws.on('connect', () => {
             window.uiManager.updateConnectionState(true, window.ws, window.sdHandler);
             setTimeout(window.updateLaserMode, 5000);
+            if (window.syncSdUploadBtn) window.syncSdUploadBtn();
         });
-        window.ws.on('disconnect', () => window.uiManager.updateConnectionState(false, window.ws, window.sdHandler));
+        window.ws.on('disconnect', () => {
+            window.uiManager.updateConnectionState(false, window.ws, window.sdHandler);
+            if (window.syncSdUploadBtn) window.syncSdUploadBtn();
+        });
         window.ws.on('line', (line) => {
             window.lineProcessor.processLine(line);
             if (window.toolsHandler) window.toolsHandler.handleLine(line);
@@ -3466,26 +3600,25 @@
             }
         });
 
-        // SD Mount State Listener
-        window.addEventListener('sd-mount-state', (e) => {
-            const state = e.detail.state;
-            // 0=Unmounted, 1=Mounted, 2=Unmounted(Auto), 3=Mounted(Auto)
-            const isMounted = (state === 1 || state === 3);
+        function syncSdUploadBtn() {
+            const uploadBtn = document.getElementById('sd-upload-btn');
+            if (!uploadBtn) return;
+            const available = window.sdMounted && window.ws?.isConnected && !window.sdJobActive;
+            uploadBtn.disabled = !available;
+        }
 
+        window.syncSdUploadBtn = syncSdUploadBtn;
+
+        window.addEventListener('sd-mount-state', () => {
             const sdLink = document.querySelector("button[onclick*='switchTab'][onclick*='sd-view']");
-
-            if (isMounted) {
-                // Enabled
-                if (sdLink) {
-                    sdLink.classList.remove('opacity-50', 'pointer-events-none');
-                    // update tooltip or visual?
-                }
+            if (window.sdMounted) {
+                if (sdLink) sdLink.classList.remove('opacity-50', 'pointer-events-none');
             } else {
-                // Disabled
-                if (sdLink && !window.sdJobActive) { // Don't disable if printing
+                if (sdLink && !window.sdJobActive) {
                     sdLink.classList.add('opacity-50', 'pointer-events-none');
                 }
             }
+            syncSdUploadBtn();
         });
 
         // --- Laser Mode & Progress ---
@@ -3520,10 +3653,13 @@
             // Bounds check: only allow if click is within the work area
             if (window.viewer) {
                 var box = window.viewer.getLocalGCodeBox ? window.viewer.getLocalGCodeBox() : null;
-                if (box) {
+                if (box && !box.isEmpty()) {
                     var pad = 10; // mm tolerance
-                    if (mX < box.min.x - pad || mX > box.max.x + pad ||
-                        mY < box.min.y - pad || mY > box.max.y + pad) {
+                    var wco = window.viewer.wco || { x: 0, y: 0 };
+                    var localX = mX - wco.x;
+                    var localY = mY - wco.y;
+                    if (localX < box.min.x - pad || localX > box.max.x + pad ||
+                        localY < box.min.y - pad || localY > box.max.y + pad) {
                         window.showToast('Outside work area', 'triangle-alert', 'warning');
                         return;
                     }

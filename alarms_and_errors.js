@@ -148,24 +148,20 @@ export class AlarmsAndErrors {
 
         const overlay = document.createElement('div');
         overlay.id = 'cnc-modal-overlay';
-        overlay.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-[1200] hidden flex items-center justify-center';
+        overlay.className = 'fixed inset-0 bg-black/55 backdrop-blur-sm z-[1200] hidden flex items-center justify-center p-4';
 
         overlay.innerHTML = `
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 p-0 border border-grey-light">
-                <!-- Header -->
-                <div id="cnc-modal-header" class="px-6 py-4 border-b border-grey-light flex items-center gap-3">
+            <div class="oz-app-modal-card w-full max-w-md overflow-hidden">
+                <div id="cnc-modal-header" class="oz-app-modal-header flex items-center gap-3">
                     <i id="cnc-modal-icon" class="bi text-xl"></i>
                     <h3 id="cnc-modal-title" class="font-bold text-lg text-secondary-dark">Title</h3>
                 </div>
 
-                <!-- Body -->
-                <div class="px-6 py-6">
+                <div class="oz-app-modal-body-wrap">
                     <p id="cnc-modal-body" class="text-sm font-bold text-grey-dark leading-relaxed"></p>
                 </div>
 
-                <!-- Footer -->
-                <div id="cnc-modal-footer" class="bg-grey-bg px-6 py-3 flex justify-end gap-2 border-t border-grey-light">
-                    <!-- Buttons injected via JS -->
+                <div id="cnc-modal-footer" class="oz-app-modal-footer flex justify-end gap-2">
                 </div>
             </div>
         `;
@@ -191,19 +187,22 @@ export class AlarmsAndErrors {
 
         // Configure styles based on type
         if (type === 'ERROR') {
-            this.domHeader.className = "px-6 py-4 border-b border-red-100 bg-red-50 flex items-center gap-3";
+            this.overlay.dataset.tone = 'error';
+            this.domHeader.className = "oz-app-modal-header flex items-center gap-3";
             this.domIcon.className = "bi bi-exclamation-octagon-fill text-red-500 text-xl";
             this.domTitle.textContent = `Error ${code}`;
             this.domTitle.className = "font-bold text-lg text-red-700";
         } else {
             // Use darker red for critical alarms
             if (isCritical) {
-                this.domHeader.className = "px-6 py-4 border-b border-red-200 bg-red-100 flex items-center gap-3";
+                this.overlay.dataset.tone = 'critical';
+                this.domHeader.className = "oz-app-modal-header flex items-center gap-3";
                 this.domIcon.className = "bi bi-exclamation-triangle-fill text-red-600 text-xl";
                 this.domTitle.textContent = `CRITICAL ALARM ${code}`;
                 this.domTitle.className = "font-bold text-lg text-red-700";
             } else {
-                this.domHeader.className = "px-6 py-4 border-b border-primary-light bg-grey-bg flex items-center gap-3";
+                this.overlay.dataset.tone = 'alarm';
+                this.domHeader.className = "oz-app-modal-header flex items-center gap-3";
                 this.domIcon.className = "bi bi-exclamation-triangle-fill text-primary-dark text-xl";
                 this.domTitle.textContent = `Alarm ${code}`;
                 this.domTitle.className = "font-bold text-lg text-secondary-dark";
@@ -213,7 +212,7 @@ export class AlarmsAndErrors {
         // Add E-Stop warning for Alarm 10
         let displayMessage = message;
         if (type === 'ALARM' && code === '10') {
-            displayMessage = '⚠️ RELEASE THE E-STOP SWITCH FIRST!\n\n' + message;
+            displayMessage = 'Release the E-Stop switch first.\n\n' + message;
         }
 
         this.domBody.textContent = displayMessage;
@@ -230,22 +229,22 @@ export class AlarmsAndErrors {
                 // Show underlying alarm info
                 let errorMsg = `${message}\n\nLast Alarm ${this.currentAlarmCode}: ${alarmDesc}\n\nClear the alarm to unlock G-code commands.`;
                 if (this.currentAlarmCode === '10') {
-                    errorMsg = '⚠️ RELEASE THE E-STOP SWITCH FIRST!\n\n' + errorMsg;
+                    errorMsg = 'Release the E-Stop switch first.\n\n' + errorMsg;
                 }
                 this.domBody.textContent = errorMsg;
 
                 // Add appropriate buttons
-                const btnCancel = this.createBtn('Cancel', 'bg-white border border-grey-light text-grey-dark hover:text-black', () => this.closeModal());
+                const btnCancel = this.createBtn('Cancel', 'btn btn-secondary', () => this.closeModal());
 
                 if (isCurrentCritical) {
-                    const btnReset = this.createBtn('Reset & Unlock', 'bg-red-500 text-white hover:bg-red-600 border border-red-600', () => {
+                    const btnReset = this.createBtn('Reset & Unlock', 'btn btn-danger', () => {
                         this.performCriticalReset();
                         this.closeModal();
                     });
                     this.domFooter.appendChild(btnCancel);
                     this.domFooter.appendChild(btnReset);
                 } else {
-                    const btnClear = this.createBtn('Clear Alarm', 'bg-primary text-black hover:bg-primary-dark border border-primary-dark', () => {
+                    const btnClear = this.createBtn('Clear Alarm', 'btn btn-primary', () => {
                         this.performUnlock();
                         this.closeModal();
                     });
@@ -261,22 +260,22 @@ export class AlarmsAndErrors {
                 // Show underlying alarm info
                 let errorMsg = `${message}\n\nActive Alarm ${this.currentAlarmCode}: ${alarmDesc}`;
                 if (this.currentAlarmCode === '10') {
-                    errorMsg = '⚠️ RELEASE THE E-STOP SWITCH FIRST!\n\n' + errorMsg;
+                    errorMsg = 'Release the E-Stop switch first.\n\n' + errorMsg;
                 }
                 this.domBody.textContent = errorMsg;
 
                 // Add appropriate buttons
-                const btnCancel = this.createBtn('Cancel', 'bg-white border border-grey-light text-grey-dark hover:text-black', () => this.closeModal());
+                const btnCancel = this.createBtn('Cancel', 'btn btn-secondary', () => this.closeModal());
 
                 if (isCurrentCritical) {
-                    const btnReset = this.createBtn('Reset & Unlock', 'bg-red-500 text-white hover:bg-red-600 border border-red-600', () => {
+                    const btnReset = this.createBtn('Reset & Unlock', 'btn btn-danger', () => {
                         this.performCriticalReset();
                         this.closeModal();
                     });
                     this.domFooter.appendChild(btnCancel);
                     this.domFooter.appendChild(btnReset);
                 } else {
-                    const btnClear = this.createBtn('Clear Alarm', 'bg-primary text-black hover:bg-primary-dark border border-primary-dark', () => {
+                    const btnClear = this.createBtn('Clear Alarm', 'btn btn-primary', () => {
                         this.performUnlock();
                         this.closeModal();
                     });
@@ -286,8 +285,8 @@ export class AlarmsAndErrors {
             } else if (code === '46') {
                 // Error 46: Homing required — machine won't unlock until homed
                 this.domBody.textContent = 'Homing is required before the machine can be used.\n\nRun the homing cycle to clear this state.';
-                const btnCancel = this.createBtn('Cancel', 'bg-white border border-grey-light text-grey-dark hover:text-black', () => this.closeModal());
-                const btnHome = this.createBtn('Home Now', 'bg-primary text-black hover:bg-primary-dark border border-primary-dark', () => {
+                const btnCancel = this.createBtn('Cancel', 'btn btn-secondary', () => this.closeModal());
+                const btnHome = this.createBtn('Home Now', 'btn btn-primary', () => {
                     if (window.dro && window.dro.home) window.dro.home();
                     this.closeModal();
                 });
@@ -295,16 +294,16 @@ export class AlarmsAndErrors {
                 this.domFooter.appendChild(btnHome);
             } else {
                 // Regular error - just OK button
-                const btnOk = this.createBtn('OK', 'bg-secondary text-white hover:bg-secondary-dark', () => this.closeModal());
+                const btnOk = this.createBtn('OK', 'btn btn-primary', () => this.closeModal());
                 this.domFooter.appendChild(btnOk);
             }
         } else {
             // Alarm Buttons
-            const btnCancel = this.createBtn('Cancel', 'bg-white border border-grey-light text-grey-dark hover:text-black', () => this.closeModal());
+            const btnCancel = this.createBtn('Cancel', 'btn btn-secondary', () => this.closeModal());
 
             if (isCritical) {
                 // Critical alarms require full reset sequence
-                const btnReset = this.createBtn('Reset & Unlock', 'bg-red-500 text-white hover:bg-red-600 border border-red-600', () => {
+                const btnReset = this.createBtn('Reset & Unlock', 'btn btn-danger', () => {
                     this.performCriticalReset();
                     this.closeModal();
                 });
@@ -312,7 +311,7 @@ export class AlarmsAndErrors {
                 this.domFooter.appendChild(btnReset);
             } else {
                 // Regular alarms can be cleared with $X
-                const btnClear = this.createBtn('Clear Alarm', 'bg-primary text-black hover:bg-primary-dark border border-primary-dark', () => {
+                const btnClear = this.createBtn('Clear Alarm', 'btn btn-primary', () => {
                     this.performUnlock();
                     this.closeModal();
                 });
@@ -337,7 +336,8 @@ export class AlarmsAndErrors {
      */
     showConfirm(title, message, onConfirm, onCancel, confirmText = 'OK', cancelText = 'Cancel') {
         // Yellow/primary theme for confirmations
-        this.domHeader.className = "px-6 py-4 border-b border-primary-light bg-grey-bg flex items-center gap-3";
+        this.overlay.dataset.tone = 'confirm';
+        this.domHeader.className = "oz-app-modal-header flex items-center gap-3";
         this.domIcon.className = "bi bi-question-circle-fill text-primary-dark text-xl";
         this.domTitle.textContent = title;
         this.domTitle.className = "font-bold text-lg text-secondary-dark";
@@ -345,12 +345,12 @@ export class AlarmsAndErrors {
         this.domBody.textContent = message;
         this.domFooter.innerHTML = '';
 
-        const btnCancel = this.createBtn(cancelText, 'bg-white border border-grey-light text-grey-dark hover:text-black', async () => {
+        const btnCancel = this.createBtn(cancelText, 'btn btn-secondary', async () => {
             if (onCancel) await onCancel();
             this.closeModal();
         });
 
-        const btnConfirm = this.createBtn(confirmText, 'bg-primary text-black hover:bg-primary-dark border border-primary-dark', async () => {
+        const btnConfirm = this.createBtn(confirmText, 'btn btn-primary', async () => {
             if (onConfirm) await onConfirm();
             this.closeModal();
         });
@@ -369,7 +369,8 @@ export class AlarmsAndErrors {
      */
     showAlert(title, message, onOk) {
         // Neutral theme for alerts
-        this.domHeader.className = "px-6 py-4 border-b border-grey-light bg-grey-bg flex items-center gap-3";
+        this.overlay.dataset.tone = 'info';
+        this.domHeader.className = "oz-app-modal-header flex items-center gap-3";
         this.domIcon.className = "bi bi-info-circle-fill text-secondary text-xl";
         this.domTitle.textContent = title;
         this.domTitle.className = "font-bold text-lg text-secondary-dark";
@@ -377,7 +378,7 @@ export class AlarmsAndErrors {
         this.domBody.innerHTML = message;
         this.domFooter.innerHTML = '';
 
-        const btnOk = this.createBtn('OK', 'bg-secondary text-white hover:bg-secondary-dark', async () => {
+        const btnOk = this.createBtn('OK', 'btn btn-primary', async () => {
             if (onOk) await onOk();
             this.closeModal();
         });
@@ -397,7 +398,8 @@ export class AlarmsAndErrors {
      */
     showPrompt(title, message, defaultValue, onSubmit, onCancel) {
         // Primary theme for prompts
-        this.domHeader.className = "px-6 py-4 border-b border-primary-light bg-grey-bg flex items-center gap-3";
+        this.overlay.dataset.tone = 'prompt';
+        this.domHeader.className = "oz-app-modal-header flex items-center gap-3";
         this.domIcon.className = "bi bi-pencil-square text-primary-dark text-xl";
         this.domTitle.textContent = title;
         this.domTitle.className = "font-bold text-lg text-secondary-dark";
@@ -406,7 +408,7 @@ export class AlarmsAndErrors {
         this.domBody.innerHTML = `
             <p class="text-sm font-bold text-grey-dark mb-3">${message}</p>
             <input type="text" id="cnc-modal-input" 
-                   class="w-full rounded-md border-2 border-grey-light bg-grey-bg px-3 py-2 text-sm font-bold text-grey-dark focus:border-secondary focus:bg-white outline-none transition-colors"
+                   class="w-full rounded-xl border border-secondary/40 bg-white px-3 py-3 text-sm font-bold text-grey-dark focus:border-secondary focus:bg-white outline-none transition-colors"
                    value="${defaultValue || ''}" />
         `;
 
@@ -414,12 +416,12 @@ export class AlarmsAndErrors {
 
         const inputEl = this.domBody.querySelector('#cnc-modal-input');
 
-        const btnCancel = this.createBtn('Cancel', 'bg-white border border-grey-light text-grey-dark hover:text-black', async () => {
+        const btnCancel = this.createBtn('Cancel', 'btn btn-secondary', async () => {
             if (onCancel) await onCancel();
             this.closeModal();
         });
 
-        const btnSubmit = this.createBtn('OK', 'bg-primary text-black hover:bg-primary-dark border border-primary-dark', async () => {
+        const btnSubmit = this.createBtn('OK', 'btn btn-primary', async () => {
             const value = inputEl.value.trim();
             if (onSubmit) await onSubmit(value);
             this.closeModal();
@@ -450,7 +452,7 @@ export class AlarmsAndErrors {
 
     createBtn(text, classes, onClick) {
         const btn = document.createElement('button');
-        btn.className = `px-4 py-2 rounded-lg text-sm font-bold transition-colors ${classes}`;
+        btn.className = classes;
         btn.textContent = text;
         btn.onclick = onClick;
         return btn;
@@ -498,7 +500,7 @@ export class AlarmsAndErrors {
      *
      * @param {string} line - The raw line from serial
      * @returns {string|boolean} - Returns a formatted string to print to console,
-     *                             true if handled silently (definitions),
+     *                             true if handled silently,
      *                             or false if not handled.
      */
     handleLine(line) {
@@ -511,7 +513,7 @@ export class AlarmsAndErrors {
             if (parts.length >= 2) {
                 this.errors[parts[0]] = parts[1];
             }
-            return true; // Handled silently
+            return line;
         }
 
         // 2. GrblHAL Alarm Definition ([ALARMCODE:1||Desc])
@@ -521,7 +523,7 @@ export class AlarmsAndErrors {
             if (parts.length >= 2) {
                 this.alarms[parts[0]] = parts[1];
             }
-            return true; // Handled silently
+            return line;
         }
 
         // 3. Standard Grbl Error Definition ([ERR:1:Desc])
@@ -531,7 +533,7 @@ export class AlarmsAndErrors {
             if (splitIdx !== -1) {
                 this.errors[inner.substring(0, splitIdx).trim()] = inner.substring(splitIdx + 1).trim();
             }
-            return true;
+            return line;
         }
 
         // 4. Standard Grbl Alarm Definition ([ALM:1:Desc])
@@ -541,7 +543,7 @@ export class AlarmsAndErrors {
             if (splitIdx !== -1) {
                 this.alarms[inner.substring(0, splitIdx).trim()] = inner.substring(splitIdx + 1).trim();
             }
-            return true;
+            return line;
         }
 
         // 5. Active Error Report (error:X)

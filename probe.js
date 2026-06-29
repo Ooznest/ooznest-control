@@ -342,7 +342,7 @@ export class ProbeHandler {
         document.querySelectorAll('#single-surface-grid button').forEach(b => {
             b.className = 'single-sel-btn rounded ' + txtClasses + ' bg-grey-bg border border-grey-light hover:bg-primary px-2 py-1 flex flex-col items-center';
         });
-        btn.className = 'single-sel-btn rounded ' + txtClasses + ' bg-primary border-2 border-black/20 ring-2 ring-primary/30 px-2 py-1 flex flex-col items-center';
+        btn.className = 'single-sel-btn rounded ' + txtClasses + ' bg-primary-dark text-white border-2 border-primary-dark px-2 py-1 flex flex-col items-center';
         const singleImg = document.getElementById('probe-single-diagram');
         const cornerImg = document.getElementById('probe-corner-diagram');
         const svgMap = { 'X1':'SS-RIGHT.svg', 'X-1':'SS-LEFT.svg', 'Y1':'SS-FRONT.svg', 'Y-1':'SS-REAR.svg', 'Z-1':'SS-TOP.svg' };
@@ -366,7 +366,7 @@ export class ProbeHandler {
 
         const parent = btn.parentElement;
         // Styles
-        const selClasses = ['bg-primary', 'border-2', 'border-black/20', 'ring-2', 'ring-primary/30'];
+        const selClasses = ['bg-primary-dark', 'text-white', 'border-2', 'border-primary-dark'];
         const outUnsel = ['bg-grey-bg', 'border', 'border-grey-light'];
         const inUnsel = ['bg-white', 'shadow-inner']; // simplified
 
@@ -412,8 +412,7 @@ export class ProbeHandler {
 
         if (!success) {
             this.activeRoutine = null;
-            this._resetProbeTest();
-            this.term.writeln('\x1b[31m> Probe Failed: No Contact.\x1b[0m');
+            this._resetProbeTest();      
             return;
         }
 

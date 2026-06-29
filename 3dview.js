@@ -227,8 +227,7 @@ export class GCodeViewer {
 
         // Controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
+        this.controls.enableDamping = false;
 
         // ViewCube
         this.viewCube = new ViewCube(this.camera, this.controls, this.container);
@@ -1185,30 +1184,9 @@ export class GCodeViewer {
 
         // Target View: Front-Facing, Tilted back
         const targetPos = new THREE.Vector3(center.x, center.y - maxDim * 1.5, center.z + maxDim);
-        const startPos = this.camera.position.clone();
-        const startTarget = this.controls.target.clone();
-
-        const duration = 600;
-        const startTime = Date.now();
-
-        const anim = () => {
-            const now = Date.now();
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            // Ease-out cubic
-            const ease = 1 - Math.pow(1 - progress, 3);
-
-            this.camera.position.lerpVectors(startPos, targetPos, ease);
-            this.controls.target.lerpVectors(startTarget, center, ease);
-            this.controls.update();
-
-            if (progress < 1) {
-                requestAnimationFrame(anim);
-            }
-        };
-
-        requestAnimationFrame(anim);
+        this.camera.position.copy(targetPos);
+        this.controls.target.copy(center);
+        this.controls.update();
     }
 
     setCameraView(view) {
@@ -1260,39 +1238,14 @@ export class GCodeViewer {
                 break;
         }
 
-        // Animate camera to target position
+        // Snap camera to target position without tweening
         this.animateCamera(targetPosition, targetUp);
     }
 
     animateCamera(targetPosition, targetUp) {
-        const startPosition = this.camera.position.clone();
-        const startUp = this.camera.up.clone();
-        const duration = 600; // milliseconds
-        const startTime = Date.now();
-
-        const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-
-            // Easing function (easeInOutCubic)
-            const eased = progress < 0.5
-                ? 4 * progress * progress * progress
-                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-            // Interpolate position
-            this.camera.position.lerpVectors(startPosition, targetPosition, eased);
-
-            // Interpolate up vector
-            this.camera.up.lerpVectors(startUp, targetUp, eased);
-
-            this.controls.update();
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-
-        animate();
+        this.camera.position.copy(targetPosition);
+        this.camera.up.copy(targetUp);
+        this.controls.update();
     }
 
     toggleCamera() {

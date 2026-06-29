@@ -36,11 +36,15 @@ class JoggingController {
         const btns = document.querySelectorAll('[data-jog]');
         const toggle = document.getElementById('jogContinuous');
         toggle.checked = window.store.get('jog.continuous');
-        document.getElementById('distContainer').classList.toggle('hidden', toggle.checked);
+        const distSelect = document.getElementById('stepSize');
+        const setModeState = () => {
+            window.store.set('jog.continuous', toggle.checked);
+            if (distSelect) distSelect.disabled = toggle.checked;
+        };
+        setModeState();
 
         toggle.addEventListener('change', () => {
-            window.store.set('jog.continuous', toggle.checked);
-            document.getElementById('distContainer').classList.toggle('hidden', toggle.checked);
+            setModeState();
         });
 
         document.getElementById('stepSize').addEventListener('change', (e) => {
