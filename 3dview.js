@@ -205,11 +205,12 @@ export class GCodeViewer {
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
-            alpha: true,
+            alpha: false,
             powerPreference: "high-performance"
         });
         this.renderer.setSize(w, h);
         this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setClearColor(0xffffff, 1);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;

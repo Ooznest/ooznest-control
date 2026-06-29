@@ -631,8 +631,7 @@ export class TroubleshootingHandler {
         this.updateAxisVisibility();
         const mapping = this.hasAAxis() ? ['X', 'Y', 'Z', 'A'] : ['X', 'Y', 'Z'];
         let html = '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-        html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-        html += '<i class="bi bi-house-gear text-primary text-xs"></i>';
+        html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
         html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Homing Status</h3>';
         html += '</div><div class="divide-y divide-grey-light/60">';
         mapping.forEach((axis, i) => {
@@ -645,6 +644,7 @@ export class TroubleshootingHandler {
         });
         html += '</div></div>';
         container.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
     }
 
     _escapeHtml(value) {
@@ -752,8 +752,7 @@ export class TroubleshootingHandler {
 
     renderComputerInfoCard(info) {
         let html = '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-        html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-        html += '<i class="bi bi-pc-display text-primary text-xs"></i>';
+        html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
         html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Computer</h3>';
         html += '</div><div class="p-4 space-y-2">';
 

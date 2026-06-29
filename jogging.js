@@ -4,6 +4,58 @@
 class JoggingController {
     constructor() {
         this.initialized = false;
+        this.layoutSyncBound = null;
+        this.layoutResizeObserver = null;
+    }
+
+    syncLayout() {
+        const panel = document.getElementById('jog-panel');
+        const wrapper = panel?.querySelector('.jog-wrapper');
+        const sideStack = panel?.querySelector('.jog-side-stack');
+        if (!panel || !wrapper || !sideStack) return;
+
+        const visibleAxisCols = Array.from(sideStack.children).filter((child) => {
+            return child instanceof HTMLElement && getComputedStyle(child).display !== 'none';
+        }).length;
+
+        const wrapperGap = parseFloat(getComputedStyle(wrapper).gap) || 12;
+        const sideGap = parseFloat(getComputedStyle(sideStack).gap) || 6;
+        const wrapperWidth = wrapper.clientWidth;
+        const wrapperHeight = wrapper.clientHeight;
+
+        if (!wrapperWidth || !wrapperHeight) return;
+
+        const minXYSize = 132;
+        const sideWidthTarget = Math.max(52, Math.min(72, Math.round(wrapperWidth * 0.17)));
+        const totalSideWidth = visibleAxisCols > 0
+            ? (visibleAxisCols * sideWidthTarget) + ((visibleAxisCols - 1) * sideGap)
+            : 0;
+        const availableWidth = Math.max(0, wrapperWidth - totalSideWidth - (visibleAxisCols > 0 ? wrapperGap : 0));
+        const xySize = Math.max(minXYSize, Math.floor(Math.min(wrapperHeight, availableWidth)));
+
+        panel.style.setProperty('--jog-xy-size', `${xySize}px`);
+        panel.style.setProperty('--jog-z-width', `${Math.max(48, Math.min(72, Math.round(xySize * 0.3)))}px`);
+    }
+
+    initLayoutSync() {
+        if (this.layoutSyncBound) return;
+
+        this.layoutSyncBound = () => {
+            window.requestAnimationFrame(() => this.syncLayout());
+        };
+
+        window.addEventListener('resize', this.layoutSyncBound);
+        window.addEventListener('tab-shown', this.layoutSyncBound);
+
+        if ('ResizeObserver' in window) {
+            this.layoutResizeObserver = new ResizeObserver(this.layoutSyncBound);
+            const panel = document.getElementById('jog-panel');
+            const aPad = document.getElementById('jog-a-pad');
+            if (panel) this.layoutResizeObserver.observe(panel);
+            if (aPad) this.layoutResizeObserver.observe(aPad);
+        }
+
+        this.layoutSyncBound();
     }
 
     getFeedForDirection(dir, speedMode) {
@@ -174,6 +226,7 @@ class JoggingController {
             btn.addEventListener('click', clickJog);
         });
 
+        this.initLayoutSync();
         this.initialized = true;
     }
 }

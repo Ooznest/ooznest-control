@@ -138,39 +138,44 @@
                         <span id="machine-state" class="machine-status-pill text-center">Unknown</span>
                         <div class="flex items-center gap-2">
                             <i id="acc-spindle" data-lucide="fan" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                data-tooltip="Spindle" onclick="window.dro.toggleAccessory('S')" style="width:14px;height:14px"></i>
+                                title="Spindle" onclick="window.dro.toggleAccessory('S')" style="width:14px;height:14px"></i>
                             <i id="acc-flood" data-lucide="droplet" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                data-tooltip="Toggle Flood Coolant" onclick="window.dro.toggleAccessory('F')" style="width:14px;height:14px"></i>
+                                title="Toggle Flood Coolant" onclick="window.dro.toggleAccessory('F')" style="width:14px;height:14px"></i>
                             <i id="acc-mist" data-lucide="cloud-fog" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                data-tooltip="Toggle Mist Coolant" onclick="window.dro.toggleAccessory('M')" style="width:14px;height:14px"></i>
+                                title="Toggle Mist Coolant" onclick="window.dro.toggleAccessory('M')" style="width:14px;height:14px"></i>
                         </div>
                     </div>
 
                     <!-- Header: WCS & Units -->
-                    <div class="flex justify-between items-center mb-1">
+                    <div class="grid grid-cols-2 gap-1.5 mb-1">
 
                         <!-- Units Toggle (Segmented) -->
-                        <label class="oz-segmented-toggle h-7 ml-0.5" for="unitToggle">
-                            <input type="checkbox" id="unitToggle" class="sr-only" onchange="window.dro.toggleUnits();">
-                            <div class="oz-segmented-bg h-full">
-                                <div class="oz-segmented-slider"></div>
-                                <span class="oz-segmented-option left-opt">MM</span>
-                                <span class="oz-segmented-option right-opt">IN</span>
-                            </div>
-                        </label>
+                        <div class="sidebar-control-stack">
+                            <label class="sidebar-control-heading" for="unitToggle">Units</label>
+                            <label class="oz-segmented-toggle h-7 w-full" for="unitToggle">
+                                <input type="checkbox" id="unitToggle" class="sr-only" onchange="window.dro.toggleUnits();">
+                                <div class="oz-segmented-bg h-full w-full">
+                                    <div class="oz-segmented-slider"></div>
+                                    <span class="oz-segmented-option left-opt">MM</span>
+                                    <span class="oz-segmented-option right-opt">IN</span>
+                                </div>
+                            </label>
+                        </div>
 
                         <!-- WCS Select (styled like MM/IN toggle) -->
-                        <div class="flex items-center rounded-lg px-1.5 py-0 h-7 ml-auto" style="background:var(--oz-teal-xlight)">
-                            <span class="text-[10px] font-black uppercase leading-none" style="color:var(--oz-teal-brand)">WCS</span>
-                            <select class="wcs-select" style="background:#ffffff;color:#004c5b;border-color:rgba(68,157,159,0.24);"
-                                onchange="window.dro.setWCS(this.value)" aria-label="Work Coordinate System">
-                                <option value="G54" selected>G54</option>
-                                <option value="G55">G55</option>
-                                <option value="G56">G56</option>
-                                <option value="G57">G57</option>
-                                <option value="G58">G58</option>
-                                <option value="G59">G59</option>
-                            </select>
+                        <div class="sidebar-control-stack">
+                            <label class="sidebar-control-heading" for="wcs-select">WCS</label>
+                            <div class="sidebar-select-group">
+                                <select id="wcs-select" class="wcs-select sidebar-select"
+                                    onchange="window.dro.setWCS(this.value)" aria-label="Work Coordinate System">
+                                    <option value="G54" selected>G54</option>
+                                    <option value="G55">G55</option>
+                                    <option value="G56">G56</option>
+                                    <option value="G57">G57</option>
+                                    <option value="G58">G58</option>
+                                    <option value="G59">G59</option>
+                                </select>
+                            </div>
                         </div>
 
 
@@ -195,7 +200,7 @@
                     <div class="dro-card border-l-4 border-l-axis-x">
                         <button id="homing-btn-x" class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('X')" title="Home X">
-                            <i data-lucide="home" ></i> Home X
+                            Home X
                         </button>
                         <div class="dro-label-box">
                             <span>X</span>
@@ -209,14 +214,14 @@
                             </span>
                         </div>
                         <button class="dro-zero-btn shadow-sm" onclick="window.dro.setZero('X')"
-                            aria-label="Zero X axis">Zero</button>
+                            aria-label="Zero X axis">Zero X</button>
                     </div>
 
                     <!-- Y Axis -->
                     <div class="dro-card border-l-4 border-l-axis-y">
                         <button id="homing-btn-y" class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('Y')" title="Home Y">
-                            <i data-lucide="home" ></i> Home Y
+                            Home Y
                         </button>
                         <div class="dro-label-box">
                             <span>Y</span>
@@ -230,14 +235,14 @@
                             </span>
                         </div>
                         <button class="dro-zero-btn shadow-sm" onclick="window.dro.setZero('Y')"
-                            aria-label="Zero Y axis">Zero</button>
+                            aria-label="Zero Y axis">Zero Y</button>
                     </div>
 
                     <!-- Z Axis -->
                     <div class="dro-card border-l-4 border-l-axis-z">
                         <button id="homing-btn-z" class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('Z')" title="Home Z">
-                            <i data-lucide="home" ></i> Home Z
+                            Home Z
                         </button>
                         <div class="dro-label-box">
                             <span>Z</span>
@@ -251,14 +256,14 @@
                             </span>
                         </div>
                         <button class="dro-zero-btn shadow-sm" onclick="window.dro.setZero('Z')"
-                            aria-label="Zero Z axis">Zero</button>
+                            aria-label="Zero Z axis">Zero Z</button>
                     </div>
 
                     <!-- A Axis (Hidden by default) -->
                     <div class="dro-row hidden dro-card border-l-4 border-l-axis-a">
                         <button id="homing-btn-a" class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('A')" title="Home A">
-                            <i data-lucide="home" ></i> Home A
+                            Home A
                         </button>
                         <div class="dro-label-box">
                             <span>A</span>
@@ -272,7 +277,7 @@
                             </span>
                         </div>
                         <button class="dro-zero-btn shadow-sm" onclick="window.dro.setZero('A')"
-                            aria-label="Zero A axis">Zero</button>
+                            aria-label="Zero A axis">Zero A</button>
                     </div>
 
 
@@ -282,14 +287,14 @@
                         <button id="home-all-btn" class="dro-sub-btn px-1 flex-col shadow-sm flex-1" onclick="window.dro.home()" aria-label="Home all axes">
                             <i data-lucide="home" style="width:12px;height:12px"></i> <span>HOME ALL</span>
                         </button>
-                        <button class="dro-sub-btn px-1 shadow-sm flex-1" onclick="window.dro.setZero('XYZ')">
-                            SET ZERO ALL
-                        </button>
                         <button class="dro-sub-btn px-1 shadow-sm flex-1" onclick="window.dro.goXY0()">
                             GO TO XY ZERO
                         </button>
                         <button class="dro-sub-btn px-1 shadow-sm flex-1" onclick="window.dro.goZ0()">
                             GO TO Z ZERO
+                        </button>
+                        <button class="dro-sub-btn px-1 shadow-sm flex-1" onclick="window.dro.setZero('XYZ')">
+                            SET ZERO ALL
                         </button>
                     </div>
 
@@ -343,10 +348,10 @@
                 <div id="jog-panel">
 
                     <!-- Feed/Dist/Mode row (above jog pad) -->
-                    <div class="grid grid-cols-2 gap-1.5 mb-3">
+                    <div class="grid grid-cols-2 gap-1.5 mb-3 jog-toolbar">
                         <div>
                             <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Feed</label>
-                            <select id="feedRate" class="input-field text-right h-7 py-0 text-[11px]" style="background:#ffffff;color:#004c5b;border-color:rgba(68,157,159,0.24);"
+                            <select id="feedRate" class="input-field sidebar-select text-right"
                                 aria-label="Jog feed rate mode">
                                 <option value="slow">Slow</option>
                                 <option value="med">Medium</option>
@@ -355,7 +360,7 @@
                         </div>
                         <div id="distContainer">
                             <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Dist</label>
-                            <select id="stepSize" class="input-field text-right h-7 py-0 text-[11px]" style="background:#ffffff;color:#004c5b;border-color:rgba(68,157,159,0.24);"
+                            <select id="stepSize" class="input-field sidebar-select text-right"
                                 aria-label="Jog distance step size">
                                 <!-- Populated by JS -->
                             </select>
@@ -392,7 +397,7 @@
                             <button class="jog-btn" data-jog="X-" aria-label="Jog X minus"><i
                                     data-lucide="chevron-left" ></i></button>
 
-                            <div class="w-12 h-12 flex items-center justify-center">
+                            <div class="jog-pad-center">
                                 <i data-lucide="crosshair" class="text-2xl text-white opacity-80"></i>
                             </div>
 
@@ -413,9 +418,9 @@
                         </div>
 
                         <!-- Right Column: Z & A -->
-                        <div class="flex flex-col gap-2 w-28">
+                        <div class="jog-side">
                             <!-- Z & A Buttons -->
-                            <div class="flex gap-1.5 justify-center">
+                            <div class="jog-side-stack">
                                 <!-- Z Pad (Blue) -->
                                 <div class="jog-extra-col">
                                     <button class="jog-btn-extra rounded-t-xl" data-jog="Z+"
@@ -441,9 +446,9 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col bg-grey-bg relative overflow-hidden h-full">
+        <main class="flex-1 flex flex-col relative overflow-hidden h-full">
             <!-- Navigation -->
-            <div class="flex items-center bg-grey-light text-grey-dark justify-between z-20 shrink-0">
+            <div class="flex items-center text-grey-dark justify-between z-20 shrink-0">
 
                 <!-- Sidebar Trigger & Logo & Status -->
                 <div class="flex items-center h-full overflow-hidden shrink-0">
@@ -506,11 +511,11 @@
 
                 <!-- 3D Viewer (Default) -->
                 <div id="viewer-view" class="tab-pane w-full h-full relative bg-grey-bg overflow-hidden">
-                    <div id="viewer-container" class="absolute inset-0 overflow-hidden"></div>
+                    <div id="viewer-container" class="absolute inset-0 overflow-hidden bg-white"></div>
 
                     <!-- Loading Overlay -->
                     <div id="loading-overlay"
-                        class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        class="hidden absolute inset-0 flex items-center justify-center z-50 modal-radial-overlay">
                         <div class="bg-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
                             <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin">
                             </div>
@@ -670,7 +675,7 @@
                 </div>
 
                 <!-- Endmill Setup Modal -->
-                <div id="endmill-modal-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1200] hidden flex items-center justify-center">
+                <div id="endmill-modal-overlay" class="fixed inset-0 z-[1200] hidden flex items-center justify-center modal-radial-overlay">
                     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 border border-grey-light max-h-[90vh] flex flex-col">
                         <div class="px-5 py-3 border-b border-grey-light flex items-center justify-between bg-grey-bg shrink-0">
                             <h3 class="font-bold text-sm text-secondary-dark"><i data-lucide="wrench" class="mr-2"></i>Endmill Setup</h3>
@@ -813,7 +818,7 @@
                             <div
                                 class="h-6 bg-grey-bg border-t border-grey-light flex items-center px-2 text-[10px] text-grey font-mono justify-between shrink-0">
                                 <span>Lines: <span id="editor-line-count">0</span></span>
-                                <span>Virtualized Render Active</span>
+
                             </div>
                         </div>
                     </div>
@@ -891,9 +896,12 @@
 
                             <!-- File Table (Restored White) -->
                             <div class="bg-white border border-grey-light rounded-xl shadow-soft overflow-hidden">
+                                <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
+                                    <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">File Listing</h3>
+                                </div>
                                 <table class="w-full text-left text-sm" id="sd-table">
                                     <thead
-                                        class="bg-grey-bg border-b border-grey-light text-grey uppercase text-[10px] tracking-wider">
+                                        class="border-b border-grey-light text-grey uppercase text-[10px] tracking-wider">
                                         <tr>
                                             <th class="px-6 py-4 font-bold">Filename</th>
                                             <th class="px-6 py-4 font-bold">Size</th>
@@ -2338,7 +2346,7 @@
                                 <div class="flex flex-col lg:flex-row gap-4 mb-4">
                                     <!-- LEFT: Limits -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
-                                        <div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                        <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                             <i data-lucide="maximize" class="text-primary text-xs"></i>
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Limits</h3>
                                         </div>
@@ -2383,7 +2391,7 @@
                                     </div>
                                     <!-- MIDDLE: Control + Probe -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
-                                        <div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                        <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                             <i data-lucide="git-branch" class="text-primary text-xs"></i>
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Control &amp; Probe</h3>
                                         </div>
@@ -2449,7 +2457,7 @@
                                     </div>
                                     <!-- RIGHT: Motor Status -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
-                                        <div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                        <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Motor Status</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
@@ -2467,7 +2475,7 @@
 
                                 <!-- PIN CONFIG & STATE CARD -->
                                 <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
-                                    <div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">
+                                    <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                         <i data-lucide="cpu" class="text-primary text-xs"></i>
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Pin Configuration &amp; State</h3>
                                         <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
@@ -2483,90 +2491,106 @@
 
                             <!-- POWER SUPPLY SUB-TAB -->
                             <div id="trouble-tab-power" class="trouble-tab-content hidden">
-                                <div class="flex items-stretch gap-4 mb-4">
-                                    <div class="bg-grey-bg rounded-xl p-4 border border-grey-light flex-1">
-                                        <div class="text-[10px] font-bold text-grey uppercase mb-1">Voltage</div>
-                                        <div class="flex items-baseline gap-1">
-                                            <span id="ina219-voltage" class="text-3xl font-black text-secondary-dark font-mono">0.00</span>
-                                            <span class="text-sm font-bold text-grey">V</span>
+                                <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
+                                    <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
+                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Power Supply</h3>
+                                    </div>
+                                    <div class="p-4">
+                                        <div class="flex items-stretch gap-4 mb-4">
+                                            <div class="bg-white rounded-xl p-4 border border-grey-light flex-1">
+                                                <div class="text-[10px] font-bold text-grey uppercase mb-1">Voltage</div>
+                                                <div class="flex items-baseline gap-1">
+                                                    <span id="ina219-voltage" class="text-3xl font-black text-secondary-dark font-mono">0.00</span>
+                                                    <span class="text-sm font-bold text-grey">V</span>
+                                                </div>
+                                            </div>
+                                            <div class="bg-white rounded-xl p-4 border border-grey-light flex-1">
+                                                <div class="text-[10px] font-bold text-grey uppercase mb-1">Current</div>
+                                                <div class="flex items-baseline gap-1">
+                                                    <span id="ina219-current" class="text-3xl font-black text-secondary-dark font-mono">0.00</span>
+                                                    <span class="text-sm font-bold text-grey">A</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-white rounded-xl border border-grey-light overflow-hidden" style="height:200px">
+                                            <canvas id="ina219-chart" style="display:block;width:100%;height:100%"></canvas>
                                         </div>
                                     </div>
-                                    <div class="bg-grey-bg rounded-xl p-4 border border-grey-light flex-1">
-                                        <div class="text-[10px] font-bold text-grey uppercase mb-1">Current</div>
-                                        <div class="flex items-baseline gap-1">
-                                            <span id="ina219-current" class="text-3xl font-black text-secondary-dark font-mono">0.00</span>
-                                            <span class="text-sm font-bold text-grey">A</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="bg-grey-bg rounded-xl border border-grey-light overflow-hidden" style="height:200px">
-                                    <canvas id="ina219-chart" style="display:block;width:100%;height:100%"></canvas>
                                 </div>
                             </div>
 
                             <!-- SPINDLES SUB-TAB -->
                             <div id="trouble-tab-spindles" class="trouble-tab-content hidden">
-                                <div class="flex items-center justify-between mb-4">
-                                    <div>
-                                        <h3 class="font-bold text-secondary-dark text-sm">Spindles</h3>
-                                        <p class="text-[10px] text-grey">Select active spindle and control speed.</p>
+                                <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
+                                    <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
+                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Spindles</h3>
+                                        <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
+                                            onclick="window.troubleshooting.refreshSpindles()">
+                                            <i data-lucide="refresh-cw" ></i> Refresh
+                                        </button>
                                     </div>
-                                    <button class="btn btn-secondary h-7 text-[10px] px-3"
-                                        onclick="window.troubleshooting.refreshSpindles()">
-                                        <i data-lucide="refresh-cw" ></i> Refresh
-                                    </button>
-                                </div>
-                                <div id="spindles-content" class="text-[11px] font-mono text-secondary-dark">
-                                    <div class="text-grey italic text-center py-4">Click <strong>Refresh</strong> to load spindle information.</div>
+                                    <div class="p-4">
+                                        <p class="text-[10px] text-grey mb-3">Select active spindle and control speed.</p>
+                                        <div id="spindles-content" class="text-[11px] font-mono text-secondary-dark">
+                                            <div class="text-grey italic text-center py-4">Click <strong>Refresh</strong> to load spindle information.</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- LED STRIP SUB-TAB -->
                             <div id="trouble-tab-led" class="trouble-tab-content hidden">
-                                <p class="text-xs text-grey mb-3">Test RGB LED strips connected to the controller. Pick a color or use the picker below.</p>
-                                <div class="flex flex-wrap gap-2 mb-4">
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#ff0000" title="Red"
-                                        onclick="window.troubleshooting.sendLEDCommand('#ff0000')"></button>
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#ff6600" title="Orange"
-                                        onclick="window.troubleshooting.sendLEDCommand('#ff6600')"></button>
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#ffcc00" title="Yellow"
-                                        onclick="window.troubleshooting.sendLEDCommand('#ffcc00')"></button>
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#00ff00" title="Green"
-                                        onclick="window.troubleshooting.sendLEDCommand('#00ff00')"></button>
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#00ccff" title="Cyan"
-                                        onclick="window.troubleshooting.sendLEDCommand('#00ccff')"></button>
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#0066ff" title="Blue"
-                                        onclick="window.troubleshooting.sendLEDCommand('#0066ff')"></button>
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#6600cc" title="Purple"
-                                        onclick="window.troubleshooting.sendLEDCommand('#6600cc')"></button>
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#ff00ff" title="Magenta"
-                                        onclick="window.troubleshooting.sendLEDCommand('#ff00ff')"></button>
-                                    <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
-                                        style="background:#ffffff" title="White"
-                                        onclick="window.troubleshooting.sendLEDCommand('#ffffff')"></button>
-                                    <button class="btn btn-secondary h-9 px-3 text-[10px]"
-                                        onclick="window.troubleshooting.sendLEDCommand('#000000')">
-                                        <i data-lucide="lightbulb-off" ></i> Off
-                                    </button>
-                                </div>
-                                <div class="flex items-center gap-3 bg-grey-bg rounded-xl p-3 border border-grey-light">
-                                    <div class="relative w-10 h-10 rounded-lg overflow-hidden border-2 border-white shadow-sm shrink-0">
-                                        <input type="color" id="led-color-picker"
-                                            class="absolute inset-[-5px] w-[150%] h-[150%] cursor-pointer"
-                                            value="#000000"
-                                            oninput="window.troubleshooting.ledPickerColor(this.value)">
+                                <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
+                                    <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
+                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">RGB LED</h3>
                                     </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="text-[10px] font-bold text-grey uppercase mb-0.5">M150 Command</div>
-                                        <div id="led-m150-command" class="font-mono text-sm font-bold text-secondary-dark truncate">M150 R0 U0 B0</div>
+                                    <div class="p-4">
+                                        <p class="text-xs text-grey mb-3">Test RGB LED strips connected to the controller. Pick a color or use the picker below.</p>
+                                        <div class="flex flex-wrap gap-2 mb-4">
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#ff0000" title="Red"
+                                                onclick="window.troubleshooting.sendLEDCommand('#ff0000')"></button>
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#ff6600" title="Orange"
+                                                onclick="window.troubleshooting.sendLEDCommand('#ff6600')"></button>
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#ffcc00" title="Yellow"
+                                                onclick="window.troubleshooting.sendLEDCommand('#ffcc00')"></button>
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#00ff00" title="Green"
+                                                onclick="window.troubleshooting.sendLEDCommand('#00ff00')"></button>
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#00ccff" title="Cyan"
+                                                onclick="window.troubleshooting.sendLEDCommand('#00ccff')"></button>
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#0066ff" title="Blue"
+                                                onclick="window.troubleshooting.sendLEDCommand('#0066ff')"></button>
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#6600cc" title="Purple"
+                                                onclick="window.troubleshooting.sendLEDCommand('#6600cc')"></button>
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#ff00ff" title="Magenta"
+                                                onclick="window.troubleshooting.sendLEDCommand('#ff00ff')"></button>
+                                            <button class="w-9 h-9 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform"
+                                                style="background:#ffffff" title="White"
+                                                onclick="window.troubleshooting.sendLEDCommand('#ffffff')"></button>
+                                            <button class="btn btn-secondary h-9 px-3 text-[10px]"
+                                                onclick="window.troubleshooting.sendLEDCommand('#000000')">
+                                                <i data-lucide="lightbulb-off" ></i> Off
+                                            </button>
+                                        </div>
+                                        <div class="flex items-center gap-3 bg-white rounded-xl p-3 border border-grey-light">
+                                            <div class="relative w-10 h-10 rounded-lg overflow-hidden border-2 border-white shadow-sm shrink-0">
+                                                <input type="color" id="led-color-picker"
+                                                    class="absolute inset-[-5px] w-[150%] h-[150%] cursor-pointer"
+                                                    value="#000000"
+                                                    oninput="window.troubleshooting.ledPickerColor(this.value)">
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-[10px] font-bold text-grey uppercase mb-0.5">M150 Command</div>
+                                                <div id="led-m150-command" class="font-mono text-sm font-bold text-secondary-dark truncate">M150 R0 U0 B0</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2607,7 +2631,7 @@
 
     <!-- Connection Modal -->
     <div id="connection-modal"
-        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4">
+        class="hidden fixed inset-0 z-[1100] flex items-center justify-center p-4 modal-radial-overlay">
         <div class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] w-[400px] max-w-[calc(100vw-2rem)]">
             <div class="px-6 py-4 border-b border-grey-light flex justify-between items-center bg-grey-bg">
                 <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
@@ -2753,7 +2777,7 @@
 
     <!-- Macro Modal -->
     <div id="macro-modal"
-        class="hidden fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        class="hidden fixed inset-0 z-[1100] flex items-center justify-center p-4 modal-radial-overlay">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-[600px] overflow-hidden flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-grey-light flex justify-between items-center bg-grey-bg">
                 <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
@@ -2808,7 +2832,7 @@
 
     <!-- Tool Change Modal -->
     <div id="tool-change-modal"
-        class="hidden fixed inset-0 z-[1100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        class="hidden fixed inset-0 z-[1100] flex items-center justify-center p-4 modal-radial-overlay modal-radial-overlay-strong">
         <div
             class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border-4 border-primary animate-in fade-in zoom-in duration-200">
             <!-- Header -->
@@ -3228,6 +3252,7 @@
             const gridBtn = document.getElementById('grid-toggle-btn');
             if (gridBtn) {
                 gridBtn.innerHTML = `<i data-lucide="grid-3x3" class="text-secondary"></i> Grid: ${viewer.gridMode === 'machine' ? 'Machine' : 'Job'}`;
+                if (window.lucide) window.lucide.createIcons();
             }
 
             window.requestAnimationFrame(updateTabsLayout);
@@ -3444,6 +3469,7 @@
         window.toggleGridMode = function () {
             const label = viewer.toggleGridMode();
             document.getElementById('grid-toggle-btn').innerHTML = `<i data-lucide="grid-3x3" class="text-secondary"></i> ${label}`;
+            if (window.lucide) window.lucide.createIcons();
         };
 
         window.resetCamera = function () { viewer.resetCamera(); };
@@ -4021,7 +4047,7 @@
     </script>
 
     <!-- Configuration Wizard Modal -->
-    <div id="config-wizard-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] isolate hidden flex items-center justify-center">
+    <div id="config-wizard-overlay" class="fixed inset-0 z-[100] isolate hidden flex items-center justify-center modal-radial-overlay">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all scale-100 border border-grey-light max-h-[90vh] flex flex-col">
             <div class="px-5 py-3 border-b border-grey-light flex items-center justify-between bg-grey-bg shrink-0">
                 <h3 class="font-bold text-sm text-secondary-dark flex items-center gap-2">

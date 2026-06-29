@@ -257,13 +257,11 @@ select {
 .app-container>main>div:first-child,
 .app-container>div:not(.machine-sidebar)>div:first-child {
     background: var(--oz-white);
-    border-bottom: 2px solid var(--oz-teal-xlight);
-    box-shadow: 0 2px 12px rgba(0, 76, 91, 0.07);
     display: flex;
     align-items: center;
     height: 52px;
     flex-shrink: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #app-logo {
@@ -546,13 +544,13 @@ select {
    ──────────────────────────────────────────────────────────────── */
 .dro-panel {
     background: var(--oz-teal-mid);
-    border-radius: var(--oz-r-xl) 0 0 0;
     border: none;
     box-shadow: var(--oz-shadow-md);
     padding: 8px;
     position: relative;
     overflow: visible;
     margin-bottom: 0;
+    border-radius: 0 0 0 0 !important;
 }
 
 @media (min-width: 768px) {
@@ -577,6 +575,44 @@ select {
     max-width: 66px;
 }
 
+.sidebar-control-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    width: 100%;
+}
+
+.sidebar-control-heading {
+    display: block;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.sidebar-control-stack .oz-segmented-toggle {
+    display: flex;
+    width: 100%;
+}
+
+.sidebar-control-stack .oz-segmented-bg {
+    width: 100% !important;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.sidebar-select-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+    padding: 0;
+    min-height: 28px;
+    border-radius: 8px;
+}
+
 .dro-panel .text-grey,
 .dro-panel .text-xs {
     color: white !important;
@@ -598,16 +634,25 @@ select {
     box-shadow: none !important;
 }
 
+#machine-sidebar .sidebar-select {
+    width: 100%;
+    height: 28px;
+    min-height: 28px;
+    padding: 2px 28px 2px 8px !important;
+    border-radius: 8px !important;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
 #machine-sidebar .dro-panel .wcs-select {
-    border-radius: 999px !important;
-    padding: 2px 22px 2px 8px !important;
     max-width: none;
-    min-width: 56px;
+    min-width: 0;
 }
 
 #machine-sidebar #feedRate,
 #machine-sidebar #stepSize {
-    border-radius: 10px !important;
+    min-width: 0;
 }
 
 #machine-sidebar .dro-panel .wcs-select option,
@@ -747,7 +792,7 @@ select {
 }
 .dro-home-header {
     display: flex;
-    min-width: 44px;
+    min-width: 24px;
     margin: 2px 2px 2px 0;
 }
 .dro-zero-header {
@@ -946,36 +991,66 @@ select {
     padding: 10px;
     position: relative;
     overflow: visible;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 320px;
 }
 
 /* Jog wrapper & grid */
 .jog-wrapper {
     display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
     gap: 12px;
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: center;
 }
 
 .jog-pad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
     gap: 6px;
+    width: var(--jog-xy-size, 168px);
+    height: var(--jog-xy-size, 168px);
+    flex: 0 0 auto;
 }
 
 .jog-extra-col {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    width: var(--jog-z-width, 52px);
+    height: 100%;
+}
+
+.jog-side {
+    display: flex;
+    align-items: stretch;
+    height: var(--jog-xy-size, 168px);
+    flex: 0 0 auto;
+}
+
+.jog-side-stack {
+    display: flex;
+    gap: 6px;
+    height: 100%;
+}
+
+.jog-toolbar {
+    flex: 0 0 auto;
 }
 
 /* XY direction buttons */
 .jog-btn {
-    width: 48px;
-    height: 48px;
+    width: 100%;
+    height: 100%;
     background: white;
     border: none;
     border-radius: 4px;
     color: var(--oz-grey-dark);
-    font-size: 22px;
+    font-size: clamp(18px, calc(var(--jog-xy-size, 168px) * 0.22), 30px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -984,6 +1059,11 @@ select {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     user-select: none;
     -webkit-user-select: none;
+}
+
+.jog-btn i {
+    width: clamp(18px, calc(var(--jog-xy-size, 168px) * 0.24), 28px);
+    height: clamp(18px, calc(var(--jog-xy-size, 168px) * 0.24), 28px);
 }
 
 /* Outer corner buttons — big organic radius on the outermost corner */
@@ -1051,31 +1131,33 @@ select {
 }
 
 /* Center D-pad button */
-.jog-pad>div {
+.jog-pad-center {
     background: var(--oz-teal-xlight);
     border-radius: 50%;
     border: 2px solid var(--oz-teal-light);
-    width: 48px;
-    height: 48px;
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.jog-pad>div i {
+.jog-pad-center i {
     color: var(--oz-teal-mid);
-    font-size: 18px;
+    width: clamp(18px, calc(var(--jog-xy-size, 168px) * 0.2), 26px);
+    height: clamp(18px, calc(var(--jog-xy-size, 168px) * 0.2), 26px);
 }
 
 /* Z / A extra buttons */
 .jog-btn-extra {
-    width: 48px;
-    height: 44px;
+    width: 100%;
+    flex: 1 1 0;
+    min-height: 0;
     background: white;
     border: none;
     border-radius: 4px;
     color: var(--oz-grey-dark);
-    font-size: 13px;
+    font-size: clamp(13px, calc(var(--jog-xy-size, 168px) * 0.12), 18px);
     font-weight: 800;
     display: flex;
     align-items: center;
@@ -1529,7 +1611,6 @@ table [id^="pin-indicator-"] {
 }
 
 #viewer-view {
-    background: linear-gradient(150deg, #F7F9F9 0%, #E4EEEE 100%);
     position: relative;
     flex: 1;
     min-height: 0;
@@ -1555,8 +1636,6 @@ table [id^="pin-indicator-"] {
 .tab-pane input:focus,
 .tab-pane select:focus,
 .tab-pane textarea:focus {
-    border-color: var(--oz-teal-mid);
-    box-shadow: 0 0 0 3px rgba(68, 157, 159, 0.12);
     background: white;
     outline: none;
 }
@@ -1697,8 +1776,15 @@ body {
     background: transparent;
     box-shadow: none;
     padding-inline: 16px;
-    margin-top: 3px;
+    margin-top: 12px;
     margin-right: 8px;
+    position: relative;
+    z-index: 5;
+}
+
+#main-content-area {
+    position: relative;
+    z-index: 0;
 }
 
 #tabs-scroll-container {
@@ -1708,7 +1794,9 @@ body {
     border-radius: 0.5rem;
     overflow: hidden;
     margin: 10px 0 6px;
-    box-shadow: inset 0 0 0 1px rgba(68, 157, 159, 0.16);
+    box-shadow:
+        0 4px 12px rgba(13, 31, 34, 0.2),
+        inset 0 0 0 1px rgba(68, 157, 159, 0.16);
 }
 
 #primary-tabs-bar {
@@ -1723,6 +1811,7 @@ body {
     background: var(--oz-teal-mid);
     color: rgba(255, 255, 255, 0.7);
     border: none;
+    box-shadow: 0 4px 12px rgba(13, 31, 34, 0.2);
     cursor: pointer;
     align-items: center;
     justify-content: center;
@@ -1807,9 +1896,28 @@ body {
     color: #fff;
 }
 
-.machine-sidebar {
+.modal-radial-overlay {
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 249, 249, 0.98) 100%);
+        radial-gradient(circle at center,
+            rgba(13, 31, 34, 0.22) 0%,
+            rgba(13, 31, 34, 0.16) 24%,
+            rgba(13, 31, 34, 0.08) 46%,
+            rgba(13, 31, 34, 0.02) 66%,
+            rgba(13, 31, 34, 0) 82%);
+}
+
+.modal-radial-overlay-strong {
+    background:
+        radial-gradient(circle at center,
+            rgba(13, 31, 34, 0.34) 0%,
+            rgba(13, 31, 34, 0.24) 24%,
+            rgba(13, 31, 34, 0.12) 48%,
+            rgba(13, 31, 34, 0.03) 68%,
+            rgba(13, 31, 34, 0) 84%);
+}
+
+.machine-sidebar {
+
     border-right: 1px solid var(--oz-border-soft);
     box-shadow: 16px 0 36px rgba(13, 31, 34, 0.08);
 }
@@ -1832,7 +1940,7 @@ body {
 #sidebar-connect {
     background-color: rgb(255, 133, 51);
     border: 0;
-    border-radius: 0 0 20px 0;
+    border-radius: 0 0 0 0;
     padding: 10px;
     box-shadow: var(--oz-surface-shadow);
 }
@@ -1873,11 +1981,6 @@ body {
     border-color: rgba(176, 202, 207, 0.45);
 }
 
-#machine-controls > *:not(#sidebar-connect) select {
-    background-image:
-        linear-gradient(45deg, transparent 50%, var(--oz-secondary-dark) 50%),
-        linear-gradient(135deg, var(--oz-secondary-dark) 50%, transparent 50%);
-}
 
 #machine-controls > *:not(#sidebar-connect) select,
 #machine-controls > *:not(#sidebar-connect) .wcs-select,
@@ -2019,6 +2122,7 @@ body {
     border-radius: var(--oz-panel-corner);
     box-shadow: var(--oz-surface-shadow);
     color: #fff;
+    padding: 12px;
 }
 
 #jog-panel .text-secondary-dark,
@@ -2042,7 +2146,7 @@ body {
     color: var(--oz-secondary-dark) !important;
 }
 
-.jog-pad > div {
+.jog-pad-center {
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.22);
 }
@@ -2117,11 +2221,6 @@ body {
     padding: 0;
 }
 
-#viewer-view {
-    background:
-        radial-gradient(circle at top right, rgba(68, 157, 159, 0.14), transparent 22%),
-        linear-gradient(180deg, #f7f9f9 0%, #e8efef 100%);
-}
 
 .overlay-btn {
     background: rgba(255, 255, 255, 0.94);
@@ -2165,16 +2264,6 @@ body {
     background: rgba(255, 255, 255, 0.8);
 }
 
-#probe-panel-content .bg-white,
-#tools-view .bg-white,
-#troubleshooting-view .bg-white,
-#settings-view .bg-white,
-#editor-view .bg-white,
-#macros-view .bg-white,
-#sd-view .bg-white {
-    border-color: var(--oz-border-soft) !important;
-    box-shadow: var(--oz-surface-shadow-soft);
-}
 
 #probe-config-banner {
     background: var(--oz-notice-warning) !important;
@@ -2277,7 +2366,6 @@ body {
 
 .oz-app-modal-body-wrap,
 #config-wizard-body {
-    background: linear-gradient(180deg, #ffffff 0%, #f7f9f9 100%);
     padding: 26px 24px 22px;
 }
 
@@ -2291,20 +2379,6 @@ body {
     padding: 18px 24px 20px;
 }
 
-#cnc-modal-overlay[data-tone="alarm"] .oz-app-modal-header,
-#cnc-modal-overlay[data-tone="confirm"] .oz-app-modal-header,
-#cnc-modal-overlay[data-tone="prompt"] .oz-app-modal-header {
-    background: linear-gradient(180deg, rgba(255, 133, 51, 0.12) 0%, rgba(255, 255, 255, 1) 100%);
-}
-
-#cnc-modal-overlay[data-tone="error"] .oz-app-modal-header,
-#cnc-modal-overlay[data-tone="critical"] .oz-app-modal-header {
-    background: linear-gradient(180deg, rgba(255, 102, 0, 0.1) 0%, rgba(255, 255, 255, 1) 100%);
-}
-
-#cnc-modal-overlay[data-tone="info"] .oz-app-modal-header {
-    background: linear-gradient(180deg, rgba(68, 157, 159, 0.12) 0%, rgba(255, 255, 255, 1) 100%);
-}
 
 #cnc-modal-overlay[data-tone="error"] .oz-app-modal-card,
 #cnc-modal-overlay[data-tone="critical"] .oz-app-modal-card {
@@ -2351,8 +2425,8 @@ label,
 #config-wizard-body select {
     min-height: 42px;
     padding: 10px 14px;
-    border-radius: 10px;
-    box-shadow: inset 0 1px 2px rgba(13, 31, 34, 0.04);
+    border-radius: 00px;
+
 }
 
 .tab-pane select,
@@ -2424,12 +2498,11 @@ label,
 }
 
 #settings-sidebar {
-    background:
-        linear-gradient(180deg, rgba(176, 202, 207, 0.18) 0%, rgba(255, 255, 255, 0.98) 20%, rgba(243, 247, 247, 0.98) 100%) !important;
+    background: #ffffff !important;
 }
 
 #settings-sidebar > div:first-child {
-    background: rgba(255, 255, 255, 0.94) !important;
+    background: #ffffff !important;
 }
 
 #settings-search-input {
@@ -2441,10 +2514,6 @@ label,
     box-shadow: inset 0 1px 2px rgba(13, 31, 34, 0.03);
 }
 
-#settings-main-panel > div:first-child {
-    background:
-        linear-gradient(180deg, rgba(68, 157, 159, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%) !important;
-}
 
 #settings-main-panel .bg-grey-bg,
 #tools-view .bg-grey-bg,
@@ -2453,8 +2522,7 @@ label,
 #connection-modal #scan-results,
 #connection-modal #discovered-list,
 #macro-icon-grid {
-    background:
-        linear-gradient(180deg, rgba(246, 251, 251, 1) 0%, rgba(235, 239, 239, 0.82) 100%) !important;
+    background: #ffffff !important;
     border-color: rgba(68, 157, 159, 0.14) !important;
 }
 
@@ -2468,9 +2536,16 @@ label,
 #settings-main-panel thead th,
 #tools-view thead th,
 #sd-table thead th {
-    background: #f8fbfb !important;
+    background: #ffffff !important;
     color: var(--oz-secondary-dark);
     border-bottom-color: rgba(68, 157, 159, 0.14) !important;
+}
+
+#sd-view .shadow-soft,
+#troubleshooting-view .shadow-soft,
+#sd-view .shadow-card,
+#troubleshooting-view .shadow-card {
+    box-shadow: none !important;
 }
 
 #settings-main-panel tbody tr,
@@ -2721,10 +2796,6 @@ label,
         gap: 10px;
     }
 
-    #sidebar-connect {
-        border-radius: 0 0 20px 0;
-    }
-
     .tab-btn {
         min-height: 34px;
         padding: 7px 14px;
@@ -2800,9 +2871,8 @@ label,
 }
 
 .console-terminal {
-    background: linear-gradient(180deg, #e7f1f2 0%, #dcebee 100%) !important;
-    border: 1px solid rgba(68, 157, 159, 0.42) !important;
-    border-radius: 0 0 40px 0 !important;
+    border: 2px solid rgba(68, 157, 159, 0.42) !important;
+    border-radius: 0 0 0 0 !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
     padding: 10px 12px;
     box-sizing: border-box;
@@ -2854,6 +2924,19 @@ label,
 #machine-sidebar select#stepSize option {
     background: #ffffff !important;
     color: #004c5b !important;
+}
+
+#machine-sidebar select.sidebar-select:disabled,
+#machine-sidebar select#stepSize:disabled {
+    background: rgba(255, 255, 255, 0.58) !important;
+    background-color: rgba(255, 255, 255, 0.58) !important;
+    color: #004c5b !important;
+    caret-color: transparent !important;
+    border-color: rgba(255, 255, 255, 0.24) !important;
+    text-shadow: none !important;
+    cursor: not-allowed;
+    opacity: 0.5 !important;
+    filter: grayscale(1);
 }
 
 .dro-mach-group {
@@ -2910,10 +2993,6 @@ label,
 .machine-status-pill.status-idle {
     background: rgba(255, 255, 255, 0.96);
     color: var(--oz-teal-brand);
-}
-
-.dro-panel {
-    border-radius: 0 0 20px 0 !important;
 }
 
 .machine-status-pill.status-run {
@@ -3003,9 +3082,13 @@ label,
 }
 
 #jog-panel .oz-segmented-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 5px 10px;
     font-size: 11px;
     font-weight: 900;
+    line-height: 1;
     white-space: nowrap;
 }
 
@@ -3160,7 +3243,7 @@ label,
 
 @media (min-width: 768px) {
     .dro-card {
-        min-height: 44px;
+        min-height: 24px;
         margin-bottom: 7px;
     }
 }

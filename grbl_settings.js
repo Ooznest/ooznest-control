@@ -325,7 +325,7 @@ export class GrblSettings {
         const sortedGroups = Object.values(this.groups).sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
         // --- Build HTML ---
-        let html = `<div class="flex flex-row h-[calc(100vh-220px)] border border-grey-light rounded-lg bg-white overflow-hidden shadow-sm">`;
+        let html = `<div class="flex flex-row h-[calc(100vh-220px)] border border-grey-light rounded-lg bg-white overflow-hidden">`;
 
         // --- Left Sidebar ---
         html += `<div id="settings-sidebar" class="w-[140px] md:w-1/3 bg-grey-bg border-r border-grey-light flex flex-col shrink-0">`;
@@ -385,17 +385,17 @@ export class GrblSettings {
 
         // Header
         html += `
-            <div class="bg-grey-bg px-2 md:px-4 py-2 border-b border-grey-light font-bold text-secondary-dark sticky top-0 z-20 shadow-sm flex items-center gap-2 text-xs md:text-sm">
+            <div class="px-4 py-2.5 border-b border-grey-light sticky top-0 z-20 flex items-center gap-2">
                 ${this.searchQuery ? '<i data-lucide="search" style="width:14px;height:14px"></i>' : '<i data-lucide="folder-open" style="width:14px;height:14px"></i>'}
-                <span class="truncate">${displayTitle}</span>
+                <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider truncate">${displayTitle}</h3>
             </div>
         `;
 
         // Content Area
         let hasContent = false;
         const subcategoryPanelClass = settingsToDisplay.length > 0
-            ? 'p-4 bg-grey-bg border-b border-grey-light'
-            : 'p-4 bg-grey-bg border-b border-grey-light flex-1';
+            ? 'p-4 bg-white border-b border-grey-light'
+            : 'p-4 bg-white border-b border-grey-light flex-1';
 
         // 1. Render Subgroups (if any)
         if (childGroups.length > 0) {
@@ -430,7 +430,7 @@ export class GrblSettings {
             hasContent = true;
             html += `
                 <table class="w-full text-left text-sm table-fixed">
-                    <thead class="bg-surface text-grey uppercase text-[9px] md:text-[10px] tracking-wider border-b border-grey-light sticky top-0 z-10 shadow-sm">
+                    <thead class="bg-white text-grey uppercase text-[9px] md:text-[10px] tracking-wider border-b border-grey-light sticky top-0 z-10">
                         <tr>
                             <th class="px-1 md:px-4 py-2 w-8 md:w-16 bg-surface text-center md:text-left">$</th>
                             <th class="px-1 md:px-4 py-2 bg-surface w-auto">Description</th>

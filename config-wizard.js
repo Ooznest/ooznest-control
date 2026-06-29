@@ -173,8 +173,7 @@ export class ConfigWizard {
 
         // Firmware card
         html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-        html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-        html += '<i data-lucide="cpu" style="width:14px;height:14px"></i>';
+        html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
         html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Firmware</h3>';
         html += '</div><div class="p-4 space-y-2">';
         if (v) {
@@ -192,8 +191,7 @@ export class ConfigWizard {
 
         // App version card
         html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-        html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-        html += '<i data-lucide="smartphone" style="width:14px;height:14px"></i>';
+        html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
         html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Application</h3>';
         html += '</div><div class="p-4 space-y-2">';
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${document.title.replace('Ooznest Control ', '') || 'Unknown'}</span></div>`;
@@ -205,8 +203,7 @@ export class ConfigWizard {
         // Options card
         if (this.optInfo) {
             html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-            html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-            html += '<i data-lucide="settings" style="width:14px;height:14px"></i>';
+            html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
             html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Options</h3>';
             html += '</div><div class="p-4">';
             html += `<span class="text-xs text-grey">${this.optInfo.slice(1, -1)}</span>`;
@@ -219,6 +216,7 @@ export class ConfigWizard {
 
         html += '</div>';
         container.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
     }
 
     // --- Wizard Modal ---
