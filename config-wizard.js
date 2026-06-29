@@ -367,7 +367,7 @@ export class ConfigWizard {
                                 html += `<div class="font-bold text-xs text-secondary-dark mb-2">${axis} Axis</div>`;
                                 html += '<div class="grid grid-cols-2 gap-x-3 gap-y-2">';
                                 html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Drive</label>';
-                                html += `<select onchange="window.configWizard.wizardData.customDrives.${lc}=this.value;window.configWizard._renderWizardStep()" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                html += `<select onchange="window.configWizard.wizardData.customDrives.${lc}=this.value;window.configWizard._renderWizardStep()" class="oz-select w-full text-xs">`;
                                 html += `<option value="belt" ${drive === 'belt' ? 'selected' : ''}>Belt</option>`;
                                 html += `<option value="leadscrew" ${drive === 'leadscrew' ? 'selected' : ''}>Leadscrew</option>`;
                                 html += '</select></div>';
@@ -387,7 +387,7 @@ export class ConfigWizard {
                                     html += '</div><div></div>';
                                 }
                                 html += '<div class="col-span-2"><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Endstop</label>';
-                                html += `<select onchange="window.configWizard.wizardData.customEndstops.${lc}=this.value" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                html += `<select onchange="window.configWizard.wizardData.customEndstops.${lc}=this.value" class="oz-select w-full text-xs">`;
                                 html += `<option value="min" ${endstop === 'min' ? 'selected' : ''}>${axis} min</option>`;
                                 html += `<option value="max" ${endstop === 'max' ? 'selected' : ''}>${axis} max</option>`;
                                 html += '</select></div>';
@@ -612,7 +612,7 @@ export class ConfigWizard {
         // Dropdown
         html += '<div class="mb-4">';
         html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Probe Type</label>';
-        html += `<select id="wizard-probe-type" onchange="window.configWizard._onProbeTypeChange(this.value)" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+        html += `<select id="wizard-probe-type" onchange="window.configWizard._onProbeTypeChange(this.value)" class="oz-select w-full text-xs">`;
         html += `<option value="ooznest" ${selected === 'ooznest' ? 'selected' : ''}>Ooznest XYZ Probe</option>`;
         html += `<option value="custom" ${selected === 'custom' ? 'selected' : ''}>Custom</option>`;
         html += '</select>';

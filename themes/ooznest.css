@@ -603,6 +603,85 @@ select {
     flex: 1 1 auto;
 }
 
+.oz-select,
+#jog-panel select,
+.tab-pane select,
+#connection-modal select,
+#macro-modal select,
+#config-wizard-body select {
+    appearance: none;
+    width: 100%;
+    min-width: 0;
+    min-height: 32px;
+    padding: 0 28px 0 10px;
+    border: 1px solid rgba(68, 157, 159, 0.24);
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #004c5b;
+    font-family: 'Nunito', 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 30px;
+    box-shadow: none;
+    outline: none;
+    text-shadow: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, currentColor 50%),
+        linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position:
+        calc(100% - 16px) calc(50% - 2px),
+        calc(100% - 11px) calc(50% - 2px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.oz-select:focus,
+#jog-panel select:focus,
+.tab-pane select:focus,
+#connection-modal select:focus,
+#macro-modal select:focus,
+#config-wizard-body select:focus {
+    border-color: rgba(68, 157, 159, 0.42);
+    background-color: #ffffff;
+}
+
+.oz-select option,
+#jog-panel select option,
+.tab-pane select option,
+#connection-modal select option,
+#macro-modal select option,
+#config-wizard-body select option {
+    background: #ffffff;
+    color: #004c5b;
+}
+
+.oz-select:disabled,
+#jog-panel select:disabled,
+.tab-pane select:disabled,
+#connection-modal select:disabled,
+#macro-modal select:disabled,
+#config-wizard-body select:disabled {
+    background-color: #f4f7f7;
+    color: rgba(47, 55, 60, 0.58);
+    border-color: rgba(0, 76, 91, 0.12);
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.oz-select--compact {
+    min-height: 28px;
+    height: 28px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: 10px;
+    line-height: 26px;
+}
+
+.oz-select--right {
+    text-align: right;
+}
+
 .sidebar-select-group {
     display: flex;
     align-items: center;
@@ -638,11 +717,11 @@ select {
     width: 100%;
     height: 28px;
     min-height: 28px;
-    padding: 2px 28px 2px 8px !important;
+    padding: 0 28px 0 8px !important;
     border-radius: 8px !important;
     font-size: 10px;
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 26px;
 }
 
 #machine-sidebar .dro-panel .wcs-select {
@@ -1230,8 +1309,7 @@ select {
 
 /* Feed/Distance inputs */
 .input-field,
-#jog-panel input,
-#jog-panel select {
+#jog-panel input {
     background: var(--oz-bg-panel);
     border: 1.5px solid var(--oz-teal-xlight);
     border-radius: var(--oz-r-xs);
@@ -1245,8 +1323,7 @@ select {
 }
 
 .input-field:focus,
-#jog-panel input:focus,
-#jog-panel select:focus {
+#jog-panel input:focus {
     border-color: var(--oz-teal-mid);
     box-shadow: 0 0 0 3px rgba(68, 157, 159, 0.12);
     background: white;
@@ -1622,7 +1699,6 @@ table [id^="pin-indicator-"] {
 .tab-pane input[type="text"],
 .tab-pane input[type="number"],
 .tab-pane input[type="search"],
-.tab-pane select,
 .tab-pane textarea:not(.xterm-helper-textarea) {
     border-radius: var(--oz-r-xs);
     border: 1.5px solid var(--oz-teal-xlight);
@@ -1634,7 +1710,6 @@ table [id^="pin-indicator-"] {
 }
 
 .tab-pane input:focus,
-.tab-pane select:focus,
 .tab-pane textarea:focus {
     background: white;
     outline: none;
@@ -2181,7 +2256,6 @@ body {
 .tab-pane input[type="text"],
 .tab-pane input[type="number"],
 .tab-pane input[type="search"],
-.tab-pane select,
 .tab-pane textarea:not(.xterm-helper-textarea) {
     background: #fff;
     border: 1px solid rgba(68, 157, 159, 0.28);
@@ -2190,9 +2264,7 @@ body {
 
 .input-field:focus,
 #jog-panel input:focus,
-#jog-panel select:focus,
 .tab-pane input:focus,
-.tab-pane select:focus,
 .tab-pane textarea:focus {
     border-color: var(--oz-secondary);
     box-shadow: 0 0 0 3px rgba(68, 157, 159, 0.14);
@@ -2410,40 +2482,18 @@ label,
 
 .input-field,
 #jog-panel input,
-#jog-panel select,
 .tab-pane input[type="text"],
 .tab-pane input[type="number"],
 .tab-pane input[type="search"],
-.tab-pane select,
 .tab-pane textarea:not(.xterm-helper-textarea),
 #connection-modal input,
-#connection-modal select,
 #macro-modal input,
-#macro-modal select,
 #macro-modal textarea,
-#config-wizard-body input,
-#config-wizard-body select {
+#config-wizard-body input {
     min-height: 42px;
     padding: 10px 14px;
-    border-radius: 00px;
+    border-radius: 8px;
 
-}
-
-.tab-pane select,
-#jog-panel select,
-#connection-modal select,
-#macro-modal select,
-#config-wizard-body select {
-    appearance: none;
-    padding-right: 38px;
-    background-image:
-        linear-gradient(45deg, transparent 50%, var(--oz-secondary-dark) 50%),
-        linear-gradient(135deg, var(--oz-secondary-dark) 50%, transparent 50%);
-    background-position:
-        calc(100% - 18px) calc(50% - 2px),
-        calc(100% - 12px) calc(50% - 2px);
-    background-size: 6px 6px, 6px 6px;
-    background-repeat: no-repeat;
 }
 
 .tab-pane input:disabled,

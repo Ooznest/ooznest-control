@@ -644,7 +644,7 @@ export class GrblSettings {
         // 3: Enum (Select)
         if (s.type === 3 && s.format) {
             const options = s.format.split(',');
-            let html = `<select class="input-field h-7 md:h-8 text-[10px] md:text-xs w-full bg-white border-grey-light shadow-sm px-0.5" oninput="window.grblSettings.update('${s.id}', this.value)">`;
+            let html = `<select class="oz-select oz-select--compact text-[10px] md:text-xs w-full" oninput="window.grblSettings.update('${s.id}', this.value)">`;
 
             options.forEach((label, index) => {
                 html += `<option value="${index}" ${val == index ? 'selected' : ''}>${label}</option>`;
