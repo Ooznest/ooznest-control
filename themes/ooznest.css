@@ -1819,14 +1819,10 @@ body {
     min-height: 100%;
     padding: 12px;
     gap: 12px;
-    background:
-        linear-gradient(180deg, rgba(176, 202, 207, 0.12) 0%, transparent 24%),
-        linear-gradient(180deg, #f8fbfb 0%, #eef3f3 100%);
 }
 
 #machine-controls > * {
-    background:
-        radial-gradient(circle at 92% 82%, rgba(0, 76, 91, 0.94) 0%, rgba(68, 157, 159, 0.96) 100%);
+    background-color: rgb(68, 157, 159);
     border: 1px solid rgba(176, 202, 207, 0.42);
     border-radius: 0 0 20px 0;
     box-shadow: var(--oz-surface-shadow);
@@ -1834,8 +1830,7 @@ body {
 }
 
 #sidebar-connect {
-    background:
-        radial-gradient(circle at 92% 82%, rgba(255, 180, 130, 0.96) 0%, rgba(255, 102, 0, 1) 100%);
+    background-color: rgb(255, 133, 51);
     border: 0;
     border-radius: 0 0 20px 0;
     padding: 10px;
@@ -2012,7 +2007,6 @@ body {
 }
 
 .dro-panel {
-    background: var(--oz-grad-teal);
     border: 0;
     border-radius: var(--oz-panel-corner-lg);
     box-shadow: var(--oz-surface-shadow);
@@ -2020,7 +2014,7 @@ body {
 }
 
 #jog-panel {
-    background: linear-gradient(309deg, #b0cacf 10%, #6bb0b2 52%, #449d9f 92%);
+    background-color: rgb(176, 202, 207);
     border: 2px solid rgba(176, 202, 207, 0.72);
     border-radius: var(--oz-panel-corner);
     box-shadow: var(--oz-surface-shadow);
