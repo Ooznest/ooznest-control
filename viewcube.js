@@ -315,39 +315,14 @@ export class ViewCube {
                 break;
         }
 
-        // Animate camera to target position
+        // Snap camera to target position without tweening
         this.animateCamera(targetPosition, targetUp);
     }
 
     animateCamera(targetPosition, targetUp) {
-        const startPosition = this.mainCamera.position.clone();
-        const startUp = this.mainCamera.up.clone();
-        const duration = 600; // milliseconds
-        const startTime = Date.now();
-
-        const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-
-            // Easing function (easeInOutCubic)
-            const eased = progress < 0.5
-                ? 4 * progress * progress * progress
-                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-            // Interpolate position
-            this.mainCamera.position.lerpVectors(startPosition, targetPosition, eased);
-
-            // Interpolate up vector
-            this.mainCamera.up.lerpVectors(startUp, targetUp, eased);
-
-            this.mainControls.update();
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-
-        animate();
+        this.mainCamera.position.copy(targetPosition);
+        this.mainCamera.up.copy(targetUp);
+        this.mainControls.update();
     }
 
     updateCamera(newCamera, newControls) {

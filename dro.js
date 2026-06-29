@@ -396,7 +396,7 @@ export class DROHandler {
         if (!stateEl) return;
         const cleanState = state.split(':')[0];
         stateEl.textContent = cleanState;
-        stateEl.className = "text-[10px] px-1.5 py-0.5 rounded font-bold uppercase text-white transition-all duration-300";
+        stateEl.className = "machine-status-pill text-center transition-all duration-300";
         const s = cleanState.toLowerCase();
 
         // Detect alarm → non-alarm transition (alarm cleared via $X or reset)
@@ -409,13 +409,13 @@ export class DROHandler {
         const isAlarmed = s.startsWith('alarm');
 
         if (isAlarmed) {
-            stateEl.classList.add('bg-red-600', 'animate-pulse', 'shadow-lg', 'shadow-red-500/50');
+            stateEl.classList.add('status-alarm', 'animate-pulse');
         } else if (s.startsWith('hold') || s.startsWith('door') || s.startsWith('sleep')) {
-            stateEl.classList.add('bg-yellow-600');
+            stateEl.classList.add('status-warn');
         } else if (s.startsWith('run') || s.startsWith('jog') || s.startsWith('homing')) {
-            stateEl.classList.add('bg-green-600');
+            stateEl.classList.add('status-run');
         } else {
-            stateEl.classList.add('bg-secondary');
+            stateEl.classList.add('status-idle');
         }
 
         if (window.uiManager && window.uiManager.applyStateLock) {

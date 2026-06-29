@@ -332,7 +332,6 @@ export class GrblSettings {
         html += `
             <div class="p-2 border-b border-grey-light bg-white sticky top-0 z-20">
                 <div class="relative">
-                    <i data-lucide="search" style="width:14px;height:14px"></i>
                     <input type="text" id="settings-search-input"
                         class="w-full pl-6 pr-1 py-1 text-[10px] md:text-xs border border-grey-light rounded bg-grey-bg focus:bg-white focus:border-primary outline-none transition-colors"
                         placeholder="Search..."
@@ -382,7 +381,7 @@ export class GrblSettings {
         html += `</div></div>`;
 
         // --- Right Panel ---
-        html += `<div id="settings-main-panel" class="flex-1 overflow-y-auto bg-white relative w-0">`;
+        html += `<div id="settings-main-panel" class="flex-1 overflow-y-auto bg-white relative w-0 flex flex-col min-h-0">`;
 
         // Header
         html += `
@@ -394,11 +393,14 @@ export class GrblSettings {
 
         // Content Area
         let hasContent = false;
+        const subcategoryPanelClass = settingsToDisplay.length > 0
+            ? 'p-4 bg-grey-bg border-b border-grey-light'
+            : 'p-4 bg-grey-bg border-b border-grey-light flex-1';
 
         // 1. Render Subgroups (if any)
         if (childGroups.length > 0) {
             hasContent = true;
-            html += `<div class="p-4 bg-grey-bg border-b border-grey-light">`;
+            html += `<div class="${subcategoryPanelClass}">`;
             html += `<h4 class="text-[10px] font-bold text-grey uppercase tracking-wider mb-2">Subcategories</h4>`;
             html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">`;
 
@@ -490,6 +492,7 @@ export class GrblSettings {
         }
 
         this._updateSaveButton();
+        if (window.lucide) window.lucide.createIcons();
     }
 
     _updateSaveButton() {
@@ -500,6 +503,7 @@ export class GrblSettings {
             ? `<i data-lucide="save" style="width:14px;height:14px"></i> Save (${count})`
             : `<i data-lucide="save" style="width:14px;height:14px"></i> Save`;
         btn.disabled = count === 0;
+        if (window.lucide) window.lucide.createIcons();
     }
 
     _getEventPluginEnrichment(s) {

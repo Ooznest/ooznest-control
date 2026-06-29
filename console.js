@@ -7,6 +7,7 @@ class ConsoleManager {
         this.fitAddon = null;
         this.commandHistory = [];
         this.historyIndex = 0;
+        this.fitTimer = null;
         this._loadHistory();
     }
 
@@ -69,12 +70,30 @@ class ConsoleManager {
 
         this.fitAddon = new FitAddon.FitAddon();
         this.term.loadAddon(this.fitAddon);
-        this.term.open(document.getElementById('terminal-container'));
-        this.fitAddon.fit();
+        const terminalContainer = document.getElementById('terminal-container');
+        this.term.open(terminalContainer);
+        this.scheduleFit();
+        setTimeout(() => this.scheduleFit(), 60);
+        setTimeout(() => this.scheduleFit(), 180);
 
         // Expose globally for other modules
         window.term = this.term;
         window.fitAddon = this.fitAddon;
+        this.term.fitAddon = this.fitAddon;
+    }
+
+    scheduleFit() {
+        if (!this.term || !this.fitAddon) return;
+        if (this.fitTimer) clearTimeout(this.fitTimer);
+
+        requestAnimationFrame(() => {
+            this.fitTimer = setTimeout(() => {
+                try {
+                    this.fitAddon.fit();
+                    this.term.scrollToBottom();
+                } catch (e) {}
+            }, 30);
+        });
     }
 
     /**

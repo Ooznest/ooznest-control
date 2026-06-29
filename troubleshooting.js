@@ -617,7 +617,7 @@ export class TroubleshootingHandler {
         this._setSignalRowVisible('l', availability.l);
         this._setSignalRowVisible('t', availability.t);
         this._setSignalRowVisible('e', availability.e);
-        this._setSignalRowVisible('p', availability.p);
+        this._setSignalRowVisible('p', true);
         this._setSignalRowVisible('f', availability.f);
 
         // Not represented in $14 metadata here, so hide when driver metadata is available.
