@@ -964,11 +964,6 @@
                                 </button>
                                 <button
                                     class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
-                                    onclick="window.toolsHandler.switchToolsTab('tab-tool-finger-joint', this)">
-                                    Finger Joint Box
-                                </button>
-                                <button
-                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-bowl', this)">
                                     Bowl Cutter
                                 </button>
@@ -1648,54 +1643,6 @@
                                             </div>
 
 
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sub-Tab Content: Finger Joint Box -->
-                            <div id="tab-tool-finger-joint" class="tools-tab-content hidden">
-                                <div class="w-full">
-                                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-                                        <div>
-                                            <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i data-lucide="package" ></i> Finger Joint Box</h2>
-                                        </div>
-                                        <div class="flex gap-2 w-full md:w-auto">
-                                            <button class="btn btn-primary shadow-soft w-full" onclick="window.fingerJointBox.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div class="space-y-6">
-                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Box Dimensions</h3>
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-box-w">Width (mm)</label><input type="number" id="fj-box-w" class="input-field font-mono text-sm" value="150"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-box-d">Depth (mm)</label><input type="number" id="fj-box-d" class="input-field font-mono text-sm" value="150"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-box-h">Height (mm)</label><input type="number" id="fj-box-h" class="input-field font-mono text-sm" value="100"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-stock">Stock Thickness (mm)</label><input type="number" id="fj-stock" class="input-field font-mono text-sm" value="12"></div>
-                                                </div>
-                                            </div>
-                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-tool">Endmill Diameter (mm)</label><input type="number" id="fj-tool" class="input-field font-mono text-sm" step="0.5" value="6"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-finger">Finger Width (mm)</label><input type="number" id="fj-finger" class="input-field font-mono text-sm" value="15"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-feed">Feed Rate (mm/min)</label><input type="number" id="fj-feed" class="input-field font-mono text-sm" value="500"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="fj-plunge">Plunge Rate (mm/min)</label><input type="number" id="fj-plunge" class="input-field font-mono text-sm" value="100"></div>
-                                                    <div class="col-span-2 flex items-center gap-2 mt-1"><input type="checkbox" id="fj-dogbones" checked><label for="fj-dogbones" class="text-xs text-secondary-dark cursor-pointer select-none">Enable dogbone relief at internal corners</label></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div id="fj-sheets-panel" class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                            <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2 flex items-center gap-2">
-                                                <i data-lucide="layers" ></i> Generated Sheets
-                                            </h3>
-                                            <div id="fj-sheets-list" class="space-y-3 min-h-[200px]">
-                                                <div class="flex flex-col items-center justify-center text-grey py-8">
-                                                    <i data-lucide="package" class="text-4xl text-grey-light block mb-2"></i>
-                                                    <p class="text-xs text-center leading-relaxed">Adjust dimensions and tool settings,<br>then click Generate G-Code.</p>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -3172,7 +3119,6 @@
         import { GCodeEditor } from './editor.js';
         import { initializeApp } from './init.js';
         import { SpoilboardGridHandler } from './spoilboard-grid.js';
-        import { FingerJointBox } from './tools/finger-joint-box.js';
         import { BowlCutter } from './tools/bowl-cutter.js';
 
         // Import new modules
@@ -3355,9 +3301,6 @@
             window.configWizard = configWizard;
             const spoilboardGrid = new SpoilboardGridHandler(ws, window.term, store);
             window.spoilboardGrid = spoilboardGrid;
-
-            const fingerJointBox = new FingerJointBox();
-            window.fingerJointBox = fingerJointBox;
 
             const bowlCutter = new BowlCutter();
             window.bowlCutter = bowlCutter;
