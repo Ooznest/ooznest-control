@@ -35,6 +35,24 @@ class UIManager {
             const pollingRate = ws.type === 'websocket' ? 500 : 250;
             this.statusInterval = setInterval(() => ws.sendRealtime('?'), pollingRate);
 
+            // Init progress tracking — advances on each 'ok' response
+            var initSteps = [
+                { label: 'Alarm Code Definitions Loaded', icon: 'alert-triangle' },
+                { label: 'Error Code Definitions Loaded', icon: 'x-circle' },
+                { label: 'Setting Groups Loaded', icon: 'folder-tree' },
+                { label: 'Settings Info Loaded', icon: 'list' },
+                { label: 'Grbl Settings Loaded', icon: 'settings' },
+                { label: 'Parameters Loaded', icon: 'sliders' },
+                { label: 'Firmware Build Info Loaded', icon: 'info' },
+                { label: 'CNC Connected', icon: 'plug' }
+            ];
+            window.lineProcessor.startInitTracking(initSteps, function(idx, step) {
+                if (window.showToast) window.showToast(step.label, step.icon, 'success');
+            }, function(idx, step) {
+                if (window.showToast) window.showToast('Failed: ' + step.label, 'plug-zap', 'error');
+                if (window.ws && window.ws.disconnect) window.ws.disconnect();
+            }, 5000);
+
             setTimeout(() => ws.sendCommand('$EA'), 500);
             setTimeout(() => ws.sendCommand('$EE'), 1000);
             setTimeout(() => sdHandler.refresh(), 1500);
@@ -49,6 +67,7 @@ class UIManager {
             }, 4500);
         } else {
             if (this.statusInterval) clearInterval(this.statusInterval);
+            if (window.lineProcessor) window.lineProcessor.cancelInitTracking();
             btn.innerHTML = 'Connect';
             btn.className = "btn btn-primary flex-1 h-9 text-xs shadow-none border border-white/10 px-2 py-0";
 
@@ -70,7 +89,7 @@ class UIManager {
      */
     applyStateLock(state) {
         state = (state || 'offline').toLowerCase().split(':')[0];
-        
+
         const setDisabled = (selector, isDisabled) => {
             document.querySelectorAll(selector).forEach(el => {
                 if (!el) return;
@@ -101,32 +120,32 @@ class UIManager {
                 btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
                 btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
             }
-            
+
             // Completely disable specific outer blocks remaining from previous UI styles
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => {
                 el.classList.add('opacity-50', 'pointer-events-none');
             });
-        } 
+        }
         else if (state === 'alarm') {
             setDisabled(jogControls, true);
             setDisabled(runControls, true);
             setDisabled(macroControls, true);
             setDisabled(txtConsole, false); // Keep console alive to query settings out of alarm
-            
+
             // Keep HOME button enabled during alarm (needed for homing-lock recovery)
             setDisabled('#home-all-btn', false);
             document.querySelectorAll('.dro-home-btn').forEach(el => {
                 el.disabled = false;
                 el.classList.remove('opacity-50', 'pointer-events-none');
             });
-            
+
             setDisabled(unlockBtn, false);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
                 btn.classList.remove('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
                 btn.classList.add('!bg-red-600', '!text-white', 'shockwave', '!border-red-500');
             }
-            
+
             // Clean up general offline locks if they were present
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
@@ -135,7 +154,7 @@ class UIManager {
             setDisabled(runControls, true);
             setDisabled(macroControls, true);
             setDisabled(txtConsole, false); // Keep console to send realtime intercepts
-            
+
             setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
@@ -149,7 +168,7 @@ class UIManager {
             setDisabled(runControls, true);
             setDisabled(macroControls, true);
             setDisabled(txtConsole, false);
-            
+
             setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
@@ -158,19 +177,19 @@ class UIManager {
             }
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
-        else { 
+        else {
             // Idle Space
             setDisabled(jogControls, false);
             setDisabled(macroControls, false);
             setDisabled(txtConsole, false);
-            
+
             setDisabled(unlockBtn, true);
             const btn = document.querySelector(unlockBtn);
             if (btn) {
                 btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
                 btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
             }
-            
+
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
 
             this.updateRunButtonsState();

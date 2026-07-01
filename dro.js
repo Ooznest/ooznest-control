@@ -315,25 +315,23 @@ export class DROHandler {
     _updateAccessories() {
         // A: S(CW), C(CCW), F(Flood), M(Mist)
         const mapping = {
-            'S': 'acc-spindle', // Icon generic spindle? Or direction?
-            'C': 'acc-spindle', // Both map to spindle icon, maybe change icon?
+            'S': 'acc-spindle',
+            'C': 'acc-spindle',
             'F': 'acc-flood',
             'M': 'acc-mist'
         };
 
-        // Reset all first? Or check presence
-        // Spindle (CW/CCW)
         const sEl = document.getElementById('acc-spindle');
         if (sEl) {
             if (this.accessoryState.includes('S')) {
-                sEl.classList.add('text-secondary', 'animate-spin-slow'); // CW Orange
-                sEl.classList.remove('text-[#B0CACF]');
+                sEl.classList.add('active');
+                sEl.querySelector('i').classList.add('animate-spin-slow');
             } else if (this.accessoryState.includes('C')) {
-                sEl.classList.add('text-secondary', 'animate-spin-reverse'); // CCW Orange
-                sEl.classList.remove('text-[#B0CACF]');
+                sEl.classList.add('active');
+                sEl.querySelector('i').classList.add('animate-spin-reverse');
             } else {
-                sEl.classList.remove('text-secondary', 'animate-spin-slow', 'animate-spin-reverse');
-                sEl.classList.add('text-[#B0CACF]');
+                sEl.classList.remove('active');
+                sEl.querySelector('i')?.classList.remove('animate-spin-slow', 'animate-spin-reverse');
             }
         }
 
@@ -342,42 +340,40 @@ export class DROHandler {
             const el = document.getElementById(id);
             if (el) {
                 if (this.accessoryState.includes(char)) {
-                    el.classList.add('text-secondary'); // Active Orange
-                    el.classList.remove('text-[#B0CACF]');
+                    el.classList.add('active');
                 } else {
-                    el.classList.remove('text-secondary');
-                    el.classList.add('text-[#B0CACF]');
+                    el.classList.remove('active');
                 }
             }
         });
     }
 
     toggleAccessory(type) {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this.ws || !this.ws.isConnected) { if (window.showToast) window.showToast('Not connected', 'plug-zap', 'error'); return; }
         var isActive = this.accessoryState ? this.accessoryState.includes(type) : false;
         if (type === 'F') {
             if (isActive) {
                 this.ws.sendCommand('M9');
-                if (window.showToast) window.showToast('Coolant off', 'droplet', 'info');
+                if (window.showToast) window.showToast('Coolant off', 'droplet', 'success');
             } else {
                 this.ws.sendCommand('M8');
-                if (window.showToast) window.showToast('Flood on', 'droplet', 'info');
+                if (window.showToast) window.showToast('Flood on', 'droplet', 'success');
             }
         } else if (type === 'M') {
             if (isActive) {
                 this.ws.sendCommand('M9');
-                if (window.showToast) window.showToast('Coolant off', 'cloud-fog', 'info');
+                if (window.showToast) window.showToast('Coolant off', 'cloud-fog', 'success');
             } else {
                 this.ws.sendCommand('M7');
-                if (window.showToast) window.showToast('Mist on', 'cloud-fog', 'info');
+                if (window.showToast) window.showToast('Mist on', 'cloud-fog', 'success');
             }
         } else if (type === 'S') {
             if (isActive) {
                 this.ws.sendCommand('M5');
-                if (window.showToast) window.showToast('Spindle off', 'fan', 'info');
+                if (window.showToast) window.showToast('Spindle off', 'fan', 'success');
             } else {
                 this.ws.sendCommand('M3');
-                if (window.showToast) window.showToast('Spindle on', 'fan', 'info');
+                if (window.showToast) window.showToast('Spindle on', 'fan', 'success');
             }
         }
     }

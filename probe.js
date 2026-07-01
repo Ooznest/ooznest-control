@@ -255,6 +255,7 @@ export class ProbeHandler {
         if (document.getElementById('tlo-z')) this.store.set('probe.tloZ', parseFloat(document.getElementById('tlo-z').value) || -5);
 
         this.renderSettings();
+        if (window.showToast) window.showToast('Probe settings saved', 'save', 'success');
     }
 
     renderSettings() {

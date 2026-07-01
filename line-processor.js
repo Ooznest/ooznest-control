@@ -2,6 +2,77 @@
 // Handles processing of incoming serial lines and routing to appropriate handlers
 
 class LineProcessor {
+    constructor() {
+        this._initSteps = null;
+        this._initCallback = null;
+        this._initFailCallback = null;
+        this._initTimeout = null;
+        this._initIdx = 0;
+    }
+
+    /**
+     * Start tracking init command progress.
+     * Advances one step per 'ok' response received.
+     * Each step gets its own timeout — if it expires, onStepFail fires and tracking stops.
+     * @param {Array} steps - Array of {label, icon} steps
+     * @param {Function} onProgress - Called for each step (idx, step)
+     * @param {Function} onStepFail - Called with (idx, step) if that step times out
+     * @param {number} stepTimeoutMs - Timeout per step
+     */
+    startInitTracking(steps, onProgress, onStepFail, stepTimeoutMs) {
+        this._initSteps = steps;
+        this._initCallback = onProgress;
+        this._initFailCallback = onStepFail;
+        this._stepTimeout = stepTimeoutMs || 3000;
+        this._initIdx = -1;
+        this._scheduleStepTimeout();
+    }
+
+    _scheduleStepTimeout() {
+        if (this._initTimeout) clearTimeout(this._initTimeout);
+        if (!this._initSteps) return;
+        var idx = this._initIdx + 1;
+        if (idx >= this._initSteps.length) return;
+        var step = this._initSteps[idx];
+        this._initTimeout = setTimeout(() => {
+            if (!this._initSteps) return;
+            this._initSteps = null;
+            this._initCallback = null;
+            if (this._initFailCallback) this._initFailCallback(idx, step);
+            this._initFailCallback = null;
+        }, this._stepTimeout);
+    }
+
+    _advanceInit() {
+        if (!this._initSteps || !this._initCallback) return;
+        if (this._initTimeout) clearTimeout(this._initTimeout);
+        this._initTimeout = null;
+        this._initIdx++;
+        if (this._initIdx >= this._initSteps.length) {
+            this._initSteps = null;
+            this._initCallback = null;
+            this._initFailCallback = null;
+            return;
+        }
+        var step = this._initSteps[this._initIdx];
+        if (this._initCallback) this._initCallback(this._initIdx, step);
+        if (this._initIdx >= this._initSteps.length - 1) {
+            this._initSteps = null;
+            this._initCallback = null;
+            this._initFailCallback = null;
+        } else {
+            this._scheduleStepTimeout();
+        }
+    }
+
+    cancelInitTracking() {
+        if (this._initTimeout) clearTimeout(this._initTimeout);
+        this._initTimeout = null;
+        this._initSteps = null;
+        this._initCallback = null;
+        this._initFailCallback = null;
+    }
+
     /**
      * Process a line from serial input
      * @param {string} line - Line to process
@@ -9,6 +80,12 @@ class LineProcessor {
     processLine(line) {
         if (!line) return;
         line = line.trim();
+
+        // Advance init tracking on each 'ok' response
+        if (this._initSteps && line === 'ok') {
+            this._advanceInit();
+            // Don't return — let other handlers process the line too
+        }
 
         // Probe result
         if (line.startsWith('[PRB:')) {

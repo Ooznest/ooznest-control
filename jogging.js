@@ -115,6 +115,7 @@ class JoggingController {
 
             const startJog = (e) => {
                 if (!toggle.checked) return;
+                if (!window.ws || !window.ws.isConnected) { if (window.showToast) window.showToast('Cannot jog - not connected', 'plug-zap', 'error'); return; }
                 const speedMode = document.getElementById('feedRate').value || 'slow';
                 const f = this.getFeedForDirection(dir, speedMode);
                 const isMm = window.store.get('general.units') === 'mm';
@@ -185,6 +186,7 @@ class JoggingController {
 
             const clickJog = () => {
                 if (toggle.checked) return;
+                if (!window.ws || !window.ws.isConnected) { if (window.showToast) window.showToast('Cannot jog - not connected', 'plug-zap', 'error'); return; }
                 const s = document.getElementById('stepSize').value;
                 const speedMode = document.getElementById('feedRate').value || 'slow';
                 const f = this.getFeedForDirection(dir, speedMode);

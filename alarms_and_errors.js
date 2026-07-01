@@ -177,6 +177,7 @@ export class AlarmsAndErrors {
     }
 
     showModal(type, code, message) {
+        var self = this;
         // Close any existing modal first (only show the most recent alarm/error)
         if (!this.overlay.classList.contains('hidden')) {
             this.closeModal();
@@ -285,38 +286,61 @@ export class AlarmsAndErrors {
             } else if (code === '46') {
                 // Error 46: Homing required — machine won't unlock until homed
                 this.domBody.textContent = 'Homing is required before the machine can be used.\n\nRun the homing cycle to clear this state.';
-                const btnCancel = this.createBtn('Cancel', 'btn btn-secondary', () => this.closeModal());
-                const btnHome = this.createBtn('Home Now', 'btn btn-primary', () => {
-                    if (window.dro && window.dro.home) window.dro.home();
-                    this.closeModal();
+                var btnHomeLater = this.createBtn('Home Later', 'btn btn-secondary', function() { self.closeModal(); });
+                var btnHomeMachine = this.createBtn('Home Machine', 'btn btn-primary', function() {
+                    setTimeout(function() { if (window.ws) window.ws.sendCommand('$H'); }, 500);
+                    self.closeModal();
                 });
-                this.domFooter.appendChild(btnCancel);
-                this.domFooter.appendChild(btnHome);
+                this.domFooter.appendChild(btnHomeLater);
+                this.domFooter.appendChild(btnHomeMachine);
             } else {
                 // Regular error - just OK button
                 const btnOk = this.createBtn('OK', 'btn btn-primary', () => this.closeModal());
                 this.domFooter.appendChild(btnOk);
             }
         } else {
-            // Alarm Buttons
-            const btnCancel = this.createBtn('Cancel', 'btn btn-secondary', () => this.closeModal());
+            // ── Alarm Button Overrides ──────────────────────────────
+            // For specific alarm codes where default Clear Alarm/Cancel isn't appropriate.
+            // Add entries here: code → { message, buttons: [{text, class, onClick}, ...] }
+            var alarmOverrides = {
+                '11': {
+                    message: 'Homing required. Execute homing command ($H) to continue.',
+                    buttons: [
+                        { text: 'Home Later', class: 'btn btn-secondary', onClick: function() { self.closeModal(); } },
+                        { text: 'Home Machine', class: 'btn btn-primary', onClick: function() {
+                            setTimeout(function() { if (window.ws) window.ws.sendCommand('$H'); }, 500);
+                            self.closeModal();
+                        } }
+                    ]
+                }
+            };
 
-            if (isCritical) {
-                // Critical alarms require full reset sequence
-                const btnReset = this.createBtn('Reset & Unlock', 'btn btn-danger', () => {
-                    this.performCriticalReset();
-                    this.closeModal();
+            var override = alarmOverrides[code];
+            if (override) {
+                if (override.message) this.domBody.textContent = override.message;
+                override.buttons.forEach(function(b) {
+                    var btn = self.createBtn(b.text, b.class, b.onClick);
+                    self.domFooter.appendChild(btn);
                 });
-                this.domFooter.appendChild(btnCancel);
-                this.domFooter.appendChild(btnReset);
             } else {
-                // Regular alarms can be cleared with $X
-                const btnClear = this.createBtn('Clear Alarm', 'btn btn-primary', () => {
-                    this.performUnlock();
-                    this.closeModal();
-                });
-                this.domFooter.appendChild(btnCancel);
-                this.domFooter.appendChild(btnClear);
+                // Default Alarm Buttons
+                var btnCancel = this.createBtn('Cancel', 'btn btn-secondary', function() { self.closeModal(); });
+
+                if (isCritical) {
+                    var btnReset = this.createBtn('Reset & Unlock', 'btn btn-danger', function() {
+                        self.performCriticalReset();
+                        self.closeModal();
+                    });
+                    this.domFooter.appendChild(btnCancel);
+                    this.domFooter.appendChild(btnReset);
+                } else {
+                    var btnClear = this.createBtn('Clear Alarm', 'btn btn-primary', function() {
+                        self.performUnlock();
+                        self.closeModal();
+                    });
+                    this.domFooter.appendChild(btnCancel);
+                    this.domFooter.appendChild(btnClear);
+                }
             }
         }
 

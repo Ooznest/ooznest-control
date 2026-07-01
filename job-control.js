@@ -82,6 +82,10 @@ class JobController {
      * Run the current job loaded in the viewer
      */
     runCurrentJob() {
+        if (!window.ws || !window.ws.isConnected) {
+            if (window.showToast) window.showToast('Cannot run job - not connected', 'plug-zap', 'error');
+            return;
+        }
         if (!window.currentGCodeContent || this.gcodeStreamer.active) {
             window.reporter.showAlert('No G-Code', 'No G-Code loaded in the viewer to run!');
             return;

@@ -136,13 +136,19 @@
                     <!-- Status Row: machine state + accessory toggles -->
                     <div class="flex items-center justify-between px-1 pb-1.5 border-b border-white/10 mb-1.5">
                         <span id="machine-state" class="machine-status-pill text-center">Unknown</span>
-                        <div class="flex items-center gap-2">
-                            <i id="acc-spindle" data-lucide="fan" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                title="Spindle" onclick="window.dro.toggleAccessory('S')" style="width:14px;height:14px"></i>
-                            <i id="acc-flood" data-lucide="droplet" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                title="Toggle Flood Coolant" onclick="window.dro.toggleAccessory('F')" style="width:14px;height:14px"></i>
-                            <i id="acc-mist" data-lucide="cloud-fog" class="text-[#B0CACF] transition-colors cursor-pointer hover:scale-110"
-                                title="Toggle Mist Coolant" onclick="window.dro.toggleAccessory('M')" style="width:14px;height:14px"></i>
+                        <div class="flex items-center gap-1">
+                            <button id="acc-spindle" class="dro-accessory-btn" onclick="window.dro.toggleAccessory('S')" title="Spindle">
+                                <i data-lucide="fan" style="width:12px;height:12px"></i>
+                                <span>Spindle</span>
+                            </button>
+                            <button id="acc-flood" class="dro-accessory-btn" onclick="window.dro.toggleAccessory('F')" title="Toggle Flood Coolant">
+                                <i data-lucide="droplet" style="width:12px;height:12px"></i>
+                                <span>Flood</span>
+                            </button>
+                            <button id="acc-mist" class="dro-accessory-btn" onclick="window.dro.toggleAccessory('M')" title="Toggle Mist Coolant">
+                                <i data-lucide="cloud-fog" style="width:12px;height:12px"></i>
+                                <span>Mist</span>
+                            </button>
                         </div>
                     </div>
 
@@ -1858,7 +1864,7 @@
                                                     class="input-field font-mono text-xs h-8">
                                             </div>
                                             <button class="btn btn-secondary shadow-soft w-full justify-center mt-2"
-                                                onclick="window.probeHandler.saveSettings(); window.showToast('Settings saved', 'save')">
+                                                onclick="window.probeHandler.saveSettings()">
                                                 <i data-lucide="save" ></i> Save Settings
                                             </button>
                                         </div>
@@ -3249,6 +3255,7 @@
                 }
 
                 switchTab('viewer-view');
+                window.showToast(filename ? filename + ' loaded' : 'G-code loaded', 'file-text', 'success');
             }
 
             // Auto-load sample logo file on page load
@@ -3419,22 +3426,24 @@
         window.resetCamera = function () { viewer.resetCamera(); };
         window.sendCmd = function (cmd) { ws.sendCommand(cmd); };
         window.sendRealtime = function (c) { ws.sendRealtime(c); };
-        window.sendRealtimeWithToast = function (c, msg, icon) { ws.sendRealtime(c); window.showToast(msg, icon); };
-        window.sendCmdWithToast = function (cmd, msg, icon) { ws.sendCommand(cmd); window.showToast(msg, icon); };
+        window.sendRealtimeWithToast = function (c, msg, icon) { if (!ws || !ws.isConnected) { window.showToast('Not connected', 'plug-zap', 'error'); return; } ws.sendRealtime(c); window.showToast(msg, icon, 'success'); };
+        window.sendCmdWithToast = function (cmd, msg, icon) { if (!ws || !ws.isConnected) { window.showToast('Not connected', 'plug-zap', 'error'); return; } ws.sendCommand(cmd); window.showToast(msg, icon, 'success'); };
         window.showToast = function (msg, icon, severity) {
             var container = document.getElementById('toast-container');
             if (!container) return;
             var el = document.createElement('div');
             el.className = 'toast-msg';
-            if (severity) el.classList.add(severity);
+            if (!severity) severity = 'success';
+            el.classList.add(severity);
             var iconName = icon || 'check-circle';
-            el.innerHTML = '<i data-lucide="' + iconName + '" style="flex-shrink:0"></i> ' + msg;
+            el.innerHTML = '<i data-lucide="' + iconName + '" style="flex-shrink:0"></i> <span>' + msg + '</span><span class="toast-close" onclick="this.parentElement.classList.add(\'out\');var p=this.parentElement;setTimeout(function(){if(p.parentNode)p.parentNode.removeChild(p)},300)"><i data-lucide="x" style="width:14px;height:14px"></i></span>';
             container.appendChild(el);
             if (window.lucide) lucide.createIcons();
+            var timeout = severity === 'error' ? 4000 : 2500;
             setTimeout(function () {
                 el.classList.add('out');
                 setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
-            }, severity === 'error' ? 4000 : 2500);
+            }, timeout);
         };
         // Console tab: refresh terminal when shown — handled via tab-shown event
 
@@ -3579,15 +3588,24 @@
 
         window.syncSdUploadBtn = syncSdUploadBtn;
 
-        window.addEventListener('sd-mount-state', () => {
+        window.addEventListener('sd-mount-state', (e) => {
+            const state = e.detail && e.detail.state !== undefined ? e.detail.state : (window.sdMounted ? 1 : 0);
+            const isMounted = (state === 1 || state === 3);
             const sdLink = document.querySelector("button[onclick*='switchTab'][onclick*='sd-view']");
-            if (window.sdMounted) {
+            if (isMounted) {
                 if (sdLink) sdLink.classList.remove('opacity-50', 'pointer-events-none');
+                if (window._sdPrevMounted !== true && window.showToast) {
+                    window.showToast('SD Card Found', 'hard-drive', 'success');
+                }
             } else {
                 if (sdLink && !window.sdJobActive) {
                     sdLink.classList.add('opacity-50', 'pointer-events-none');
                 }
+                if (window._sdPrevMounted !== false && window.showToast) {
+                    window.showToast('SD Card Not Found', 'hard-drive-off', 'error');
+                }
             }
+            window._sdPrevMounted = isMounted;
             syncSdUploadBtn();
         });
 

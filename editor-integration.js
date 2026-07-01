@@ -113,6 +113,8 @@ class EditorIntegration {
                     document.getElementById('editor-line-count').innerText = lineCount;
                 }
 
+                if (window.showToast) window.showToast(file.name + ' loaded', 'file-text', 'success');
+
                 e.target.value = '';
             };
             reader.readAsText(file);
