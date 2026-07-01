@@ -564,6 +564,9 @@ export class ConfigWizard {
     }
 
     _syncGangedYAxisSteps(lines = []) {
+        // Only send $103 if the controller actually supports Y2 (ganged Y)
+        if (!window.grblSettings?.settings['103']) return lines;
+
         const y1Line = lines.find(line => line.startsWith('$101='));
         if (!y1Line) return lines;
 

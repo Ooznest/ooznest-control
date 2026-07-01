@@ -25,16 +25,25 @@ class JoggingController {
 
         if (!wrapperWidth || !wrapperHeight) return;
 
-        const minXYSize = 132;
-        const sideWidthTarget = Math.max(52, Math.min(72, Math.round(wrapperWidth * 0.17)));
-        const totalSideWidth = visibleAxisCols > 0
-            ? (visibleAxisCols * sideWidthTarget) + ((visibleAxisCols - 1) * sideGap)
-            : 0;
-        const availableWidth = Math.max(0, wrapperWidth - totalSideWidth - (visibleAxisCols > 0 ? wrapperGap : 0));
-        const xySize = Math.max(minXYSize, Math.floor(Math.min(wrapperHeight, availableWidth)));
+        let xySize = Math.floor(Math.min(wrapperHeight, wrapperWidth));
+        let sideWidth = 0;
 
-        panel.style.setProperty('--jog-xy-size', `${xySize}px`);
-        panel.style.setProperty('--jog-z-width', `${Math.max(48, Math.min(72, Math.round(xySize * 0.3)))}px`);
+        // Recalculate width from the current XY size so the combined pad never exceeds the panel width.
+        for (let i = 0; i < 2; i += 1) {
+            sideWidth = visibleAxisCols > 0
+                ? Math.max(48, Math.min(72, Math.round(xySize * 0.3)))
+                : 0;
+
+            const totalSideWidth = visibleAxisCols > 0
+                ? (visibleAxisCols * sideWidth) + ((visibleAxisCols - 1) * sideGap)
+                : 0;
+            const availableWidth = Math.max(0, wrapperWidth - totalSideWidth - (visibleAxisCols > 0 ? wrapperGap : 0));
+
+            xySize = Math.floor(Math.min(wrapperHeight, availableWidth));
+        }
+
+        panel.style.setProperty('--jog-xy-size', `${Math.max(0, xySize)}px`);
+        panel.style.setProperty('--jog-z-width', `${sideWidth}px`);
     }
 
     initLayoutSync() {

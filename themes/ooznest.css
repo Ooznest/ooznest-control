@@ -98,8 +98,14 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(-360deg); }
 }
+@keyframes flood-bob {
+    0%, 100% { transform: translateY(0) scale(1); }
+    35% { transform: translateY(1px) scale(0.94); }
+    65% { transform: translateY(-1px) scale(1.06); }
+}
 .animate-spin-slow { animation: spin-slow 2s linear infinite; }
 .animate-spin-reverse { animation: spin-reverse 2s linear infinite; }
+.animate-flood-flow { animation: flood-bob 1s ease-in-out infinite; }
 
 /*
  * OOZNEST MACHINE CONTROL THEME v9.0
@@ -182,6 +188,7 @@
     --color-axis-y: var(--axis-y);
     --color-axis-z: var(--axis-z);
     --color-axis-a: var(--axis-a);
+    --oz-select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%236B7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 /* ================================================================
@@ -595,6 +602,7 @@ select {
 .dro-accessory-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 3px;
     padding: 2px 6px;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -609,15 +617,18 @@ select {
     text-transform: uppercase;
     font-family: 'Nunito', 'Inter', sans-serif;
     white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(13, 31, 34, 0.18);
 }
 .dro-accessory-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.28);
 }
 .dro-accessory-btn.active {
-    background: var(--oz-secondary);
-    border-color: var(--oz-secondary);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.42);
     color: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 3px 10px rgba(13, 31, 34, 0.16);
 }
 
 /* WCS select inside DRO — match MM/IN toggle style */
@@ -670,6 +681,8 @@ select {
 #connection-modal select,
 #macro-modal select,
 #config-wizard-body select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
     appearance: none;
     width: 100%;
     min-width: 0;
@@ -686,13 +699,9 @@ select {
     box-shadow: none;
     outline: none;
     text-shadow: none;
-    background-image:
-        linear-gradient(45deg, transparent 50%, currentColor 50%),
-        linear-gradient(135deg, currentColor 50%, transparent 50%);
-    background-position:
-        calc(100% - 16px) calc(50% - 2px),
-        calc(100% - 11px) calc(50% - 2px);
-    background-size: 5px 5px, 5px 5px;
+    background-image: var(--oz-select-chevron);
+    background-position: calc(100% - 10px) 50%;
+    background-size: 16px 16px;
     background-repeat: no-repeat;
     transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
@@ -767,7 +776,7 @@ select {
 #machine-sidebar .dro-panel .wcs-select,
 #machine-sidebar #feedRate,
 #machine-sidebar #stepSize {
-    background: #fff !important;
+    background-color: #fff !important;
     color: #004c5b !important;
     opacity: 1 !important;
     border: 1px solid rgba(68, 157, 159, 0.24) !important;
@@ -3052,7 +3061,6 @@ label,
 #machine-sidebar select.wcs-select,
 #machine-sidebar select#feedRate,
 #machine-sidebar select#stepSize {
-    background: #ffffff !important;
     background-color: #ffffff !important;
     color: #004c5b !important;
     caret-color: #004c5b !important;
@@ -3068,7 +3076,6 @@ label,
 
 #machine-sidebar select.sidebar-select:disabled,
 #machine-sidebar select#stepSize:disabled {
-    background: rgba(255, 255, 255, 0.58) !important;
     background-color: rgba(255, 255, 255, 0.58) !important;
     color: #004c5b !important;
     caret-color: transparent !important;
@@ -3077,6 +3084,24 @@ label,
     cursor: not-allowed;
     opacity: 0.5 !important;
     filter: grayscale(1);
+}
+
+select::-ms-expand {
+    display: none;
+}
+
+/* Preserve the shared chevron when section-specific rules override select backgrounds. */
+.oz-select,
+#jog-panel select,
+.dro-panel select,
+.tab-pane select,
+#connection-modal select,
+#macro-modal select,
+#config-wizard-body select {
+    background-image: var(--oz-select-chevron) !important;
+    background-position: calc(100% - 10px) 50% !important;
+    background-size: 16px 16px !important;
+    background-repeat: no-repeat !important;
 }
 
 .dro-mach-group {

@@ -145,10 +145,6 @@
                                 <i data-lucide="droplet" style="width:12px;height:12px"></i>
                                 <span>Flood</span>
                             </button>
-                            <button id="acc-mist" class="dro-accessory-btn" onclick="window.dro.toggleAccessory('M')" title="Toggle Mist Coolant">
-                                <i data-lucide="cloud-fog" style="width:12px;height:12px"></i>
-                                <span>Mist</span>
-                            </button>
                         </div>
                     </div>
 
@@ -357,7 +353,7 @@
                     <div class="grid grid-cols-2 gap-1.5 mb-3 jog-toolbar">
                         <div>
                             <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Feed</label>
-                            <select id="feedRate" class="sidebar-select oz-select oz-select--compact oz-select--right"
+                            <select id="feedRate" class="sidebar-select oz-select oz-select--compact"
                                 aria-label="Jog feed rate mode">
                                 <option value="slow">Slow</option>
                                 <option value="med">Medium</option>
@@ -366,7 +362,7 @@
                         </div>
                         <div id="distContainer">
                             <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Dist</label>
-                            <select id="stepSize" class="sidebar-select oz-select oz-select--compact oz-select--right"
+                            <select id="stepSize" class="sidebar-select oz-select oz-select--compact"
                                 aria-label="Jog distance step size">
                                 <!-- Populated by JS -->
                             </select>
@@ -690,7 +686,7 @@
                         <div class="p-5 overflow-y-auto space-y-4 text-sm">
                             <!-- Tool Family -->
                             <div>
-                                <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider block mb-1.5">Tool Family</label>
+                                <label class="font-semibold text-secondary-dark text-xs block mb-1.5">Tool Family</label>
                                 <select id="em-toolType" class="oz-select w-full text-sm">
                                     <option value="Flat Endmill">Flat Endmill</option>
                                     <option value="Ball Nose">Ball Nose</option>
@@ -701,14 +697,14 @@
                             <!-- Diameter -->
                             <div>
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider">Diameter</label>
+                                    <label class="font-semibold text-secondary-dark text-xs">Diameter</label>
                                     <span id="em-val-diameter" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">6.0 mm</span>
                                 </div>
                                 <input type="range" id="em-diameter" min="1.0" max="32.0" step="0.5" value="6.0" class="w-full accent-primary">
                             </div>
                             <!-- Flute Count -->
                             <div id="em-row-flutes">
-                                <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider block mb-1.5">Flute Count</label>
+                                <label class="font-semibold text-secondary-dark text-xs block mb-1.5">Flute Count</label>
                                 <select id="em-flutes" class="oz-select w-full text-sm">
                                     <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="6">6</option>
                                 </select>
@@ -716,7 +712,7 @@
                             <!-- Helix Angle -->
                             <div id="em-row-helix">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider">Helix Angle</label>
+                                    <label class="font-semibold text-secondary-dark text-xs">Helix Angle</label>
                                     <span id="em-val-helixAngle" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">30°</span>
                                 </div>
                                 <input type="range" id="em-helixAngle" min="0" max="55" step="1" value="30" class="w-full accent-primary">
@@ -724,7 +720,7 @@
                             <!-- Flute Depth -->
                             <div id="em-row-fluteDepth">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider">Flute Depth</label>
+                                    <label class="font-semibold text-secondary-dark text-xs">Flute Depth</label>
                                     <span id="em-val-fluteDepth" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">38%</span>
                                 </div>
                                 <input type="range" id="em-fluteDepth" min="0.10" max="0.65" step="0.01" value="0.38" class="w-full accent-primary">
@@ -732,14 +728,14 @@
                             <!-- Cut Length -->
                             <div id="em-row-cutLength">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider">Cut Length</label>
+                                    <label class="font-semibold text-secondary-dark text-xs">Cut Length</label>
                                     <span id="em-val-cutLength" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">22.0 mm</span>
                                 </div>
                                 <input type="range" id="em-cutLength" min="5.0" max="60.0" step="1.0" value="22.0" class="w-full accent-primary">
                             </div>
                             <!-- V-Angle (hidden by default) -->
                             <div id="em-row-vAngle" class="hidden">
-                                <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider block mb-1.5">V-Angle (Included)</label>
+                                <label class="font-semibold text-secondary-dark text-xs block mb-1.5">V-Angle (Included)</label>
                                 <select id="em-vAngle" class="oz-select w-full text-sm">
                                     <option value="15">15°</option><option value="30">30°</option><option value="45">45°</option><option value="60" selected>60°</option><option value="90">90°</option>
                                 </select>
@@ -747,14 +743,14 @@
                             <!-- Exposed Shank -->
                             <div>
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider">Exposed Shank</label>
+                                    <label class="font-semibold text-secondary-dark text-xs">Exposed Shank</label>
                                     <span id="em-val-exposedShank" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">8.0 mm</span>
                                 </div>
                                 <input type="range" id="em-exposedShank" min="0.0" max="25.0" step="1.0" value="8.0" class="w-full accent-primary">
                             </div>
                             <!-- Show Collet -->
                             <div class="flex items-center justify-between">
-                                <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider">Show Collet</label>
+                                <label class="font-semibold text-secondary-dark text-xs">Show Collet</label>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" id="em-showHolder" checked class="sr-only peer">
                                     <div class="w-9 h-5 bg-grey-light rounded-full peer-checked:bg-primary peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
@@ -762,7 +758,7 @@
                             </div>
                             <!-- Coating -->
                             <div>
-                                <label class="font-semibold text-secondary-dark text-xs uppercase tracking-wider block mb-1.5">Coating</label>
+                                <label class="font-semibold text-secondary-dark text-xs block mb-1.5">Coating</label>
                                 <select id="em-coating" class="oz-select w-full text-sm">
                                     <option value="Carbide (Uncoated)">Carbide (Uncoated)</option>
                                     <option value="TiN (Gold)" selected>TiN (Gold)</option>

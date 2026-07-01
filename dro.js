@@ -323,15 +323,18 @@ export class DROHandler {
 
         const sEl = document.getElementById('acc-spindle');
         if (sEl) {
+            const iconEl = sEl.querySelector('svg, i, [data-lucide]');
             if (this.accessoryState.includes('S')) {
                 sEl.classList.add('active');
-                sEl.querySelector('i').classList.add('animate-spin-slow');
+                iconEl?.classList.remove('animate-spin-reverse');
+                iconEl?.classList.add('animate-spin-slow');
             } else if (this.accessoryState.includes('C')) {
                 sEl.classList.add('active');
-                sEl.querySelector('i').classList.add('animate-spin-reverse');
+                iconEl?.classList.remove('animate-spin-slow');
+                iconEl?.classList.add('animate-spin-reverse');
             } else {
                 sEl.classList.remove('active');
-                sEl.querySelector('i')?.classList.remove('animate-spin-slow', 'animate-spin-reverse');
+                iconEl?.classList.remove('animate-spin-slow', 'animate-spin-reverse');
             }
         }
 
@@ -339,13 +342,24 @@ export class DROHandler {
             const id = mapping[char];
             const el = document.getElementById(id);
             if (el) {
+                const iconEl = el.querySelector('svg, i, [data-lucide]');
                 if (this.accessoryState.includes(char)) {
                     el.classList.add('active');
+                    if (char === 'F') iconEl?.classList.add('animate-flood-flow');
                 } else {
                     el.classList.remove('active');
+                    if (char === 'F') iconEl?.classList.remove('animate-flood-flow');
                 }
             }
         });
+    }
+
+    _setAccessoryState(char, enabled) {
+        const state = new Set((this.accessoryState || '').split('').filter(Boolean));
+        if (enabled) state.add(char);
+        else state.delete(char);
+        this.accessoryState = Array.from(state).join('');
+        this._updateAccessories();
     }
 
     toggleAccessory(type) {
@@ -354,25 +368,35 @@ export class DROHandler {
         if (type === 'F') {
             if (isActive) {
                 this.ws.sendCommand('M9');
+                this._setAccessoryState('F', false);
+                this._setAccessoryState('M', false);
                 if (window.showToast) window.showToast('Coolant off', 'droplet', 'success');
             } else {
                 this.ws.sendCommand('M8');
+                this._setAccessoryState('F', true);
                 if (window.showToast) window.showToast('Flood on', 'droplet', 'success');
             }
         } else if (type === 'M') {
             if (isActive) {
                 this.ws.sendCommand('M9');
+                this._setAccessoryState('F', false);
+                this._setAccessoryState('M', false);
                 if (window.showToast) window.showToast('Coolant off', 'cloud-fog', 'success');
             } else {
                 this.ws.sendCommand('M7');
+                this._setAccessoryState('M', true);
                 if (window.showToast) window.showToast('Mist on', 'cloud-fog', 'success');
             }
         } else if (type === 'S') {
             if (isActive) {
                 this.ws.sendCommand('M5');
+                this._setAccessoryState('S', false);
+                this._setAccessoryState('C', false);
                 if (window.showToast) window.showToast('Spindle off', 'fan', 'success');
             } else {
                 this.ws.sendCommand('M3');
+                this._setAccessoryState('S', true);
+                this._setAccessoryState('C', false);
                 if (window.showToast) window.showToast('Spindle on', 'fan', 'success');
             }
         }

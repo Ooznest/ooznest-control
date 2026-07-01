@@ -399,7 +399,10 @@ export class TroubleshootingHandler {
     }
 
     refreshSpindles() {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this.ws || !this.ws.isConnected) {
+            if (window.showToast) window.showToast('Not connected', 'plug-zap', 'error');
+            return;
+        }
         this.spindles = [];
         document.getElementById('spindles-content').innerHTML = '<div class="text-grey text-center py-4"><i class="bi bi-arrow-clockwise animate-spin"></i> Loading...</div>';
         this._collectingSpindles = true;
