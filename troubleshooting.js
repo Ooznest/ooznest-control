@@ -235,7 +235,10 @@ export class TroubleshootingHandler {
     }
 
     refreshPinInfo() {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this.ws || !this.ws.isConnected) {
+            if (window.showToast) window.showToast('Not connected', 'plug-zap', 'error');
+            return;
+        }
         this.pinDefs = {};
         this.pinDefsByPin = {};
         this.inputDefsByPin = {};
