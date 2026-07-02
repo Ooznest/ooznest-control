@@ -154,9 +154,12 @@ export class AlarmsAndErrors {
 
         overlay.innerHTML = `
             <div class="oz-modal__dialog w-full max-w-md" data-modal-panel>
-                <div id="cnc-modal-header" class="oz-app-modal-header flex items-center gap-3">
-                    <i id="cnc-modal-icon" class="bi text-xl"></i>
-                    <h3 id="cnc-modal-title" class="font-bold text-lg text-secondary-dark">Title</h3>
+                <div id="cnc-modal-header" class="oz-modal__header">
+                    <div class="flex items-center gap-3">
+                        <i id="cnc-modal-icon" class="bi text-xl"></i>
+                        <h3 id="cnc-modal-title" class="font-bold text-lg text-secondary-dark">Title</h3>
+                    </div>
+                    <button data-modal-close onclick="window.reporter?.closeModal()" class="btn-ghost"><i data-lucide="x" ></i></button>
                 </div>
 
                 <div class="oz-app-modal-body-wrap">
