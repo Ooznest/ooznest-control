@@ -161,6 +161,7 @@ export class MacroHandler {
                 document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('bg-primary', 'text-black', 'border-primary'));
                 iBtn.classList.add('bg-primary', 'text-black', 'border-primary');
                 document.getElementById('macro-icon-input').value = iconClass;
+                if (window.lucide) window.lucide.createIcons();
             });
             this.iconGrid.appendChild(iBtn);
         });

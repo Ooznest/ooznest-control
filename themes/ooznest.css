@@ -373,7 +373,7 @@ select {
     color: white;
     border-color: var(--oz-primary);
     font-weight: 800;
-    box-shadow: 0 3px 10px rgba(255, 102, 0, 0.28);
+    box-shadow: 0 3px 10px rgba(13, 31, 34, 0.12);
 }
 
 .tab-badge {
@@ -1366,7 +1366,7 @@ select {
 .btn-secondary:hover {
     background: var(--oz-primary);
     border-color: var(--oz-primary);
-    box-shadow: 0 3px 10px rgba(255, 102, 0, 0.3);
+    box-shadow: 0 3px 10px rgba(13, 31, 34, 0.12);
 }
 
 /* Feed/Distance inputs */
@@ -1594,7 +1594,6 @@ table [id^="pin-indicator-"] {
     justify-content: center;
     cursor: pointer;
     transition: all 0.15s;
-    box-shadow: 0 2px 6px rgba(255, 102, 0, 0.2);
     padding: 0;
 }
 
@@ -1640,12 +1639,12 @@ table [id^="pin-indicator-"] {
 .btn-primary {
     background: var(--oz-primary);
     color: white;
-    box-shadow: 0 3px 10px rgba(255, 102, 0, 0.2);
+    box-shadow: 0 3px 10px rgba(13, 31, 34, 0.1);
 }
 
 .btn-primary:hover {
     background: var(--oz-primary-light);
-    box-shadow: 0 5px 14px rgba(255, 102, 0, 0.3);
+    box-shadow: 0 5px 14px rgba(13, 31, 34, 0.15);
     transform: translateY(-1px);
 }
 
@@ -2791,14 +2790,6 @@ label,
         linear-gradient(180deg, rgba(246, 251, 251, 1) 0%, rgba(235, 239, 239, 0.8) 100%) !important;
 }
 
-#config-wizard-body .bg-primary,
-#config-wizard-body .bg-primary.text-white,
-#config-wizard-body .bg-primary.text-white:hover,
-#config-wizard-body button.bg-primary,
-#config-wizard-body button.bg-green-500 {
-    box-shadow: 0 10px 22px rgba(255, 102, 0, 0.16);
-}
-
 #config-wizard-body button.bg-green-500 {
     background: var(--oz-primary) !important;
 }
@@ -2837,7 +2828,7 @@ label,
 #macro-icon-grid .icon-option.bg-primary,
 #macro-icon-grid .icon-option.border-primary {
     color: #fff !important;
-    box-shadow: 0 10px 22px rgba(255, 102, 0, 0.18);
+    box-shadow: 0 3px 10px rgba(13, 31, 34, 0.1);
 }
 
 #macro-gcode-input {
@@ -2895,11 +2886,6 @@ label,
     border-radius: var(--oz-r-control);
     background: var(--oz-primary);
     color: #fff;
-    box-shadow: 0 10px 22px rgba(255, 102, 0, 0.16);
-}
-
-#btnSend:hover {
-    background: var(--oz-primary-light);
 }
 
 #btnClearConsole {
