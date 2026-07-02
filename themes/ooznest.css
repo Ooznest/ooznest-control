@@ -2827,6 +2827,7 @@ label,
 
 #macro-icon-grid .icon-option.bg-primary,
 #macro-icon-grid .icon-option.border-primary {
+    background: var(--oz-primary) !important;
     color: #fff !important;
     box-shadow: 0 3px 10px rgba(13, 31, 34, 0.1);
 }
