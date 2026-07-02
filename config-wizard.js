@@ -129,7 +129,12 @@ export class ConfigWizard {
         const enclosure = configName[4] === 'A' ? 'Enclosure' : 'Open frame';
         const spindle = spindleMap[configName[5]] || 'Unknown spindle';
         const laser = configName[6] === 'A' ? 'Laser fitted' : 'No laser';
-        const probe = configName[7] === 'A' ? 'Ooznest XYZ Probe' : 'Custom probe';
+        const probeMap = {
+            A: 'Ooznest XYZ Probe',
+            B: 'Custom probe',
+            C: 'No probe'
+        };
+        const probe = probeMap[configName[7]] || 'Unknown probe';
         const category = categoryMap[configName[8]] || 'Unknown machine type';
 
         return `${category}, ${size}, ${spindle}, ${dust}, ${enclosure}, ${laser}, ${probe}`;
@@ -229,6 +234,8 @@ export class ConfigWizard {
         this.wizardStep = 0;
         this.wizardData.machine = null;
         this.wizardData.toolheads = { spindle: null, vfdModbusEnabled: false, vfdModbus: null, laser: false };
+        this.wizardData.dustShoe = false;
+        this.wizardData.enclosure = false;
         this.wizardData.customWidth = 500;
         this.wizardData.customLength = 500;
         this.wizardData.customDrives = { x: 'belt', y: 'belt', z: 'belt' };
@@ -253,13 +260,15 @@ export class ConfigWizard {
     _renderWizardStep() {
         console.log('[ConfigWizard] _renderWizardStep step=' + this.wizardStep);
         const container = document.getElementById('config-wizard-body');
+        const footer = document.getElementById('config-wizard-footer');
         if (!container) { console.warn('[ConfigWizard] config-wizard-body not found'); return; }
-        if (!container) return;
+        if (!container || !footer) return;
 
         const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'Apply'];
         const totalSteps = steps.length;
 
         let html = '';
+        let footerHtml = '';
 
         // Step indicator
         html += '<div class="flex items-center gap-1 mb-6 px-1">';
@@ -283,7 +292,7 @@ export class ConfigWizard {
         html += '</div>';
 
         // Step content
-        html += '<div class="min-h-[200px]">';
+        html += '<div>';
         switch (this.wizardStep) {
             case 0: html += this._renderMachineStep(); break;
             case 1: html += this._renderRouterStep(); break;
@@ -295,21 +304,23 @@ export class ConfigWizard {
         html += '</div>';
 
         // Navigation buttons
-        html += '<div class="flex justify-between mt-6 pt-4 border-t border-grey-light">';
+        footerHtml += '<div class="flex w-full justify-between items-center gap-3">';
         if (this.wizardStep > 0) {
-            html += `<button onclick="window.configWizard._prevStep()" class="btn btn-secondary">Back</button>`;
+            footerHtml += `<button onclick="window.configWizard._prevStep()" class="btn btn-secondary">Back</button>`;
         } else {
-            html += '<div></div>';
+            footerHtml += '<div></div>';
         }
         if (this.wizardStep < totalSteps - 1) {
             const disabled = !this._canProceed();
-            html += `<button onclick="window.configWizard._nextStep()" class="btn btn-primary" ${disabled ? 'disabled' : ''}>Continue</button>`;
+            footerHtml += `<button onclick="window.configWizard._nextStep()" class="btn btn-primary" ${disabled ? 'disabled' : ''}>Continue</button>`;
         } else {
-            html += `<button onclick="window.configWizard._applyConfig()" class="btn btn-primary">Apply Configuration</button>`;
+            footerHtml += `<button onclick="window.configWizard._applyConfig()" class="btn btn-primary">Apply Configuration</button>`;
         }
-        html += '</div>';
+        footerHtml += '</div>';
 
         container.innerHTML = html;
+        footer.innerHTML = footerHtml;
+        footer.classList.remove('hidden');
         this._wireStepEvents();
         if (window.lucide) window.lucide.createIcons();
     }
@@ -335,26 +346,20 @@ export class ConfigWizard {
             if (!cat.items.length) return;
 
             const isExpanded = this._expandedMachineCat === catKey;
-            const hasSelection = this.wizardData.machine && this.wizardData.machine.category === catKey;
-
-            html += `<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden mb-2">`;
-            html += `<div class="flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none hover:bg-grey-bg/50 transition-colors" onclick="window.configWizard._toggleMachineCategory('${catKey}')">`;
-            html += `<div class="flex items-center gap-2"><i class="${cat.icon} text-xs text-primary"></i><span class="font-bold text-xs text-secondary-dark">${cat.label}</span></div>`;
-            html += `<div class="flex items-center gap-2">`;
-            if (hasSelection) {
-                html += `<span class="text-[10px] text-green-600 font-bold"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Selected</span>`;
-            }
-            html += `<i class="bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} text-xs text-grey"></i>`;
-            html += `</div></div>`;
+            html += `<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden mb-2">`;
+            html += `<div class="config-filter-group__header flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none transition-colors" onclick="window.configWizard._toggleMachineCategory('${catKey}')">`;
+            html += `<span class="config-filter-group__title">${cat.label}</span>`;
+            html += `<i class="config-filter-group__chevron bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'}"></i>`;
+            html += `</div>`;
 
             if (isExpanded) {
                 html += `<div class="divide-y divide-grey-light/60">`;
                 cat.items.forEach(m => {
                     if (catKey === 'custom') {
                         const sel = this.wizardData.machine && this.wizardData.machine.id === m.id;
-                        html += `<div class="machine-select-item flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
-                        html += `<div class="w-4 h-4 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${m.name}</span>`;
+                        html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
+                        html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+                        html += `<span class="config-filter-choice__label">${m.name}</span>`;
                         html += `</div>`;
                         if (sel) {
                             html += '<div class="px-4 pb-3 space-y-2">';
@@ -399,9 +404,9 @@ export class ConfigWizard {
                         }
                     } else {
                         const sel = this.wizardData.machine && this.wizardData.machine.id === m.id;
-                        html += `<div class="machine-select-item flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
-                        html += `<div class="w-4 h-4 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${m.name}</span>`;
+                        html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
+                        html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+                        html += `<span class="config-filter-choice__label">${m.name}</span>`;
                         html += `</div>`;
                     }
                 });
@@ -409,9 +414,9 @@ export class ConfigWizard {
                 // Z2 custom size option
                 if (catKey === 'z2') {
                     const isCustomSize = this.wizardData.machine && this.wizardData.machine.id === 'z2-custom';
-                    html += `<div class="machine-select-item flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer" data-machine-id="z2-custom">`;
-                    html += `<div class="w-4 h-4 rounded-full border-2 ${isCustomSize ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${isCustomSize ? 'bg-white' : ''}"></div></div>`;
-                    html += `<span class="font-bold text-xs text-secondary-dark">Custom Size</span>`;
+                    html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="z2-custom">`;
+                    html += `<div class="config-filter-choice__control ${isCustomSize ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${isCustomSize ? 'bg-white' : ''}"></div></div>`;
+                    html += `<span class="config-filter-choice__label">Custom Size</span>`;
                     html += `</div>`;
                     if (isCustomSize) {
                         html += '<div class="px-4 pb-3 space-y-2">';
@@ -463,47 +468,37 @@ export class ConfigWizard {
             if (!cat.items.length) return;
 
             const isExpanded = this._expandedCat === catKey;
-            let hasSelection;
-            if (catKey === 'laser') hasSelection = th.laser;
-            else if (catKey === 'vfd-modbus') hasSelection = th.vfdModbusEnabled;
-            else hasSelection = th.spindle !== null;
-
-            html += `<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden mb-2">`;
-            html += `<div class="flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none hover:bg-grey-bg/50 transition-colors" onclick="window.configWizard._toggleCategory('${catKey}')">`;
-            html += `<div class="flex items-center gap-2"><i class="${cat.icon} text-xs text-primary"></i><span class="font-bold text-xs text-secondary-dark">${cat.label}</span></div>`;
-            html += `<div class="flex items-center gap-2">`;
-            if (hasSelection) {
-                html += `<span class="text-[10px] text-green-600 font-bold"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Selected</span>`;
-            }
-            html += `<i class="bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} text-xs text-grey"></i>`;
-            html += `</div></div>`;
+            html += `<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden mb-2">`;
+            html += `<div class="config-filter-group__header flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none transition-colors" onclick="window.configWizard._toggleCategory('${catKey}')">`;
+            html += `<span class="config-filter-group__title">${cat.label}</span>`;
+            html += `<i class="config-filter-group__chevron bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'}"></i>`;
+            html += `</div>`;
 
             if (isExpanded) {
                 html += `<div class="divide-y divide-grey-light/60">`;
                 cat.items.forEach(r => {
-                    const def = spindleDefs[r.id] || {};
                     if (catKey === 'laser') {
                         const checked = th.laser;
-                        html += `<label class="flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer">`;
-                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.laser = this.checked; window.configWizard._renderWizardStep()" class="w-4 h-4 accent-primary rounded">`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${r.name}</span>`;
+                        html += `<label class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer">`;
+                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.laser = this.checked; window.configWizard._renderWizardStep()" class="accent-primary rounded shrink-0" style="width:16px;height:16px;min-height:16px;padding:0;border:0;box-shadow:none;background:transparent;flex:0 0 auto;">`;
+                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
                         html += `</label>`;
                     } else if (catKey === 'vfd-modbus') {
                         const checked = th.vfdModbusEnabled;
-                        html += `<label class="flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer">`;
-                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.vfdModbusEnabled = this.checked; if(!this.checked)window.configWizard.wizardData.toolheads.vfdModbus=null; window.configWizard._renderWizardStep()" class="w-4 h-4 accent-primary rounded">`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${r.name}</span>`;
+                        html += `<label class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer">`;
+                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.vfdModbusEnabled = this.checked; if(!this.checked)window.configWizard.wizardData.toolheads.vfdModbus=null; window.configWizard._renderWizardStep()" class="accent-primary rounded shrink-0" style="width:16px;height:16px;min-height:16px;padding:0;border:0;box-shadow:none;background:transparent;flex:0 0 auto;">`;
+                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
                         html += `</label>`;
                         // Modbus protocol sub-select
                         if (checked) {
-                            html += '<div class="px-4 pb-2 bg-grey-bg/30">';
-                            html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5 mt-1">Modbus Protocol</label>';
+                            html += '<div class="px-4 pb-3 bg-grey-bg/30">';
+                            html += '<label class="config-filter-subtitle block mb-1.5 mt-1">Modbus Protocol</label>';
                             html += '<div class="grid gap-1">';
                             Object.entries(this.modbusProtocols).forEach(([key, proto]) => {
                                 const sel = th.vfdModbus === key;
-                                html += `<div class="modbus-select-item flex items-center gap-2 px-2.5 py-1.5 rounded border ${sel ? 'border-primary bg-primary-light/20' : 'border-grey-light hover:bg-grey-bg'} cursor-pointer transition-all" data-modbus-key="${key}">`;
-                                html += `<div class="w-3 h-3 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1 h-1 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-                                html += `<span class="text-[10px] font-bold text-secondary-dark">${proto.name}</span>`;
+                                html += `<div class="modbus-select-item config-filter-choice flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all" data-modbus-key="${key}">`;
+                                html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-3 h-3 rounded-full flex items-center justify-center"><div class="w-1 h-1 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+                                html += `<span class="config-filter-choice__label config-filter-choice__label--compact">${proto.name}</span>`;
                                 html += `<span class="text-[10px] text-grey ml-auto">$$396=${proto['$396']}</span>`;
                                 html += `</div>`;
                             });
@@ -511,9 +506,9 @@ export class ConfigWizard {
                         }
                     } else {
                         const selected = th.spindle === r.id;
-                        html += `<div class="flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer toolhead-option" data-id="${r.id}">`;
-                        html += `<div class="w-4 h-4 rounded-full border-2 ${selected ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : ''}"></div></div>`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${r.name}</span>`;
+                        html += `<div class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer toolhead-option" data-id="${r.id}">`;
+                        html += `<div class="config-filter-choice__control ${selected ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : ''}"></div></div>`;
+                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
                         html += `</div>`;
                     }
                 });
@@ -620,6 +615,7 @@ export class ConfigWizard {
         html += `<select id="wizard-probe-type" onchange="window.configWizard._onProbeTypeChange(this.value)" class="oz-select w-full text-xs">`;
         html += `<option value="ooznest" ${selected === 'ooznest' ? 'selected' : ''}>Ooznest XYZ Probe</option>`;
         html += `<option value="custom" ${selected === 'custom' ? 'selected' : ''}>Custom</option>`;
+        html += `<option value="none" ${selected === 'none' ? 'selected' : ''}>None</option>`;
         html += '</select>';
         html += '</div>';
 
@@ -639,8 +635,10 @@ export class ConfigWizard {
         // Description
         if (selected === 'ooznest') {
             html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Ooznest XYZ Probe: thickness 10mm, XY offset 10mm. These will be set automatically in your probe settings.</p>';
-        } else {
+        } else if (selected === 'custom') {
             html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Enter your custom probe plate dimensions above.</p>';
+        } else {
+            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> No probe plate will be configured.</p>';
         }
 
         return html;
@@ -671,7 +669,7 @@ export class ConfigWizard {
         html += '<div class="grid gap-2">';
         [
             { value: true, label: 'Yes, WorkBee Enclosure', icon: 'bi-box-seam' },
-            { value: false, label: 'Open frame', icon: 'bi-unlock' }
+            { value: false, label: 'No Enclosure', icon: 'bi-unlock' }
         ].forEach(opt => {
             const sel = selected === opt.value;
             html += `<div class="enclosure-option border ${sel ? 'border-primary bg-primary-light/20 ring-1 ring-primary/30' : 'border-grey-light hover:border-primary/40 hover:bg-grey-bg'} rounded-lg p-3 cursor-pointer transition-all" data-value="${opt.value}">`;
@@ -712,9 +710,14 @@ export class ConfigWizard {
         }
 
         html += '<div class="border-t border-grey-light pt-2"></div>';
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe</span><span class="text-xs font-bold text-secondary-dark">${this.wizardData.probeType === 'ooznest' ? 'Ooznest XYZ Probe' : 'Custom'}</span></div>`;
+        const probeLabel = this.wizardData.probeType === 'ooznest'
+            ? 'Ooznest XYZ Probe'
+            : this.wizardData.probeType === 'custom'
+                ? 'Custom'
+                : 'None';
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe</span><span class="text-xs font-bold text-secondary-dark">${probeLabel}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Dust Shoe</span><span class="text-xs font-bold ${this.wizardData.dustShoe ? 'text-green-600' : 'text-grey'}">${this.wizardData.dustShoe ? 'Yes' : 'No'}</span></div>`;
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold ${this.wizardData.enclosure ? 'text-green-600' : 'text-grey'}">${this.wizardData.enclosure ? 'WorkBee Enclosure' : 'Open frame'}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold ${this.wizardData.enclosure ? 'text-green-600' : 'text-grey'}">${this.wizardData.enclosure ? 'WorkBee Enclosure' : 'No Enclosure'}</span></div>`;
 
         html += '</div>';
 
@@ -730,6 +733,7 @@ export class ConfigWizard {
         html += '<i data-lucide="triangle-alert" style="width:14px;height:14px"></i>';
         html += '<p class="text-[10px] text-amber-700">This will overwrite your current Grbl settings and perform a soft reset. Make sure you have a backup of your current configuration.</p>';
         html += '</div>';
+        html += '<div id="config-wizard-status" class="mt-4"></div>';
 
         return html;
     }
@@ -862,7 +866,7 @@ export class ConfigWizard {
                 const offset = document.getElementById('wizard-plate-offset');
                 if (thick) this.wizardData.plateThickness = parseFloat(thick.value) || 5;
                 if (offset) this.wizardData.xyPlateOffset = parseFloat(offset.value) || 10;
-            } else {
+            } else if (this.wizardData.probeType === 'ooznest') {
                 this.wizardData.plateThickness = 5;
                 this.wizardData.xyPlateOffset = 10;
             }
@@ -947,7 +951,7 @@ export class ConfigWizard {
             //   Pos 6 (spindle): A=WorkBee Router Head, B=Mafell FM 1000 (Digital), C=Mafell FM 1000 (Manual),
             //                    D=VFD (0-10v), E=VFD (Modbus), F=PWM Laser Module
             //   Pos 7 (laser): A=yes, B=no
-            //   Pos 8 (probe): A=Ooznest XYZ Probe, B=Custom Probe
+            //   Pos 8 (probe): A=Ooznest XYZ Probe, B=Custom Probe, C=None
             //   Pos 9 (cat):   A=Z1+, B=Z2, C=Custom
             const th = this.wizardData.toolheads;
             const sizeCodes = { '500x500':'A', '750x750':'B', '750x1000':'C', '1000x1000':'D', '1000x1500':'E', '1500x1500':'F' };
@@ -960,7 +964,8 @@ export class ConfigWizard {
             const dustCode = this.wizardData.dustShoe ? 'A' : 'B';
             const encCode = this.wizardData.enclosure ? 'A' : 'B';
             const lasCode = th.laser ? 'A' : 'B';
-            const prbCode = this.wizardData.probeType === 'ooznest' ? 'A' : 'B';
+            const probeCodes = { ooznest: 'A', custom: 'B', none: 'C' };
+            const prbCode = probeCodes[this.wizardData.probeType] || 'A';
             const wbCode = `WB${szCode}${dustCode}${encCode}${spCode}${lasCode}${prbCode}${catCode}`;
             await this.ws.sendCommand(`$I=${wbCode}`);
 

@@ -669,14 +669,14 @@
                 <!-- Endmill Setup Modal -->
                 <div id="endmill-modal-overlay" class="oz-modal hidden z-[1200] modal-radial-overlay">
                     <div class="oz-modal__dialog w-full max-w-md" data-modal-panel>
-                        <div class="oz-modal__header px-5 py-3 shrink-0">
-                            <h3 class="font-bold text-sm text-secondary-dark"><i data-lucide="wrench" class="mr-2"></i>Endmill Setup</h3>
+                        <div class="oz-modal__header shrink-0">
+                            <h3 class="text-secondary-dark flex items-center gap-2"><i data-lucide="wrench"></i>Endmill Setup</h3>
                             <button onclick="closeEndmillSetup()" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
                         </div>
                         <div class="oz-modal__body space-y-4 text-sm">
                             <!-- Tool Family -->
                             <div>
-                                <label class="font-semibold text-secondary-dark text-xs block mb-1.5">Tool Family</label>
+                                <label class="text-secondary-dark text-xs block mb-1.5">Tool Family</label>
                                 <select id="em-toolType" class="oz-select w-full text-sm">
                                     <option value="Flat Endmill">Flat Endmill</option>
                                     <option value="Ball Nose">Ball Nose</option>
@@ -687,14 +687,14 @@
                             <!-- Diameter -->
                             <div>
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs">Diameter</label>
+                                    <label class="text-secondary-dark text-xs">Diameter</label>
                                     <span id="em-val-diameter" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">6.0 mm</span>
                                 </div>
                                 <input type="range" id="em-diameter" min="1.0" max="32.0" step="0.5" value="6.0" class="w-full accent-primary">
                             </div>
                             <!-- Flute Count -->
                             <div id="em-row-flutes">
-                                <label class="font-semibold text-secondary-dark text-xs block mb-1.5">Flute Count</label>
+                                <label class="text-secondary-dark text-xs block mb-1.5">Flute Count</label>
                                 <select id="em-flutes" class="oz-select w-full text-sm">
                                     <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="6">6</option>
                                 </select>
@@ -702,7 +702,7 @@
                             <!-- Helix Angle -->
                             <div id="em-row-helix">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs">Helix Angle</label>
+                                    <label class="text-secondary-dark text-xs">Helix Angle</label>
                                     <span id="em-val-helixAngle" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">30°</span>
                                 </div>
                                 <input type="range" id="em-helixAngle" min="0" max="55" step="1" value="30" class="w-full accent-primary">
@@ -710,7 +710,7 @@
                             <!-- Flute Depth -->
                             <div id="em-row-fluteDepth">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs">Flute Depth</label>
+                                    <label class="text-secondary-dark text-xs">Flute Depth</label>
                                     <span id="em-val-fluteDepth" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">38%</span>
                                 </div>
                                 <input type="range" id="em-fluteDepth" min="0.10" max="0.65" step="0.01" value="0.38" class="w-full accent-primary">
@@ -718,14 +718,14 @@
                             <!-- Cut Length -->
                             <div id="em-row-cutLength">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs">Cut Length</label>
+                                    <label class="text-secondary-dark text-xs">Cut Length</label>
                                     <span id="em-val-cutLength" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">22.0 mm</span>
                                 </div>
                                 <input type="range" id="em-cutLength" min="5.0" max="60.0" step="1.0" value="22.0" class="w-full accent-primary">
                             </div>
                             <!-- V-Angle (hidden by default) -->
                             <div id="em-row-vAngle" class="hidden">
-                                <label class="font-semibold text-secondary-dark text-xs block mb-1.5">V-Angle (Included)</label>
+                                <label class="text-secondary-dark text-xs block mb-1.5">V-Angle (Included)</label>
                                 <select id="em-vAngle" class="oz-select w-full text-sm">
                                     <option value="15">15°</option><option value="30">30°</option><option value="45">45°</option><option value="60" selected>60°</option><option value="90">90°</option>
                                 </select>
@@ -733,14 +733,14 @@
                             <!-- Exposed Shank -->
                             <div>
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="font-semibold text-secondary-dark text-xs">Exposed Shank</label>
+                                    <label class="text-secondary-dark text-xs">Exposed Shank</label>
                                     <span id="em-val-exposedShank" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">8.0 mm</span>
                                 </div>
                                 <input type="range" id="em-exposedShank" min="0.0" max="25.0" step="1.0" value="8.0" class="w-full accent-primary">
                             </div>
                             <!-- Show Collet -->
                             <div class="flex items-center justify-between">
-                                <label class="font-semibold text-secondary-dark text-xs">Show Collet</label>
+                                <label class="text-secondary-dark text-xs">Show Collet</label>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" id="em-showHolder" checked class="sr-only peer">
                                     <div class="w-9 h-5 bg-grey-light rounded-full peer-checked:bg-primary peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
@@ -748,7 +748,7 @@
                             </div>
                             <!-- Coating -->
                             <div>
-                                <label class="font-semibold text-secondary-dark text-xs block mb-1.5">Coating</label>
+                                <label class="text-secondary-dark text-xs block mb-1.5">Coating</label>
                                 <select id="em-coating" class="oz-select w-full text-sm">
                                     <option value="Carbide (Uncoated)">Carbide (Uncoated)</option>
                                     <option value="TiN (Gold)" selected>TiN (Gold)</option>
@@ -757,8 +757,8 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="oz-modal__footer px-5 py-3 justify-end shrink-0">
-                            <button onclick="closeEndmillSetup(); if(window.lucide)lucide.createIcons();" class="btn btn-primary">Apply</button>
+                        <div class="oz-modal__footer justify-end shrink-0">
+                            <button onclick="closeEndmillSetup(); if(window.lucide)lucide.createIcons();" class="btn btn-primary w-full">Apply</button>
                         </div>
                     </div>
                 </div>
@@ -925,7 +925,7 @@
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
                                         <i data-lucide="wrench" ></i> Tools & Calibration
                                     </h2>
-                                    <p class="text-sm text-grey">Manage tool library, machine offsets, and calibration.
+                                    <p class="text-sm text-grey">Various tools and widgets — new tools added over time.
                                     </p>
                                 </div>
                             </div>
