@@ -30,6 +30,9 @@ export class ConfigWizard {
             probeType: 'ooznest',
             plateThickness: 5,
             xyPlateOffset: 10,
+            wifiMode: '0',
+            wifiSsid: '',
+            wifiPsk: '',
             dustShoe: false,
             enclosure: false
         };
@@ -236,6 +239,9 @@ export class ConfigWizard {
         this.wizardData.toolheads = { spindle: null, vfdModbusEnabled: false, vfdModbus: null, laser: false };
         this.wizardData.dustShoe = false;
         this.wizardData.enclosure = false;
+        this.wizardData.wifiMode = '0';
+        this.wizardData.wifiSsid = '';
+        this.wizardData.wifiPsk = '';
         this.wizardData.customWidth = 500;
         this.wizardData.customLength = 500;
         this.wizardData.customDrives = { x: 'belt', y: 'belt', z: 'belt' };
@@ -264,7 +270,7 @@ export class ConfigWizard {
         if (!container) { console.warn('[ConfigWizard] config-wizard-body not found'); return; }
         if (!container || !footer) return;
 
-        const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'Apply'];
+        const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'WiFi Setup', 'Apply'];
         const totalSteps = steps.length;
 
         let html = '';
@@ -299,7 +305,8 @@ export class ConfigWizard {
             case 2: html += this._renderProbePlateStep(); break;
             case 3: html += this._renderDustShoeStep(); break;
             case 4: html += this._renderEnclosureStep(); break;
-            case 5: html += this._renderApplyStep(); break;
+            case 5: html += this._renderWifiSetupStep(); break;
+            case 6: html += this._renderApplyStep(); break;
         }
         html += '</div>';
 
@@ -608,27 +615,33 @@ export class ConfigWizard {
         const s = this.store.data.probe;
         const selected = this.wizardData.probeType;
         let html = '<p class="text-sm text-grey mb-4">Select your probe plate:</p>';
-
-        // Dropdown
-        html += '<div class="mb-4">';
-        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Probe Type</label>';
-        html += `<select id="wizard-probe-type" onchange="window.configWizard._onProbeTypeChange(this.value)" class="oz-select w-full text-xs">`;
-        html += `<option value="ooznest" ${selected === 'ooznest' ? 'selected' : ''}>Ooznest XYZ Probe</option>`;
-        html += `<option value="custom" ${selected === 'custom' ? 'selected' : ''}>Custom</option>`;
-        html += `<option value="none" ${selected === 'none' ? 'selected' : ''}>None</option>`;
-        html += '</select>';
-        html += '</div>';
-
-        // Custom dimensions (shown only when Custom is selected)
-        const showCustom = selected === 'custom' ? '' : 'hidden';
-        html += `<div id="wizard-custom-probe-dims" class="${showCustom} grid grid-cols-2 gap-4">`;
-        html += '<div>';
-        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
-        html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="input-field w-full">`;
-        html += '</div>';
-        html += '<div>';
-        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">XY Plate Offset (mm)</label>';
-        html += `<input type="number" step="0.1" id="wizard-plate-offset" value="${s.xyPlateOffset || 10}" class="input-field w-full">`;
+        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+        html += '<div class="divide-y divide-grey-light/60">';
+        [
+            { value: 'ooznest', label: 'Ooznest XYZ Probe' },
+            { value: 'custom', label: 'Custom Probe' },
+            { value: 'none', label: 'No Probe' }
+        ].forEach(opt => {
+            const sel = selected === opt.value;
+            html += `<div class="probe-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+            html += `<span class="config-filter-choice__label">${opt.label}</span>`;
+            html += '</div>';
+            if (sel && opt.value === 'custom') {
+                html += '<div class="px-4 pb-3 bg-grey-bg/30">';
+                html += '<div class="grid grid-cols-2 gap-4">';
+                html += '<div>';
+                html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
+                html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="input-field w-full">`;
+                html += '</div>';
+                html += '<div>';
+                html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">XY Plate Offset (mm)</label>';
+                html += `<input type="number" step="0.1" id="wizard-plate-offset" value="${s.xyPlateOffset || 10}" class="input-field w-full">`;
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+        });
         html += '</div>';
         html += '</div>';
 
@@ -647,18 +660,19 @@ export class ConfigWizard {
     _renderDustShoeStep() {
         const selected = this.wizardData.dustShoe;
         let html = '<p class="text-sm text-grey mb-4">Do you have a dust shoe?</p>';
-        html += '<div class="grid gap-2">';
+        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+        html += '<div class="divide-y divide-grey-light/60">';
         [
-            { value: true, label: 'Yes, I have one', icon: 'bi-fan' },
-            { value: false, label: 'No dust shoe', icon: 'bi-x-lg' }
+            { value: true, label: 'Yes, I have one' },
+            { value: false, label: 'No Dust Shoe' }
         ].forEach(opt => {
             const sel = selected === opt.value;
-            html += `<div class="dust-shoe-option border ${sel ? 'border-primary bg-primary-light/20 ring-1 ring-primary/30' : 'border-grey-light hover:border-primary/40 hover:bg-grey-bg'} rounded-lg p-3 cursor-pointer transition-all" data-value="${opt.value}">`;
-            html += `<div class="flex items-center gap-3">`;
-            html += `<div class="w-5 h-5 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-2 h-2 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-            html += `<span class="font-bold text-xs text-secondary-dark">${opt.label}</span>`;
-            html += '</div></div>';
+            html += `<div class="dust-shoe-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+            html += `<span class="config-filter-choice__label">${opt.label}</span>`;
+            html += '</div>';
         });
+        html += '</div>';
         html += '</div>';
         return html;
     }
@@ -666,18 +680,58 @@ export class ConfigWizard {
     _renderEnclosureStep() {
         const selected = this.wizardData.enclosure;
         let html = '<p class="text-sm text-grey mb-4">Do you have a <a href="https://ooznest.co.uk/product/original-workbee-enclosure/" target="_blank" class="text-primary hover:underline">WorkBee Enclosure</a>? </p>';
-        html += '<div class="grid gap-2">';
+        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+        html += '<div class="divide-y divide-grey-light/60">';
         [
-            { value: true, label: 'Yes, WorkBee Enclosure', icon: 'bi-box-seam' },
-            { value: false, label: 'No Enclosure', icon: 'bi-unlock' }
+            { value: true, label: 'Yes, WorkBee Enclosure' },
+            { value: false, label: 'No Enclosure' }
         ].forEach(opt => {
             const sel = selected === opt.value;
-            html += `<div class="enclosure-option border ${sel ? 'border-primary bg-primary-light/20 ring-1 ring-primary/30' : 'border-grey-light hover:border-primary/40 hover:bg-grey-bg'} rounded-lg p-3 cursor-pointer transition-all" data-value="${opt.value}">`;
-            html += `<div class="flex items-center gap-3">`;
-            html += `<div class="w-5 h-5 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-2 h-2 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-            html += `<span class="font-bold text-xs text-secondary-dark">${opt.label}</span>`;
-            html += '</div></div>';
+            html += `<div class="enclosure-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+            html += `<span class="config-filter-choice__label">${opt.label}</span>`;
+            html += '</div>';
         });
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    _renderWifiSetupStep() {
+        const isStation = this.wizardData.wifiMode === '1';
+        let html = '<p class="text-sm text-grey mb-4">Configure the controller network mode.</p>';
+        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+        html += '<div class="divide-y divide-grey-light/60">';
+        [
+            { value: '0', label: 'Wifi Off / Ethernet (Optional)' },
+            { value: '1', label: 'Wifi Enabled' }
+        ].forEach(opt => {
+            const sel = this.wizardData.wifiMode === opt.value;
+            html += `<div class="wifi-mode-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+            html += `<span class="config-filter-choice__label">${opt.label}</span>`;
+            html += '</div>';
+        });
+        if (isStation) {
+            html += '<div class="px-4 py-3 bg-grey-bg/30 space-y-4">';
+            html += '<div>';
+            html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Network Name ($74)</label>';
+            html += `<input type="text" maxlength="64" value="${this._escapeHtml(this.wizardData.wifiSsid || '')}" oninput="window.configWizard.wizardData.wifiSsid=this.value" class="input-field w-full" placeholder="WiFi network name">`;
+            html += '</div>';
+            html += '<div>';
+            html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Password ($75)</label>';
+            html += `<input type="password" minlength="8" maxlength="32" value="${this._escapeHtml(this.wizardData.wifiPsk || '')}" oninput="window.configWizard.wizardData.wifiPsk=this.value" class="input-field w-full" placeholder="8 to 32 characters">`;
+            html += '</div>';
+            html += '</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+
+        html += '<p class="text-[10px] text-grey">';
+        html += isStation
+            ? 'Station mode will save the SSID and password to the controller.'
+            : 'Use this when networking is handled over Ethernet, or when WiFi should remain disabled.';
+        html += '</p>';
         html += '</div>';
         return html;
     }
@@ -688,6 +742,7 @@ export class ConfigWizard {
         const assignments = this._computeToolheadAssignments();
         const modbusKey = th.vfdModbus;
         const modbusProto = modbusKey ? this.modbusProtocols[modbusKey] : null;
+        const wifiLines = this._getWifiConfigLines();
 
         let html = '<p class="text-sm text-grey mb-4">Review your configuration before applying:</p>';
         html += '<div class="bg-grey-bg rounded-lg p-4 space-y-3 border border-grey-light">';
@@ -718,14 +773,19 @@ export class ConfigWizard {
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe</span><span class="text-xs font-bold text-secondary-dark">${probeLabel}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Dust Shoe</span><span class="text-xs font-bold ${this.wizardData.dustShoe ? 'text-green-600' : 'text-grey'}">${this.wizardData.dustShoe ? 'Yes' : 'No'}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold ${this.wizardData.enclosure ? 'text-green-600' : 'text-grey'}">${this.wizardData.enclosure ? 'WorkBee Enclosure' : 'No Enclosure'}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">WiFi Mode</span><span class="text-xs font-bold text-secondary-dark">${this.wizardData.wifiMode === '1' ? 'Wifi Enabled' : 'Wifi Off / Ethernet (Optional)'}</span></div>`;
+        if (this.wizardData.wifiMode === '1') {
+            html += `<div class="flex justify-between"><span class="text-xs text-grey">Wifi Network Name</span><span class="text-xs font-bold text-secondary-dark">${this._escapeHtml(this.wizardData.wifiSsid || '')}</span></div>`;
+        }
 
         html += '</div>';
 
         if (machine) {
             const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
-            html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${configLines.length} settings)</p>`;
+            const totalSettings = configLines.length + wifiLines.length;
+            html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${totalSettings} settings)</p>`;
             html += `<div class="bg-white border border-grey-light rounded-lg p-2 max-h-32 overflow-y-auto text-[10px] font-mono text-grey-dark leading-relaxed">`;
-            html += configLines.map(l => `<div>${l}</div>`).join('');
+            html += configLines.concat(wifiLines).map(l => `<div>${this._escapeHtml(l)}</div>`).join('');
             html += '</div></div>';
         }
 
@@ -771,6 +831,13 @@ export class ConfigWizard {
             };
         });
 
+        // Probe selection
+        document.querySelectorAll('.probe-option').forEach(el => {
+            el.onclick = () => {
+                this._onProbeTypeChange(el.dataset.value);
+            };
+        });
+
         // Modbus protocol selection
         document.querySelectorAll('.modbus-select-item').forEach(el => {
             el.onclick = () => {
@@ -791,6 +858,14 @@ export class ConfigWizard {
         document.querySelectorAll('.enclosure-option').forEach(el => {
             el.onclick = () => {
                 this.wizardData.enclosure = el.dataset.value === 'true';
+                this._renderWizardStep();
+            };
+        });
+
+        // WiFi mode selection
+        document.querySelectorAll('.wifi-mode-option').forEach(el => {
+            el.onclick = () => {
+                this.wizardData.wifiMode = el.dataset.value;
                 this._renderWizardStep();
             };
         });
@@ -820,6 +895,12 @@ export class ConfigWizard {
                 if (!hasAny) return false;
                 if (th.vfdModbusEnabled && !th.vfdModbus) return false;
                 return true;
+            }
+            case 5: {
+                if (this.wizardData.wifiMode !== '1') return true;
+                const ssid = (this.wizardData.wifiSsid || '').trim();
+                const psk = this.wizardData.wifiPsk || '';
+                return ssid.length > 0 && psk.length >= 8 && psk.length <= 32;
             }
             default: return true;
         }
@@ -899,17 +980,23 @@ export class ConfigWizard {
         // Save dust shoe and enclosure for future use
         this.store.set('machine.dustShoe', this.wizardData.dustShoe);
         this.store.set('machine.enclosure', this.wizardData.enclosure);
+        this.store.set('machine.wifi', JSON.stringify({
+            mode: this.wizardData.wifiMode,
+            ssid: this.wizardData.wifiSsid
+        }));
 
         // Apply grbl settings
         const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
-        this._showWizardStatus(`Applying ${configLines.length} settings...`, 'info');
+        const wifiLines = this._getWifiConfigLines();
+        const allConfigLines = configLines.concat(wifiLines);
+        this._showWizardStatus(`Applying ${allConfigLines.length} settings...`, 'info');
 
         try {
-            for (let i = 0; i < configLines.length; i++) {
-                const line = configLines[i].trim();
+            for (let i = 0; i < allConfigLines.length; i++) {
+                const line = allConfigLines[i].trim();
                 if (!line) continue;
                 if (i % 10 === 0) {
-                    this._showWizardStatus(`Setting ${i + 1} of ${configLines.length}...`, 'info');
+                    this._showWizardStatus(`Setting ${i + 1} of ${allConfigLines.length}...`, 'info');
                     await this._sleep(10);
                 }
                 await this.ws.sendCommand(line);
@@ -1001,5 +1088,23 @@ export class ConfigWizard {
 
     _sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    _getWifiConfigLines() {
+        const lines = [`$73=${this.wizardData.wifiMode || '0'}`];
+        if ((this.wizardData.wifiMode || '0') === '1') {
+            lines.push(`$74=${(this.wizardData.wifiSsid || '').trim()}`);
+            lines.push(`$75=${this.wizardData.wifiPsk || ''}`);
+        }
+        return lines;
+    }
+
+    _escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 }
