@@ -1,3 +1,5 @@
+import { registerModal } from './modal.js';
+
 // Default Grbl 1.1 + GrblHAL Extended Errors
 // Sources: gnea/grbl Wiki & grblHAL/core errors.h
 const STANDARD_ERRORS = {
@@ -148,10 +150,10 @@ export class AlarmsAndErrors {
 
         const overlay = document.createElement('div');
         overlay.id = 'cnc-modal-overlay';
-        overlay.className = 'fixed inset-0 bg-black/55 backdrop-blur-sm z-[1200] hidden flex items-center justify-center p-4';
+        overlay.className = 'oz-modal hidden z-[1200] modal-radial-overlay';
 
         overlay.innerHTML = `
-            <div class="oz-app-modal-card w-full max-w-md overflow-hidden">
+            <div class="oz-modal__dialog w-full max-w-md" data-modal-panel>
                 <div id="cnc-modal-header" class="oz-app-modal-header flex items-center gap-3">
                     <i id="cnc-modal-icon" class="bi text-xl"></i>
                     <h3 id="cnc-modal-title" class="font-bold text-lg text-secondary-dark">Title</h3>
@@ -174,12 +176,13 @@ export class AlarmsAndErrors {
         this.domFooter = overlay.querySelector('#cnc-modal-footer');
         this.domIcon = overlay.querySelector('#cnc-modal-icon');
         this.domHeader = overlay.querySelector('#cnc-modal-header');
+        this.modalController = registerModal(overlay, { closeOnBackdrop: false, closeOnEscape: false });
     }
 
     showModal(type, code, message) {
         var self = this;
         // Close any existing modal first (only show the most recent alarm/error)
-        if (!this.overlay.classList.contains('hidden')) {
+        if (this.modalController?.isOpen()) {
             this.closeModal();
         }
 
@@ -285,14 +288,9 @@ export class AlarmsAndErrors {
                 }
             } else if (code === '46') {
                 // Error 46: Homing required — machine won't unlock until homed
-                this.domBody.textContent = 'Homing is required before the machine can be used.\n\nRun the homing cycle to clear this state.';
-                var btnHomeLater = this.createBtn('Home Later', 'btn btn-secondary', function() { self.closeModal(); });
-                var btnHomeMachine = this.createBtn('Home Machine', 'btn btn-primary', function() {
-                    setTimeout(function() { if (window.ws) window.ws.sendCommand('$H'); }, 500);
-                    self.closeModal();
-                });
-                this.domFooter.appendChild(btnHomeLater);
-                this.domFooter.appendChild(btnHomeMachine);
+                const override = this.getModalOverride(type, code);
+                if (override?.message) this.domBody.textContent = override.message;
+                this.renderFooterButtons(override?.buttons || []);
             } else {
                 // Regular error - just OK button
                 const btnOk = this.createBtn('OK', 'btn btn-primary', () => this.closeModal());
@@ -302,26 +300,10 @@ export class AlarmsAndErrors {
             // ── Alarm Button Overrides ──────────────────────────────
             // For specific alarm codes where default Clear Alarm/Cancel isn't appropriate.
             // Add entries here: code → { message, buttons: [{text, class, onClick}, ...] }
-            var alarmOverrides = {
-                '11': {
-                    message: 'Homing required. Execute homing command ($H) to continue.',
-                    buttons: [
-                        { text: 'Home Later', class: 'btn btn-secondary', onClick: function() { self.closeModal(); } },
-                        { text: 'Home Machine', class: 'btn btn-primary', onClick: function() {
-                            setTimeout(function() { if (window.ws) window.ws.sendCommand('$H'); }, 500);
-                            self.closeModal();
-                        } }
-                    ]
-                }
-            };
-
-            var override = alarmOverrides[code];
+            var override = this.getModalOverride(type, code);
             if (override) {
                 if (override.message) this.domBody.textContent = override.message;
-                override.buttons.forEach(function(b) {
-                    var btn = self.createBtn(b.text, b.class, b.onClick);
-                    self.domFooter.appendChild(btn);
-                });
+                this.renderFooterButtons(override.buttons || []);
             } else {
                 // Default Alarm Buttons
                 var btnCancel = this.createBtn('Cancel', 'btn btn-secondary', function() { self.closeModal(); });
@@ -344,11 +326,11 @@ export class AlarmsAndErrors {
             }
         }
 
-        this.overlay.classList.remove('hidden');
+        this.modalController?.show();
     }
 
     closeModal() {
-        this.overlay.classList.add('hidden');
+        this.modalController?.hide();
     }
 
     /**
@@ -369,20 +351,26 @@ export class AlarmsAndErrors {
         this.domBody.textContent = message;
         this.domFooter.innerHTML = '';
 
-        const btnCancel = this.createBtn(cancelText, 'btn btn-secondary', async () => {
-            if (onCancel) await onCancel();
-            this.closeModal();
-        });
+        this.renderFooterButtons([
+            {
+                text: cancelText,
+                className: 'btn btn-secondary',
+                onClick: async () => {
+                    if (onCancel) await onCancel();
+                    this.closeModal();
+                }
+            },
+            {
+                text: confirmText,
+                className: 'btn btn-primary',
+                onClick: async () => {
+                    if (onConfirm) await onConfirm();
+                    this.closeModal();
+                }
+            }
+        ]);
 
-        const btnConfirm = this.createBtn(confirmText, 'btn btn-primary', async () => {
-            if (onConfirm) await onConfirm();
-            this.closeModal();
-        });
-
-        this.domFooter.appendChild(btnCancel);
-        this.domFooter.appendChild(btnConfirm);
-
-        this.overlay.classList.remove('hidden');
+        this.modalController?.show();
     }
 
     /**
@@ -402,14 +390,18 @@ export class AlarmsAndErrors {
         this.domBody.innerHTML = message;
         this.domFooter.innerHTML = '';
 
-        const btnOk = this.createBtn('OK', 'btn btn-primary', async () => {
-            if (onOk) await onOk();
-            this.closeModal();
-        });
+        this.renderFooterButtons([
+            {
+                text: 'OK',
+                className: 'btn btn-primary',
+                onClick: async () => {
+                    if (onOk) await onOk();
+                    this.closeModal();
+                }
+            }
+        ]);
 
-        this.domFooter.appendChild(btnOk);
-
-        this.overlay.classList.remove('hidden');
+        this.modalController?.show();
     }
 
     /**
@@ -440,21 +432,29 @@ export class AlarmsAndErrors {
 
         const inputEl = this.domBody.querySelector('#cnc-modal-input');
 
-        const btnCancel = this.createBtn('Cancel', 'btn btn-secondary', async () => {
-            if (onCancel) await onCancel();
-            this.closeModal();
-        });
+        let btnSubmit;
+        this.renderFooterButtons([
+            {
+                text: 'Cancel',
+                className: 'btn btn-secondary',
+                onClick: async () => {
+                    if (onCancel) await onCancel();
+                    this.closeModal();
+                }
+            },
+            {
+                text: 'OK',
+                className: 'btn btn-primary',
+                onClick: async () => {
+                    const value = inputEl.value.trim();
+                    if (onSubmit) await onSubmit(value);
+                    this.closeModal();
+                },
+                assign: (btn) => { btnSubmit = btn; }
+            }
+        ]);
 
-        const btnSubmit = this.createBtn('OK', 'btn btn-primary', async () => {
-            const value = inputEl.value.trim();
-            if (onSubmit) await onSubmit(value);
-            this.closeModal();
-        });
-
-        this.domFooter.appendChild(btnCancel);
-        this.domFooter.appendChild(btnSubmit);
-
-        this.overlay.classList.remove('hidden');
+        this.modalController?.show();
 
         // Focus and select input
         setTimeout(() => {
@@ -480,6 +480,46 @@ export class AlarmsAndErrors {
         btn.textContent = text;
         btn.onclick = onClick;
         return btn;
+    }
+
+    renderFooterButtons(actions) {
+        this.domFooter.innerHTML = '';
+        actions.forEach((action) => {
+            const btn = this.createBtn(action.text, action.className || action.class, action.onClick);
+            this.domFooter.appendChild(btn);
+            if (typeof action.assign === 'function') action.assign(btn);
+        });
+    }
+
+    getModalOverride(type, code) {
+        const homingButtons = [
+            { text: 'Home Later', className: 'btn btn-secondary', onClick: () => this.closeModal() },
+            {
+                text: 'Home Machine',
+                className: 'btn btn-primary',
+                onClick: () => {
+                    setTimeout(() => { if (window.ws) window.ws.sendCommand('$H'); }, 500);
+                    this.closeModal();
+                }
+            }
+        ];
+
+        const overrides = {
+            ERROR: {
+                '46': {
+                    message: 'Homing is required before the machine can be used.\n\nRun the homing cycle to clear this state.',
+                    buttons: homingButtons
+                }
+            },
+            ALARM: {
+                '11': {
+                    message: 'Homing required. Execute homing command ($H) to continue.',
+                    buttons: homingButtons
+                }
+            }
+        };
+
+        return overrides[type]?.[String(code)] || null;
     }
 
     // Check if alarm code is critical (based on grblHAL alarms.h)

@@ -10,7 +10,7 @@ class EditorIntegration {
         const content = window.editor.getValue();
         window.currentGCodeContent = content;
 
-        window.viewer.processGCodeString(content);
+        window.viewer.processGCodeString(content, 'G-code parsed');
         window.switchTab('viewer-view');
         window.term.writeln("\x1b[32m[Editor] Job updated from editor.\x1b[0m");
     }
@@ -104,7 +104,7 @@ class EditorIntegration {
                 window.currentSDFile = null; // Clear SD context for local files
                 window.uiManager.updateRunButtonsState();
 
-                window.viewer.processGCodeString(window.currentGCodeContent);
+                window.viewer.processGCodeString(window.currentGCodeContent, `${file.name} parsed`);
 
                 // Update Editor
                 if (window.editor) {
@@ -112,8 +112,6 @@ class EditorIntegration {
                     const lineCount = window.editor.getValue().split('\\n').length;
                     document.getElementById('editor-line-count').innerText = lineCount;
                 }
-
-                if (window.showToast) window.showToast(file.name + ' loaded', 'file-text', 'success');
 
                 e.target.value = '';
             };

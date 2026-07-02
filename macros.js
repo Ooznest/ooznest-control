@@ -1,3 +1,5 @@
+import { registerModal } from './modal.js';
+
 export class MacroHandler {
     constructor(ws, term) {
         this.ws = ws;
@@ -143,6 +145,7 @@ export class MacroHandler {
     initModal() {
         // Find modal elements
         this.modal = document.getElementById('macro-modal');
+        this.modalController = registerModal(this.modal, { closeOnBackdrop: true, closeOnEscape: true });
         this.iconGrid = document.getElementById('macro-icon-grid');
         this.colorSelect = document.getElementById('macro-color-select');
 
@@ -176,7 +179,7 @@ export class MacroHandler {
 
         // Close Button
         document.getElementById('btn-close-macro').addEventListener('click', () => {
-            this.modal.classList.add('hidden');
+            this.modalController?.hide();
         });
     }
 
@@ -214,7 +217,7 @@ export class MacroHandler {
             if (iconBtn) iconBtn.classList.add('bg-primary', 'text-black', 'border-primary');
         }
 
-        this.modal.classList.remove('hidden');
+        this.modalController?.show();
         if (window.lucide) window.lucide.createIcons();
     }
 
@@ -267,6 +270,6 @@ export class MacroHandler {
         }
 
         this.save(); // Saves to localstorage and re-renders
-        this.modal.classList.add('hidden');
+        this.modalController?.hide();
     }
 }

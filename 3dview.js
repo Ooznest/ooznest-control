@@ -117,9 +117,8 @@ class ParticleSystem {
 }
 
 export class GCodeViewer {
-    constructor(containerId, loadingOverlayId, store) { // Added store
+    constructor(containerId, store) {
         this.container = document.getElementById(containerId);
-        this.loadingOverlay = document.getElementById(loadingOverlayId);
         this.store = store; // Save store reference
 
         this.scene = null;
@@ -924,41 +923,31 @@ export class GCodeViewer {
         }
     }
 
-    processGCodeString(gcode) {
-        if (this.loadingOverlay) this.loadingOverlay.classList.remove('hidden');
-        this.sendToWorker(gcode);
+    processGCodeString(gcode, successMessage = 'G-code parsed') {
+        this.sendToWorker(gcode, successMessage);
     }
 
     loadLocalFile(file) {
         if (!file) return;
-        if (this.loadingOverlay) this.loadingOverlay.classList.remove('hidden');
         const reader = new FileReader();
-        reader.onload = (evt) => { this.sendToWorker(evt.target.result); };
+        reader.onload = (evt) => { this.sendToWorker(evt.target.result, `${file.name} parsed`); };
         reader.readAsText(file);
     }
 
-    sendToWorker(data) {
+    sendToWorker(data, successMessage = 'G-code parsed') {
         this.currentGCode = data; // Store for tool parsing
         const worker = new Worker('gcview.worker.js', { type: 'module' });
         worker.onmessage = (msg) => {
             const payload = msg.data;
-            if (payload.progress !== undefined) {
-                if (this.loadingOverlay) {
-                    const text = this.loadingOverlay.querySelector('p');
-                    if (text) text.innerText = `Parsing G-code: ${payload.progress}%`;
-                }
-                return;
-            }
+            if (payload.progress !== undefined) return;
             if (payload.feedGeo || payload.rapidGeo) {
-                if (this.loadingOverlay) {
-                    const text = this.loadingOverlay.querySelector('p');
-                    if (text) text.innerText = `Preparing geometry...`;
-                }
                 this.nativeUnits = payload.inch ? 'inch' : 'mm';
                 this.renderLines(payload);
                 this.renderCoolGrid();
-                if (this.loadingOverlay) this.loadingOverlay.classList.add('hidden');
                 worker.terminate();
+                if (successMessage && window.showToast) {
+                    window.showToast(successMessage, 'file-text', 'success');
+                }
 
                 // Dispatch stats event for UI panels to consume
                 window.dispatchEvent(new CustomEvent('gcode-stats', {

@@ -1,4 +1,5 @@
 import { GrblFlowControl } from './grbl-flow-control.js';
+import { registerModal } from './modal.js';
 
 export class ConnectionManager {
     constructor(webSerial) {
@@ -27,6 +28,7 @@ export class ConnectionManager {
 
         // UI element references
         this.modal = document.getElementById('connection-modal');
+        this.modalController = registerModal(this.modal, { closeOnBackdrop: true, closeOnEscape: true });
         this.btnConnect = document.getElementById('btn-connect');
 
         // Expose globals for UI callbacks
@@ -210,17 +212,17 @@ export class ConnectionManager {
     }
 
     toggleModal() {
-        if (!this.modal) return;
+        if (!this.modalController) return;
         // In direct mode only allow closing, never opening the modal
-        if (this._isDirectMode && this.modal.classList.contains('hidden')) return;
-        this.modal.classList.toggle('hidden');
+        if (this._isDirectMode && !this.modalController.isOpen()) return;
+        this.modalController.toggle();
 
-        if (!this.modal.classList.contains('hidden')) {
+        if (this.modalController.isOpen()) {
             this.setConnectionType(this.type);
         }
 
         // If showing USB tab and in Electron, refresh ports
-        if (!this.modal.classList.contains('hidden') && this.type === 'usb' && this.isElectron) {
+        if (this.modalController.isOpen() && this.type === 'usb' && this.isElectron) {
             this.refreshNodePorts();
         }
 
@@ -676,7 +678,7 @@ export class ConnectionManager {
         } else if (this.type === 'websocket') {
             if (this.isCordova) {
                 this.emit('error', new Error('WebSocket is not supported on Cordova (HTTPS restricts ws://). Please use Telnet instead.'));
-                this.modal.classList.add('hidden');
+                this.modalController?.hide();
                 return;
             }
             const url = document.getElementById('url-websocket').value || `ws://${window.location.hostname}:81/ws`;
@@ -719,7 +721,7 @@ export class ConnectionManager {
                     this.emit('error', new Error(`Invalid WebSocket URL: ${wsErr}`));
                 }
                 this._setConnectingState(false);
-                this.modal.classList.add('hidden');
+                this.modalController?.hide();
                 return;
             }
 
@@ -776,7 +778,7 @@ export class ConnectionManager {
                 if (this.isConnected) this.handleDisconnect();
             };
         }
-        this.modal.classList.add('hidden');
+        this.modalController?.hide();
     }
 
     _handleDirectWsData(decoded) {
@@ -1602,7 +1604,7 @@ export class ConnectionManager {
 
         this.type = 'telnet';
         this.saveSettings();
-        this.modal.classList.add('hidden');
+        this.modalController?.hide();
         this._showConnectingStatus(`Auto-connecting to ${ip}:23 (Telnet)...`);
         if (this.isCordova) {
             this._connectCordovaTelnet(ip, 23).catch(err => {

@@ -678,9 +678,7 @@ select {
 .oz-select,
 #jog-panel select,
 .tab-pane select,
-#connection-modal select,
-#macro-modal select,
-#config-wizard-body select {
+.oz-modal select {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -709,9 +707,7 @@ select {
 .oz-select:focus,
 #jog-panel select:focus,
 .tab-pane select:focus,
-#connection-modal select:focus,
-#macro-modal select:focus,
-#config-wizard-body select:focus {
+.oz-modal select:focus {
     border-color: rgba(68, 157, 159, 0.42);
     background-color: #ffffff;
 }
@@ -719,9 +715,7 @@ select {
 .oz-select option,
 #jog-panel select option,
 .tab-pane select option,
-#connection-modal select option,
-#macro-modal select option,
-#config-wizard-body select option {
+.oz-modal select option {
     background: #ffffff;
     color: #004c5b;
 }
@@ -729,9 +723,7 @@ select {
 .oz-select:disabled,
 #jog-panel select:disabled,
 .tab-pane select:disabled,
-#connection-modal select:disabled,
-#macro-modal select:disabled,
-#config-wizard-body select:disabled {
+.oz-modal select:disabled {
     background-color: #f4f7f7;
     color: rgba(47, 55, 60, 0.58);
     border-color: rgba(0, 76, 91, 0.12);
@@ -2496,63 +2488,77 @@ body {
     color: #935d00;
 }
 
-#connection-modal > div,
-#macro-modal > div,
-#endmill-modal-overlay > div,
-#config-wizard-overlay > div,
-#cnc-modal-overlay .oz-app-modal-card {
-    border: 1.5px solid rgba(68, 157, 159, 0.2);
-    border-radius: 0 0 24px 0;
-    box-shadow: 0 24px 56px rgba(13, 31, 34, 0.14);
-    overflow: hidden;
+.oz-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
 }
 
-#tool-change-modal > div {
+.oz-modal__dialog,
+#cnc-modal-overlay .oz-modal__dialog {
+    width: 100%;
+    max-height: calc(100vh - 2rem);
+    border: 1.5px solid rgba(68, 157, 159, 0.2);
+    border-radius: var(--oz-r-control);
+    box-shadow: 0 24px 56px rgba(13, 31, 34, 0.14);
+    overflow: hidden;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.oz-modal__dialog--warning {
     border-color: rgba(255, 102, 0, 0.28) !important;
     border-width: 1px !important;
-    border-radius: 28px !important;
+    border-radius: var(--oz-r-control) !important;
     box-shadow: 0 28px 60px rgba(13, 31, 34, 0.18);
 }
 
-#connection-modal > div > div:first-child,
-#macro-modal > div > div:first-child,
-#endmill-modal-overlay > div > div:first-child,
-#config-wizard-overlay > div > div:first-child,
+.oz-modal__header,
 .oz-app-modal-header {
     background: #fff;
     border-bottom: 1px solid rgba(68, 157, 159, 0.14);
     padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
-#tool-change-modal > div > div:first-child {
+.oz-modal__header--warning {
     background: var(--oz-primary) !important;
     border-bottom: 0;
 }
 
-#tool-change-modal > div > div:first-child h3,
-#tool-change-modal > div > div:first-child * {
+.oz-modal__header--warning h3,
+.oz-modal__header--warning * {
     color: #fff !important;
 }
 
+.oz-modal__body,
 .oz-app-modal-body-wrap,
 #config-wizard-body {
     background: #fff;
     padding: 26px 24px 22px;
+    overflow-y: auto;
 }
 
+.oz-modal__footer,
 .oz-app-modal-footer,
-#connection-modal > div > div:last-child,
-#macro-modal > div > div:last-child,
-#tool-change-modal > div > div:last-child,
-#endmill-modal-overlay > div > div:last-child {
+.oz-modal__dialog > .oz-modal__footer:last-child {
     background: #fff;
     border-top: 1px solid rgba(68, 157, 159, 0.14);
     padding: 18px 24px 20px;
+    display: flex;
+    align-items: center;
 }
 
 
-#cnc-modal-overlay[data-tone="error"] .oz-app-modal-card,
-#cnc-modal-overlay[data-tone="critical"] .oz-app-modal-card {
+#cnc-modal-overlay[data-tone="error"] .oz-modal__dialog,
+#cnc-modal-overlay[data-tone="critical"] .oz-modal__dialog {
     border-color: rgba(255, 102, 0, 0.22);
     box-shadow: 0 24px 56px rgba(13, 31, 34, 0.16), 0 0 0 1px rgba(255, 102, 0, 0.06);
 }
@@ -2573,8 +2579,7 @@ body {
 
 label,
 .tab-pane label,
-#connection-modal label,
-#macro-modal label,
+.oz-modal label,
 #config-wizard-body label {
     color: var(--oz-secondary-dark);
 }
@@ -2585,9 +2590,8 @@ label,
 .tab-pane input[type="number"],
 .tab-pane input[type="search"],
 .tab-pane textarea:not(.xterm-helper-textarea),
-#connection-modal input,
-#macro-modal input,
-#macro-modal textarea,
+.oz-modal input,
+.oz-modal textarea,
 #config-wizard-body input {
     min-height: 42px;
     padding: 10px 14px;
@@ -2598,8 +2602,8 @@ label,
 .tab-pane input:disabled,
 .tab-pane select:disabled,
 .tab-pane textarea:disabled,
-#connection-modal input:disabled,
-#connection-modal select:disabled,
+.oz-modal input:disabled,
+.oz-modal select:disabled,
 #config-wizard-body input:disabled,
 #config-wizard-body select:disabled {
     background: #f4f7f7;
@@ -2612,8 +2616,8 @@ label,
 .tab-pane input[type="radio"],
 #config-wizard-body input[type="checkbox"],
 #config-wizard-body input[type="radio"],
-#macro-modal input[type="checkbox"],
-#macro-modal input[type="radio"] {
+.oz-modal input[type="checkbox"],
+.oz-modal input[type="radio"] {
     accent-color: var(--oz-primary);
 }
 
@@ -2621,21 +2625,15 @@ label,
 #probe-view .btn,
 #tools-view .btn,
 #troubleshooting-view .btn,
-#connection-modal .btn,
-#macro-modal .btn,
-#tool-change-modal .btn,
-#config-wizard-overlay .btn {
-    border-radius: 12px;
+.oz-modal .btn {
+    border-radius: var(--oz-r-control);
 }
 
 #settings-view .overflow-x-auto > div,
 #tools-view .tools-tab-content > div:first-child,
 #probe-view .grid > div > .bg-white,
 #troubleshooting-view .bg-white,
-#connection-modal .bg-white,
-#macro-modal .bg-white,
-#tool-change-modal .bg-white,
-#config-wizard-overlay .bg-white {
+.oz-modal .bg-white {
     backdrop-filter: saturate(1.05);
 }
 
@@ -2655,7 +2653,7 @@ label,
 }
 
 #settings-search-input {
-    border-radius: 999px !important;
+    border-radius: var(--oz-r-control) !important;
     border-color: rgba(68, 157, 159, 0.18) !important;
     background: #fff !important;
     padding-left: 28px !important;
@@ -2810,10 +2808,7 @@ label,
 }
 
 #connection-modal .tab-btn {
-    border-radius: 12px;
     min-height: 44px;
-    background: linear-gradient(180deg, #fff 0%, #f8fbfb 100%);
-    border: 1px solid rgba(68, 157, 159, 0.16);
 }
 
 #connection-modal .tab-btn.active {
@@ -2827,14 +2822,14 @@ label,
 }
 
 #macro-icon-grid {
-    border-radius: 18px;
+    border-radius: var(--oz-r-control);
     padding: 12px;
 }
 
 #macro-icon-grid .icon-option {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: var(--oz-r-control);
     border-color: rgba(68, 157, 159, 0.16);
     background: rgba(255, 255, 255, 0.9);
 }
@@ -2849,7 +2844,7 @@ label,
     min-height: 168px;
     background: #fff !important;
     border: 1px solid rgba(68, 157, 159, 0.24) !important;
-    border-radius: 16px !important;
+    border-radius: var(--oz-r-control) !important;
     box-shadow: inset 0 1px 2px rgba(13, 31, 34, 0.03);
 }
 
@@ -2873,7 +2868,7 @@ label,
 #console-input-area {
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(68, 157, 159, 0.14);
-    border-radius: 18px;
+    border-radius: var(--oz-r-control);
     padding: 10px;
     box-shadow: var(--oz-surface-shadow-soft);
 }
@@ -2881,7 +2876,7 @@ label,
 #cmdInput {
     min-height: 42px;
     border: 1px solid rgba(68, 157, 159, 0.22);
-    border-radius: 12px;
+    border-radius: var(--oz-r-control);
     background: #fff;
     color: var(--oz-grey-dark);
     padding: 10px 14px;
@@ -2897,7 +2892,7 @@ label,
 #btnSend {
     min-width: 42px;
     min-height: 42px;
-    border-radius: 12px;
+    border-radius: var(--oz-r-control);
     background: var(--oz-primary);
     color: #fff;
     box-shadow: 0 10px 22px rgba(255, 102, 0, 0.16);
@@ -2910,7 +2905,7 @@ label,
 #btnClearConsole {
     min-width: 42px;
     min-height: 42px;
-    border-radius: 12px;
+    border-radius: var(--oz-r-control);
     background: rgba(255, 255, 255, 0.86);
     border: 1px solid rgba(68, 157, 159, 0.14);
 }
@@ -3095,9 +3090,7 @@ select::-ms-expand {
 #jog-panel select,
 .dro-panel select,
 .tab-pane select,
-#connection-modal select,
-#macro-modal select,
-#config-wizard-body select {
+.oz-modal select {
     background-image: var(--oz-select-chevron) !important;
     background-position: calc(100% - 10px) 50% !important;
     background-size: 16px 16px !important;
@@ -3437,10 +3430,7 @@ select::-ms-expand {
 #probe-view .btn,
 #tools-view .btn,
 #troubleshooting-view .btn,
-#connection-modal .btn,
-#macro-modal .btn,
-#tool-change-modal .btn,
-#config-wizard-overlay .btn {
+.oz-modal .btn {
     border-radius: var(--oz-r-control) !important;
 }
 

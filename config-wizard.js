@@ -1,3 +1,5 @@
+import { registerModal } from './modal.js';
+
 export class ConfigWizard {
     constructor(ws, store) {
         console.log('[ConfigWizard] constructor');
@@ -31,6 +33,7 @@ export class ConfigWizard {
             dustShoe: false,
             enclosure: false
         };
+        this.modal = registerModal('config-wizard-overlay', { closeOnBackdrop: true, closeOnEscape: true });
         this.loadMachineJson();
     }
 
@@ -211,7 +214,7 @@ export class ConfigWizard {
         }
 
         if (v && this._isUnconfigured(v.configName)) {
-            html += '<button onclick="window.configWizard.showWizard()" class="w-full py-3 rounded-lg font-bold text-sm bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm">Run Configuration Wizard</button>';
+            html += '<button onclick="window.configWizard.showWizard()" class="btn btn-primary w-full">Run Configuration Wizard</button>';
         }
 
         html += '</div>';
@@ -233,10 +236,9 @@ export class ConfigWizard {
         this.wizardData.customPulleyTeeth = { x: 20, y: 20, z: 20 };
         this.wizardData.customLead = { x: 5, y: 5, z: 5 };
         this.wizardData.customEndstops = { x: 'min', y: 'min', z: 'min' };
-        const overlay = document.getElementById('config-wizard-overlay');
-        if (overlay) {
+        if (this.modal) {
             console.log('[ConfigWizard] Removing hidden class from overlay');
-            overlay.classList.remove('hidden');
+            this.modal.show();
         } else {
             console.warn('[ConfigWizard] overlay element not found');
         }
@@ -245,8 +247,7 @@ export class ConfigWizard {
 
     hideWizard() {
         console.log('[ConfigWizard] hideWizard');
-        const overlay = document.getElementById('config-wizard-overlay');
-        if (overlay) overlay.classList.add('hidden');
+        this.modal?.hide();
     }
 
     _renderWizardStep() {
@@ -296,15 +297,15 @@ export class ConfigWizard {
         // Navigation buttons
         html += '<div class="flex justify-between mt-6 pt-4 border-t border-grey-light">';
         if (this.wizardStep > 0) {
-            html += `<button onclick="window.configWizard._prevStep()" class="px-4 py-2 rounded-lg text-xs font-bold text-grey-dark border border-grey-light hover:bg-grey-bg transition-colors">Back</button>`;
+            html += `<button onclick="window.configWizard._prevStep()" class="btn btn-secondary">Back</button>`;
         } else {
             html += '<div></div>';
         }
         if (this.wizardStep < totalSteps - 1) {
             const disabled = !this._canProceed();
-            html += `<button onclick="window.configWizard._nextStep()" class="px-6 py-2 rounded-lg text-xs font-bold ${disabled ? 'bg-grey-light text-grey cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-dark'} transition-colors shadow-sm" ${disabled ? 'disabled' : ''}>Continue</button>`;
+            html += `<button onclick="window.configWizard._nextStep()" class="btn btn-primary" ${disabled ? 'disabled' : ''}>Continue</button>`;
         } else {
-            html += `<button onclick="window.configWizard._applyConfig()" class="px-6 py-2 rounded-lg text-xs font-bold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">Apply Configuration</button>`;
+            html += `<button onclick="window.configWizard._applyConfig()" class="btn btn-primary">Apply Configuration</button>`;
         }
         html += '</div>';
 
@@ -335,8 +336,8 @@ export class ConfigWizard {
             const isExpanded = this._expandedMachineCat === catKey;
             const hasSelection = this.wizardData.machine && this.wizardData.machine.category === catKey;
 
-            html += `<div class="border border-grey-light rounded-lg mb-2 overflow-hidden">`;
-            html += `<div class="flex items-center justify-between px-3 py-2.5 bg-grey-bg cursor-pointer select-none hover:bg-white transition-colors" onclick="window.configWizard._toggleMachineCategory('${catKey}')">`;
+            html += `<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden mb-2">`;
+            html += `<div class="flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none hover:bg-grey-bg/50 transition-colors" onclick="window.configWizard._toggleMachineCategory('${catKey}')">`;
             html += `<div class="flex items-center gap-2"><i class="${cat.icon} text-xs text-primary"></i><span class="font-bold text-xs text-secondary-dark">${cat.label}</span></div>`;
             html += `<div class="flex items-center gap-2">`;
             if (hasSelection) {
@@ -363,7 +364,7 @@ export class ConfigWizard {
                                 const teeth = (this.wizardData.customPulleyTeeth || {})[lc] || 20;
                                 const lead = (this.wizardData.customLead || {})[lc] || 5;
                                 const endstop = (this.wizardData.customEndstops || {})[lc] || 'min';
-                                html += '<div class="border border-grey-light rounded-lg p-3">';
+                                html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light p-3">';
                                 html += `<div class="font-bold text-xs text-secondary-dark mb-2">${axis} Axis</div>`;
                                 html += '<div class="grid grid-cols-2 gap-x-3 gap-y-2">';
                                 html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Drive</label>';
@@ -372,18 +373,18 @@ export class ConfigWizard {
                                 html += `<option value="leadscrew" ${drive === 'leadscrew' ? 'selected' : ''}>Leadscrew</option>`;
                                 html += '</select></div>';
                                 html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Travel (mm)</label>';
-                                html += `<input type="number" step="1" id="w-custom-travel-${lc}" value="${(this.wizardData.machine.travel || {})[lc] || 0}" placeholder="e.g. 270" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                html += `<input type="number" step="1" id="w-custom-travel-${lc}" value="${(this.wizardData.machine.travel || {})[lc] || 0}" placeholder="e.g. 270" class="input-field w-full">`;
                                 html += '</div>';
                                 if (drive === 'belt') {
                                     html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Belt pitch (mm)</label>';
-                                    html += `<input type="number" step="0.1" value="${pitch}" onchange="window.configWizard.wizardData.customBeltPitch.${lc}=parseFloat(this.value)||2" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                    html += `<input type="number" step="0.1" value="${pitch}" onchange="window.configWizard.wizardData.customBeltPitch.${lc}=parseFloat(this.value)||2" class="input-field w-full">`;
                                     html += '</div>';
                                     html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Pulley teeth</label>';
-                                    html += `<input type="number" step="1" value="${teeth}" onchange="window.configWizard.wizardData.customPulleyTeeth.${lc}=parseInt(this.value)||20" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                    html += `<input type="number" step="1" value="${teeth}" onchange="window.configWizard.wizardData.customPulleyTeeth.${lc}=parseInt(this.value)||20" class="input-field w-full">`;
                                     html += '</div>';
                                 } else {
                                     html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Lead (mm/rev)</label>';
-                                    html += `<input type="number" step="0.1" value="${lead}" onchange="window.configWizard.wizardData.customLead.${lc}=parseFloat(this.value)||5" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                    html += `<input type="number" step="0.1" value="${lead}" onchange="window.configWizard.wizardData.customLead.${lc}=parseFloat(this.value)||5" class="input-field w-full">`;
                                     html += '</div><div></div>';
                                 }
                                 html += '<div class="col-span-2"><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Endstop</label>';
@@ -414,9 +415,9 @@ export class ConfigWizard {
                     if (isCustomSize) {
                         html += '<div class="px-4 pb-3 space-y-2">';
                         html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Width (mm)</label>';
-                        html += `<input type="number" step="1" id="w-custom-width" value="${this.wizardData.customWidth || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=this.value&&document.getElementById('w-custom-length').value?'('+(Math.max(0,parseInt(this.value)-230))+'×'+(Math.max(0,parseInt(document.getElementById('w-custom-length').value)-230))+'×88mm)':''" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                        html += `<input type="number" step="1" id="w-custom-width" value="${this.wizardData.customWidth || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=this.value&&document.getElementById('w-custom-length').value?'('+(Math.max(0,parseInt(this.value)-230))+'×'+(Math.max(0,parseInt(document.getElementById('w-custom-length').value)-230))+'×88mm)':''" class="input-field w-full">`;
                         html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5 mt-2">Length (mm)</label>';
-                        html += `<input type="number" step="1" id="w-custom-length" value="${this.wizardData.customLength || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=document.getElementById('w-custom-width').value&&this.value?'('+(Math.max(0,parseInt(document.getElementById('w-custom-width').value)-230))+'×'+(Math.max(0,parseInt(this.value)-230))+'×88mm)':''" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                        html += `<input type="number" step="1" id="w-custom-length" value="${this.wizardData.customLength || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=document.getElementById('w-custom-width').value&&this.value?'('+(Math.max(0,parseInt(document.getElementById('w-custom-width').value)-230))+'×'+(Math.max(0,parseInt(this.value)-230))+'×88mm)':''" class="input-field w-full">`;
                         html += `<p id="w-custom-area" class="text-[10px] text-grey italic">${this.wizardData.customWidth && this.wizardData.customLength ? `(${Math.max(0, this.wizardData.customWidth - 230)}×${Math.max(0, this.wizardData.customLength - 230)}×88mm)` : ''}</p>`;
                         html += '</div>';
                     }
@@ -466,8 +467,8 @@ export class ConfigWizard {
             else if (catKey === 'vfd-modbus') hasSelection = th.vfdModbusEnabled;
             else hasSelection = th.spindle !== null;
 
-            html += `<div class="border border-grey-light rounded-lg mb-2 overflow-hidden">`;
-            html += `<div class="flex items-center justify-between px-3 py-2.5 bg-grey-bg cursor-pointer select-none hover:bg-white transition-colors" onclick="window.configWizard._toggleCategory('${catKey}')">`;
+            html += `<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden mb-2">`;
+            html += `<div class="flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none hover:bg-grey-bg/50 transition-colors" onclick="window.configWizard._toggleCategory('${catKey}')">`;
             html += `<div class="flex items-center gap-2"><i class="${cat.icon} text-xs text-primary"></i><span class="font-bold text-xs text-secondary-dark">${cat.label}</span></div>`;
             html += `<div class="flex items-center gap-2">`;
             if (hasSelection) {
@@ -626,11 +627,11 @@ export class ConfigWizard {
         html += `<div id="wizard-custom-probe-dims" class="${showCustom} grid grid-cols-2 gap-4">`;
         html += '<div>';
         html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
-        html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+        html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="input-field w-full">`;
         html += '</div>';
         html += '<div>';
         html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">XY Plate Offset (mm)</label>';
-        html += `<input type="number" step="0.1" id="wizard-plate-offset" value="${s.xyPlateOffset || 10}" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+        html += `<input type="number" step="0.1" id="wizard-plate-offset" value="${s.xyPlateOffset || 10}" class="input-field w-full">`;
         html += '</div>';
         html += '</div>';
 

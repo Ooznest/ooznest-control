@@ -515,16 +515,6 @@
                 <div id="viewer-view" class="tab-pane w-full h-full relative bg-grey-bg overflow-hidden">
                     <div id="viewer-container" class="absolute inset-0 overflow-hidden bg-white"></div>
 
-                    <!-- Loading Overlay -->
-                    <div id="loading-overlay"
-                        class="hidden absolute inset-0 flex items-center justify-center z-50 modal-radial-overlay">
-                        <div class="bg-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
-                            <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin">
-                            </div>
-                            <p id="loading-status-text" class="font-bold text-grey-dark">Parsing G-Code...</p>
-                        </div>
-                    </div>
-
                     <!-- Progress Overlay -->
                     <div id="job-progress-overlay"
                         class="hidden absolute bottom-20 left-0 right-0 z-40 px-4 transition-all duration-300">
@@ -677,13 +667,13 @@
                 </div>
 
                 <!-- Endmill Setup Modal -->
-                <div id="endmill-modal-overlay" class="fixed inset-0 z-[1200] hidden flex items-center justify-center modal-radial-overlay">
-                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 border border-grey-light max-h-[90vh] flex flex-col">
-                        <div class="px-5 py-3 border-b border-grey-light flex items-center justify-between bg-grey-bg shrink-0">
+                <div id="endmill-modal-overlay" class="oz-modal hidden z-[1200] modal-radial-overlay">
+                    <div class="oz-modal__dialog w-full max-w-md" data-modal-panel>
+                        <div class="oz-modal__header px-5 py-3 shrink-0">
                             <h3 class="font-bold text-sm text-secondary-dark"><i data-lucide="wrench" class="mr-2"></i>Endmill Setup</h3>
-                            <button onclick="closeEndmillSetup()" class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
+                            <button onclick="closeEndmillSetup()" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
                         </div>
-                        <div class="p-5 overflow-y-auto space-y-4 text-sm">
+                        <div class="oz-modal__body space-y-4 text-sm">
                             <!-- Tool Family -->
                             <div>
                                 <label class="font-semibold text-secondary-dark text-xs block mb-1.5">Tool Family</label>
@@ -767,8 +757,8 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="px-5 py-3 border-t border-grey-light flex justify-end bg-grey-bg shrink-0">
-                            <button onclick="closeEndmillSetup(); if(window.lucide)lucide.createIcons();" class="px-4 py-2 rounded-lg text-sm font-bold bg-white border border-grey-light text-grey-dark hover:text-black transition-colors">Apply</button>
+                        <div class="oz-modal__footer px-5 py-3 justify-end shrink-0">
+                            <button onclick="closeEndmillSetup(); if(window.lucide)lucide.createIcons();" class="btn btn-primary">Apply</button>
                         </div>
                     </div>
                 </div>
@@ -2581,15 +2571,15 @@
 
     <!-- Connection Modal -->
     <div id="connection-modal"
-        class="hidden fixed inset-0 z-[1100] flex items-center justify-center p-4 modal-radial-overlay">
-        <div class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] w-[400px] max-w-[calc(100vw-2rem)]">
-            <div class="px-6 py-4 border-b border-grey-light flex justify-between items-center bg-grey-bg">
+        class="oz-modal hidden z-[1100] modal-radial-overlay">
+        <div class="oz-modal__dialog overflow-hidden w-[400px] max-w-[calc(100vw-2rem)]" data-modal-panel>
+            <div class="oz-modal__header px-6 py-4">
                 <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
                         data-lucide="plug" class="text-primary"></i><span>Connect to Machine</span></h3>
-                <button onclick="toggleConnectionModal()" class="btn-ghost"><i data-lucide="x" ></i></button>
+                <button onclick="toggleConnectionModal()" data-modal-close class="btn-ghost"><i data-lucide="x" ></i></button>
             </div>
 
-            <div class="p-5 overflow-y-auto space-y-4">
+            <div class="oz-modal__body space-y-4">
                 <!-- Connection Type Tabs -->
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="setConnectionType('webserial')" id="tab-webserial"
@@ -2628,7 +2618,7 @@
                         <label class="text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
                         <div class="flex gap-2">
                             <select id="port-node" class="oz-select flex-1 min-w-0"></select>
-                            <button onclick="refreshNodePorts()" class="hidden btn btn-secondary h-10 w-10"><i
+                            <button onclick="refreshNodePorts()" class="hidden btn btn-secondary"><i
                                     data-lucide="refresh-cw" ></i></button>
                         </div>
                     </div>
@@ -2655,7 +2645,7 @@
                                 <i data-lucide="search" class="mr-1"></i> SCAN NETWORK
                             </button>
                         </div>
-                        <input type="text" id="ip-telnet" class="input-field h-10" placeholder="192.168.1.10" aria-label="Telnet IP address">
+                        <input type="text" id="ip-telnet" class="input-field" placeholder="192.168.1.10" aria-label="Telnet IP address">
                     </div>
                     <div id="discover-panel" class="hidden bg-grey-bg rounded-xl border border-grey-light p-4 space-y-3">
                         <div class="flex justify-end">
@@ -2668,7 +2658,7 @@
                             <select id="discover-subnet-select" class="oz-select" onchange="window.updateTelnetScanStartState()"></select>
                         </div>
                         <div class="flex justify-end">
-                            <button id="btn-start-telnet-scan" onclick="window.startTelnetScanNetwork()" class="btn btn-primary h-10 px-4 text-xs font-bold" disabled>
+                            <button id="btn-start-telnet-scan" onclick="window.startTelnetScanNetwork()" class="btn btn-primary" disabled>
                                 Start Scan
                             </button>
                         </div>
@@ -2686,7 +2676,7 @@
                     </div>
                     <div id="telnet-manual-port-wrap">
                         <label class="text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
-                        <input type="number" id="port-telnet" class="input-field h-10" value="23" aria-label="Telnet port">
+                        <input type="number" id="port-telnet" class="input-field" value="23" aria-label="Telnet port">
                     </div>
                 </div>
 
@@ -2695,7 +2685,7 @@
                     <p class="text-xs text-grey">Connect to grblHAL WebSocket (Plugin_networking).</p>
                     <div>
                         <label class="text-[10px] font-bold text-grey uppercase block mb-1">URL</label>
-                        <input type="text" id="url-websocket" class="input-field h-10"
+                        <input type="text" id="url-websocket" class="input-field"
                             placeholder="ws://192.168.1.10:81/ws">
                     </div>
 
@@ -2718,7 +2708,7 @@
                 </div>
 
                 <div class="flex gap-2 pt-2">
-                    <button id="btn-modal-connect" class="btn btn-primary flex-1 h-12 font-bold text-base"
+                    <button id="btn-modal-connect" class="btn btn-primary flex-1"
                         onclick="handleConnectClick()">Connect</button>
                 </div>
             </div>
@@ -2727,16 +2717,16 @@
 
     <!-- Macro Modal -->
     <div id="macro-modal"
-        class="hidden fixed inset-0 z-[1100] flex items-center justify-center p-4 modal-radial-overlay">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-[600px] overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b border-grey-light flex justify-between items-center bg-grey-bg">
+        class="oz-modal hidden z-[1100] modal-radial-overlay">
+        <div class="oz-modal__dialog w-full max-w-[600px]" data-modal-panel>
+            <div class="oz-modal__header px-6 py-4">
                 <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
                         data-lucide="zap" ></i> <span id="macro-modal-title">Create New Macro</span>
                 </h3>
-                <button id="btn-close-macro" class="btn-ghost"><i data-lucide="x" ></i></button>
+                <button id="btn-close-macro" data-modal-close class="btn-ghost"><i data-lucide="x" ></i></button>
             </div>
 
-            <div class="p-6 overflow-y-auto space-y-4">
+            <div class="oz-modal__body space-y-4">
 
                 <!-- Name & Color -->
                 <div class="space-y-4">
@@ -2772,9 +2762,9 @@
                 </div>
             </div>
 
-            <div class="px-6 py-4 border-t border-grey-light bg-grey-bg flex justify-end gap-2">
-                <button class="btn btn-secondary"
-                    onclick="document.getElementById('macro-modal').classList.add('hidden')">Cancel</button>
+            <div class="oz-modal__footer px-6 py-4 justify-end gap-2">
+                <button class="btn btn-secondary" data-modal-close
+                    onclick="window.getAppModal && window.getAppModal('macro-modal')?.hide()">Cancel</button>
                 <button class="btn btn-primary" id="btn-save-macro">Save Macro</button>
             </div>
         </div>
@@ -2782,11 +2772,11 @@
 
     <!-- Tool Change Modal -->
     <div id="tool-change-modal"
-        class="hidden fixed inset-0 z-[1100] flex items-center justify-center p-4 modal-radial-overlay modal-radial-overlay-strong">
+        class="oz-modal hidden z-[1100] modal-radial-overlay modal-radial-overlay-strong">
         <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border-4 border-primary animate-in fade-in zoom-in duration-200">
+            class="oz-modal__dialog oz-modal__dialog--warning w-full max-w-lg animate-in fade-in zoom-in duration-200" data-modal-panel>
             <!-- Header -->
-            <div class="bg-primary p-4 flex justify-between items-center">
+            <div class="oz-modal__header oz-modal__header--warning p-4">
                 <h3 class="text-xl font-black text-black uppercase flex items-center gap-2">
                     <i data-lucide="triangle-alert" ></i> Manual Tool Change
                 </h3>
@@ -2797,7 +2787,7 @@
             </div>
 
             <!-- Body -->
-            <div class="p-6 space-y-5">
+            <div class="oz-modal__body p-6 space-y-5">
                 <div class="text-center space-y-2">
                     <p class="text-lg font-bold text-secondary-dark">The machine has requested a tool change.</p>
                     <p class="text-sm text-grey">Spindle is stopped. Jogging is enabled.</p>
@@ -2870,7 +2860,7 @@
             </div>
 
             <!-- Footer -->
-            <div class="p-4 bg-grey-bg border-t border-grey-light flex justify-between gap-3">
+            <div class="oz-modal__footer p-4 justify-between gap-3">
                 <div class="text-[10px] text-grey leading-tight flex-1">
                     Click Resume only after tool is set.<br>Machine will return to previous pos.
                 </div>
@@ -3122,6 +3112,7 @@
         import { initializeApp } from './init.js';
         import { SpoilboardGridHandler } from './spoilboard-grid.js';
         import { BowlCutter } from './tools/bowl-cutter.js';
+        import './modal.js';
 
         // Import new modules
         import './ui.js';
@@ -3157,7 +3148,7 @@
             }
         });
 
-        const viewer = new GCodeViewer('viewer-container', 'loading-overlay', store); // Added store
+        const viewer = new GCodeViewer('viewer-container', store); // Added store
         const reporter = new AlarmsAndErrors(ws);
         window.viewer = viewer;
         window.reporter = reporter; // Make reporter globally accessible
@@ -3233,7 +3224,7 @@
                 window.currentGCodeContent = content;
                 window.currentSDFile = null; // Clear SD context
                 window.uiManager.updateRunButtonsState();
-                viewer.processGCodeString(content);
+                viewer.processGCodeString(content, filename ? `${filename} parsed` : 'G-code parsed');
                 if (editor) {
                     editor.setValue(content);
                     const lineCount = editor.getValue().split('\n').length;
@@ -3251,7 +3242,6 @@
                 }
 
                 switchTab('viewer-view');
-                window.showToast(filename ? filename + ' loaded' : 'G-code loaded', 'file-text', 'success');
             }
 
             // Auto-load sample logo file on page load
@@ -3477,7 +3467,7 @@
             const content = window.editor.getValue();
             window.currentGCodeContent = content;
 
-            viewer.processGCodeString(content);
+            viewer.processGCodeString(content, 'G-code parsed');
             switchTab('viewer-view');
             window.term.writeln("\x1b[32m[Editor] Job updated from editor.\x1b[0m");
         };
@@ -3930,15 +3920,15 @@
         }
 
         window.openEndmillSetup = function() {
-            const overlay = document.getElementById('endmill-modal-overlay');
-            if (!overlay) return;
+            const modal = window.getAppModal && window.getAppModal('endmill-modal-overlay');
+            if (!modal) return;
             populateEndmillForm();
-            overlay.classList.remove('hidden');
+            modal.show();
         };
 
         window.closeEndmillSetup = function() {
-            const overlay = document.getElementById('endmill-modal-overlay');
-            if (overlay) overlay.classList.add('hidden');
+            const modal = window.getAppModal && window.getAppModal('endmill-modal-overlay');
+            if (modal) modal.hide();
         };
 
 
@@ -3979,13 +3969,6 @@
                     applyEndmillForm();
                 });
             });
-            // Close modal on overlay backdrop click
-            const overlay = document.getElementById('endmill-modal-overlay');
-            if (overlay) {
-                overlay.addEventListener('click', function(e) {
-                    if (e.target === this) window.closeEndmillSetup();
-                });
-            }
         });
 
     </script>
@@ -4005,21 +3988,21 @@
     </script>
 
     <!-- Configuration Wizard Modal -->
-    <div id="config-wizard-overlay" class="fixed inset-0 z-[100] isolate hidden flex items-center justify-center modal-radial-overlay">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all scale-100 border border-grey-light max-h-[90vh] flex flex-col">
-            <div class="px-5 py-3 border-b border-grey-light flex items-center justify-between bg-grey-bg shrink-0">
+    <div id="config-wizard-overlay" class="oz-modal isolate hidden z-[100] modal-radial-overlay">
+        <div class="oz-modal__dialog w-full max-w-2xl" data-modal-panel>
+            <div class="oz-modal__header px-5 py-3 shrink-0">
                 <h3 class="font-bold text-sm text-secondary-dark flex items-center gap-2">
                     <i data-lucide="wand" class="text-primary"></i> Machine Configuration Wizard
                 </h3>
-                <button onclick="window.configWizard.hideWizard()" class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
+                <button onclick="window.configWizard.hideWizard()" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
             </div>
-            <div id="config-wizard-body" class="p-5 overflow-y-auto">
+            <div id="config-wizard-body" class="oz-modal__body">
                 <div class="text-center py-8">
                     <i data-lucide="refresh-cw" class="animate-spin text-2xl text-grey"></i>
                     <p class="text-xs text-grey mt-2">Loading...</p>
                 </div>
             </div>
-            <div id="config-wizard-status" class="px-5 pb-2"></div>
+            <div id="config-wizard-status" class="oz-modal__footer px-5 pb-2"></div>
         </div>
     </div>
 

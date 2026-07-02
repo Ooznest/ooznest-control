@@ -77,7 +77,6 @@ export function initializeApp(ws, store, viewer, reporter, term) {
             document.getElementById('editor-file-name').innerText = filename;
         }
 
-        if (window.showToast) window.showToast(filename + ' loaded', 'file-text', 'success');
     });
 
     // Unit syncing

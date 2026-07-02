@@ -516,7 +516,7 @@ export class SDCardHandler {
                 // Pass filename AND fullPath
                 this.callbacks.onDownloadComplete(cleanContent, filename, this.downloadingFullPath);
             }
-            this.viewer.processGCodeString(cleanContent);
+            this.viewer.processGCodeString(cleanContent, `${filename} parsed`);
             if (this.callbacks.switchToViewer) {
                 this.callbacks.switchToViewer();
             }
