@@ -1842,28 +1842,6 @@ body[data-3d-probe-enabled="false"] .prb-3d-probe-only { display: none !importan
     pointer-events: none !important;
 }
 
-/* Fast tooltips - appear immediately on hover, no delay */
-[data-tooltip] {
-    position: relative;
-}
-[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    background: #2F373C;
-    color: #fff;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    font-family: 'Nunito', 'Inter', sans-serif;
-    pointer-events: none;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
 
 /* Override Tailwind v4 @layer utilities cascade layer issue for tab-pane only */
 .tab-pane.hidden {
