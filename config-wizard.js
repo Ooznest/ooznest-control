@@ -276,7 +276,7 @@ export class ConfigWizard {
             } else {
                 html += `<span class="w-5 h-5 rounded-full ${isActive ? 'bg-white/20' : 'bg-grey-light'} flex items-center justify-center text-[10px] font-bold ${isActive ? 'text-white' : 'text-grey'}">${i + 1}</span>`;
             }
-            html += `<span class="text-[10px] font-bold ${isActive ? '' : 'hidden md:inline'}">${label}</span>`;
+            html += `<span class="text-[10px] font-bold">${label}</span>`;
             html += '</div>';
             html += '</div>';
         });
@@ -311,6 +311,7 @@ export class ConfigWizard {
 
         container.innerHTML = html;
         this._wireStepEvents();
+        if (window.lucide) window.lucide.createIcons();
     }
 
     _renderMachineStep() {
