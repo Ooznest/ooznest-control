@@ -2643,7 +2643,7 @@ label,
     background: #fff;
     color: var(--oz-secondary-dark);
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 400;
     box-shadow: none;
     transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
