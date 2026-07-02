@@ -757,7 +757,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="oz-modal__footer justify-end shrink-0">
+                        <div class="oz-modal__footer oz-modal__footer--actions justify-end shrink-0">
                             <button onclick="closeEndmillSetup(); if(window.lucide)lucide.createIcons();" class="btn btn-primary w-full">Apply</button>
                         </div>
                     </div>
@@ -2572,16 +2572,16 @@
     <!-- Connection Modal -->
     <div id="connection-modal"
         class="oz-modal hidden z-[1100] modal-radial-overlay">
-        <div class="oz-modal__dialog overflow-hidden w-[400px] max-w-[calc(100vw-2rem)]" data-modal-panel>
-            <div class="oz-modal__header px-6 py-4">
+        <div class="oz-modal__dialog overflow-hidden w-full max-w-md" data-modal-panel>
+            <div class="oz-modal__header">
                 <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
                         data-lucide="plug" class="text-primary"></i><span>Connect to Machine</span></h3>
-                <button onclick="toggleConnectionModal()" data-modal-close class="btn-ghost"><i data-lucide="x" ></i></button>
+                <button onclick="toggleConnectionModal()" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none"><i data-lucide="x" ></i></button>
             </div>
 
             <div class="oz-modal__body space-y-4">
                 <!-- Connection Type Tabs -->
-                <div class="grid grid-cols-2 gap-2">
+                <div class="connection-modal__tabs">
                     <button onclick="setConnectionType('webserial')" id="tab-webserial"
                         class="tab-btn">Web
                         Serial</button>
@@ -2707,10 +2707,10 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2 pt-2">
-                    <button id="btn-modal-connect" class="btn btn-primary flex-1"
-                        onclick="handleConnectClick()">Connect</button>
-                </div>
+            </div>
+            <div class="oz-modal__footer oz-modal__footer--actions shrink-0">
+                <button id="btn-modal-connect" class="btn btn-primary"
+                    onclick="handleConnectClick()">Connect</button>
             </div>
         </div>
     </div>
@@ -2719,11 +2719,11 @@
     <div id="macro-modal"
         class="oz-modal hidden z-[1100] modal-radial-overlay">
         <div class="oz-modal__dialog w-full max-w-[600px]" data-modal-panel>
-            <div class="oz-modal__header px-6 py-4">
+            <div class="oz-modal__header">
                 <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
                         data-lucide="zap" ></i> <span id="macro-modal-title">Create New Macro</span>
                 </h3>
-                <button id="btn-close-macro" data-modal-close class="btn-ghost"><i data-lucide="x" ></i></button>
+                <button id="btn-close-macro" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none"><i data-lucide="x" ></i></button>
             </div>
 
             <div class="oz-modal__body space-y-4">
@@ -2762,7 +2762,7 @@
                 </div>
             </div>
 
-            <div class="oz-modal__footer px-6 py-4 justify-end gap-2">
+            <div class="oz-modal__footer oz-modal__footer--actions justify-end gap-2">
                 <button class="btn btn-secondary" data-modal-close
                     onclick="window.getAppModal && window.getAppModal('macro-modal')?.hide()">Cancel</button>
                 <button class="btn btn-primary" id="btn-save-macro">Save Macro</button>
@@ -4002,7 +4002,7 @@
                     <p class="text-xs text-grey mt-2">Loading...</p>
                 </div>
             </div>
-            <div id="config-wizard-footer" class="oz-modal__footer justify-between shrink-0 hidden"></div>
+            <div id="config-wizard-footer" class="oz-modal__footer oz-modal__footer--actions justify-between shrink-0 hidden"></div>
         </div>
     </div>
 

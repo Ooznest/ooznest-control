@@ -2495,10 +2495,15 @@ body {
 .oz-modal__header h3,
 .oz-app-modal-header h3 {
     margin: 0;
-    color: var(--oz-secondary-dark);
-    font-size: clamp(1.2rem, 1.06rem + 0.36vw, 1.7rem);
-    font-weight: 800;
-    line-height: 1.15;
+    color: var(--oz-secondary-dark) !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2;
+}
+
+.oz-modal__header h3 [data-lucide],
+.oz-app-modal-header h3 [data-lucide] {
+    color: currentColor !important;
 }
 
 .oz-modal__header [data-modal-close] {
@@ -2599,10 +2604,12 @@ label,
 #config-wizard-body label {
     display: block;
     margin-bottom: 0.4rem;
-    font-size: 0.82rem;
+    color: var(--oz-secondary) !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
     line-height: 1.25;
     letter-spacing: 0;
-    text-transform: none;
+    text-transform: none !important;
 }
 
 .input-field,
@@ -2714,6 +2721,15 @@ label,
     width: 100%;
 }
 
+.oz-modal__footer--actions > .btn {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.oz-modal__footer--actions > .btn:only-child {
+    flex-basis: 100%;
+}
+
 #endmill-modal-overlay {
     align-items: flex-start;
     overflow-y: auto;
@@ -2726,31 +2742,14 @@ label,
     max-height: calc(100vh - 84px);
 }
 
-#endmill-modal-overlay .oz-modal__header {
-    padding: 18px 22px 8px;
-}
-
-#endmill-modal-overlay .oz-modal__header h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
 #endmill-modal-overlay .oz-modal__body {
-    padding: 8px 22px 0;
+    padding: 10px 28px 0;
     font-size: 0.875rem;
     scrollbar-gutter: stable;
 }
 
 #endmill-modal-overlay .oz-modal__footer {
-    padding: 16px 22px 22px;
-}
-
-#endmill-modal-overlay label {
-    margin-bottom: 0.3rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--oz-secondary);
+    padding: 20px 28px 28px;
 }
 
 #endmill-modal-overlay .oz-select,
@@ -2806,16 +2805,16 @@ label,
     }
 
     #endmill-modal-overlay .oz-modal__header {
-        padding: 16px 18px 8px;
+        padding: 20px 18px 8px;
     }
 
     #endmill-modal-overlay .oz-modal__body {
-        padding: 6px 18px 0;
+        padding: 8px 18px 0;
         gap: 10px;
     }
 
     #endmill-modal-overlay .oz-modal__footer {
-        padding: 14px 18px 18px;
+        padding: 18px 18px 20px;
     }
 }
 
@@ -3087,14 +3086,40 @@ label,
     background: var(--oz-primary-light) !important;
 }
 
+#connection-modal .connection-modal__tabs {
+    display: flex;
+    gap: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--oz-secondary);
+}
+
 #connection-modal .tab-btn {
-    min-height: 44px;
+    flex: 1 1 0;
+    min-height: 42px;
+    padding: 8px 20px;
+    border-radius: 0 !important;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 400;
+    box-shadow: none;
+    justify-content: center;
 }
 
 #connection-modal .tab-btn.active {
     background: var(--oz-primary);
     color: #fff;
-    border-color: var(--oz-primary);
+    border-color: transparent;
+    box-shadow: none;
+}
+
+#connection-modal .tab-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 #connection-modal #discover-progress-wrap .bg-grey-bg {
