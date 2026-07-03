@@ -98,13 +98,37 @@ export class TroubleshootingInfoView {
         });
     }
 
+    _getBitmaskLabels(setting) {
+        const intVal = parseInt(setting?.val, 10) || 0;
+        if (!intVal) return [];
+
+        let labels = [];
+        if (setting.type === 4) {
+            if (setting.format) {
+                if (/^\d+$/.test(setting.format)) {
+                    labels = ['X', 'Y', 'Z', 'A', 'B', 'C'].slice(0, parseInt(setting.format, 10));
+                } else {
+                    labels = setting.format.split(',').map(label => label.trim());
+                }
+            } else {
+                labels = ['X', 'Y', 'Z', 'A', 'B', 'C'];
+            }
+        } else if ((setting.type === 1 || setting.type === 2 || setting.type === 'mask') && setting.format) {
+            labels = setting.format.split(',').map(label => label.trim());
+        }
+
+        return labels.filter((label, index) => label && label.toUpperCase() !== 'N/A' && ((intVal & (1 << index)) !== 0));
+    }
+
     _getGrblSettingsLines() {
         const settings = Object.values(window.grblSettings?.settings || {})
             .sort((a, b) => Number(a.id) - Number(b.id))
             .map(setting => {
                 const note = (setting.desc || setting.label || '').trim().replace(/\s+/g, ' ');
+                const bitmaskLabels = this._getBitmaskLabels(setting);
+                const suffix = bitmaskLabels.length ? ` (${bitmaskLabels.join(' and ')})` : '';
                 return note
-                    ? `$${setting.id}=${setting.val ?? ''} ; ${note}`
+                    ? `$${setting.id}=${setting.val ?? ''} ; ${note}${suffix}`
                     : `$${setting.id}=${setting.val ?? ''}`;
             });
         return settings;
@@ -203,6 +227,97 @@ export class TroubleshootingInfoView {
             macros: this._getMacroLines(),
             grblSettings: this._getGrblSettingsLines()
         };
+    }
+
+    _snapshotSectionLines(title, lines, emptyMessage = 'Not available yet.') {
+        const body = lines?.length ? lines : [emptyMessage];
+        return [`=== ${title} ===`, ...body, ''];
+    }
+
+    _snapshotKeyValueLines(title, entries) {
+        const lines = entries
+            .filter(([, value]) => value !== null && value !== undefined && value !== '')
+            .map(([label, value]) => `${label}: ${value}`);
+        return this._snapshotSectionLines(title, lines);
+    }
+
+    _buildPlainTextReport(snapshot) {
+        const adapterLines = snapshot.computer?.adapters?.length
+            ? snapshot.computer.adapters.flatMap(adapter => [
+                `${adapter.name || 'Adapter'}`,
+                `  Address: ${adapter.address || 'Unknown'}`,
+                `  Netmask: ${adapter.netmask || 'Unknown'}${adapter.cidr ? ` | ${adapter.cidr}` : ''}`,
+                ''
+            ])
+            : ['No adapter details available.', ''];
+        const scanRangeLines = snapshot.computer?.scanRanges?.length
+            ? snapshot.computer.scanRanges.map(range => range.label || `${range.subnet}.x`)
+            : [];
+
+        const lines = [
+            'OOZNEST TROUBLESHOOTING EXPORT',
+            `Generated: ${new Date(snapshot.exportedAt).toLocaleString()}`,
+            'Email this file to help@ooznest.co.uk and include a detailed fault description or a description of what you need help with.',
+            '',
+            ...this._snapshotKeyValueLines('Firmware', [
+                ['Version', snapshot.firmware.version],
+                ['Machine Config', snapshot.firmware.machineConfig],
+                ['Decoded Config', snapshot.firmware.decodedConfig],
+                ['Board', snapshot.firmware.board],
+                ['Options', snapshot.firmware.options]
+            ]),
+            ...this._snapshotKeyValueLines('Application', [
+                ['Version', snapshot.application.version],
+                ['Platform', snapshot.application.platform],
+                ['Exported At', snapshot.exportedAt]
+            ]),
+            ...this._snapshotKeyValueLines('Computer', [
+                ['Runtime', snapshot.computer?.runtime],
+                ['OS', snapshot.computer?.os],
+                ['Browser', snapshot.computer?.browser],
+                ['Language', snapshot.computer?.language],
+                ['Online', snapshot.computer?.online],
+                ['Screen', snapshot.computer?.screen],
+                ['CPU Cores', snapshot.computer?.cores],
+                ['Memory', snapshot.computer?.memory],
+                ['Host', snapshot.computer?.host],
+                ['Origin', snapshot.computer?.origin]
+            ]),
+            ...this._snapshotSectionLines('Network Adapters', adapterLines),
+            ...this._snapshotSectionLines('Scanner Ranges', scanRangeLines),
+            ...this._snapshotSectionLines('WebUI Environment', snapshot.computer?.userAgent ? [snapshot.computer.userAgent] : []),
+            ...this._snapshotSectionLines('Homing', snapshot.homing),
+            ...this._snapshotSectionLines('Power Supply', snapshot.powerSupply),
+            ...this._snapshotSectionLines('SD Card', snapshot.sdCard),
+            ...this._snapshotSectionLines('Probe Config', snapshot.probeConfig),
+            ...this._snapshotSectionLines('Spindles', snapshot.spindles),
+            ...this._snapshotSectionLines('Pin State', snapshot.pinState),
+            ...this._snapshotSectionLines('Macros', snapshot.macros),
+            ...this._snapshotSectionLines('Grbl Settings ($$)', snapshot.grblSettings)
+        ];
+
+        return lines.join('\n');
+    }
+
+    async _ensureJsPdfLoaded() {
+        if (window.jspdf?.jsPDF) return window.jspdf.jsPDF;
+
+        if (!this._jspdfLoadPromise) {
+            this._jspdfLoadPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+                script.onload = () => {
+                    if (window.jspdf?.jsPDF) resolve(window.jspdf.jsPDF);
+                    else reject(new Error('jsPDF loaded without global export'));
+                };
+                script.onerror = () => reject(new Error('Failed to load jsPDF'));
+                document.head.appendChild(script);
+            }).finally(() => {
+                if (!window.jspdf?.jsPDF) this._jspdfLoadPromise = null;
+            });
+        }
+
+        return this._jspdfLoadPromise;
     }
 
     async render() {
@@ -472,5 +587,50 @@ export class TroubleshootingInfoView {
         link.click();
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async exportPdf() {
+        if (!window.ws || !window.ws.isConnected) {
+            window.showToast?.('Exporting without a machine connection. PC info will be included, but connect to capture full machine details.', 'plug-zap', 'warning');
+        }
+
+        try {
+            const jsPDF = await this._ensureJsPdfLoaded();
+            const snapshot = await this._buildSnapshot();
+            const reportText = this._buildPlainTextReport(snapshot);
+            const exportDate = new Date(snapshot.exportedAt);
+            const stamp = exportDate.toISOString().replace(/[:.]/g, '-');
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'pt',
+                format: 'a4',
+                compress: true
+            });
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 36;
+            const maxWidth = pageWidth - (margin * 2);
+            const lineHeight = 12;
+            let y = margin;
+
+            doc.setFont('courier', 'normal');
+            doc.setFontSize(10);
+
+            const lines = doc.splitTextToSize(reportText, maxWidth);
+            lines.forEach(line => {
+                if (y > pageHeight - margin) {
+                    doc.addPage();
+                    y = margin;
+                }
+                doc.text(line, margin, y);
+                y += lineHeight;
+            });
+
+            doc.save(`ooznest-troubleshooting-${stamp}.pdf`);
+        } catch (error) {
+            console.error('Failed to export troubleshooting PDF:', error);
+            window.showToast?.('Failed to export PDF. Please try again while online.', 'file-warning', 'error');
+        }
     }
 }

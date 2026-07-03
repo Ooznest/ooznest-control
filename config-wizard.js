@@ -129,7 +129,7 @@ export class ConfigWizard {
 
         const size = sizeMap[configName[2]] || 'Unknown size';
         const dust = configName[3] === 'A' ? 'Dust shoe' : 'No dust shoe';
-        const enclosure = configName[4] === 'A' ? 'Enclosure' : 'Open frame';
+        const enclosure = configName[4] === 'A' ? 'Enclosure' : 'No Enclosure';
         const spindle = spindleMap[configName[5]] || 'Unknown spindle';
         const laser = configName[6] === 'A' ? 'Laser fitted' : 'No laser';
         const probeMap = {
