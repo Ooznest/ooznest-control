@@ -16,13 +16,9 @@ export class TroubleshootingHandler {
         this._chainToSpindles = false;
         this.isOoznestBoard = false;
         this._computerInfoPromise = null;
-
-        this.ws.on('connect', () => {
-            setTimeout(() => {
-                this._chainToSpindles = true;
-                this.refreshPinInfo();
-            }, 3000);
-        });
+        this.lastHomingMask = null;
+        this._startupPinRefresh = false;
+        this._startupSpindleRefresh = false;
 
         this.ws.on('line', (line) => {
             if (line.startsWith('[BOARD:Ooznest-CNC]') || line.startsWith('[BOARD:Ooznest-Motion-Control-Core]')) {
@@ -139,6 +135,10 @@ export class TroubleshootingHandler {
         this._updateINA219Chart();
     }
 
+    getLatestPowerSupplyValues() {
+        return this.ina219Data.length ? this.ina219Data[this.ina219Data.length - 1] : null;
+    }
+
     _initINA219Chart() {
         const canvas = document.getElementById('ina219-chart');
         if (!canvas || this.ina219Chart) return;
@@ -234,9 +234,17 @@ export class TroubleshootingHandler {
         this.ina219Chart.update('none');
     }
 
-    refreshPinInfo() {
+    primeStartupDiscovery() {
+        if (!this.ws || !this.ws.isConnected) return;
+        this._startupPinRefresh = true;
+        this._startupSpindleRefresh = true;
+        this._chainToSpindles = true;
+        this.refreshPinInfo({ suppressNotConnectedToast: true });
+    }
+
+    refreshPinInfo(options = {}) {
         if (!this.ws || !this.ws.isConnected) {
-            if (window.showToast) window.showToast('Not connected', 'plug-zap', 'error');
+            if (!options.suppressNotConnectedToast && window.showToast) window.showToast('Not connected', 'plug-zap', 'error');
             return;
         }
         this.pinDefs = {};
@@ -298,11 +306,14 @@ export class TroubleshootingHandler {
     _collectPinState(line) {
         if (line === 'ok') {
             this._collectingPinInfo = null;
+            this._renderPinInfo();
+            if (this._startupPinRefresh && window.showToast) {
+                this._startupPinRefresh = false;
+                window.showToast('Pin State Loaded', 'toggle-left', 'success');
+            }
             if (this._chainToSpindles) {
                 this._chainToSpindles = false;
-                this.refreshSpindles();
-            } else {
-                this._renderPinInfo();
+                this.refreshSpindles({ suppressNotConnectedToast: true });
             }
             return;
         }
@@ -401,9 +412,9 @@ export class TroubleshootingHandler {
         container.innerHTML = html;
     }
 
-    refreshSpindles() {
+    refreshSpindles(options = {}) {
         if (!this.ws || !this.ws.isConnected) {
-            if (window.showToast) window.showToast('Not connected', 'plug-zap', 'error');
+            if (!options.suppressNotConnectedToast && window.showToast) window.showToast('Not connected', 'plug-zap', 'error');
             return;
         }
         this.spindles = [];
@@ -416,6 +427,10 @@ export class TroubleshootingHandler {
         if (line === 'ok') {
             this._collectingSpindles = false;
             this._renderSpindles();
+            if (this._startupSpindleRefresh && window.showToast) {
+                this._startupSpindleRefresh = false;
+                window.showToast('Spindle Info Loaded', 'circle-gauge', 'success');
+            }
             if (window.updateLaserMode) setTimeout(window.updateLaserMode, 100);
             return;
         }
@@ -632,6 +647,7 @@ export class TroubleshootingHandler {
     }
 
     updateHoming(mask) {
+        this.lastHomingMask = mask;
         const container = document.getElementById('homing-status-content');
         if (!container) return;
         this.updateAxisVisibility();
@@ -643,7 +659,7 @@ export class TroubleshootingHandler {
         mapping.forEach((axis, i) => {
             const isHomed = (mask >> i) & 1;
             html += `<div class="flex items-center gap-2 px-3 py-2">
-                <span class="text-xs font-bold text-grey-dark flex-1">${axis} Axis</span>
+                <span class="text-xs font-medium text-grey-dark flex-1">${axis} Axis</span>
                 <span class="signal-badge ${isHomed ? 'signal-on' : 'signal-off'}"
                     style="${isHomed ? 'background:#dcfce7;color:#16a34a;border-color:#86efac;' : ''}">${isHomed ? 'HOMED' : '—'}</span>
             </div>`;
@@ -743,8 +759,8 @@ export class TroubleshootingHandler {
     }
 
     async renderInfoTab() {
-        if (window.configWizard?.renderInfoTab) {
-            await window.configWizard.renderInfoTab();
+        if (window.troubleshootingInfo?.render) {
+            await window.troubleshootingInfo.render();
         }
     }
 
@@ -802,7 +818,7 @@ export class TroubleshootingHandler {
         }
 
         html += '<details class="pt-2 border-t border-grey-light/60">';
-        html += '<summary class="text-[10px] font-bold text-grey uppercase cursor-pointer">User Agent</summary>';
+        html += '<summary class="text-[10px] font-bold text-grey uppercase cursor-pointer">WebUI Environment</summary>';
         html += `<div class="mt-2 text-[10px] text-grey break-all">${this._escapeHtml(info.userAgent)}</div>`;
         html += '</details>';
 

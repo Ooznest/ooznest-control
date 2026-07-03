@@ -173,61 +173,9 @@ export class ConfigWizard {
     // --- Info Tab Rendering ---
 
     async renderInfoTab() {
-        const container = document.getElementById('trouble-tab-info-content');
-        if (!container) return;
-
-        const v = this.verInfo;
-        const computerCardHtml = window.troubleshooting?.getComputerInfo
-            ? window.troubleshooting.renderComputerInfoCard(await window.troubleshooting.getComputerInfo())
-            : '';
-        let html = '<div class="space-y-4">';
-
-        // Firmware card
-        html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-        html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
-        html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Firmware</h3>';
-        html += '</div><div class="p-4 space-y-2">';
-        if (v) {
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${v.version || 'Unknown'}</span></div>`;
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine Config</span><span class="text-xs font-bold ${this._isUnconfigured(v.configName) ? 'text-red-500' : 'text-secondary-dark'}">${v.configName || 'None'}</span></div>`;
-            const decodedConfig = this._decodeMachineConfig(v.configName);
-            if (decodedConfig) {
-                html += `<div class="text-[10px] text-grey leading-relaxed">${decodedConfig}</div>`;
-            }
+        if (window.troubleshootingInfo?.render) {
+            await window.troubleshootingInfo.render();
         }
-        if (this.boardInfo) {
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Board</span><span class="text-xs font-bold text-secondary-dark">${this.boardInfo}</span></div>`;
-        }
-        html += '</div></div>';
-
-        // App version card
-        html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-        html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
-        html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Application</h3>';
-        html += '</div><div class="p-4 space-y-2">';
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${document.title.replace('Ooznest Control ', '') || 'Unknown'}</span></div>`;
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Platform</span><span class="text-xs font-bold text-secondary-dark">${window.electron ? 'Desktop' : window.cordova ? 'Mobile' : 'Web'}</span></div>`;
-        html += '</div></div>';
-
-        html += computerCardHtml;
-
-        // Options card
-        if (this.optInfo) {
-            html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-            html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
-            html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Options</h3>';
-            html += '</div><div class="p-4">';
-            html += `<span class="text-xs text-grey">${this.optInfo.slice(1, -1)}</span>`;
-            html += '</div></div>';
-        }
-
-        if (v && this._isUnconfigured(v.configName)) {
-            html += '<button onclick="window.configWizard.showWizard()" class="btn btn-primary w-full">Run Configuration Wizard</button>';
-        }
-
-        html += '</div>';
-        container.innerHTML = html;
-        if (window.lucide) window.lucide.createIcons();
     }
 
     // --- Wizard Modal ---

@@ -62,6 +62,11 @@ class UIManager {
             setTimeout(() => ws.sendCommand('$#'), 3500);
             setTimeout(() => ws.sendCommand('$I+'), 4000);
             setTimeout(() => {
+                if (window.troubleshooting?.primeStartupDiscovery) {
+                    window.troubleshooting.primeStartupDiscovery();
+                }
+            }, 4250);
+            setTimeout(() => {
                 window.userRequestedStatus = true;
                 ws.sendRealtime('\x87');
             }, 4500);

@@ -11,6 +11,7 @@ export class SDCardHandler {
         this.path = "/";
         this.fileCount = 0;
         this.files = {}; // Map filename -> size (bytes)
+        this.listedEntries = []; // Current directory listing for troubleshooting/export
 
         // Download State
         this.isDownloading = false;
@@ -141,6 +142,7 @@ export class SDCardHandler {
         document.getElementById('sd-current-path').textContent = this.path;
         this.fileCount = 0;
         this.files = {}; // Clear cache
+        this.listedEntries = [];
         document.getElementById('sd-badge').classList.add('hidden');
 
         // Try HTTP first if available
@@ -350,6 +352,7 @@ export class SDCardHandler {
             this.files[name] = bytes; // Store for progress calculation
             this.term.writeln(`  \x1b[2m${name}  (${sizeDisplay})\x1b[0m`);
         }
+        this.listedEntries.push({ type: 'file', name, fullPath, bytes, sizeDisplay });
 
         // Update Badge
         this.fileCount++;
@@ -461,6 +464,7 @@ export class SDCardHandler {
         const content = line.replace('[DIR:', '').replace(']', '');
         const name = content.split('/').pop();
         const tbody = document.querySelector('#sd-table tbody');
+        this.listedEntries.push({ type: 'dir', name, fullPath: content });
 
         const row = document.createElement('tr');
         row.className = "hover:bg-grey-light border-b border-grey-light cursor-pointer transition-colors group";
