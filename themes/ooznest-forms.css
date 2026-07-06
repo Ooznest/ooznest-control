@@ -16,6 +16,8 @@
 .tab-pane input[type="number"],
 .tab-pane input[type="search"],
 .tab-pane textarea:not(.xterm-helper-textarea) {
+    width: 100%;
+    min-width: 0;
     min-height: 44px;
     padding: 10px 14px;
     border: 1.5px solid rgba(68, 157, 159, 0.72);

@@ -291,17 +291,6 @@ export class ProbeHandler {
         setVal('tlo-y', s.tloY || 0);
         setVal('tlo-z', s.tloZ || -5);
 
-        const statusEls = document.querySelectorAll('.plate-status-text');
-        statusEls.forEach(el => {
-            if (isPlate) {
-                el.textContent = "Mode: Plate";
-                el.classList.replace('text-grey', 'text-primary-dark');
-            } else {
-                el.textContent = "Mode: Probe";
-                el.classList.replace('text-primary-dark', 'text-grey');
-            }
-        });
-
         ['tab-centers', 'tab-rotation', 'tab-inside-corners'].forEach(tab => {
             const btn = document.querySelector(`.probe-tab-btn[data-target="${tab}"]`);
             if (btn) {

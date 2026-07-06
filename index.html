@@ -1661,37 +1661,32 @@
                                             <button class="btn btn-primary shadow-soft w-full" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div class="space-y-6">
-                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="ooznest-field input-field font-mono text-sm" value="5"></div>
-                                                </div>
-                                            </div>
-                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6"></div>
-                                                    <div>
-                                                        <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-type">Endmill Type</label>
-                                                        <select id="bc-tool-type" class="ooznest-select oz-select text-sm">
-                                                            <option value="flat">Flat</option>
-                                                            <option value="ball">Ball</option>
-                                                        </select>
-                                                    </div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100"></div>
-                                                </div>
+                                    <div class="space-y-6">
+                                        <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                            <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="ooznest-field input-field font-mono text-sm" value="5"></div>
                                             </div>
                                         </div>
-                                        <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft flex items-center justify-center text-grey text-xs">
-                                            <div class="text-center"><i data-lucide="circle" class="text-5xl text-grey-light block mb-3"></i><p>Bowl cutter generates concentric toolpaths from the center outward.<br>Origin is set to the center of the bowl.</p></div>
+                                        <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                            <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6"></div>
+                                                <div>
+                                                    <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-type">Endmill Type</label>
+                                                    <select id="bc-tool-type" class="ooznest-select oz-select text-sm">
+                                                        <option value="flat">Flat</option>
+                                                        <option value="ball">Ball</option>
+                                                    </select>
+                                                </div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1798,20 +1793,20 @@
                                             <!-- Basic Params -->
                                             <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-tool">Probe
-                                                    Diameter</label>
+                                                    Diameter (mm)</label>
                                                 <input type="number" id="prb-tool"
                                                     class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
                                             </div>
                                             <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-z-thick">Plate
                                                     Thickness
-                                                    (Z)</label>
+                                                    (Z, mm)</label>
                                                 <input type="number" id="prb-z-thick"
                                                     class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
                                             </div>
                                             <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-xy-offset">Plate Offset
-                                                    (XY)</label>
+                                                    (XY, mm)</label>
                                                 <input type="number" id="prb-xy-offset"
                                                     class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
                                             </div>
@@ -1819,43 +1814,39 @@
                                             <hr class="border-grey-light">
 
                                             <!-- Speeds -->
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                        for="prb-feed">Fast
-                                                        Feed</label>
-                                                    <input type="number" id="prb-feed"
-                                                        class="ooznest-field input-field font-mono text-xs h-8">
-                                                </div>
-                                                <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                        for="prb-feed-latch">Seek
-                                                        Feed</label>
-                                                    <input type="number" id="prb-feed-latch"
-                                                        class="ooznest-field input-field font-mono text-xs h-8">
-                                                </div>
+                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-feed">Fast
+                                                    Feed (mm/min)</label>
+                                                <input type="number" id="prb-feed"
+                                                    class="ooznest-field input-field font-mono text-xs h-8">
                                             </div>
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                        for="prb-dist">Max
-                                                        Dist</label>
-                                                    <input type="number" id="prb-dist"
-                                                        class="ooznest-field input-field font-mono text-xs h-8">
-                                                </div>
-                                                <div><label
-                                                        class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                        for="prb-retract">Retract</label>
-                                                    <input type="number" id="prb-retract"
-                                                        class="ooznest-field input-field font-mono text-xs h-8">
-                                                </div>
+                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-feed-latch">Seek
+                                                    Feed (mm/min)</label>
+                                                <input type="number" id="prb-feed-latch"
+                                                    class="ooznest-field input-field font-mono text-xs h-8">
+                                            </div>
+                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-dist">Max
+                                                    Dist (mm)</label>
+                                                <input type="number" id="prb-dist"
+                                                    class="ooznest-field input-field font-mono text-xs h-8">
+                                            </div>
+                                            <div><label
+                                                    class="ooznest-label text-[10px] font-bold text-grey block mb-1"
+                                                    for="prb-retract">Retract (mm)</label>
+                                                <input type="number" id="prb-retract"
+                                                    class="ooznest-field input-field font-mono text-xs h-8">
                                             </div>
                                             <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-edge-dist">Plate
-                                                    Clearance (XY)</label>
+                                                    Clearance (XY, mm)</label>
                                                 <input type="number" id="prb-edge-dist"
                                                     class="ooznest-field input-field font-mono text-xs h-8">
                                             </div>
                                             <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-z-depth">Probe
-                                                    Depth</label>
+                                                    Depth (mm)</label>
                                                 <input type="number" id="prb-z-depth"
                                                     class="ooznest-field input-field font-mono text-xs h-8">
                                             </div>
@@ -1953,7 +1944,7 @@
                                                         <h4 class="text-xs font-bold text-grey uppercase mb-2">Fixed
                                                             Tool
                                                             Setter Location (G53)</h4>
-                                                        <div class="grid grid-cols-3 gap-2">
+                                                        <div class="space-y-2">
                                                             <div><label class="ooznest-label text-[9px] font-bold text-grey">X</label>
                                                                 <input type="number" id="tlo-x"
                                                                     class="ooznest-field input-field h-8 text-xs" placeholder="0.0">
@@ -2025,7 +2016,6 @@
                                                 <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
                                                     <div class="flex justify-between items-start mb-2">
                                                         <h3 class="font-bold text-secondary-dark text-sm"><i data-lucide="box" ></i> Outside Corner</h3>
-                                                        <span class="text-[9px] text-grey font-bold plate-status-text">Mode: Plate</span>
                                                     </div>
                                                     <p class="text-xs text-grey leading-relaxed mb-3">
                                                         Probe two edges of an outside corner to set work zero.
@@ -2056,7 +2046,6 @@
                                                 <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
                                                     <div class="flex justify-between items-center mb-2">
                                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Single Surface</h3>
-                                                        <span class="text-[10px] text-grey font-bold plate-status-text">Mode: Plate</span>
                                                     </div>
                                                     <p class="text-xs text-grey leading-relaxed mb-3">
                                                         Find the location of a single edge or surface in X, Y, or Z.
@@ -2170,7 +2159,6 @@
                                         <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
                                             <div class="flex justify-between items-start mb-2">
                                                 <h3 class="font-bold text-secondary-dark text-sm"><i data-lucide="crop" ></i> Inside Corner</h3>
-                                                <span class="text-[9px] text-grey font-bold plate-status-text">Mode: Plate</span>
                                             </div>
                                             <p class="text-xs text-grey leading-relaxed mb-3">
                                                 Probe two edges of an inside corner to set work zero.

@@ -18,11 +18,11 @@ export class MacroHandler {
 
         // Color options (Tailwind classes)
         this.colors = [
-            { name: 'Yellow', bg: 'bg-primary', text: 'text-black', border: 'border-primary-dark' },
+            { name: 'Orange', bg: 'bg-secondary', text: 'text-white', border: 'border-secondary-dark' },
             { name: 'Green', bg: 'bg-green-500', text: 'text-white', border: 'border-green-600' },
             { name: 'Red', bg: 'bg-red-500', text: 'text-white', border: 'border-red-600' },
             { name: 'Blue', bg: 'bg-blue-500', text: 'text-white', border: 'border-blue-600' },
-            { name: 'Grey', bg: 'bg-secondary', text: 'text-white', border: 'border-secondary-dark' },
+            { name: 'Teal', bg: 'bg-primary', text: 'text-black', border: 'border-primary-dark' },
             { name: 'White', bg: 'bg-white', text: 'text-grey-dark', border: 'border-grey-light' }
         ];
 
@@ -35,6 +35,9 @@ export class MacroHandler {
         if (stored) {
             try {
                 this.macros = JSON.parse(stored);
+                this.macros.forEach(macro => {
+                    macro.color = this.normalizeColorName(macro.color);
+                });
             } catch (e) {
                 console.error("Failed to load macros", e);
                 this.macros = [];
@@ -86,7 +89,7 @@ export class MacroHandler {
         this.macros.forEach((macro, index) => {
             const btn = document.createElement('div');
             // Find color definition
-            const colorDef = this.colors.find(c => c.name === macro.color) || this.colors[0];
+            const colorDef = this.colors.find(c => c.name === this.normalizeColorName(macro.color)) || this.colors[0];
 
             btn.className = `relative group cursor-pointer rounded-xl shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center p-4 h-32 ${colorDef.bg} ${colorDef.text} ${colorDef.border}`;
 
@@ -200,7 +203,7 @@ export class MacroHandler {
             nameInput.value = "";
             gcodeInput.value = "";
             iconInput.value = this.icons[0];
-            this.colorSelect.value = "Yellow";
+            this.colorSelect.value = "Orange";
             // Select first icon visually
             this.iconGrid.firstElementChild.classList.add('bg-primary', 'text-black', 'border-primary');
         } else {
@@ -211,7 +214,7 @@ export class MacroHandler {
             nameInput.value = m.name;
             gcodeInput.value = m.gcode;
             iconInput.value = normalizedIcon;
-            this.colorSelect.value = m.color;
+            this.colorSelect.value = this.normalizeColorName(m.color);
 
             // Highlight Icon
             const iconBtn = this.iconGrid.querySelector(`[data-icon="${normalizedIcon}"]`);
@@ -248,11 +251,19 @@ export class MacroHandler {
         return map[icon] || icon || 'play';
     }
 
+    normalizeColorName(color) {
+        const map = {
+            Yellow: 'Orange',
+            Grey: 'Teal'
+        };
+        return map[color] || color || 'Orange';
+    }
+
     saveFromModal() {
         const name = document.getElementById('macro-name-input').value.trim();
         const gcode = document.getElementById('macro-gcode-input').value;
         const icon = document.getElementById('macro-icon-input').value;
-        const color = this.colorSelect.value;
+        const color = this.normalizeColorName(this.colorSelect.value);
 
         if (!name) {
             const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
