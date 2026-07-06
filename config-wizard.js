@@ -328,28 +328,28 @@ export class ConfigWizard {
                                 html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light p-3">';
                                 html += `<div class="font-bold text-xs text-secondary-dark mb-2">${axis} Axis</div>`;
                                 html += '<div class="grid grid-cols-2 gap-x-3 gap-y-2">';
-                                html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Drive</label>';
-                                html += `<select onchange="window.configWizard.wizardData.customDrives.${lc}=this.value;window.configWizard._renderWizardStep()" class="oz-select w-full text-xs">`;
+                                html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Drive</label>';
+                                html += `<select onchange="window.configWizard.wizardData.customDrives.${lc}=this.value;window.configWizard._renderWizardStep()" class="ooznest-select oz-select w-full text-xs">`;
                                 html += `<option value="belt" ${drive === 'belt' ? 'selected' : ''}>Belt</option>`;
                                 html += `<option value="leadscrew" ${drive === 'leadscrew' ? 'selected' : ''}>Leadscrew</option>`;
                                 html += '</select></div>';
-                                html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Travel (mm)</label>';
-                                html += `<input type="number" step="1" id="w-custom-travel-${lc}" value="${(this.wizardData.machine.travel || {})[lc] || 0}" placeholder="e.g. 270" class="input-field w-full">`;
+                                html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Travel (mm)</label>';
+                                html += `<input type="number" step="1" id="w-custom-travel-${lc}" value="${(this.wizardData.machine.travel || {})[lc] || 0}" placeholder="e.g. 270" class="ooznest-field input-field w-full">`;
                                 html += '</div>';
                                 if (drive === 'belt') {
-                                    html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Belt pitch (mm)</label>';
-                                    html += `<input type="number" step="0.1" value="${pitch}" onchange="window.configWizard.wizardData.customBeltPitch.${lc}=parseFloat(this.value)||2" class="input-field w-full">`;
+                                    html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Belt pitch (mm)</label>';
+                                    html += `<input type="number" step="0.1" value="${pitch}" onchange="window.configWizard.wizardData.customBeltPitch.${lc}=parseFloat(this.value)||2" class="ooznest-field input-field w-full">`;
                                     html += '</div>';
-                                    html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Pulley teeth</label>';
-                                    html += `<input type="number" step="1" value="${teeth}" onchange="window.configWizard.wizardData.customPulleyTeeth.${lc}=parseInt(this.value)||20" class="input-field w-full">`;
+                                    html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Pulley teeth</label>';
+                                    html += `<input type="number" step="1" value="${teeth}" onchange="window.configWizard.wizardData.customPulleyTeeth.${lc}=parseInt(this.value)||20" class="ooznest-field input-field w-full">`;
                                     html += '</div>';
                                 } else {
-                                    html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Lead (mm/rev)</label>';
-                                    html += `<input type="number" step="0.1" value="${lead}" onchange="window.configWizard.wizardData.customLead.${lc}=parseFloat(this.value)||5" class="input-field w-full">`;
+                                    html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Lead (mm/rev)</label>';
+                                    html += `<input type="number" step="0.1" value="${lead}" onchange="window.configWizard.wizardData.customLead.${lc}=parseFloat(this.value)||5" class="ooznest-field input-field w-full">`;
                                     html += '</div><div></div>';
                                 }
-                                html += '<div class="col-span-2"><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Endstop</label>';
-                                html += `<select onchange="window.configWizard.wizardData.customEndstops.${lc}=this.value" class="oz-select w-full text-xs">`;
+                                html += '<div class="col-span-2"><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Endstop</label>';
+                                html += `<select onchange="window.configWizard.wizardData.customEndstops.${lc}=this.value" class="ooznest-select oz-select w-full text-xs">`;
                                 html += `<option value="min" ${endstop === 'min' ? 'selected' : ''}>${axis} min</option>`;
                                 html += `<option value="max" ${endstop === 'max' ? 'selected' : ''}>${axis} max</option>`;
                                 html += '</select></div>';
@@ -375,10 +375,10 @@ export class ConfigWizard {
                     html += `</div>`;
                     if (isCustomSize) {
                         html += '<div class="px-4 pb-3 space-y-2">';
-                        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Width (mm)</label>';
-                        html += `<input type="number" step="1" id="w-custom-width" value="${this.wizardData.customWidth || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=this.value&&document.getElementById('w-custom-length').value?'('+(Math.max(0,parseInt(this.value)-230))+'×'+(Math.max(0,parseInt(document.getElementById('w-custom-length').value)-230))+'×88mm)':''" class="input-field w-full">`;
-                        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5 mt-2">Length (mm)</label>';
-                        html += `<input type="number" step="1" id="w-custom-length" value="${this.wizardData.customLength || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=document.getElementById('w-custom-width').value&&this.value?'('+(Math.max(0,parseInt(document.getElementById('w-custom-width').value)-230))+'×'+(Math.max(0,parseInt(this.value)-230))+'×88mm)':''" class="input-field w-full">`;
+                        html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Width (mm)</label>';
+                        html += `<input type="number" step="1" id="w-custom-width" value="${this.wizardData.customWidth || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=this.value&&document.getElementById('w-custom-length').value?'('+(Math.max(0,parseInt(this.value)-230))+'×'+(Math.max(0,parseInt(document.getElementById('w-custom-length').value)-230))+'×88mm)':''" class="ooznest-field input-field w-full">`;
+                        html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5 mt-2">Length (mm)</label>';
+                        html += `<input type="number" step="1" id="w-custom-length" value="${this.wizardData.customLength || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=document.getElementById('w-custom-width').value&&this.value?'('+(Math.max(0,parseInt(document.getElementById('w-custom-width').value)-230))+'×'+(Math.max(0,parseInt(this.value)-230))+'×88mm)':''" class="ooznest-field input-field w-full">`;
                         html += `<p id="w-custom-area" class="text-[10px] text-grey italic">${this.wizardData.customWidth && this.wizardData.customLength ? `(${Math.max(0, this.wizardData.customWidth - 230)}×${Math.max(0, this.wizardData.customLength - 230)}×88mm)` : ''}</p>`;
                         html += '</div>';
                     }
@@ -447,7 +447,7 @@ export class ConfigWizard {
                         // Modbus protocol sub-select
                         if (checked) {
                             html += '<div class="px-4 pb-3 bg-grey-bg/30">';
-                            html += '<label class="config-filter-subtitle block mb-1.5 mt-1">Modbus Protocol</label>';
+                            html += '<label class="ooznest-label config-filter-subtitle block mb-1.5 mt-1">Modbus Protocol</label>';
                             html += '<div class="grid gap-1">';
                             Object.entries(this.modbusProtocols).forEach(([key, proto]) => {
                                 const sel = th.vfdModbus === key;
@@ -579,12 +579,12 @@ export class ConfigWizard {
                 html += '<div class="px-4 pb-3 bg-grey-bg/30">';
                 html += '<div class="grid grid-cols-2 gap-4">';
                 html += '<div>';
-                html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
-                html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="input-field w-full">`;
+                html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
+                html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="ooznest-field input-field w-full">`;
                 html += '</div>';
                 html += '<div>';
-                html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">XY Plate Offset (mm)</label>';
-                html += `<input type="number" step="0.1" id="wizard-plate-offset" value="${s.xyPlateOffset || 10}" class="input-field w-full">`;
+                html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">XY Plate Offset (mm)</label>';
+                html += `<input type="number" step="0.1" id="wizard-plate-offset" value="${s.xyPlateOffset || 10}" class="ooznest-field input-field w-full">`;
                 html += '</div>';
                 html += '</div>';
                 html += '</div>';
@@ -663,12 +663,12 @@ export class ConfigWizard {
         if (isStation) {
             html += '<div class="px-4 py-3 bg-grey-bg/30 space-y-4">';
             html += '<div>';
-            html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Network Name ($74)</label>';
-            html += `<input type="text" maxlength="64" value="${this._escapeHtml(this.wizardData.wifiSsid || '')}" oninput="window.configWizard.wizardData.wifiSsid=this.value" class="input-field w-full" placeholder="WiFi network name">`;
+            html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Network Name ($74)</label>';
+            html += `<input type="text" maxlength="64" value="${this._escapeHtml(this.wizardData.wifiSsid || '')}" oninput="window.configWizard.wizardData.wifiSsid=this.value" class="ooznest-field input-field w-full" placeholder="WiFi network name">`;
             html += '</div>';
             html += '<div>';
-            html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Password ($75)</label>';
-            html += `<input type="password" minlength="8" maxlength="32" value="${this._escapeHtml(this.wizardData.wifiPsk || '')}" oninput="window.configWizard.wizardData.wifiPsk=this.value" class="input-field w-full" placeholder="8 to 32 characters">`;
+            html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Password ($75)</label>';
+            html += `<input type="password" minlength="8" maxlength="32" value="${this._escapeHtml(this.wizardData.wifiPsk || '')}" oninput="window.configWizard.wizardData.wifiPsk=this.value" class="ooznest-field input-field w-full" placeholder="8 to 32 characters">`;
             html += '</div>';
             html += '</div>';
         }

@@ -27,6 +27,7 @@ class AppModal {
         };
 
         this.panel = this.root.querySelector('[data-modal-panel]') || this.root.firstElementChild;
+        this.lastFocusedElement = null;
         this.root.classList.add('oz-modal');
         this.root.setAttribute('role', 'dialog');
         this.root.setAttribute('aria-modal', 'true');
@@ -53,13 +54,32 @@ class AppModal {
         return !this.root.classList.contains('hidden');
     }
 
+    getPrimaryAction() {
+        return this.root.querySelector(
+            '[data-modal-primary], .oz-modal__footer .btn-primary:not(:disabled), .btn-primary:not(:disabled)'
+        );
+    }
+
+    focusPrimaryAction() {
+        const primaryAction = this.getPrimaryAction();
+        if (!primaryAction || typeof primaryAction.focus !== 'function') return;
+
+        requestAnimationFrame(() => {
+            if (!this.isOpen()) return;
+            primaryAction.focus();
+        });
+    }
+
     show() {
         if (this.isOpen()) return;
+        const activeEl = document.activeElement;
+        this.lastFocusedElement = activeEl instanceof HTMLElement ? activeEl : null;
         this.root.classList.remove('hidden');
         this.root.setAttribute('aria-hidden', 'false');
         removeFromStack(this);
         modalStack.push(this);
         if (typeof this.options.onShow === 'function') this.options.onShow();
+        this.focusPrimaryAction();
     }
 
     hide() {
@@ -68,6 +88,10 @@ class AppModal {
         this.root.setAttribute('aria-hidden', 'true');
         removeFromStack(this);
         if (typeof this.options.onHide === 'function') this.options.onHide();
+        if (this.lastFocusedElement && typeof this.lastFocusedElement.focus === 'function') {
+            this.lastFocusedElement.focus();
+        }
+        this.lastFocusedElement = null;
     }
 
     toggle(force) {

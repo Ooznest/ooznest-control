@@ -1,0 +1,170 @@
+/* Ooznest navbar and tab patterns */
+
+#tabs-scroll-container {
+    gap: 0;
+    padding: 0;
+    background: var(--oz-teal-mid);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin: 10px 0 6px;
+    box-shadow:
+        0 4px 12px rgba(13, 31, 34, 0.2),
+        inset 0 0 0 1px rgba(68, 157, 159, 0.16);
+}
+
+#primary-tabs-bar {
+    min-width: 0;
+}
+
+.tabs-scroll-arrow {
+    display: none;
+    flex: 0 0 auto;
+    width: 36px;
+    margin: 10px 0 6px;
+    background: var(--oz-teal-mid);
+    color: rgba(255, 255, 255, 0.7);
+    border: none;
+    box-shadow: 0 4px 12px rgba(13, 31, 34, 0.2);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tabs-scroll-arrow:hover {
+    color: #ffffff;
+    background: var(--oz-teal-mid);
+    filter: brightness(1.12);
+}
+
+#tabs-scroll-left {
+    border-radius: 0.5rem 0 0 0.5rem;
+}
+
+#tabs-scroll-right {
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+#primary-tabs-bar.tabs-fit #tabs-scroll-container {
+    overflow-x: hidden;
+}
+
+#primary-tabs-bar.tabs-fit #tabs-scroll-container .tab-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+}
+
+#primary-tabs-bar.tabs-overflow .tabs-scroll-arrow {
+    display: inline-flex;
+}
+
+#primary-tabs-bar.tabs-overflow #tabs-scroll-container {
+    cursor: grab;
+    border-radius: 0;
+}
+
+#primary-tabs-bar.tabs-overflow #tabs-scroll-container .tab-btn {
+    flex: 0 0 auto;
+}
+
+.tab-btn {
+    min-height: 42px;
+    padding: 8px 20px;
+    border-radius: 0 !important;
+    border: 0;
+    color: #ffffff;
+    background: transparent;
+    box-shadow: none;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.tab-btn.active {
+    background: var(--oz-primary);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.tab-badge {
+    background: rgba(255, 255, 255, 0.24);
+    color: #fff;
+}
+
+.tab-btn:not(.active) .tab-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.tab-btn.active .tab-badge {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+}
+
+.tools-tab-btn,
+.probe-tab-btn,
+.trouble-tab-btn {
+    border-bottom-width: 2px;
+    border-bottom-color: transparent;
+    color: var(--oz-grey-mid);
+    background: transparent;
+}
+
+.tools-tab-btn:hover,
+.probe-tab-btn:hover,
+.trouble-tab-btn:hover {
+    color: var(--oz-secondary-dark);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.tools-tab-btn.text-primary-dark,
+.probe-tab-btn.text-primary-dark,
+.trouble-tab-btn.text-primary-dark {
+    color: var(--oz-primary-dark) !important;
+    border-bottom-color: var(--oz-primary) !important;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+#connection-modal .connection-modal__tabs {
+    display: flex;
+    gap: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--oz-secondary);
+}
+
+#connection-modal .tab-btn {
+    flex: 1 1 0;
+    min-height: 42px;
+    padding: 8px 20px;
+    border-radius: 0 !important;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 400;
+    box-shadow: none;
+    justify-content: center;
+}
+
+#connection-modal .tab-btn.active {
+    background: var(--oz-primary);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+#connection-modal .tab-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: none;
+}

@@ -573,13 +573,9 @@ export class ConnectionManager {
         if (!this.btnConnect) return;
 
         if (isConnecting) {
+            this.btnConnect.innerHTML = '<i data-lucide="x-circle"></i> Disconnect';
             if (window.lucide) {
-                var xIcon = lucide.createElement('x-circle');
-                this.btnConnect.innerHTML = '';
-                this.btnConnect.appendChild(xIcon);
-                this.btnConnect.appendChild(document.createTextNode(' Disconnect'));
-            } else {
-                this.btnConnect.innerHTML = '<i data-lucide="x-circle"></i> Disconnect';
+                lucide.createIcons({ root: this.btnConnect });
             }
             this.btnConnect.className = "btn btn-secondary flex-1 h-9 text-xs shadow-none border border-white/10 px-2 py-0 !bg-yellow-500 !text-secondary-dark hover:!bg-yellow-400";
         } else if (!this.isConnected) {

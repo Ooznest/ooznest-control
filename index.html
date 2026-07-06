@@ -12,6 +12,16 @@
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
     <!-- Themes -->
     <link id="theme-stylesheet" rel="stylesheet" href="themes/ooznest.css">
+    <link rel="stylesheet" href="themes/ooznest-navbar.css">
+    <link rel="stylesheet" href="themes/ooznest-sidebar.css">
+    <link rel="stylesheet" href="themes/ooznest-3dview.css">
+    <link rel="stylesheet" href="themes/ooznest-toggles.css">
+    <link rel="stylesheet" href="themes/ooznest-forms.css">
+    <link rel="stylesheet" href="themes/ooznest-calibration.css">
+    <link rel="stylesheet" href="themes/ooznest-probe.css">
+    <link rel="stylesheet" href="themes/ooznest-configwizard.css">
+    <link rel="stylesheet" href="themes/ooznest-modals.css">
+    <link rel="stylesheet" href="themes/ooznest-toasts.css">
     <!-- Vendor fonts & icons (deferred — not critical for first paint) -->
     <link rel="stylesheet" href="vendor/google-fonts.css" media="print" onload="this.media='all'; this.onload=null">
     <script src="vendor/lucide.js"></script>
@@ -132,9 +142,9 @@
                 </div>
 
                 <!-- DRO Panel -->
-                <div class="dro-panel">
+                <div class="dro-panel machine-sidebar-panel machine-sidebar-panel--dro">
                     <!-- Status Row: machine state + accessory toggles -->
-                    <div class="flex items-center justify-between px-1 pb-1.5 border-b border-white/10 mb-1.5">
+                    <div class="flex items-center justify-between pb-2 border-b border-white/10 mb-1.5">
                         <span id="machine-state" class="machine-status-pill text-center">Unknown</span>
                         <div class="flex items-center gap-1">
                             <button id="acc-spindle" class="dro-accessory-btn" onclick="window.dro.toggleAccessory('S')" title="Spindle">
@@ -149,12 +159,12 @@
                     </div>
 
                     <!-- Header: WCS & Units -->
-                    <div class="grid grid-cols-2 gap-1.5 mb-1">
+                    <div class="grid grid-cols-2 gap-1.5 mb-1  pb-2 border-b border-white/10">
 
                         <!-- Units Toggle (Segmented) -->
                         <div class="sidebar-control-stack">
-                            <label class="sidebar-control-heading" for="unitToggle">Units</label>
-                            <label class="oz-segmented-toggle h-7 w-full" for="unitToggle">
+                            <label class="ooznest-label sidebar-control-heading" for="unitToggle">Units</label>
+                            <label class="oz-segmented-toggle oz-segmented-toggle--dark h-7 w-full" for="unitToggle">
                                 <input type="checkbox" id="unitToggle" class="sr-only" onchange="window.dro.toggleUnits();">
                                 <div class="oz-segmented-bg h-full w-full">
                                     <div class="oz-segmented-slider"></div>
@@ -166,9 +176,9 @@
 
                         <!-- WCS Select (styled like MM/IN toggle) -->
                         <div class="sidebar-control-stack">
-                            <label class="sidebar-control-heading" for="wcs-select">WCS</label>
+                            <label class="ooznest-label sidebar-control-heading" for="wcs-select">WCS</label>
                             <div class="sidebar-select-group">
-                                <select id="wcs-select" class="wcs-select sidebar-select oz-select oz-select--compact"
+                                <select id="wcs-select" class="wcs-select sidebar-select ooznest-select oz-select oz-select--compact"
                                     onchange="window.dro.setWCS(this.value)" aria-label="Work Coordinate System">
                                     <option value="G54" selected>G54</option>
                                     <option value="G55">G55</option>
@@ -305,7 +315,7 @@
                         <div class="flex items-center justify-between text-[10px]">
                             <div class="flex items-center gap-1.5 font-bold text-white/80 uppercase tracking-wide">
                                 <i data-lucide="fan" ></i>
-                                <span>Spindle</span>
+                                <span>Spindle Override</span>
                             </div>
                             <div class="flex gap-1 items-center">
                                 <button onclick="sendRealtime('\x9B')" class="override-mini-btn">-</button>
@@ -318,7 +328,7 @@
                         <div class="flex items-center justify-between text-[10px]">
                             <div class="flex items-center gap-1.5 font-bold text-white/80 uppercase tracking-wide">
                                 <i data-lucide="gauge" ></i>
-                                <span>Feed</span>
+                                <span>Feed Override</span>
                             </div>
                             <div class="flex gap-1 items-center">
                                 <button onclick="sendRealtime('\x92')" class="override-mini-btn">-</button>
@@ -331,7 +341,7 @@
                         <div class="flex items-center justify-between text-[10px]">
                             <div class="flex items-center gap-1.5 font-bold text-white/80 uppercase tracking-wide">
                                 <i data-lucide="zap" ></i>
-                                <span>Rapids</span>
+                                <span>Rapids Override</span>
                             </div>
                             <div class="flex gap-1 items-center">
                                 <span id="rapid-ovr" class="min-w-[32px] text-center font-bold !text-white">100%</span>
@@ -347,13 +357,13 @@
                 </div>
 
                 <!-- Jog Controls (Compact) -->
-                <div id="jog-panel">
+                <div id="jog-panel" class="machine-sidebar-panel machine-sidebar-panel--jog">
 
                     <!-- Feed/Dist/Mode row (above jog pad) -->
                     <div class="grid grid-cols-2 gap-1.5 mb-3 jog-toolbar">
                         <div>
-                            <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Feed</label>
-                            <select id="feedRate" class="sidebar-select oz-select oz-select--compact"
+                            <label class="ooznest-label text-[9px] font-bold text-grey uppercase block mb-0.5">Jog Feedrate</label>
+                            <select id="feedRate" class="sidebar-select ooznest-select oz-select oz-select--compact"
                                 aria-label="Jog feed rate mode">
                                 <option value="slow">Slow</option>
                                 <option value="med">Medium</option>
@@ -361,15 +371,15 @@
                             </select>
                         </div>
                         <div id="distContainer">
-                            <label class="text-[9px] font-bold text-grey uppercase block mb-0.5">Dist</label>
-                            <select id="stepSize" class="sidebar-select oz-select oz-select--compact"
+                            <label class="ooznest-label text-[9px] font-bold text-grey uppercase block mb-0.5">Jog Distance</label>
+                            <select id="stepSize" class="sidebar-select ooznest-select oz-select oz-select--compact"
                                 aria-label="Jog distance step size">
                                 <!-- Populated by JS -->
                             </select>
                         </div>
                         <div class="col-span-2">
-                            <label class="text-[9px] font-bold text-grey uppercase block mb-1">Jog Mode</label>
-                            <label class="oz-segmented-toggle h-8 w-full" for="jogContinuous">
+                            <label class="ooznest-label text-[9px] font-bold text-grey uppercase block mb-1">Jog Mode</label>
+                            <label class="oz-segmented-toggle oz-segmented-toggle--dark h-8 w-full" for="jogContinuous">
                                 <input type="checkbox" id="jogContinuous" class="sr-only">
                                 <div class="oz-segmented-bg h-full w-full">
                                     <div class="oz-segmented-slider"></div>
@@ -669,15 +679,15 @@
                 <!-- Endmill Setup Modal -->
                 <div id="endmill-modal-overlay" class="oz-modal hidden z-[1200] modal-radial-overlay">
                     <div class="oz-modal__dialog w-full max-w-md" data-modal-panel>
-                        <div class="oz-modal__header shrink-0">
-                            <h3 class="text-secondary-dark flex items-center gap-2"><i data-lucide="wrench"></i>Endmill Setup</h3>
-                            <button onclick="closeEndmillSetup()" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
+                        <div class="oz-modal__header">
+                            <h3><i data-lucide="wrench"></i><span>Endmill Setup</span></h3>
+                            <button type="button" data-modal-close><i data-lucide="x" ></i></button>
                         </div>
                         <div class="oz-modal__body space-y-4 text-sm">
                             <!-- Tool Family -->
                             <div>
-                                <label class="text-secondary-dark text-xs block mb-1.5">Tool Family</label>
-                                <select id="em-toolType" class="oz-select w-full text-sm">
+                                <label class="ooznest-label text-secondary-dark text-xs block mb-1.5">Tool Family</label>
+                                <select id="em-toolType" class="ooznest-select oz-select w-full text-sm">
                                     <option value="Flat Endmill">Flat Endmill</option>
                                     <option value="Ball Nose">Ball Nose</option>
                                     <option value="V-Bit">V-Bit</option>
@@ -687,22 +697,22 @@
                             <!-- Diameter -->
                             <div>
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="text-secondary-dark text-xs">Diameter</label>
+                                    <label class="ooznest-label text-secondary-dark text-xs">Diameter</label>
                                     <span id="em-val-diameter" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">6.0 mm</span>
                                 </div>
                                 <input type="range" id="em-diameter" min="1.0" max="32.0" step="0.5" value="6.0" class="w-full accent-primary">
                             </div>
                             <!-- Flute Count -->
                             <div id="em-row-flutes">
-                                <label class="text-secondary-dark text-xs block mb-1.5">Flute Count</label>
-                                <select id="em-flutes" class="oz-select w-full text-sm">
+                                <label class="ooznest-label text-secondary-dark text-xs block mb-1.5">Flute Count</label>
+                                <select id="em-flutes" class="ooznest-select oz-select w-full text-sm">
                                     <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="6">6</option>
                                 </select>
                             </div>
                             <!-- Helix Angle -->
                             <div id="em-row-helix">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="text-secondary-dark text-xs">Helix Angle</label>
+                                    <label class="ooznest-label text-secondary-dark text-xs">Helix Angle</label>
                                     <span id="em-val-helixAngle" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">30°</span>
                                 </div>
                                 <input type="range" id="em-helixAngle" min="0" max="55" step="1" value="30" class="w-full accent-primary">
@@ -710,7 +720,7 @@
                             <!-- Flute Depth -->
                             <div id="em-row-fluteDepth">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="text-secondary-dark text-xs">Flute Depth</label>
+                                    <label class="ooznest-label text-secondary-dark text-xs">Flute Depth</label>
                                     <span id="em-val-fluteDepth" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">38%</span>
                                 </div>
                                 <input type="range" id="em-fluteDepth" min="0.10" max="0.65" step="0.01" value="0.38" class="w-full accent-primary">
@@ -718,29 +728,29 @@
                             <!-- Cut Length -->
                             <div id="em-row-cutLength">
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="text-secondary-dark text-xs">Cut Length</label>
+                                    <label class="ooznest-label text-secondary-dark text-xs">Cut Length</label>
                                     <span id="em-val-cutLength" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">22.0 mm</span>
                                 </div>
                                 <input type="range" id="em-cutLength" min="5.0" max="60.0" step="1.0" value="22.0" class="w-full accent-primary">
                             </div>
                             <!-- V-Angle (hidden by default) -->
                             <div id="em-row-vAngle" class="hidden">
-                                <label class="text-secondary-dark text-xs block mb-1.5">V-Angle (Included)</label>
-                                <select id="em-vAngle" class="oz-select w-full text-sm">
+                                <label class="ooznest-label text-secondary-dark text-xs block mb-1.5">V-Angle (Included)</label>
+                                <select id="em-vAngle" class="ooznest-select oz-select w-full text-sm">
                                     <option value="15">15°</option><option value="30">30°</option><option value="45">45°</option><option value="60" selected>60°</option><option value="90">90°</option>
                                 </select>
                             </div>
                             <!-- Exposed Shank -->
                             <div>
                                 <div class="flex justify-between items-center mb-1">
-                                    <label class="text-secondary-dark text-xs">Exposed Shank</label>
+                                    <label class="ooznest-label text-secondary-dark text-xs">Exposed Shank</label>
                                     <span id="em-val-exposedShank" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">8.0 mm</span>
                                 </div>
                                 <input type="range" id="em-exposedShank" min="0.0" max="25.0" step="1.0" value="8.0" class="w-full accent-primary">
                             </div>
                             <!-- Show Collet -->
                             <div class="flex items-center justify-between">
-                                <label class="text-secondary-dark text-xs">Show Collet</label>
+                                <label class="ooznest-label text-secondary-dark text-xs">Show Collet</label>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" id="em-showHolder" checked class="sr-only peer">
                                     <div class="w-9 h-5 bg-grey-light rounded-full peer-checked:bg-primary peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
@@ -748,8 +758,8 @@
                             </div>
                             <!-- Coating -->
                             <div>
-                                <label class="text-secondary-dark text-xs block mb-1.5">Coating</label>
-                                <select id="em-coating" class="oz-select w-full text-sm">
+                                <label class="ooznest-label text-secondary-dark text-xs block mb-1.5">Coating</label>
+                                <select id="em-coating" class="ooznest-select oz-select w-full text-sm">
                                     <option value="Carbide (Uncoated)">Carbide (Uncoated)</option>
                                     <option value="TiN (Gold)" selected>TiN (Gold)</option>
                                     <option value="AlTiN (Violet/Black)">AlTiN (Violet/Black)</option>
@@ -757,7 +767,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="oz-modal__footer oz-modal__footer--actions justify-end shrink-0">
+                        <div class="oz-modal__footer oz-modal__footer--actions">
                             <button onclick="closeEndmillSetup(); if(window.lucide)lucide.createIcons();" class="btn btn-primary w-full">Apply</button>
                         </div>
                     </div>
@@ -1022,7 +1032,7 @@
                                                 </div>
                                                 <div>
                                                     <label
-                                                        class="text-[10px] font-bold text-grey uppercase block mb-0.5">Tool
+                                                        class="ooznest-label text-[10px] font-bold text-grey uppercase block mb-0.5">Tool
                                                         Number</label>
                                                     <input type="number" id="edit-tool-num"
                                                         class="font-mono text-2xl font-bold w-24 outline-none bg-transparent placeholder-grey/30"
@@ -1040,11 +1050,11 @@
                                                 <div class="flex items-end gap-2">
                                                     <div class="flex-1">
                                                         <label
-                                                            class="text-[11px] font-bold text-secondary-dark block mb-1">Z
+                                                            class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Z
                                                             Offset</label>
                                                         <div>
                                                             <input type="number" id="edit-tool-z"
-                                                                class="input-field font-mono text-lg" step="0.001"
+                                                        class="ooznest-field input-field font-mono text-lg" step="0.001"
                                                                 placeholder="9999.999">
                                                         </div>
                                                     </div>
@@ -1057,27 +1067,27 @@
                                                 <div class="flex items-end gap-2">
                                                     <div class="flex-1">
                                                         <label
-                                                            class="text-[11px] font-bold text-secondary-dark block mb-1">Diameter</label>
+                                                            class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Diameter</label>
                                                         <div>
                                                             <input type="number" id="edit-tool-dia"
-                                                                class="input-field font-mono text-lg" step="0.01"
+                                                                class="ooznest-field input-field font-mono text-lg" step="0.01"
                                                                 placeholder="0.00">
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4 pt-2">
                                                     <div>
-                                                        <label class="text-[10px] font-bold text-grey block mb-1">X
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1">X
                                                             Offset</label>
                                                         <input type="number" id="edit-tool-x"
-                                                            class="input-field font-mono text-sm" step="0.001"
+                                                            class="ooznest-field input-field font-mono text-sm" step="0.001"
                                                             placeholder="9999.999">
                                                     </div>
                                                     <div>
-                                                        <label class="text-[10px] font-bold text-grey block mb-1">Y
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1">Y
                                                             Offset</label>
                                                         <input type="number" id="edit-tool-y"
-                                                            class="input-field font-mono text-sm" step="0.001"
+                                                            class="ooznest-field input-field font-mono text-sm" step="0.001"
                                                             placeholder="9999.999">
                                                     </div>
                                                 </div>
@@ -1090,7 +1100,7 @@
                                                     <p class="text-xs text-grey font-bold uppercase"><i
                                                             data-lucide="info" ></i> Description</p>
                                                     <textarea id="edit-tool-desc"
-                                                        class="input-field h-16 resize-none text-xs"
+                                                        class="ooznest-field input-field h-16 resize-none text-xs"
                                                         placeholder="Endmill, Ballnose, etc..."></textarea>
                                                     <p class="text-[10px] text-grey leading-tight">
                                                         <i data-lucide="info" ></i>
@@ -1290,8 +1300,8 @@
                                             </div>
 
                                             <div id="cal-distance-panel" class="hidden mb-8 max-w-md mx-auto text-left bg-grey-bg border border-grey-light rounded-xl p-4">
-                                                <label class="text-xs font-bold text-secondary-dark block mb-2">Commanded Travel (mm)</label>
-                                                <input type="number" id="cal-input-commanded" class="input-field text-right text-lg font-mono" value="100" min="0.1" step="0.1">
+                                                <label class="ooznest-label text-xs font-bold text-secondary-dark block mb-2">Commanded Travel (mm)</label>
+                                                <input type="number" id="cal-input-commanded" class="ooznest-field input-field text-right text-lg font-mono" value="100" min="0.1" step="0.1">
                                                 <p class="text-[10px] text-grey mt-2">The machine will move the selected axis by this amount in the positive direction.</p>
                                             </div>
 
@@ -1345,31 +1355,31 @@
 
                                                 <div id="cal-measure-vernier-inputs">
                                                     <div>
-                                                        <label class="text-xs font-bold text-secondary-dark block mb-2">Which CNC mark aligns perfectly? (0-100)</label>
+                                                        <label class="ooznest-label text-xs font-bold text-secondary-dark block mb-2">Which CNC mark aligns perfectly? (0-100)</label>
                                                         <div>
-                                                            <label class="text-[10px] font-bold text-grey block mb-1">MARK</label>
-                                                            <input type="number" id="cal-input-mark" class="input-field text-right text-lg font-mono" placeholder="96" min="0" max="100">
+                                                            <label class="ooznest-label text-[10px] font-bold text-grey block mb-1">MARK</label>
+                                                            <input type="number" id="cal-input-mark" class="ooznest-field input-field text-right text-lg font-mono" placeholder="96" min="0" max="100">
                                                         </div>
                                                         <p class="text-[10px] text-grey mt-1 italic">Calculated CNC Distance: <span id="cal-cnc-dist-display">0.00</span> mm</p>
                                                     </div>
 
                                                     <div>
-                                                        <label class="text-xs font-bold text-secondary-dark block mb-2">What is the Ruler reading at that mark? (mm)</label>
+                                                        <label class="ooznest-label text-xs font-bold text-secondary-dark block mb-2">What is the Ruler reading at that mark? (mm)</label>
                                                         <div>
-                                                            <label class="text-[10px] font-bold text-grey block mb-1">REAL</label>
-                                                            <input type="number" id="cal-input-real" class="input-field text-right text-lg font-mono" placeholder="86.0" step="0.1">
+                                                            <label class="ooznest-label text-[10px] font-bold text-grey block mb-1">REAL</label>
+                                                            <input type="number" id="cal-input-real" class="ooznest-field input-field text-right text-lg font-mono" placeholder="86.0" step="0.1">
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 <div id="cal-measure-distance-inputs" class="hidden space-y-4">
                                                     <div>
-                                                        <label class="text-xs font-bold text-secondary-dark block mb-2">Commanded Travel (mm)</label>
-                                                        <input type="text" id="cal-commanded-display" class="input-field text-right text-lg font-mono" value="100.00" readonly>
+                                                        <label class="ooznest-label text-xs font-bold text-secondary-dark block mb-2">Commanded Travel (mm)</label>
+                                                        <input type="text" id="cal-commanded-display" class="ooznest-field input-field text-right text-lg font-mono" value="100.00" readonly>
                                                     </div>
                                                     <div>
-                                                        <label class="text-xs font-bold text-secondary-dark block mb-2">Actual Measured Travel (mm)</label>
-                                                        <input type="number" id="cal-input-actual-travel" class="input-field text-right text-lg font-mono" placeholder="99.8" step="0.01">
+                                                        <label class="ooznest-label text-xs font-bold text-secondary-dark block mb-2">Actual Measured Travel (mm)</label>
+                                                        <input type="number" id="cal-input-actual-travel" class="ooznest-field input-field text-right text-lg font-mono" placeholder="99.8" step="0.01">
                                                     </div>
                                                 </div>
 
@@ -1461,18 +1471,18 @@
                                                     Flatten a spoilboard or stock material using a surfacing bit. Ensure your spindle is trammed perpendicular to the bed, and set Z zero at the highest point.
                                                 </p>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-tool">Tool Diameter (mm)</label><input type="number" id="surf-tool"
-                                                            class="input-field font-mono text-sm"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-stepover">Stepover (%)</label><input type="number" id="surf-stepover"
-                                                            class="input-field font-mono text-sm"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-feed">Feed Rate (mm/min)</label><input type="number" id="surf-feed"
-                                                            class="input-field font-mono text-sm"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-rpm">Spindle RPM</label><input type="number" id="surf-rpm"
-                                                            class="input-field font-mono text-sm"></div>
+                                                            class="ooznest-field input-field font-mono text-sm"></div>
                                                 </div>
                                             </div>
 
@@ -1494,17 +1504,17 @@
                                             <div class="space-y-3">
                                                 <div id="surf-dim-fields"
                                                     class="grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-x">Width (X)</label><input type="number" id="surf-x"
-                                                            class="input-field font-mono text-sm"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-y">Height (Y)</label><input type="number" id="surf-y"
-                                                            class="input-field font-mono text-sm"></div>
+                                                            class="ooznest-field input-field font-mono text-sm"></div>
                                                 </div>
                                                 <div>
-                                                    <label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                         for="surf-dir">Cutting Direction</label>
-                                                    <select id="surf-dir" class="oz-select text-sm">
+                                                    <select id="surf-dir" class="ooznest-select oz-select text-sm">
                                                         <option value="X">Along X-Axis</option>
                                                         <option value="Y">Along Y-Axis</option>
                                                     </select>
@@ -1518,16 +1528,16 @@
                                                     Depth Control</h3>
                                                 <div class="space-y-3">
                                                     <div class="grid grid-cols-2 gap-4">
-                                                        <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                        <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                                 for="surf-z-step">Depth per Pass (mm)</label><input type="number" id="surf-z-step"
-                                                                class="input-field font-mono text-sm"></div>
-                                                        <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                                class="ooznest-field input-field font-mono text-sm"></div>
+                                                        <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                                 for="surf-z-final">Final Depth (mm)</label><input type="number" id="surf-z-final"
-                                                                class="input-field font-mono text-sm"></div>
+                                                                class="ooznest-field input-field font-mono text-sm"></div>
                                                     </div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-z-safe">Safe Z Clearance (mm)</label><input type="number" id="surf-z-safe"
-                                                            class="input-field font-mono text-sm"></div>
+                                                            class="ooznest-field input-field font-mono text-sm"></div>
                                                 </div>
                                             </div>
 
@@ -1580,15 +1590,15 @@
                                                     Engrave a grid pattern with outward-facing rulers along the left and bottom edges. Use a V-bit or engraving tool for best results.
                                                 </p>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-width">Width (X mm)</label><input type="number" id="sg-width"
-                                                            class="input-field font-mono text-sm" value="300"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm" value="300"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-height">Height (Y mm)</label><input type="number" id="sg-height"
-                                                            class="input-field font-mono text-sm" value="300"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm" value="300"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-spacing">Grid Spacing (mm)</label><input type="number" id="sg-spacing"
-                                                            class="input-field font-mono text-sm" value="50"></div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="50"></div>
                                                 </div>
                                             </div>
 
@@ -1596,7 +1606,7 @@
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Coordinate System</h3>
                                                 <div>
-                                                    <select id="sg-coords" class="oz-select text-sm">
+                                                    <select id="sg-coords" class="ooznest-select oz-select text-sm">
                                                         <option value="Work">Work Coordinates</option>
                                                         <option value="Machine">Machine Coordinates</option>
                                                     </select>
@@ -1619,18 +1629,18 @@
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Depth & Feeds</h3>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-depth">Engrave Depth (mm)</label><input type="number" id="sg-depth"
-                                                            class="input-field font-mono text-sm" value="-0.3" step="0.1"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm" value="-0.3" step="0.1"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-up">Safe Z (mm)</label><input type="number" id="sg-up"
-                                                            class="input-field font-mono text-sm" value="1" step="0.1"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm" value="1" step="0.1"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-feed">Feed Rate (mm/min)</label><input type="number" id="sg-feed"
-                                                            class="input-field font-mono text-sm" value="500"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            class="ooznest-field input-field font-mono text-sm" value="500"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-plunge">Plunge Rate (mm/min)</label><input type="number" id="sg-plunge"
-                                                            class="input-field font-mono text-sm" value="100"></div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="100"></div>
                                                 </div>
                                             </div>
 
@@ -1656,27 +1666,27 @@
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="input-field font-mono text-sm" value="100"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="input-field font-mono text-sm" value="100"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="input-field font-mono text-sm" value="20"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="input-field font-mono text-sm" value="5"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="ooznest-field input-field font-mono text-sm" value="5"></div>
                                                 </div>
                                             </div>
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="input-field font-mono text-sm" step="0.5" value="6"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6"></div>
                                                     <div>
-                                                        <label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-type">Endmill Type</label>
-                                                        <select id="bc-tool-type" class="oz-select text-sm">
+                                                        <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-type">Endmill Type</label>
+                                                        <select id="bc-tool-type" class="ooznest-select oz-select text-sm">
                                                             <option value="flat">Flat</option>
                                                             <option value="ball">Ball</option>
                                                         </select>
                                                     </div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="input-field font-mono text-sm" value="35"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="input-field font-mono text-sm" step="0.5" value="1"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="input-field font-mono text-sm" value="500"></div>
-                                                    <div><label class="text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1786,68 +1796,68 @@
                                             </div>
 
                                             <!-- Basic Params -->
-                                            <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-tool">Probe
                                                     Diameter</label>
                                                 <input type="number" id="prb-tool"
-                                                    class="input-field font-mono text-xs h-8" step="0.01">
+                                                    class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
                                             </div>
-                                            <div class="prb-plate-only"><label class="text-[10px] font-bold text-grey block mb-1"
+                                            <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-z-thick">Plate
                                                     Thickness
                                                     (Z)</label>
                                                 <input type="number" id="prb-z-thick"
-                                                    class="input-field font-mono text-xs h-8" step="0.01">
+                                                    class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
                                             </div>
-                                            <div class="prb-plate-only"><label class="text-[10px] font-bold text-grey block mb-1"
+                                            <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-xy-offset">Plate Offset
                                                     (XY)</label>
                                                 <input type="number" id="prb-xy-offset"
-                                                    class="input-field font-mono text-xs h-8" step="0.01">
+                                                    class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
                                             </div>
 
                                             <hr class="border-grey-light">
 
                                             <!-- Speeds -->
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                         for="prb-feed">Fast
                                                         Feed</label>
                                                     <input type="number" id="prb-feed"
-                                                        class="input-field font-mono text-xs h-8">
+                                                        class="ooznest-field input-field font-mono text-xs h-8">
                                                 </div>
-                                                <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                         for="prb-feed-latch">Seek
                                                         Feed</label>
                                                     <input type="number" id="prb-feed-latch"
-                                                        class="input-field font-mono text-xs h-8">
+                                                        class="ooznest-field input-field font-mono text-xs h-8">
                                                 </div>
                                             </div>
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                                <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                         for="prb-dist">Max
                                                         Dist</label>
                                                     <input type="number" id="prb-dist"
-                                                        class="input-field font-mono text-xs h-8">
+                                                        class="ooznest-field input-field font-mono text-xs h-8">
                                                 </div>
                                                 <div><label
-                                                        class="text-[10px] font-bold text-grey block mb-1"
+                                                        class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                         for="prb-retract">Retract</label>
                                                     <input type="number" id="prb-retract"
-                                                        class="input-field font-mono text-xs h-8">
+                                                        class="ooznest-field input-field font-mono text-xs h-8">
                                                 </div>
                                             </div>
-                                            <div class="prb-plate-only"><label class="text-[10px] font-bold text-grey block mb-1"
+                                            <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-edge-dist">Plate
                                                     Clearance (XY)</label>
                                                 <input type="number" id="prb-edge-dist"
-                                                    class="input-field font-mono text-xs h-8">
+                                                    class="ooznest-field input-field font-mono text-xs h-8">
                                             </div>
-                                            <div><label class="text-[10px] font-bold text-grey block mb-1"
+                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-z-depth">Probe
                                                     Depth</label>
                                                 <input type="number" id="prb-z-depth"
-                                                    class="input-field font-mono text-xs h-8">
+                                                    class="ooznest-field input-field font-mono text-xs h-8">
                                             </div>
                                             <button class="btn btn-secondary shadow-soft w-full justify-center mt-2"
                                                 onclick="window.probeHandler.saveSettings()">
@@ -1944,18 +1954,18 @@
                                                             Tool
                                                             Setter Location (G53)</h4>
                                                         <div class="grid grid-cols-3 gap-2">
-                                                            <div><label class="text-[9px] font-bold text-grey">X</label>
+                                                            <div><label class="ooznest-label text-[9px] font-bold text-grey">X</label>
                                                                 <input type="number" id="tlo-x"
-                                                                    class="input-field h-8 text-xs" placeholder="0.0">
+                                                                    class="ooznest-field input-field h-8 text-xs" placeholder="0.0">
                                                             </div>
-                                                            <div><label class="text-[9px] font-bold text-grey">Y</label>
+                                                            <div><label class="ooznest-label text-[9px] font-bold text-grey">Y</label>
                                                                 <input type="number" id="tlo-y"
-                                                                    class="input-field h-8 text-xs" placeholder="0.0">
+                                                                    class="ooznest-field input-field h-8 text-xs" placeholder="0.0">
                                                             </div>
-                                                            <div><label class="text-[9px] font-bold text-grey">Z
+                                                            <div><label class="ooznest-label text-[9px] font-bold text-grey">Z
                                                                     (Start)</label>
                                                                 <input type="number" id="tlo-z"
-                                                                    class="input-field h-8 text-xs" placeholder="-5.0">
+                                                                    class="ooznest-field input-field h-8 text-xs" placeholder="-5.0">
                                                             </div>
                                                         </div>
                                                         <div class="flex gap-2 mt-2">
@@ -2111,14 +2121,14 @@
                                                 Approximate size of the feature. Extra clearance is added automatically.
                                             </p>
                                             <div class="grid grid-cols-2 gap-4 max-w-sm">
-                                                <div><label class="text-[10px] font-bold text-grey block mb-1">Width
+                                                <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1">Width
                                                         (X)</label>
-                                                    <input type="number" id="prb-feature-x" class="input-field h-8 text-sm"
+                                                    <input type="number" id="prb-feature-x" class="ooznest-field input-field h-8 text-sm"
                                                         placeholder="0.0">
                                                 </div>
-                                                <div><label class="text-[10px] font-bold text-grey block mb-1">Height
+                                                <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1">Height
                                                         (Y)</label>
-                                                    <input type="number" id="prb-feature-y" class="input-field h-8 text-sm"
+                                                    <input type="number" id="prb-feature-y" class="ooznest-field input-field h-8 text-sm"
                                                         placeholder="0.0">
                                                 </div>
                                             </div>
@@ -2201,10 +2211,10 @@
                                                     </p>
 
                                                     <div class="bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                                        <label class="text-[10px] font-bold text-grey block mb-1">Probe
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1">Probe
                                                             Distance (P1 to P2)</label>
                                                         <input type="number" id="rot-dist"
-                                                            class="input-field h-8 text-sm" value="50">
+                                                            class="ooznest-field input-field h-8 text-sm" value="50">
                                                         <p class="text-[9px] text-grey mt-1">Distance to move along X
                                                             before
                                                             probing P2.</p>
@@ -2579,9 +2589,8 @@
         class="oz-modal hidden z-[1100] modal-radial-overlay">
         <div class="oz-modal__dialog overflow-hidden w-full max-w-md" data-modal-panel>
             <div class="oz-modal__header">
-                <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
-                        data-lucide="plug" class="text-primary"></i><span>Connect to Machine</span></h3>
-                <button onclick="toggleConnectionModal()" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none"><i data-lucide="x" ></i></button>
+                <h3><i data-lucide="plug"></i><span>Connect to Machine</span></h3>
+                <button type="button" data-modal-close><i data-lucide="x" ></i></button>
             </div>
 
             <div class="oz-modal__body space-y-4">
@@ -2602,8 +2611,8 @@
                 <div id="config-webserial" class="flex flex-col gap-4">
                     <p class="text-xs text-grey">Browser-native direct serial connection (Recommended for web use).</p>
                     <div>
-                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Baud</label>
-                        <select id="baud-webserial" class="oz-select">
+                        <label class="ooznest-label text-[10px] font-bold text-grey uppercase block mb-1">Baud</label>
+                        <select id="baud-webserial" class="ooznest-select oz-select">
 
                             <option value="115200" selected>115200</option>
                             <option value="250000">250000</option>
@@ -2620,16 +2629,16 @@
                 <div id="config-usb" class="hidden flex flex-col gap-4">
                     <p class="text-xs text-grey">Connect via Native USB OTG (Mobile) or Node.js Backend (Desktop).</p>
                     <div id="usb-port-container">
-                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
+                        <label class="ooznest-label text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
                         <div class="flex gap-2">
-                            <select id="port-node" class="oz-select flex-1 min-w-0"></select>
+                            <select id="port-node" class="ooznest-select oz-select flex-1 min-w-0"></select>
                             <button onclick="refreshNodePorts()" class="hidden btn btn-secondary"><i
                                     data-lucide="refresh-cw" ></i></button>
                         </div>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Baud</label>
-                        <select id="baud-node" class="oz-select">
+                        <label class="ooznest-label text-[10px] font-bold text-grey uppercase block mb-1">Baud</label>
+                        <select id="baud-node" class="ooznest-select oz-select">
                             <option value="115200" selected>115200</option>
                             <option value="250000">250000</option>
                             <option value="500000">500000</option>
@@ -2644,13 +2653,13 @@
                     <p class="text-xs text-grey">Connect to grblHAL over Ethernet or WiFi.</p>
                     <div id="telnet-manual-ip-wrap">
                         <div class="flex items-center justify-between mb-1 gap-3">
-                            <label class="text-[10px] font-bold text-grey uppercase block">IP Address</label>
+                            <label class="ooznest-label text-[10px] font-bold text-grey uppercase block">IP Address</label>
                             <button id="btn-scan-telnet" onclick="window.openTelnetScanner()"
                                 class="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors whitespace-nowrap">
                                 <i data-lucide="search" class="mr-1"></i> SCAN NETWORK
                             </button>
                         </div>
-                        <input type="text" id="ip-telnet" class="input-field" placeholder="192.168.1.10" aria-label="Telnet IP address">
+                        <input type="text" id="ip-telnet" class="ooznest-field input-field" placeholder="192.168.1.10" aria-label="Telnet IP address">
                     </div>
                     <div id="discover-panel" class="hidden bg-grey-bg rounded-xl border border-grey-light p-4 space-y-3">
                         <div class="flex justify-end">
@@ -2659,8 +2668,8 @@
                             </button>
                         </div>
                         <div id="discover-subnet-wrap" class="space-y-1">
-                            <label for="discover-subnet-select" class="text-[10px] font-bold text-grey uppercase block">Network Adapter</label>
-                            <select id="discover-subnet-select" class="oz-select" onchange="window.updateTelnetScanStartState()"></select>
+                            <label for="discover-subnet-select" class="ooznest-label text-[10px] font-bold text-grey uppercase block">Network Adapter</label>
+                            <select id="discover-subnet-select" class="ooznest-select oz-select" onchange="window.updateTelnetScanStartState()"></select>
                         </div>
                         <div class="flex justify-end">
                             <button id="btn-start-telnet-scan" onclick="window.startTelnetScanNetwork()" class="btn btn-primary" disabled>
@@ -2680,8 +2689,8 @@
                         </div>
                     </div>
                     <div id="telnet-manual-port-wrap">
-                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
-                        <input type="number" id="port-telnet" class="input-field" value="23" aria-label="Telnet port">
+                        <label class="ooznest-label text-[10px] font-bold text-grey uppercase block mb-1">Port</label>
+                        <input type="number" id="port-telnet" class="ooznest-field input-field" value="23" aria-label="Telnet port">
                     </div>
                 </div>
 
@@ -2689,8 +2698,8 @@
                 <div id="config-websocket" class="hidden flex flex-col gap-4">
                     <p class="text-xs text-grey">Connect to grblHAL WebSocket (Plugin_networking).</p>
                     <div>
-                        <label class="text-[10px] font-bold text-grey uppercase block mb-1">URL</label>
-                        <input type="text" id="url-websocket" class="input-field"
+                        <label class="ooznest-label text-[10px] font-bold text-grey uppercase block mb-1">URL</label>
+                        <input type="text" id="url-websocket" class="ooznest-field input-field"
                             placeholder="ws://192.168.1.10:81/ws">
                     </div>
 
@@ -2725,10 +2734,9 @@
         class="oz-modal hidden z-[1100] modal-radial-overlay">
         <div class="oz-modal__dialog w-full max-w-[600px]" data-modal-panel>
             <div class="oz-modal__header">
-                <h3 class="text-lg font-bold text-secondary-dark flex items-center gap-2"><i
-                        data-lucide="zap" ></i> <span id="macro-modal-title">Create New Macro</span>
+                <h3><i data-lucide="zap" ></i><span id="macro-modal-title">Create New Macro</span>
                 </h3>
-                <button id="btn-close-macro" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none"><i data-lucide="x" ></i></button>
+                <button id="btn-close-macro" type="button" data-modal-close><i data-lucide="x" ></i></button>
             </div>
 
             <div class="oz-modal__body space-y-4">
@@ -2736,12 +2744,12 @@
                 <!-- Name & Color -->
                 <div class="space-y-4">
                     <div class="space-y-1">
-                        <label for="macro-name-input" class="text-[11px] font-bold text-grey uppercase">Macro Name</label>
-                        <input type="text" id="macro-name-input" class="input-field w-full" placeholder="e.g. Probe Z">
+                        <label for="macro-name-input" class="ooznest-label text-[11px] font-bold text-grey uppercase">Macro Name</label>
+                        <input type="text" id="macro-name-input" class="ooznest-field input-field w-full" placeholder="e.g. Probe Z">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-grey uppercase">Color</label>
-                        <select id="macro-color-select" class="oz-select w-full">
+                        <label class="ooznest-label text-[11px] font-bold text-grey uppercase">Color</label>
+                        <select id="macro-color-select" class="ooznest-select oz-select w-full">
                             <!-- Populated by JS -->
                         </select>
                     </div>
@@ -2749,7 +2757,7 @@
 
                 <!-- Icon Selection -->
                 <div class="space-y-1">
-                    <label class="text-[11px] font-bold text-grey uppercase">Icon</label>
+                    <label class="ooznest-label text-[11px] font-bold text-grey uppercase">Icon</label>
                     <input type="hidden" id="macro-icon-input">
                     <div id="macro-icon-grid"
                         class="flex flex-wrap gap-2 p-2 border border-grey-light rounded-lg bg-grey-bg">
@@ -2759,18 +2767,17 @@
 
                 <!-- G-Code Area -->
                 <div class="space-y-1 flex-1">
-                    <label class="text-[11px] font-bold text-grey uppercase">G-Code Sequence</label>
+                    <label class="ooznest-label text-[11px] font-bold text-grey uppercase">G-Code Sequence</label>
                     <textarea id="macro-gcode-input"
-                        class="w-full h-40 font-mono text-sm border-2 border-grey-light rounded-lg p-3 bg-grey-bg focus:bg-white focus:border-secondary outline-none resize-none"
+                        class="ooznest-field ooznest-textarea w-full h-40 font-mono text-sm border-2 border-grey-light rounded-lg p-3 bg-grey-bg focus:bg-white focus:border-secondary outline-none resize-none"
                         placeholder="G21&#10;G91&#10;G0 Z10"></textarea>
                     <p class="text-[10px] text-grey italic">Enter one G-code command per line.</p>
                 </div>
             </div>
 
-            <div class="oz-modal__footer oz-modal__footer--actions justify-end gap-2">
-                <button class="btn btn-secondary" data-modal-close
-                    onclick="window.getAppModal && window.getAppModal('macro-modal')?.hide()">Cancel</button>
+            <div class="oz-modal__footer oz-modal__footer--actions">
                 <button class="btn btn-primary" id="btn-save-macro">Save Macro</button>
+                <button class="btn btn-secondary" type="button" data-modal-close>Cancel</button>
             </div>
         </div>
     </div>
@@ -2781,10 +2788,8 @@
         <div
             class="oz-modal__dialog oz-modal__dialog--warning w-full max-w-lg animate-in fade-in zoom-in duration-200" data-modal-panel>
             <!-- Header -->
-            <div class="oz-modal__header oz-modal__header--warning p-4">
-                <h3 class="text-xl font-black text-black uppercase flex items-center gap-2">
-                    <i data-lucide="triangle-alert" ></i> Manual Tool Change
-                </h3>
+            <div class="oz-modal__header oz-modal__header--warning">
+                <h3>Manual Tool Change</h3>
                 <div class="flex items-center gap-2">
                     <span id="mtc-tool-badge" class="bg-black/20 text-black px-2 py-0.5 rounded text-xs font-bold hidden">T?</span>
                     <div class="bg-black/20 text-black px-2 py-0.5 rounded text-xs font-bold">M6</div>
@@ -2792,7 +2797,7 @@
             </div>
 
             <!-- Body -->
-            <div class="oz-modal__body p-6 space-y-5">
+            <div class="oz-modal__body oz-modal__body--warning space-y-5">
                 <div class="text-center space-y-2">
                     <p class="text-lg font-bold text-secondary-dark">The machine has requested a tool change.</p>
                     <p class="text-sm text-grey">Spindle is stopped. Jogging is enabled.</p>
@@ -2865,7 +2870,7 @@
             </div>
 
             <!-- Footer -->
-            <div class="oz-modal__footer p-4 justify-between gap-3">
+            <div class="oz-modal__footer oz-modal__footer--warning-bar">
                 <div class="text-[10px] text-grey leading-tight flex-1">
                     Click Resume only after tool is set.<br>Machine will return to previous pos.
                 </div>
@@ -3998,11 +4003,9 @@
     <!-- Configuration Wizard Modal -->
     <div id="config-wizard-overlay" class="oz-modal isolate hidden z-[100] modal-radial-overlay">
         <div class="oz-modal__dialog w-full max-w-2xl" data-modal-panel>
-            <div class="oz-modal__header px-5 py-3 shrink-0">
-                <h3 class="font-bold text-sm text-secondary-dark flex items-center gap-2">
-                    <i data-lucide="wand" class="text-primary"></i> Machine Configuration Wizard
-                </h3>
-                <button onclick="window.configWizard.hideWizard()" data-modal-close class="text-grey hover:text-secondary-dark text-lg leading-none">&times;</button>
+            <div class="oz-modal__header">
+                <h3><i data-lucide="wand"></i><span>Machine Configuration Wizard</span></h3>
+                <button type="button" data-modal-close><i data-lucide="x" ></i></button>
             </div>
             <div id="config-wizard-body" class="oz-modal__body">
                 <div class="text-center py-8">
@@ -4010,7 +4013,7 @@
                     <p class="text-xs text-grey mt-2">Loading...</p>
                 </div>
             </div>
-            <div id="config-wizard-footer" class="oz-modal__footer oz-modal__footer--actions justify-between shrink-0 hidden"></div>
+            <div id="config-wizard-footer" class="oz-modal__footer oz-modal__footer--actions hidden"></div>
         </div>
     </div>
 

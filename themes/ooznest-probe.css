@@ -1,0 +1,128 @@
+/* Ooznest probe-specific UI */
+
+body[data-probe-mode="plate"] .prb-probe-only {
+    display: none !important;
+}
+
+body[data-probe-mode="probe"] .prb-plate-only {
+    display: none !important;
+}
+
+body[data-3d-probe-enabled="false"] .prb-3d-probe-only {
+    display: none !important;
+}
+
+#probe-config-banner {
+    background: var(--oz-notice-warning) !important;
+    border-color: #f2b23b !important;
+    color: #935d00 !important;
+}
+
+#probe-safety-bar.safe {
+    background: var(--oz-notice-success) !important;
+    border-color: var(--oz-success) !important;
+    color: #166534 !important;
+}
+
+#probe-safety-bar.unsafe,
+#probe-safety-bar {
+    background: var(--oz-notice-error) !important;
+    border-color: var(--oz-error) !important;
+    color: var(--oz-error) !important;
+}
+
+.probe-btn.probe-btn-disabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+.single-sel-btn,
+.corner-sel-btn {
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        background-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.single-sel-btn:hover,
+.corner-sel-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px rgba(13, 31, 34, 0.08);
+}
+
+.single-sel-btn {
+    width: 48px;
+    aspect-ratio: 1;
+    border-radius: 14px;
+    border-color: rgba(68, 157, 159, 0.18) !important;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.corner-sel-btn {
+    aspect-ratio: 1;
+}
+
+#outside-corner-grid .corner-sel-btn:nth-child(1),
+#inside-corner-grid .corner-sel-btn:nth-child(1) {
+    border-radius: 14px 0 0 0;
+}
+
+#outside-corner-grid .corner-sel-btn:nth-child(2),
+#inside-corner-grid .corner-sel-btn:nth-child(2) {
+    border-radius: 0 14px 0 0;
+}
+
+#outside-corner-grid .corner-sel-btn:nth-child(3),
+#inside-corner-grid .corner-sel-btn:nth-child(3) {
+    border-radius: 0 0 0 14px;
+}
+
+#outside-corner-grid .corner-sel-btn:nth-child(4),
+#inside-corner-grid .corner-sel-btn:nth-child(4) {
+    border-radius: 0 0 14px 0;
+}
+
+.corner-sel-btn.bg-primary-dark,
+.single-sel-btn.bg-primary-dark {
+    background: var(--oz-teal-brand);
+    border-color: var(--oz-teal-brand);
+    color: #fff;
+}
+
+.probe-config-card {
+    padding: 18px 18px 20px;
+    background: #fff;
+    border: 2px solid var(--oz-secondary) !important;
+    border-radius: 0 0 58px 0 !important;
+    box-shadow: 0 18px 38px rgba(13, 31, 34, 0.08);
+}
+
+.probe-config-card h3 {
+    color: var(--oz-secondary-dark);
+    border-bottom-color: rgba(68, 157, 159, 0.16) !important;
+    padding-bottom: 10px;
+}
+
+.probe-config-subcard {
+    background: #f5f8f8 !important;
+    border: 1px solid rgba(68, 157, 159, 0.18) !important;
+    border-radius: 0 0 24px 0 !important;
+}
+
+.probe-config-card .ooznest-field,
+.probe-config-card .ooznest-select {
+    border-color: rgba(68, 157, 159, 0.22);
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(13, 31, 34, 0.03);
+}
+
+.probe-config-card hr {
+    border-color: rgba(68, 157, 159, 0.14) !important;
+}
+
+.probe-config-card .btn-secondary {
+    border-color: rgba(68, 157, 159, 0.2);
+}

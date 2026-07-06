@@ -1,0 +1,345 @@
+/* Ooznest sidebar, DRO, and jog patterns */
+
+.machine-sidebar {
+    border-right: 1px solid var(--oz-border-soft);
+    box-shadow: 16px 0 36px rgba(13, 31, 34, 0.08);
+}
+
+#machine-controls {
+    flex: 1 1 auto;
+    min-height: 100%;
+    padding: 12px;
+    gap: 12px;
+}
+
+.machine-sidebar-panel {
+    background-color: rgb(68, 157, 159);
+    border: 1px solid rgba(176, 202, 207, 0.42);
+    border-radius: 0 0 20px 0;
+    box-shadow: var(--oz-surface-shadow);
+    color: #fff;
+}
+
+#sidebar-connect {
+    background-color: rgb(255, 133, 51);
+    border: 0;
+    border-radius: 0 0 0 0;
+    padding: 10px;
+    box-shadow: var(--oz-surface-shadow);
+}
+
+.machine-sidebar-panel .text-secondary-dark,
+.machine-sidebar-panel .text-grey-dark,
+.machine-sidebar-panel .text-grey,
+.machine-sidebar-panel .text-xs,
+.machine-sidebar-panel .text-sm,
+.machine-sidebar-panel .text-base,
+.machine-sidebar-panel .text-lg,
+.machine-sidebar-panel label,
+.machine-sidebar-panel span,
+.machine-sidebar-panel p,
+.machine-sidebar-panel div,
+.machine-sidebar-panel button {
+    color: #fff;
+}
+
+.machine-sidebar-panel .text-primary,
+.machine-sidebar-panel .text-primary-dark,
+.machine-sidebar-panel .text-secondary {
+    color: #ffe0cc !important;
+}
+
+.machine-sidebar-panel hr,
+.machine-sidebar-panel .border-grey-light,
+.machine-sidebar-panel .border-t,
+.machine-sidebar-panel .border-b {
+    border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.machine-sidebar-panel .ooznest-field,
+.machine-sidebar-panel .ooznest-select,
+.machine-sidebar-panel .sidebar-select {
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--oz-secondary-dark) !important;
+    border-color: rgba(176, 202, 207, 0.45);
+}
+
+.machine-sidebar-panel .sidebar-select,
+.machine-sidebar-panel .wcs-select,
+.machine-sidebar-panel .ooznest-select,
+.machine-sidebar-panel--jog .ooznest-field {
+    background-color: #fff !important;
+    color: var(--oz-secondary-dark) !important;
+    text-shadow: none !important;
+}
+
+.machine-sidebar-panel .sidebar-select option,
+.machine-sidebar-panel .wcs-select option,
+.machine-sidebar-panel .ooznest-select option {
+    background: #fff !important;
+    color: var(--oz-secondary-dark) !important;
+}
+
+.machine-sidebar-panel .btn-secondary,
+.machine-sidebar-panel .btn-ghost,
+.machine-sidebar-panel .jog-btn,
+.machine-sidebar-panel .jog-btn-extra,
+.machine-sidebar-panel .btn-ovr {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #fff;
+}
+
+.machine-sidebar-panel .btn-secondary:hover,
+.machine-sidebar-panel .btn-ghost:hover,
+.machine-sidebar-panel .jog-btn:hover,
+.machine-sidebar-panel .jog-btn-extra:hover,
+.machine-sidebar-panel .btn-ovr:hover {
+    color: #fff;
+}
+
+.machine-sidebar-panel--dro {
+    border: 0;
+    border-radius: var(--oz-panel-corner-lg);
+    box-shadow: var(--oz-surface-shadow);
+    padding: 12px;
+}
+
+.machine-sidebar-panel--jog {
+    background-color: rgb(176, 202, 207);
+    border: 2px solid rgba(176, 202, 207, 0.72);
+    border-radius: var(--oz-panel-corner);
+    box-shadow: var(--oz-surface-shadow);
+    color: #fff;
+    padding: 12px;
+}
+
+.machine-sidebar-panel--jog .text-secondary-dark,
+.machine-sidebar-panel--jog .text-grey-dark,
+.machine-sidebar-panel--jog .text-grey,
+.machine-sidebar-panel--jog .text-xs,
+.machine-sidebar-panel--jog .text-sm,
+.machine-sidebar-panel--jog label,
+.machine-sidebar-panel--jog span,
+.machine-sidebar-panel--jog p,
+.machine-sidebar-panel--jog div,
+.machine-sidebar-panel--jog button {
+    color: #fff;
+}
+
+.jog-pad-center {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.jog-btn,
+.jog-btn-extra,
+.btn-ovr {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 18px rgba(13, 31, 34, 0.07);
+}
+
+.jog-btn:hover,
+.jog-btn-extra:hover,
+.btn-ovr:hover {
+    color: #fff;
+}
+
+.jog-btn-extra[data-jog^="Z"]:hover {
+    color: #dbeafe;
+}
+
+.jog-btn-extra[data-jog^="A"]:hover {
+    color: #ffedd5;
+}
+
+/* Preserve shared chevron when sidebar-specific rules override select backgrounds. */
+.ooznest-select,
+.oz-select {
+    background-image: var(--oz-select-chevron) !important;
+    background-position: calc(100% - 10px) 50% !important;
+    background-size: 16px 16px !important;
+    background-repeat: no-repeat !important;
+}
+
+.dro-accessory-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+    font-family: 'Nunito', 'Inter', sans-serif;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(13, 31, 34, 0.18);
+}
+
+.dro-accessory-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+.dro-accessory-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.42);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 3px 10px rgba(13, 31, 34, 0.16);
+}
+
+.sidebar-control-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    min-width: 0;
+    width: 100%;
+}
+
+.sidebar-control-heading {
+    display: block;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.sidebar-select-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+    padding: 0;
+    min-height: 28px;
+    border-radius: 8px;
+}
+
+.dro-mach-group {
+    min-width: 60px;
+    justify-content: flex-end;
+    padding-right: 0;
+}
+
+#machine-controls .dro-home-btn,
+#machine-controls .dro-zero-btn,
+#machine-controls .dro-home-btn span,
+#machine-controls .dro-zero-btn span,
+#machine-controls .dro-home-btn i,
+#machine-controls .dro-zero-btn i {
+    color: white !important;
+}
+
+#machine-controls .dro-home-btn:hover,
+#machine-controls .dro-zero-btn:hover,
+#machine-controls .dro-home-btn:hover span,
+#machine-controls .dro-zero-btn:hover span,
+#machine-controls .dro-home-btn:hover i,
+#machine-controls .dro-zero-btn:hover i {
+    color: var(--oz-primary) !important;
+}
+
+#machine-controls .dro-home-btn.text-green-500,
+#machine-controls .dro-home-btn.text-green-500 span,
+#machine-controls .dro-home-btn.text-green-500 i {
+    color: #22c55e !important;
+}
+
+#machine-controls .dro-home-btn.text-green-500:hover,
+#machine-controls .dro-home-btn.text-green-500:hover span,
+#machine-controls .dro-home-btn.text-green-500:hover i {
+    color: #22c55e !important;
+}
+
+.machine-status-pill {
+    background: var(--oz-teal-brand) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+#machine-controls .dro-sub-btn,
+#machine-controls .dro-sub-btn span,
+#machine-controls .dro-sub-btn i,
+#home-all-btn,
+#home-all-btn span,
+#home-all-btn i {
+    color: var(--oz-grey-dark) !important;
+}
+
+.machine-status-pill.status-idle {
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--oz-teal-brand);
+}
+
+.machine-status-pill.status-run {
+    background: var(--oz-notice-success);
+    color: var(--oz-success);
+    border-color: rgba(2, 122, 72, 0.24);
+}
+
+.machine-status-pill.status-warn {
+    background: var(--oz-notice-warning);
+    color: #935d00;
+    border-color: rgba(242, 178, 59, 0.28);
+}
+
+.machine-status-pill.status-alarm {
+    background: var(--oz-notice-error);
+    color: var(--oz-error);
+    border-color: rgba(180, 27, 19, 0.28);
+}
+
+.override-mini-btn,
+.override-preset-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 5px;
+    margin: 2px 2px 2px 0;
+    border: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: var(--oz-r-xs);
+    transition: all 0.15s;
+    white-space: nowrap;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    min-height: 34px;
+}
+
+.override-mini-btn:hover,
+.override-preset-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.override-mini-btn,
+.override-preset-btn {
+    font-size: 9px;
+    padding: 6px 8px;
+    min-width: 36px;
+}
+
+.machine-sidebar-panel .sidebar-select:disabled,
+.machine-sidebar-panel .ooznest-select:disabled {
+    background: rgba(255, 255, 255, 0.58) !important;
+    color: rgba(0, 76, 91, 0.58) !important;
+    border-color: rgba(255, 255, 255, 0.24) !important;
+    cursor: not-allowed;
+}
