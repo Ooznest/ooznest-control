@@ -1235,6 +1235,7 @@ table [id^="pin-indicator-"] {
     font-family: 'Nunito', 'Roboto', sans-serif;
     font-weight: 700;
     font-size: 13px;
+    line-height: 1;
     border: none;
     cursor: pointer;
     display: flex;
@@ -1511,7 +1512,7 @@ body {
 
 .dro-panel {
     border: 0;
-    border-radius: var(--oz-panel-corner-lg);
+    border-radius: 0;
     box-shadow: var(--oz-surface-shadow);
     padding: 12px;
 }

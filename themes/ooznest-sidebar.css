@@ -100,7 +100,7 @@
 
 .machine-sidebar-panel--dro {
     border: 0;
-    border-radius: var(--oz-panel-corner-lg);
+    border-radius: 0;
     box-shadow: var(--oz-surface-shadow);
     padding: 12px;
 }
