@@ -18,14 +18,16 @@
 .tab-pane textarea:not(.xterm-helper-textarea) {
     width: 100%;
     min-width: 0;
-    min-height: 44px;
-    padding: 10px 14px;
-    border: 1.5px solid rgba(68, 157, 159, 0.72);
-    border-radius: 9px;
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid rgba(68, 157, 159, 0.24);
+    border-radius: 8px;
     background: #fff;
-    color: var(--oz-secondary-dark);
-    font-size: 0.95rem;
-    font-weight: 400;
+    color: #004c5b;
+    font-family: 'Nunito', 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 30px;
     box-shadow: none;
     transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
@@ -33,6 +35,8 @@
 textarea.ooznest-field,
 .ooznest-textarea {
     min-height: 140px;
+    padding: 10px 14px;
+    line-height: 1.5;
     resize: vertical;
 }
 
