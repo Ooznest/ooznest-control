@@ -383,7 +383,7 @@ export class SDCardHandler {
 
         const row = `
           <tr class="hover:bg-grey-light border-b border-grey-light last:border-b-0 transition-colors group" data-filename="${name}">
-              <td class="px-4 py-2 md:px-6 md:py-3 font-medium text-grey-dark align-middle truncate overflow-hidden">
+              <td class="px-4 py-2 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
                   <div class="flex flex-col justify-center w-full">
                       <div class="flex items-center gap-2 truncate">
                           <i data-lucide="file-code" style="width:14px;height:14px" class="text-grey shrink-0"></i>
@@ -475,7 +475,7 @@ export class SDCardHandler {
         };
 
         row.innerHTML = `
-          <td class="px-4 py-3 md:px-6 md:py-3 font-bold text-grey-dark align-middle truncate overflow-hidden">
+          <td class="px-4 py-3 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
               <div class="flex items-center gap-2 truncate">
                   <i data-lucide="folder" style="width:14px;height:14px" class="text-primary opacity-70 shrink-0"></i>
                   <span class="truncate" title="${name}">${name}</span>
