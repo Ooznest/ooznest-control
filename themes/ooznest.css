@@ -1450,6 +1450,7 @@ body {
 #gcode-editor textarea {
     border-radius: 0 !important;
     border: none !important;
+    font-weight: 400 !important;
 }
 
 #btn-connect {
