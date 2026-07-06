@@ -1447,6 +1447,11 @@ body {
     z-index: 0;
 }
 
+#gcode-editor textarea {
+    border-radius: 0 !important;
+    border: none !important;
+}
+
 #btn-connect {
     background: var(--oz-primary-light);
     color: #fff;
