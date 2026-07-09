@@ -4,6 +4,58 @@
 class UIManager {
     constructor() {
         this.statusInterval = null;
+        this.unlockInProgress = false;
+    }
+
+    getUnlockButton() {
+        return document.querySelector('button[title="Unlock ($X)"]');
+    }
+
+    setUnlockPending() {
+        this.unlockInProgress = true;
+        const btn = this.getUnlockButton();
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'pointer-events-none');
+        }
+        this.renderUnlockButton('unlocking');
+    }
+
+    clearUnlockPending() {
+        this.unlockInProgress = false;
+    }
+
+    renderUnlockButton(mode) {
+        const btn = this.getUnlockButton();
+        if (!btn) return;
+
+        btn.classList.remove(
+            'btn-secondary',
+            '!bg-red-600',
+            '!text-white',
+            'animate-pulse',
+            '!border-red-500',
+            'shockwave',
+            '!bg-amber-900/20',
+            '!text-amber-400/30',
+            '!text-amber-400',
+            '!border-amber-700/20',
+            '!border-amber-700/30',
+            '!opacity-100'
+        );
+
+        if (mode === 'alarm') {
+            btn.innerHTML = '<i data-lucide="unlock" style="width:12px;height:12px"></i> Unlock';
+            btn.classList.add('!bg-red-600', '!text-white', 'shockwave', '!border-red-500');
+        } else if (mode === 'unlocking') {
+            btn.innerHTML = '<i data-lucide="loader-circle" style="width:12px;height:12px"></i> Unlocking...';
+            btn.classList.add('!bg-amber-900/20', '!text-amber-400', '!border-amber-700/30', '!opacity-100');
+        } else {
+            btn.innerHTML = '<i data-lucide="unlock" style="width:12px;height:12px"></i> Unlock';
+            btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
+        }
+
+        if (window.lucide) window.lucide.createIcons();
     }
 
     /**
@@ -95,6 +147,10 @@ class UIManager {
     applyStateLock(state) {
         state = (state || 'offline').toLowerCase().split(':')[0];
 
+        if (state !== 'alarm' && this.unlockInProgress) {
+            this.clearUnlockPending();
+        }
+
         const setDisabled = (selector, isDisabled) => {
             document.querySelectorAll(selector).forEach(el => {
                 if (!el) return;
@@ -120,11 +176,7 @@ class UIManager {
             setDisabled(macroControls, true);
             setDisabled(txtConsole, true);
             setDisabled(unlockBtn, true);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
-                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-            }
+            this.renderUnlockButton('default');
 
             // Completely disable specific outer blocks remaining from previous UI styles
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => {
@@ -144,11 +196,12 @@ class UIManager {
                 el.classList.remove('opacity-50', 'pointer-events-none');
             });
 
-            setDisabled(unlockBtn, false);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-                btn.classList.add('!bg-red-600', '!text-white', 'shockwave', '!border-red-500');
+            if (this.unlockInProgress) {
+                setDisabled(unlockBtn, true);
+                this.renderUnlockButton('unlocking');
+            } else {
+                setDisabled(unlockBtn, false);
+                this.renderUnlockButton('alarm');
             }
 
             // Clean up general offline locks if they were present
@@ -161,11 +214,7 @@ class UIManager {
             setDisabled(txtConsole, false); // Keep console to send realtime intercepts
 
             setDisabled(unlockBtn, true);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
-                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-            }
+            this.renderUnlockButton('default');
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else if (state === 'hold' || state === 'door' || state === 'sleep') {
@@ -175,11 +224,7 @@ class UIManager {
             setDisabled(txtConsole, false);
 
             setDisabled(unlockBtn, true);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
-                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-            }
+            this.renderUnlockButton('default');
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else {
@@ -189,11 +234,7 @@ class UIManager {
             setDisabled(txtConsole, false);
 
             setDisabled(unlockBtn, true);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
-                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-            }
+            this.renderUnlockButton('default');
 
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
 

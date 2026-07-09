@@ -84,6 +84,67 @@
         #viewer-view canvas {
             outline: none;
         }
+
+        .tab-shell-padding {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .editor-toolbar-padding {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .editor-footer-padding {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .editor-actions-edge {
+            margin-right: 0;
+        }
+
+        @media (min-width: 640px) {
+            .tab-shell-padding {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .editor-toolbar-padding {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .editor-footer-padding {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .tab-shell-padding {
+                padding-left: 24px;
+                padding-right: 19px;
+            }
+
+            .editor-toolbar-padding {
+                padding-left: 24px;
+                padding-right: 20px;
+            }
+
+            .editor-footer-padding {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .editor-actions-edge {
+                margin-right: -20px;
+            }
+
+            #troubleshooting-view #troubleshooting-toolbar {
+                margin-right: -5px;
+            }
+        }
     </style>
 
 
@@ -496,7 +557,7 @@
                         <button class="tab-btn" data-tab="tools-view" onclick="switchTab('tools-view', this)">
                             <i data-lucide="wrench"></i>Tools
                         </button>
-                        <button class="tab-btn" data-tab="sd-view" onclick="switchTab('sd-view', this)">
+                        <button id="sd-tab-btn" class="tab-btn" data-tab="sd-view" onclick="switchTab('sd-view', this)">
                             <i data-lucide="hard-drive"></i>SD Card
                             <span id="sd-badge"
                                 class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
@@ -568,8 +629,8 @@
                                     <span><span class="font-medium">Open File from Computer</span><br><span class="text-[11px] text-grey">Browse files on this device</span></span>
                                 </button>
                                 <div class="border-t border-grey-light"></div>
-                                <button class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
-                                    onclick="switchTab('sd-view'); closeOpenFileDropdown();">
+                                <button id="open-file-sd-option" class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors opacity-50 pointer-events-none"
+                                    onclick="switchTab('sd-view'); closeOpenFileDropdown();" disabled>
                                     <i data-lucide="sd-card" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Open File from SD Card</span><br><span class="text-[11px] text-grey">Browse files on the controller</span></span>
                                 </button>
@@ -775,12 +836,12 @@
 
                 <!-- G-Code Editor View -->
                 <div id="editor-view" class="tab-pane hidden w-full h-full flex flex-col bg-grey-bg relative">
-                    <div class="flex flex-col h-full overflow-y-auto">
+                    <div class="flex flex-col h-full overflow-y-auto tab-shell-padding">
                         <div class="w-full flex-1 flex flex-col">
 
                             <!-- Toolbar -->
                             <div
-                                class="min-h-[3rem] h-auto bg-white border-b border-grey-light flex items-center justify-between px-4 py-2 shrink-0 shadow-sm z-10">
+                                class="min-h-[3rem] h-auto bg-white flex flex-wrap items-center justify-between gap-2 editor-toolbar-padding py-2 shrink-0 z-10">
                                 <div class="flex flex-1 min-w-0 items-center gap-2 overflow-hidden">
                                     <h2
                                         class="text-xs md:text-sm font-bold text-secondary-dark uppercase tracking-wider flex items-center gap-1 shrink-0">
@@ -792,7 +853,7 @@
                                         loaded</span>
                                 </div>
 
-                                <div class="flex gap-1.5 md:gap-2 shrink-0">
+                                <div class="editor-actions-edge flex w-full sm:w-auto justify-end gap-1.5 md:gap-2 shrink-0">
                                     <button class="btn btn-secondary"
                                         onclick="applyEditorChanges()" title="Update Preview">
                                         <i data-lucide="play-circle" class="text-secondary"></i>
@@ -803,8 +864,8 @@
                                         <i data-lucide="download" ></i>
                                         <span>Save to PC</span>
                                     </button>
-                                    <button class="btn btn-primary"
-                                        onclick="uploadEditorToSD()" title="Upload to SD">
+                                    <button id="editor-upload-sd-btn" class="btn btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                                        onclick="uploadEditorToSD()" title="Upload to SD" disabled>
                                         <i data-lucide="upload" class="!text-white"></i>
                                         <span>Upload to SD</span>
                                     </button>
@@ -812,13 +873,15 @@
                             </div>
 
                             <!-- The Virtual Editor Container -->
-                            <div class="flex-1 relative bg-white">
-                                <div id="gcode-editor" class="absolute inset-0"></div>
+                            <div class="flex-1 bg-white">
+                                <div class="h-full bg-white">
+                                    <div id="gcode-editor" class="h-full"></div>
+                                </div>
                             </div>
 
                             <!-- Status Footer -->
                             <div
-                                class="h-6 bg-grey-bg border-t border-grey-light flex items-center px-2 text-[10px] text-grey font-mono justify-between shrink-0">
+                                class="h-6 bg-grey-bg border-t border-grey-light flex items-center editor-footer-padding text-[10px] text-grey font-mono justify-between shrink-0">
                                 <span>Lines: <span id="editor-line-count">0</span></span>
 
                             </div>
@@ -828,17 +891,11 @@
 
                 <!-- Macros View -->
                 <div id="macros-view" class="tab-pane hidden w-full h-full bg-grey-bg">
-                    <div class="w-full h-full p-4 md:p-8 overflow-y-auto">
+                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-y-auto">
                         <div class="w-full pb-20">
                             <div
-                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-                                <div>
-                                    <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i data-lucide="zap" ></i> Custom Macros
-                                    </h2>
-                                    <p class="text-sm text-grey">Quickly execute predefined G-code sequences.</p>
-                                </div>
-                                <button class="btn btn-secondary shadow-soft w-full md:w-auto"
+                                class="flex justify-end mb-6 gap-3">
+                                <button class="btn btn-primary shadow-soft w-full md:w-auto"
                                     onclick="window.macroHandler.openModal(null)">
                                     <i data-lucide="plus" ></i> Create New
                                 </button>
@@ -855,16 +912,10 @@
 
                 <!-- SD Card -->
                 <div id="sd-view" class="tab-pane hidden w-full h-full bg-grey-bg">
-                    <div class="w-full h-full p-4 md:p-8 overflow-y-auto">
+                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-y-auto">
                         <div class="w-full pb-20">
                             <div
-                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-                                <div>
-                                    <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i data-lucide="sd-card" ></i> SD Card
-                                    </h2>
-                                    <p class="text-sm text-grey">Manage files stored on your controller.</p>
-                                </div>
+                                class="flex justify-end mb-6 gap-3">
                                 <!-- SD Actions (Disabled when offline) -->
                                  <div id="sd-tools"
                                      class="flex gap-2 w-full md:w-auto transition-opacity duration-200">
@@ -872,12 +923,12 @@
                                         onclick="document.getElementById('sd-upload-input').click()" disabled>
                                         <i data-lucide="cloud-upload" ></i> Upload
                                     </button>
-                                    <button class="btn btn-secondary flex-1 md:flex-initial"
-                                        onclick="window.sdHandler.refresh()">
+                                    <button id="sd-refresh-btn" class="btn btn-secondary flex-1 md:flex-initial disabled:opacity-40 disabled:cursor-not-allowed"
+                                        onclick="window.sdHandler.refresh()" disabled>
                                         <i data-lucide="refresh-cw" ></i> Refresh
                                     </button>
-                                    <button class="btn btn-danger flex-1 md:flex-initial"
-                                        onclick="window.sdHandler.format()">
+                                    <button id="sd-format-btn" class="btn btn-danger flex-1 md:flex-initial disabled:opacity-40 disabled:cursor-not-allowed"
+                                        onclick="window.sdHandler.format()" disabled>
                                         <i data-lucide="triangle-alert" ></i> Format
                                     </button>
                                 </div>
@@ -887,8 +938,8 @@
                             <!-- Breadcrumb (Disabled when offline) -->
                             <div id="sd-breadcrumb"
                                 class="bg-white border border-grey-light rounded-lg p-3 mb-4 flex items-center gap-3 shadow-card opacity-50 pointer-events-none transition-opacity duration-200 overflow-hidden">
-                                <button class="btn-icon text-grey-dark shrink-0" onclick="window.sdHandler.upLevel()"
-                                    aria-label="Go up one directory level">
+                                <button id="sd-up-level-btn" class="btn-icon text-grey-dark shrink-0 disabled:opacity-40 disabled:cursor-not-allowed" onclick="window.sdHandler.upLevel()"
+                                    aria-label="Go up one directory level" disabled>
                                     <i data-lucide="corner-up-left" ></i>
                                 </button>
                                 <span class="text-grey-light shrink-0">|</span>
@@ -924,13 +975,13 @@
                 </div>
 
                 <!-- Tools Tab -->
-                <div id="tools-view" class="tab-pane hidden w-full h-full bg-grey-bg overflow-y-auto">
+                <div id="tools-view" class="tab-pane hidden w-full h-full bg-grey-bg">
 
-                    <div class="w-full h-full p-4 md:p-8 overflow-y-auto">
+                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-y-auto">
                         <div class="w-full pb-20">
                             <!-- Header -->
                             <div
-                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+                                class="hidden flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
                                         <i data-lucide="wrench" ></i> Tools & Calibration
@@ -1698,16 +1749,10 @@
 
                 <!-- Grbl Settings -->
                 <div id="settings-view" class="tab-pane hidden w-full h-full bg-grey-bg">
-                    <div class="w-full h-full p-4 md:p-8 overflow-hidden flex flex-col min-h-0">
+                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-hidden flex flex-col min-h-0">
                         <div class="w-full flex flex-col min-h-0 flex-1">
                             <div
-                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3 shrink-0">
-                                <div>
-                                    <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i data-lucide="sliders-horizontal" ></i> Machine Settings
-                                    </h2>
-                                    <p class="text-sm text-grey">Configure GrblHAL firmware parameters.</p>
-                                </div>
+                                class="flex justify-end mb-6 gap-3 shrink-0">
                                 <div class="flex flex-wrap gap-2 w-full md:w-auto" id="settings-toolbar">
                                     <button class="btn btn-secondary flex-1"
                                         onclick="window.grblSettings.fetchSettings()">
@@ -1745,12 +1790,12 @@
 
                 <!-- Probing Tab -->
                 <div id="probe-view" class="tab-pane hidden w-full h-full bg-grey-bg">
-                    <div id="probe-panel-content" class="w-full h-full p-4 md:p-6 overflow-y-auto">
+                    <div id="probe-panel-content" class="w-full h-full tab-shell-padding py-4 md:py-6 overflow-y-auto">
                         <div class="w-full pb-20">
 
                             <!-- Header -->
                             <div
-                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+                                class="hidden flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                                 <div>
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
                                         <i data-lucide="crosshair" ></i> Probing
@@ -1760,7 +1805,7 @@
                             </div>
 
                             <!-- Main Layout: Sidebar Config + Tabbed Content -->
-                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
                                 <!-- LEFT COLUMN: Global Configuration (Always Visible) -->
                                 <div class="lg:col-span-4 xl:col-span-3 order-2 lg:order-1">
@@ -2238,16 +2283,10 @@
 
                 <!-- TROUBLESHOOTING TAB PANE -->
                 <div id="troubleshooting-view" class="tab-pane hidden w-full h-full">
-                    <div class="w-full h-full p-4 md:p-8 overflow-y-auto">
+                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-y-auto">
                         <div class="w-full pb-20">
                             <div
-                                class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
-                                <div>
-                                    <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
-                                        <i data-lucide="wrench" ></i> Troubleshooting
-                                    </h2>
-                                    <p class="text-sm text-grey mt-1">Diagnostics and live signal monitoring.</p>
-                                </div>
+                                class="flex justify-end mb-4 gap-3">
                                 <div class="flex flex-wrap gap-2 w-full md:w-auto" id="troubleshooting-toolbar">
                                     <button class="btn btn-primary flex-1 whitespace-nowrap" onclick="window.troubleshootingInfo.exportPdf()">
                                         <i data-lucide="file-text" ></i> Export Troubleshooting Information
@@ -2555,7 +2594,7 @@
 
                 <!-- CONSOLE TAB PANE -->
                 <div id="console-view" class="tab-pane hidden w-full h-full flex flex-col bg-grey-bg">
-                    <div class="flex flex-col h-full overflow-hidden p-4">
+                    <div class="flex flex-col h-full overflow-hidden tab-shell-padding py-4">
                         <div class="console-shell flex-1 flex flex-col min-h-0">
                             <div id="terminal-container" class="console-terminal w-full flex-1 min-h-0"></div>
                             <div id="console-input-area" class="flex gap-2 mt-3 shrink-0">
@@ -3414,7 +3453,7 @@
         window.sendCmd = function (cmd) { ws.sendCommand(cmd); };
         window.sendRealtime = function (c) { ws.sendRealtime(c); };
         window.sendRealtimeWithToast = function (c, msg, icon) { if (!ws || !ws.isConnected) { window.showToast('Not connected', 'plug-zap', 'error'); return; } ws.sendRealtime(c); window.showToast(msg, icon, 'success'); };
-        window.sendCmdWithToast = function (cmd, msg, icon) { if (!ws || !ws.isConnected) { window.showToast('Not connected', 'plug-zap', 'error'); return; } ws.sendCommand(cmd); window.showToast(msg, icon, 'success'); };
+        window.sendCmdWithToast = function (cmd, msg, icon) { if (!ws || !ws.isConnected) { window.showToast('Not connected', 'plug-zap', 'error'); return; } if (cmd === '$X' && window.uiManager?.setUnlockPending) window.uiManager.setUnlockPending(); ws.sendCommand(cmd); window.showToast(msg, icon, 'success'); };
         window.showToast = function (msg, icon, severity) {
             var container = document.getElementById('toast-container');
             if (!container) return;
@@ -3487,6 +3526,10 @@
 
         window.uploadEditorToSD = function () {
             if (!window.editor) return;
+            if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
+                reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+                return;
+            }
             const content = window.editor.getValue();
             const defaultName = document.getElementById('editor-file-name').innerText !== "No file loaded" ? document.getElementById('editor-file-name').innerText : "edited.gcode";
             reporter.showPrompt('Upload to SD Card', 'Enter filename for SD Card:', defaultName, (filename) => {
@@ -3500,6 +3543,10 @@
 
         // New function: Run from SD (Smart)
         window.runFromSD = function () {
+            if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
+                reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+                return;
+            }
             // Case 1: File is already on SD (Context Aware)
             if (window.currentSDFile) {
                 reporter.showConfirm('Run from SD', `Run ${window.currentSDFile} directly from SD card?`, () => {
@@ -3567,18 +3614,56 @@
         });
 
         function syncSdUploadBtn() {
-            const uploadBtn = document.getElementById('sd-upload-btn');
-            if (!uploadBtn) return;
             const available = window.sdMounted && window.ws?.isConnected && !window.sdJobActive;
-            uploadBtn.disabled = !available;
+            const uploadBtn = document.getElementById('sd-upload-btn');
+            if (uploadBtn) {
+                uploadBtn.disabled = !available;
+            }
+
+            const editorUploadBtn = document.getElementById('editor-upload-sd-btn');
+            if (editorUploadBtn) {
+                editorUploadBtn.disabled = !available;
+            }
+
+            const sdRunBtn = document.getElementById('run-job-sd-option');
+            if (sdRunBtn) {
+                sdRunBtn.disabled = !available;
+                sdRunBtn.classList.toggle('opacity-50', !available);
+                sdRunBtn.classList.toggle('pointer-events-none', !available);
+            }
+
+            const openFileSdBtn = document.getElementById('open-file-sd-option');
+            if (openFileSdBtn) {
+                openFileSdBtn.disabled = !available;
+                openFileSdBtn.classList.toggle('opacity-50', !available);
+                openFileSdBtn.classList.toggle('pointer-events-none', !available);
+            }
+
+            const refreshBtn = document.getElementById('sd-refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.disabled = !available;
+            }
+
+            const formatBtn = document.getElementById('sd-format-btn');
+            if (formatBtn) {
+                formatBtn.disabled = !available;
+            }
+
+            const upLevelBtn = document.getElementById('sd-up-level-btn');
+            if (upLevelBtn) {
+                upLevelBtn.disabled = !available;
+            }
         }
 
         window.syncSdUploadBtn = syncSdUploadBtn;
+        window.isSdActionAvailable = function () {
+            return !!(window.sdMounted && window.ws?.isConnected && !window.sdJobActive);
+        };
 
         window.addEventListener('sd-mount-state', (e) => {
             const state = e.detail && e.detail.state !== undefined ? e.detail.state : (window.sdMounted ? 1 : 0);
             const isMounted = (state === 1 || state === 3);
-            const sdLink = document.querySelector("button[onclick*='switchTab'][onclick*='sd-view']");
+            const sdLink = document.getElementById('sd-tab-btn');
             if (isMounted) {
                 if (sdLink) sdLink.classList.remove('opacity-50', 'pointer-events-none');
                 if (window._sdPrevMounted !== true && window.showToast) {

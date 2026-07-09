@@ -46,11 +46,33 @@ export class DROHandler {
     }
 
     goXY0() {
-        this.ws.sendCommand('G0 X0 Y0');
+        if (!this.ws || !this.ws.isConnected) return;
+        const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+        if (!reporter) {
+            console.error('Reporter not available for modal');
+            return;
+        }
+        const originalMachineZ = Number.isFinite(this.mpos[2]) ? this.mpos[2] : null;
+        reporter.showConfirm('Go To XY Zero', 'Move to X0 Y0? Z will first raise to G53 Z-5, then move X, then Y, then return Z to its starting position. Ensure the path is clear.', () => {
+            this.ws.sendCommand('G53 G0 Z-5');
+            this.ws.sendCommand('G0 X0');
+            this.ws.sendCommand('G0 Y0');
+            if (originalMachineZ !== null) {
+                this.ws.sendCommand(`G53 G0 Z${originalMachineZ}`);
+            }
+        });
     }
 
     goZ0() {
-        this.ws.sendCommand('G0 Z0');
+        if (!this.ws || !this.ws.isConnected) return;
+        const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+        if (!reporter) {
+            console.error('Reporter not available for modal');
+            return;
+        }
+        reporter.showConfirm('Go To Z Zero', 'Move to Z0? Ensure the path is clear.', () => {
+            this.ws.sendCommand('G0 Z0');
+        });
     }
 
     setWCS(wcs) {

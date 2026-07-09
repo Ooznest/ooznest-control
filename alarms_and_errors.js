@@ -532,6 +532,7 @@ export class AlarmsAndErrors {
     // Critical alarms require: Reset (Ctrl-X) -> Wait for reboot -> Unlock ($X)
     performCriticalReset() {
         if (this.ws) {
+            if (window.uiManager?.setUnlockPending) window.uiManager.setUnlockPending();
             // Step 1: Send Ctrl-X (0x18) to reset
             this.ws.sendRealtime('\x18');
 
@@ -547,6 +548,7 @@ export class AlarmsAndErrors {
     performUnlock() {
         // Send Soft Reset then Unlock
         if (this.ws) {
+            if (window.uiManager?.setUnlockPending) window.uiManager.setUnlockPending();
             setTimeout(() => {
                 this.ws.sendCommand('$X'); // Unlock
             }, 100);

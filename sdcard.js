@@ -574,6 +574,10 @@ export class SDCardHandler {
 
     async startUpload(file, onComplete = null, options = {}) {
         if (!file) return;
+        if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
+            if (window.reporter) window.reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+            return;
+        }
         const name = file.name.replace(/\s/g, '_');
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         const skipConfirm = options.skipConfirm === true;

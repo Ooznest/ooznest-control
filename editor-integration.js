@@ -35,6 +35,10 @@ class EditorIntegration {
      */
     uploadEditorToSD() {
         if (!window.editor) return;
+        if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
+            if (window.reporter) window.reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+            return;
+        }
         const content = window.editor.getValue();
         const defaultName = document.getElementById('editor-file-name').innerText !== "No file loaded"
             ? document.getElementById('editor-file-name').innerText
@@ -52,6 +56,10 @@ class EditorIntegration {
      * Run from SD card (smart function - context aware)
      */
     runFromSD() {
+        if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
+            if (window.reporter) window.reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+            return;
+        }
         // Case 1: File is already on SD (Context Aware)
         if (window.currentSDFile) {
             window.reporter.showConfirm('Run from SD', `Run ${window.currentSDFile} directly from SD card?`, () => {
