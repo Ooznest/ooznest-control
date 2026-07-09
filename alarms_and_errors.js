@@ -5,7 +5,7 @@ import { registerModal } from './modal.js';
 const STANDARD_ERRORS = {
     '1': 'Expected command letter: G-code words consist of a letter and a value. Letter was not found.',
     '2': 'Bad number format: Missing the expected G-code word value or numeric value format is not valid.',
-    '3': 'Invalid statement: Grbl \'$\' system command was not recognized or supported.',
+    '3': 'Invalid statement: Command was not recognized or supported in the current parser context.',
     '4': 'Value < 0: Negative value received for an expected positive value.',
     '5': 'Setting disabled: Homing cycle failure. Homing is not enabled via settings.',
     '6': 'Value < 3 usec: Minimum step pulse time must be greater than 3usec.',

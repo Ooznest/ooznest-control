@@ -141,9 +141,88 @@
                 margin-right: -20px;
             }
 
-            #troubleshooting-view #troubleshooting-toolbar {
-                margin-right: -5px;
-            }
+        }
+
+        .probe-compact-action {
+            width: 100%;
+            min-height: 48px;
+        }
+
+        .probe-axis-option {
+            width: 72px;
+            height: 72px;
+        }
+
+        .probe-corner-grid {
+            max-width: 240px;
+            max-height: 240px;
+        }
+
+        .probe-selector-card {
+            background: #fff;
+            border: 1px solid var(--oz-secondary-dark);
+            border-radius: 0;
+        }
+
+        .probe-instruction-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 14px;
+            border-radius: 22px;
+            border: 1px solid rgba(210, 220, 223, 0.82);
+            background: linear-gradient(180deg, #eef3f4 0%, #edf2f3 100%);
+            box-shadow: 0 16px 34px rgba(13, 31, 34, 0.08);
+        }
+
+        .probe-instruction-card .calibration-choice-card__media {
+            display: flex;
+            flex: 1 1 auto;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 0;
+            border-radius: 18px;
+            background:
+                radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0) 52%),
+                linear-gradient(180deg, #f4f7f8 0%, #edf2f3 100%);
+        }
+
+        .probe-instruction-card .calibration-choice-card__media img {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .probe-instruction-card .calibration-choice-card__info {
+            display: block;
+            flex: 0 0 auto;
+            min-height: 0;
+            margin-top: 12px;
+            padding: 14px 16px 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: inset 0 0 0 1px rgba(230, 236, 238, 0.9);
+        }
+
+        .probe-instruction-card .calibration-choice-card__title {
+            margin-bottom: 8px;
+        }
+
+        .probe-instruction-card__footer-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 26px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: var(--oz-primary);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1;
         }
     </style>
 
@@ -631,7 +710,7 @@
                                 <div class="border-t border-grey-light"></div>
                                 <button id="open-file-sd-option" class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors opacity-50 pointer-events-none"
                                     onclick="switchTab('sd-view'); closeOpenFileDropdown();" disabled>
-                                    <i data-lucide="sd-card" class="text-lg" style="color:#FF6600"></i>
+                                    <i data-lucide="hard-drive" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Open File from SD Card</span><br><span class="text-[11px] text-grey">Browse files on the controller</span></span>
                                 </button>
                             </div>
@@ -654,7 +733,7 @@
                                 <div class="border-t border-grey-light"></div>
                                 <button id="run-job-sd-option" class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
                                     onclick="closeRunJobDropdown(); runJobFromSD();">
-                                    <i data-lucide="sd-card" class="text-lg" style="color:#FF6600"></i>
+                                    <i data-lucide="hard-drive" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Run (From SD Card)</span><br><span class="text-[11px] text-grey">Upload then run from controller SD</span></span>
                                 </button>
                             </div>
@@ -700,7 +779,7 @@
                             <div class="flex items-center justify-between gap-1.5 mb-2">
                                 <div class="flex items-center gap-1.5 truncate">
                                     <i data-lucide="file-code" class="text-teal-600 text-xs shrink-0" id="stats-file-icon"></i>
-                                    <i data-lucide="sd-card" class="text-xs shrink-0 hidden" id="stats-sd-icon" style="color:#FF6600"></i>
+                                    <i data-lucide="hard-drive" class="text-xs shrink-0 hidden" id="stats-sd-icon" style="color:#FF6600"></i>
                                     <span id="viewer-file-name"
                                         class="text-secondary-dark font-bold text-xs truncate leading-none">No file
                                         loaded</span>
@@ -841,7 +920,7 @@
 
                             <!-- Toolbar -->
                             <div
-                                class="min-h-[3rem] h-auto bg-white flex flex-wrap items-center justify-between gap-2 editor-toolbar-padding py-2 shrink-0 z-10">
+                                class="min-h-[3rem] h-auto bg-white flex flex-wrap md:flex-nowrap items-center justify-between gap-2 editor-toolbar-padding py-2 shrink-0 z-10">
                                 <div class="flex flex-1 min-w-0 items-center gap-2 overflow-hidden">
                                     <h2
                                         class="text-xs md:text-sm font-bold text-secondary-dark uppercase tracking-wider flex items-center gap-1 shrink-0">
@@ -849,11 +928,11 @@
                                             Editor</span>
                                     </h2>
                                     <span id="editor-file-name"
-                                        class="flex-1 min-w-0 pr-1 text-[10px] md:text-xs text-grey italic whitespace-nowrap">No file
+                                        class="block flex-1 min-w-0 pr-1 text-[10px] md:text-xs text-grey italic whitespace-nowrap truncate">No file
                                         loaded</span>
                                 </div>
 
-                                <div class="editor-actions-edge flex w-full sm:w-auto justify-end gap-1.5 md:gap-2 shrink-0">
+                                <div class="editor-actions-edge flex w-auto justify-end gap-1.5 md:gap-2 shrink-0">
                                     <button class="btn btn-secondary"
                                         onclick="applyEditorChanges()" title="Update Preview">
                                         <i data-lucide="play-circle" class="text-secondary"></i>
@@ -992,33 +1071,26 @@
                             </div>
 
                             <!-- Sub-Tabs Navigation -->
-                            <div class="flex border-b border-grey-light mb-6 overflow-x-auto">
+                            <div class="subtabs">
                                 <button
-                                    class="px-5 py-2 text-xs font-bold text-primary-dark border-b-2 border-primary hover:bg-white whitespace-nowrap tools-tab-btn"
-                                    onclick="window.toolsHandler.switchToolsTab('tab-tool-calibration', this)">
-                                    Calibration
-                                </button>
-                                <button
-                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
-                                    onclick="window.toolsHandler.switchToolsTab('tab-tool-table', this)">
-                                    Tool Table
-                                    <span id="tools-badge"
-                                        class="hidden ml-1 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
-                                </button>
-                                <button
-                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="subtab-btn text-primary-dark border-b-2 border-primary tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-surfacing', this)">
                                     Surfacing
                                 </button>
                                 <button
-                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="subtab-btn text-grey border-b-2 border-transparent tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-spoilboard', this)">
                                     Spoilboard Grid
                                 </button>
                                 <button
-                                    class="px-5 py-2 text-xs font-bold text-grey border-b-2 border-transparent hover:text-secondary-dark hover:bg-white whitespace-nowrap tools-tab-btn"
+                                    class="subtab-btn text-grey border-b-2 border-transparent tools-tab-btn"
                                     onclick="window.toolsHandler.switchToolsTab('tab-tool-bowl', this)">
                                     Bowl Cutter
+                                </button>
+                                <button
+                                    class="subtab-btn text-grey border-b-2 border-transparent tools-tab-btn"
+                                    onclick="window.toolsHandler.switchToolsTab('tab-tool-calibration', this)">
+                                    Calibration
                                 </button>
                             </div>
 
@@ -1172,16 +1244,10 @@
                             </div>
 
                             <!-- Sub-Tab Content: Calibration -->
-                            <div id="tab-tool-calibration" class="tools-tab-content">
+                            <div id="tab-tool-calibration" class="tools-tab-content hidden">
                                 <div id="calibration-wizard" class="max-w-4xl mx-auto">
                                     <!-- Initial State -->
                                     <div id="cal-step-intro" class="bg-white p-8 rounded-xl border border-grey-light shadow-soft text-center">
-                                        <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <i data-lucide="crosshair" class="text-4xl text-primary"></i>
-                                        </div>
-                                        <h3 class="text-2xl font-black text-secondary-dark mb-2">Machine Calibration</h3>
-                                        <p class="text-grey max-w-2xl mx-auto mb-8">Choose a calibration method for the axis you want to tune. Measured Travel works for X, Y, and Z. Vernier remains available for fine X/Y tuning with a cut scale.</p>
-
                                         <div class="space-y-6 max-w-4xl mx-auto text-left">
                                             <div>
                                                 <div class="flex items-center justify-between mb-3">
@@ -1398,7 +1464,11 @@
                                                     </div>
                                                 </div>
                                                 <div id="cal-measure-vernier-image" class="mt-6">
-                                                    <img src="Calibration/vernier_example.png" alt="Vernier Example" class="rounded-lg border border-grey-light shadow-sm w-full" onerror="this.src='https://placehold.co/400x200?text=Vernier+Reading+Diagram'">
+                                                    <img
+                                                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 300'%3E%3Crect width='720' height='300' rx='20' fill='%23f7fafb'/%3E%3Crect x='40' y='52' width='640' height='196' rx='18' fill='white' stroke='%23d7e5ea' stroke-width='2'/%3E%3Ctext x='64' y='88' font-family='Arial,sans-serif' font-size='18' font-weight='700' fill='%23245563'%3EPhysical ruler (1 mm marks)%3C/text%3E%3Ctext x='64' y='194' font-family='Arial,sans-serif' font-size='18' font-weight='700' fill='%23ff6600'%3ECNC vernier scale (0.9 mm marks)%3C/text%3E%3Cg stroke='%23245563' stroke-width='2'%3E%3Cline x1='64' y1='118' x2='656' y2='118'/%3E%3C/g%3E%3Cg stroke='%23ff6600' stroke-width='2'%3E%3Cline x1='64' y1='224' x2='656' y2='224'/%3E%3C/g%3E%3Cg fill='%235e6b85' font-family='Arial,sans-serif' font-size='12'%3E%3Cline x1='104' y1='96' x2='104' y2='138' stroke='%23245563' stroke-width='2'/%3E%3Ctext x='98' y='154'%3E0%3C/text%3E%3Cline x1='164' y1='102' x2='164' y2='134' stroke='%23245563' stroke-width='2'/%3E%3Cline x1='224' y1='96' x2='224' y2='138' stroke='%23245563' stroke-width='2'/%3E%3Ctext x='218' y='154'%3E2%3C/text%3E%3Cline x1='284' y1='102' x2='284' y2='134' stroke='%23245563' stroke-width='2'/%3E%3Cline x1='344' y1='96' x2='344' y2='138' stroke='%23245563' stroke-width='2'/%3E%3Ctext x='338' y='154'%3E4%3C/text%3E%3Cline x1='404' y1='102' x2='404' y2='134' stroke='%23245563' stroke-width='2'/%3E%3Cline x1='464' y1='96' x2='464' y2='138' stroke='%23245563' stroke-width='2'/%3E%3Ctext x='458' y='154'%3E6%3C/text%3E%3Cline x1='524' y1='102' x2='524' y2='134' stroke='%23245563' stroke-width='2'/%3E%3Cline x1='584' y1='96' x2='584' y2='138' stroke='%23245563' stroke-width='2'/%3E%3Ctext x='578' y='154'%3E8%3C/text%3E%3Cline x1='644' y1='102' x2='644' y2='134' stroke='%23245563' stroke-width='2'/%3E%3Ctext x='634' y='154'%3E10%3C/text%3E%3C/g%3E%3Cg stroke='%23ff6600' stroke-width='2'%3E%3Cline x1='104' y1='202' x2='104' y2='244'/%3E%3Cline x1='158' y1='208' x2='158' y2='240'/%3E%3Cline x1='212' y1='202' x2='212' y2='244'/%3E%3Cline x1='266' y1='208' x2='266' y2='240'/%3E%3Cline x1='320' y1='202' x2='320' y2='244'/%3E%3Cline x1='374' y1='208' x2='374' y2='240'/%3E%3Cline x1='428' y1='202' x2='428' y2='244'/%3E%3Cline x1='482' y1='208' x2='482' y2='240'/%3E%3Cline x1='536' y1='202' x2='536' y2='244'/%3E%3Cline x1='590' y1='208' x2='590' y2='240'/%3E%3Cline x1='644' y1='202' x2='644' y2='244'/%3E%3C/g%3E%3Cline x1='428' y1='84' x2='428' y2='252' stroke='%230f5968' stroke-width='3' stroke-dasharray='6 6'/%3E%3Crect x='448' y='84' width='188' height='58' rx='14' fill='white' stroke='%23d7e5ea'/%3E%3Ctext x='466' y='108' font-family='Arial,sans-serif' font-size='14' font-weight='700' fill='%230f5968'%3EAlignment example%3C/text%3E%3Ctext x='466' y='128' font-family='Arial,sans-serif' font-size='13' fill='%235e6b85'%3EOne CNC mark lines up with a ruler mark.%3C/text%3E%3C/svg%3E"
+                                                        alt="Vernier reading diagram"
+                                                        class="rounded-lg border border-grey-light shadow-sm w-full"
+                                                    >
                                                 </div>
                                             </div>
                                             <div class="space-y-6 bg-grey-bg p-6 rounded-xl border border-grey-light">
@@ -1499,20 +1569,8 @@
 
 
                             <!-- Sub-Tab Content: Surfacing -->
-                            <div id="tab-tool-surfacing" class="tools-tab-content hidden">
+                            <div id="tab-tool-surfacing" class="tools-tab-content">
                                 <div class="w-full">
-                                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-                                        <div>
-                                            <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i
-                                                    data-lucide="layers" ></i> Surfacing Wizard</h2>
-                                        </div>
-                                        <div class="flex gap-2 w-full md:w-auto">
-                                            <button class="btn btn-primary shadow-soft w-full"
-                                                onclick="window.surfacing.loadToViewer()"><i data-lucide="check" ></i>
-                                                Generate G-Code</button>
-                                        </div>
-                                    </div>
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
@@ -1612,26 +1670,17 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="mt-6">
+                                        <button class="btn btn-primary shadow-soft w-full h-12"
+                                            onclick="window.surfacing.loadToViewer()"><i data-lucide="check" ></i>
+                                            Generate G-Code</button>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Sub-Tab Content: Spoilboard Grid -->
                             <div id="tab-tool-spoilboard" class="tools-tab-content hidden">
                                 <div class="w-full">
-                                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-                                        <div>
-                                            <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i
-                                                    data-lucide="grid-3x3" ></i> Spoilboard Grid</h2>
-                                        </div>
-                                        <div class="flex gap-2 w-full md:w-auto">
-                                            <button class="btn btn-secondary shadow-soft text-xs"
-                                                onclick="window.spoilboardGrid.autoSpoilboard()"><i data-lucide="maximize" ></i> Auto</button>
-                                            <button class="btn btn-primary shadow-soft w-full"
-                                                onclick="window.spoilboardGrid.generateGrid()"><i data-lucide="check" ></i>
-                                                Generate G-Code</button>
-                                        </div>
-                                    </div>
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
@@ -1698,20 +1747,19 @@
 
                                         </div>
                                     </div>
+                                    <div class="mt-6 flex flex-col gap-3">
+                                        <button class="btn btn-secondary shadow-soft w-full h-12"
+                                            onclick="window.spoilboardGrid.autoSpoilboard()"><i data-lucide="maximize" ></i> Auto</button>
+                                        <button class="btn btn-primary shadow-soft w-full h-12"
+                                            onclick="window.spoilboardGrid.generateGrid()"><i data-lucide="check" ></i>
+                                            Generate G-Code</button>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Sub-Tab Content: Bowl Cutter -->
                             <div id="tab-tool-bowl" class="tools-tab-content hidden">
                                 <div class="w-full">
-                                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-                                        <div>
-                                            <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2"><i data-lucide="circle" ></i> Bowl Cutter</h2>
-                                        </div>
-                                        <div class="flex gap-2 w-full md:w-auto">
-                                            <button class="btn btn-primary shadow-soft w-full" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
-                                        </div>
-                                    </div>
                                     <div class="space-y-6">
                                         <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                             <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
@@ -1739,6 +1787,9 @@
                                                 <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100"></div>
                                             </div>
                                         </div>
+                                    </div>
+                                    <div class="mt-6">
+                                        <button class="btn btn-primary shadow-soft w-full h-12" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
                                     </div>
                                 </div>
                             </div>
@@ -1804,18 +1855,17 @@
                                 </div>
                             </div>
 
-                            <!-- Main Layout: Sidebar Config + Tabbed Content -->
-                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                            <!-- Main Layout: Tabbed Content -->
+                            <div class="w-full">
 
-                                <!-- LEFT COLUMN: Global Configuration (Always Visible) -->
-                                <div class="lg:col-span-4 xl:col-span-3 order-2 lg:order-1">
-                                    <div
-                                        class="probe-config-card bg-white p-4 rounded-xl border border-grey-light shadow-soft sticky top-4">
-                                        <h3
-                                            class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
-                                            <i data-lucide="settings" ></i> Probe Config
-                                        </h3>
-                                        <div class="space-y-3">
+                                <!-- Probe Config Modal -->
+                                <div id="probe-config-modal" class="oz-modal hidden z-[1100] modal-radial-overlay">
+                                    <div class="oz-modal__dialog w-full max-w-md max-h-[calc(100vh-5rem)] overflow-hidden" data-modal-panel>
+                                        <div class="oz-modal__header">
+                                            <h3><i data-lucide="settings-2"></i><span>Probe Config</span></h3>
+                                            <button type="button" data-modal-close><i data-lucide="x" ></i></button>
+                                        </div>
+                                        <div class="oz-modal__body space-y-3 overflow-y-auto max-h-[calc(100vh-12rem)]">
                                             <!-- Probe Mode Toggle -->
                                             <div
                                                 class="probe-config-subcard bg-grey-bg p-2 rounded border border-grey-light prb-3d-probe-only"
@@ -1836,12 +1886,6 @@
                                             </div>
 
                                             <!-- Basic Params -->
-                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-tool">Probe
-                                                    Diameter (mm)</label>
-                                                <input type="number" id="prb-tool"
-                                                    class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
-                                            </div>
                                             <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
                                                     for="prb-z-thick">Plate
                                                     Thickness
@@ -1895,16 +1939,17 @@
                                                 <input type="number" id="prb-z-depth"
                                                     class="ooznest-field input-field font-mono text-xs h-8">
                                             </div>
-                                            <button class="btn btn-secondary shadow-soft w-full justify-center mt-2"
-                                                onclick="window.probeHandler.saveSettings()">
-                                                <i data-lucide="save" ></i> Save Settings
+                                        </div>
+                                        <div class="oz-modal__footer oz-modal__footer--actions">
+                                            <button class="btn btn-primary" type="button" onclick="window.probeHandler.saveSettings(); const modal = window.getAppModal && window.getAppModal('probe-config-modal'); if (modal) modal.hide();">
+                                                <i data-lucide="save" ></i> Apply
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- RIGHT COLUMN: Tabbed Interface -->
-                                <div class="lg:col-span-8 xl:col-span-9 order-1 lg:order-2 flex flex-col">
+                                <div class="w-full flex flex-col">
 
                                     <!-- Config Wizard Banner -->
                                     <div id="probe-config-banner" class="mb-3 rounded-lg border text-xs font-bold bg-amber-50 border-amber-200 text-amber-700 p-3 items-center gap-3 flex hidden">
@@ -1912,6 +1957,12 @@
                                         <span class="flex-1">Config Wizard has not been run — probe settings may be incomplete.</span>
                                         <button class="btn btn-warning !py-1 !px-3 !text-[10px] whitespace-nowrap" onclick="window.configWizard.showWizard()">
                                             <i data-lucide="wand" ></i> Run Config Wizard
+                                        </button>
+                                    </div>
+
+                                    <div class="flex justify-end mb-3">
+                                        <button class="btn btn-secondary shadow-soft" onclick="window.probeHandler.openConfigModal()">
+                                            <i data-lucide="settings-2" ></i> Probe Config
                                         </button>
                                     </div>
 
@@ -1925,11 +1976,11 @@
                                         <div class="flex gap-2 px-3 pb-4" id="probe-safety-actions">
                                             <button id="probe-test-btn" class="btn btn-primary flex-1 flex flex-col items-center gap-0 !py-2 !px-2 !text-[10px] leading-tight" onclick="window.probeHandler.runProbeTest()">
                                                 <span><i data-lucide="pointer" ></i> Test Probe</span>
-                                                <span class="text-[8px] font-normal opacity-75">Touch endmill to plate</span>
+                                                <span class="text-[9px] font-normal opacity-75">Touch endmill to plate</span>
                                             </button>
                                             <button id="probe-skip-btn" class="btn btn-secondary flex-1 flex flex-col items-center gap-0 !py-2 !px-2 !text-[10px] leading-tight" onclick="window.probeHandler.skipSafetyCheck()">
                                                 <span><i data-lucide="check" ></i> Bypass</span>
-                                                <span class="text-[8px] font-normal opacity-75">I confirm clip is attached</span>
+                                                <span class="text-[9px] font-normal opacity-75">I confirm clip is attached</span>
                                             </button>
                                         </div>
                                         <div id="probe-safety-note" class="hidden px-3 pb-2 text-[10px] text-amber-700">
@@ -1938,208 +1989,225 @@
                                     </div>
 
                                     <!-- Internal Tabs -->
-                                    <div class="flex border-b border-grey-light mb-4 overflow-x-auto no-scrollbar">
+                                    <div class="subtabs">
 
                                         <button
-                                            class="px-4 py-2 text-sm font-bold text-primary-dark border-b-2 border-primary transition-colors hover:bg-white whitespace-nowrap probe-tab-btn"
-                                            data-target="tab-edges"
-                                            onclick="window.probeHandler.switchProbeTab('tab-edges', this)">
-                                            Edge & Corners
+                                            class="subtab-btn text-primary-dark border-b-2 border-primary probe-tab-btn"
+                                            data-target="tab-outside-corner"
+                                            onclick="window.probeHandler.switchProbeTab('tab-outside-corner', this)">
+                                            Outside Corner
                                         </button>
                                         <button
-                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn prb-3d-probe-only"
+                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn"
+                                            data-target="tab-surfaces"
+                                            onclick="window.probeHandler.switchProbeTab('tab-surfaces', this)">
+                                            Single Surface
+                                        </button>
+                                        <button
+                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
                                             data-target="tab-centers"
                                             onclick="window.probeHandler.switchProbeTab('tab-centers', this)">
                                             Center Finder
                                         </button>
                                         <button
-                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn prb-3d-probe-only"
+                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
                                             data-target="tab-rotation"
                                             onclick="window.probeHandler.switchProbeTab('tab-rotation', this)">
                                             Rotation
                                         </button>
                                         <button
-                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn prb-3d-probe-only"
+                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
                                             data-target="tab-inside-corners"
                                             onclick="window.probeHandler.switchProbeTab('tab-inside-corners', this)">
                                             Inside Corners
                                         </button>
+                                        <!--
                                         <button
-                                            class="px-4 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap probe-tab-btn"
+                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn"
                                             data-target="tab-tlo"
                                             onclick="window.probeHandler.switchProbeTab('tab-tlo', this)">
                                             Tool Length Offset
                                         </button>
+                                        -->
                                     </div>
 
                                     <!-- TAB CONTENT: Tool Length Offset -->
                                     <div id="tab-tlo" class="probe-tab-content hidden">
-                                        <div class="bg-white p-6 rounded-xl shadow-soft border border-grey-light">
-                                            <p class="text-xs text-grey leading-relaxed mb-4">
-                                                Use a fixed tool setter to establish a Z reference with your first tool, then measure subsequent tools. The offset is applied to the active Work Coordinate System.
-                                            </p>
-                                            <h3 class="font-bold text-lg text-secondary-dark mb-4">Tool Length Offset
-                                                (TLO)
-                                            </h3>
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <!-- Config -->
-                                                <div class="space-y-4">
-
-                                                    <div class="bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                                        <h4 class="text-xs font-bold text-grey uppercase mb-2">Fixed
-                                                            Tool
-                                                            Setter Location (G53)</h4>
-                                                        <div class="space-y-2">
-                                                            <div><label class="ooznest-label text-[9px] font-bold text-grey">X</label>
-                                                                <input type="number" id="tlo-x"
-                                                                    class="ooznest-field input-field h-8 text-xs" placeholder="0.0">
-                                                            </div>
-                                                            <div><label class="ooznest-label text-[9px] font-bold text-grey">Y</label>
-                                                                <input type="number" id="tlo-y"
-                                                                    class="ooznest-field input-field h-8 text-xs" placeholder="0.0">
-                                                            </div>
-                                                            <div><label class="ooznest-label text-[9px] font-bold text-grey">Z
-                                                                    (Start)</label>
-                                                                <input type="number" id="tlo-z"
-                                                                    class="ooznest-field input-field h-8 text-xs" placeholder="-5.0">
-                                                            </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex flex-col min-h-[420px]">
+                                                <p class="text-xs text-grey leading-relaxed mb-4">
+                                                    Use a fixed tool setter to establish a Z reference with your first tool, then measure subsequent tools. The offset is applied to the active Work Coordinate System.
+                                                </p>
+                                                <div class="probe-selector-card p-3 mb-4">
+                                                    <div class="text-[11px] font-bold text-grey mb-3 text-center uppercase tracking-wider">Fixed Tool Setter Location (G53)</div>
+                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                        <div>
+                                                            <label class="ooznest-label text-[9px] font-bold text-grey">X</label>
+                                                            <input type="number" id="tlo-x" class="ooznest-field input-field h-8 text-xs" placeholder="0.0">
                                                         </div>
-                                                        <div class="flex gap-2 mt-2">
-                                                            <button class="btn btn-secondary text-[10px] w-full"
-                                                                onclick="window.probeHandler.setTLOFromMachine()">
-                                                                <i data-lucide="map-pin" ></i> Get Current Pos
-                                                            </button>
+                                                        <div>
+                                                            <label class="ooznest-label text-[9px] font-bold text-grey">Y</label>
+                                                            <input type="number" id="tlo-y" class="ooznest-field input-field h-8 text-xs" placeholder="0.0">
+                                                        </div>
+                                                        <div>
+                                                            <label class="ooznest-label text-[9px] font-bold text-grey">Z (Start)</label>
+                                                            <input type="number" id="tlo-z" class="ooznest-field input-field h-8 text-xs" placeholder="-5.0">
                                                         </div>
                                                     </div>
+                                                    <button class="btn btn-secondary text-[10px] w-full mt-3" onclick="window.probeHandler.setTLOFromMachine()">
+                                                        <i data-lucide="map-pin" ></i> Get Current Pos
+                                                    </button>
                                                 </div>
-
-
-                                                <!-- Actions -->
-                                                <div class="flex flex-col gap-3 justify-center">
-
-                                                    <!-- Button 1: Reference (Height set to auto to prevent overflow) -->
+                                                <div class="flex flex-col gap-3 flex-1 justify-center">
                                                     <button
                                                         class="btn btn-secondary h-auto py-3 flex-col items-center justify-center gap-1 border-2 probe-btn"
                                                         onclick="window.probeHandler.runTLO('reference')">
                                                         <i data-lucide="circle" class="text-2xl text-primary-dark"></i>
                                                         <span class="text-sm font-bold">1. Establish Reference</span>
-                                                        <span class="text-[10px] text-white font-normal">Probe First
-                                                            Tool</span>
+                                                        <span class="text-[10px] text-white font-normal">Probe First Tool</span>
                                                     </button>
-
                                                     <div class="flex items-center justify-center text-grey-light">
                                                         <i data-lucide="arrow-down" class="text-xl"></i>
                                                     </div>
-
-                                                    <!-- Button 2: Measure (Height set to auto) -->
                                                     <button
                                                         class="btn btn-primary h-auto py-3 flex-col items-center justify-center gap-1 shadow-md probe-btn"
                                                         onclick="window.probeHandler.runTLO('measure')">
                                                         <i data-lucide="ruler" class="text-2xl"></i>
                                                         <span class="text-sm font-bold">2. Measure New Tool</span>
-                                                        <span class="text-[10px] text-white/80 font-normal">Adjusts WCS
-                                                            Z
-                                                            Zero</span>
+                                                        <span class="text-[10px] text-white/80 font-normal">Adjusts WCS Z Zero</span>
                                                     </button>
-
                                                     <div class="mt-2 text-center">
-                                                        <span
-                                                            class="text-xs font-mono bg-grey-bg px-2 py-1 rounded text-grey-dark"
-                                                            id="tlo-status">Ref: Not Set</span>
+                                                        <span class="text-xs font-mono bg-grey-bg px-2 py-1 rounded text-grey-dark" id="tlo-status">Ref: Not Set</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="min-h-[420px]">
+                                                <div class="probe-instruction-card">
+                                                    <div class="calibration-choice-card__media relative">
+                                                        <div class="flex flex-col items-center justify-center text-secondary-dark gap-3">
+                                                            <div class="w-24 h-24 rounded-full bg-white/80 border border-grey-light flex items-center justify-center shadow-sm">
+                                                                <i data-lucide="ruler" class="w-12 h-12"></i>
+                                                            </div>
+                                                            <div class="text-xs font-bold uppercase tracking-[0.2em] text-grey">Tool Length Offset</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="calibration-choice-card__info">
+                                                        <div class="calibration-choice-card__title">Tool Setter Setup</div>
+                                                        <p class="calibration-choice-card__text">Enter the fixed tool setter location in machine coordinates. Establish a reference with the first tool, then measure each subsequent tool to update Z automatically.</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- TAB CONTENT: Edges & Corners -->
-                                    <div id="tab-edges" class="probe-tab-content block">
+                                    <!-- TAB CONTENT: Outside Corner -->
+                                    <div id="tab-outside-corner" class="probe-tab-content block">
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <!-- LEFT COLUMN: Corner + Single Surface + Run Probe -->
-                                            <div class="space-y-4">
-                                                <!-- Outside Corner -->
-                                                <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
-                                                    <div class="flex justify-between items-start mb-2">
-                                                        <h3 class="font-bold text-secondary-dark text-sm"><i data-lucide="box" ></i> Outside Corner</h3>
-                                                    </div>
-                                                    <p class="text-xs text-grey leading-relaxed mb-3">
-                                                        Probe two edges of an outside corner to set work zero.
-                                                    </p>
-                                                    <div class="bg-grey-light border border-grey-light/50 rounded-lg p-2 flex justify-center">
-                                                        <div id="outside-corner-grid" class="w-24 h-24 grid grid-cols-2 flex-shrink-0">
-                                                            <button class="corner-sel-btn rounded-tl bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
-                                                                data-corner="RL"
-                                                                onclick="window.probeHandler.selectCorner(this, 'Outside', 'RL')"
-                                                                aria-label="Rear-left outside corner">Rear<br>Left</button>
-                                                            <button class="corner-sel-btn rounded-tr bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
-                                                                data-corner="RR"
-                                                                onclick="window.probeHandler.selectCorner(this, 'Outside', 'RR')"
-                                                                aria-label="Rear-right outside corner">Rear<br>Right</button>
-                                                            <button class="corner-sel-btn rounded-bl bg-primary-dark text-white border-2 border-primary-dark h-full text-[10px] font-bold leading-tight"
-                                                                data-corner="FL"
-                                                                onclick="window.probeHandler.selectCorner(this, 'Outside', 'FL')"
-                                                                aria-label="Front-left outside corner">Front<br>Left</button>
-                                                            <button class="corner-sel-btn rounded-br bg-grey-bg border border-grey-light hover:bg-primary h-full text-[10px] font-bold leading-tight"
-                                                                data-corner="FR"
-                                                                onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"
-                                                                aria-label="Front-right outside corner">Front<br>Right</button>
-                                                        </div>
+                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex flex-col min-h-[420px]">
+                                                <p class="text-xs text-grey leading-relaxed mb-4">
+                                                    Probe an outside corner to set X, Y, and Z zero.
+                                                </p>
+                                                <div class="mb-4">
+                                                    <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-outside">Endmill / Dowel Pin Diameter (mm)</label>
+                                                    <input type="number" id="prb-tool-outside" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
+                                                </div>
+                                                <div class="probe-selector-card p-3 flex-1 flex items-center justify-center">
+                                                    <div id="outside-corner-grid" class="probe-corner-grid grid grid-cols-2 gap-2 w-full aspect-square">
+                                                        <button class="corner-sel-btn rounded-xl bg-grey-bg border border-grey-light hover:bg-primary h-full text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-corner="RL"
+                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'RL')"
+                                                            aria-label="Rear-left outside corner">Rear<br>Left</button>
+                                                        <button class="corner-sel-btn rounded-xl bg-grey-bg border border-grey-light hover:bg-primary h-full text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-corner="RR"
+                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'RR')"
+                                                            aria-label="Rear-right outside corner">Rear<br>Right</button>
+                                                        <button class="corner-sel-btn rounded-xl bg-primary-dark text-white border-2 border-primary-dark h-full text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-corner="FL"
+                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'FL')"
+                                                            aria-label="Front-left outside corner">Front<br>Left</button>
+                                                        <button class="corner-sel-btn rounded-xl bg-grey-bg border border-grey-light hover:bg-primary h-full text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-corner="FR"
+                                                            onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"
+                                                            aria-label="Front-right outside corner">Front<br>Right</button>
                                                     </div>
                                                 </div>
-
-                                                <!-- Single Surface -->
-                                                <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
-                                                    <div class="flex justify-between items-center mb-2">
-                                                        <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Single Surface</h3>
-                                                    </div>
-                                                    <p class="text-xs text-grey leading-relaxed mb-3">
-                                                        Find the location of a single edge or surface in X, Y, or Z.
-                                                    </p>
-                                                    <div id="single-surface-grid" class="flex flex-wrap gap-3">
-                                                        <div class="flex-1 min-w-[130px] bg-grey-light border border-grey-light/50 rounded-lg p-2">
-                                                            <div class="text-[9px] font-bold text-grey mb-1 text-center">X Axis</div>
-                                                            <div class="flex gap-1 justify-center">
-                                                                 <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                     onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)"><i data-lucide="chevrons-right" class="text-base"></i><span>Right</span><span>X+</span></button>
-                                                                 <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                     onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)"><i data-lucide="chevrons-left" class="text-base"></i><span>Left</span><span>X-</span></button>
-                                                            </div>
-                                                        </div>
-                                                        <div class="flex-1 min-w-[130px] bg-grey-light border border-grey-light/50 rounded-lg p-2">
-                                                            <div class="text-[9px] font-bold text-grey mb-1 text-center">Y Axis</div>
-                                                            <div class="flex gap-1 justify-center">
-                                                                <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Y', 1)"><i data-lucide="chevrons-up" class="text-base"></i><span>Front</span><span>Y+</span></button>
-                                                                <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Y', -1)"><i data-lucide="chevrons-down" class="text-base"></i><span>Back</span><span>Y-</span></button>
-                                                            </div>
-                                                        </div>
-                                                        <div class="flex-1 min-w-[130px] bg-grey-light border border-grey-light/50 rounded-lg p-2">
-                                                            <div class="text-[9px] font-bold text-grey mb-1 text-center">Z Axis</div>
-                                                            <div class="flex gap-1 justify-center">
-                                                                <button class="single-sel-btn rounded bg-grey-bg border border-grey-light hover:bg-primary text-[9px] font-bold leading-tight px-2 py-1 flex flex-col items-center"
-                                                                    onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)"><i data-lucide="chevrons-down" class="text-base"></i><span>Top</span><span>Z-</span></button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Run Probe -->
-                                                <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light">
-                                                    <div class="flex justify-between items-center mb-2">
-                                                        <h3 class="font-bold text-secondary-dark text-sm"><i data-lucide="play" ></i> Run Probe</h3>
-                                                    </div>
-                                                    <p class="text-xs text-grey leading-relaxed mb-3" id="run-probe-desc">Probe the selected corner to zero work coordinates.</p>
-                                                    <button class="btn btn-primary w-full py-3 probe-btn" onclick="window.probeHandler.runSelectedOperation()">
-                                                        <i data-lucide="zap" ></i> <span id="run-probe-label">Probe Corner</span>
-                                                    </button>
-                                                </div>
+                                                <button class="btn btn-primary probe-compact-action py-3 mt-4 probe-btn" onclick="window.probeHandler.runAutoCorner()">
+                                                    <i data-lucide="zap" ></i> Probe Outside Corner
+                                                </button>
                                             </div>
 
-                                            <!-- RIGHT COLUMN: SVG Diagram -->
-                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex items-center justify-center min-h-[400px]">
-                                                <img id="probe-corner-diagram" src="themes/FL.svg" alt="Probe corner diagram" style="max-width:100%;height:auto;max-height:360px;">
-                                                <img id="probe-single-diagram" src="themes/SS-RIGHT.svg" alt="Single surface diagram" style="max-width:100%;height:auto;max-height:360px;" class="hidden">
+                                            <div class="min-h-[420px]">
+                                                <div class="probe-instruction-card">
+                                                    <div class="calibration-choice-card__media relative">
+                                                        <img id="probe-corner-diagram" src="themes/FL.svg" alt="Probe corner diagram" style="max-width:100%;height:auto;max-height:340px;">
+                                                    </div>
+                                                    <div class="calibration-choice-card__info">
+                                                        <div class="calibration-choice-card__title">Outside Corner Setup</div>
+                                                        <p id="outside-corner-help" class="calibration-choice-card__text">Place probe plate on the front left outside corner. Position the tool above the Start Here hole before probing.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- TAB CONTENT: Surfaces -->
+                                    <div id="tab-surfaces" class="probe-tab-content hidden">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex flex-col min-h-[420px]">
+                                                <p class="text-xs text-grey leading-relaxed mb-4">
+                                                    Find the location of a single surface in X, Y, or Z.
+                                                </p>
+                                                <div class="mb-4">
+                                                    <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-surface">Endmill / Dowel Pin Diameter (mm)</label>
+                                                    <input type="number" id="prb-tool-surface" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
+                                                </div>
+                                                <div id="single-surface-grid" class="grid grid-cols-1 gap-3">
+                                                    <div class="probe-selector-card p-3 flex flex-col min-h-[148px]">
+                                                        <div class="text-[11px] font-bold text-grey mb-3 text-center uppercase tracking-wider">X Axis</div>
+                                                        <div class="surface-pair flex items-center justify-center gap-2 flex-1">
+                                                             <button class="single-sel-btn probe-axis-option bg-primary-dark text-white border-2 border-primary-dark text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
+                                                                 data-axis="X" data-dir="1"
+                                                                 onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)">Right<br>X+</button>
+                                                             <button class="single-sel-btn probe-axis-option bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
+                                                                 data-axis="X" data-dir="-1"
+                                                                 onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)">Left<br>X-</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="probe-selector-card p-3 flex flex-col min-h-[148px]">
+                                                        <div class="text-[11px] font-bold text-grey mb-3 text-center uppercase tracking-wider">Y Axis</div>
+                                                        <div class="surface-pair flex items-center justify-center gap-2 flex-1">
+                                                            <button class="single-sel-btn probe-axis-option bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
+                                                                data-axis="Y" data-dir="1"
+                                                                onclick="window.probeHandler.selectSingleSurface(this, 'Y', 1)">Front<br>Y+</button>
+                                                            <button class="single-sel-btn probe-axis-option bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
+                                                                data-axis="Y" data-dir="-1"
+                                                                onclick="window.probeHandler.selectSingleSurface(this, 'Y', -1)">Back<br>Y-</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="probe-selector-card p-3 flex flex-col min-h-[148px]">
+                                                        <div class="text-[11px] font-bold text-grey mb-3 text-center uppercase tracking-wider">Z Axis</div>
+                                                        <div class="flex items-center justify-center flex-1">
+                                                            <button class="single-sel-btn probe-axis-option rounded-xl bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
+                                                                data-axis="Z" data-dir="-1"
+                                                                onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)">Top<br>Z-</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button class="btn btn-primary probe-compact-action py-3 mt-4 probe-btn" onclick="window.probeHandler.runSingleSurface()">
+                                                    <i data-lucide="zap" ></i> Probe Single Surface
+                                                </button>
+                                            </div>
+
+                                            <div class="min-h-[420px]">
+                                                <div class="probe-instruction-card">
+                                                    <div class="calibration-choice-card__media relative">
+                                                        <img id="probe-single-diagram" src="themes/SS-RIGHT.svg" alt="Single surface diagram" style="max-width:100%;height:auto;max-height:340px;">
+                                                    </div>
+                                                    <div class="calibration-choice-card__info">
+                                                        <div class="calibration-choice-card__title">Surface Setup</div>
+                                                        <p id="single-surface-help" class="calibration-choice-card__text">Place probe plate on the right X+ surface. Position the tool beside the plate so it can probe toward it.</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2295,29 +2363,29 @@
                             </div>
 
                             <!-- Sub-Tabs Navigation -->
-                            <div class="flex border-b border-grey-light mb-4 overflow-x-auto no-scrollbar">
+                            <div class="subtabs">
                                 <button
-                                    class="px-5 py-2 text-sm font-bold text-primary-dark border-b-2 border-primary transition-colors hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    class="subtab-btn text-primary-dark border-b-2 border-primary trouble-tab-btn"
                                     onclick="switchTroubleTab('trouble-tab-signals', this)">
                                     Signals
                                 </button>
                                 <button
-                                    class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    class="subtab-btn text-grey border-b-2 border-transparent trouble-tab-btn"
                                     onclick="switchTroubleTab('trouble-tab-power', this)">
                                     Power Supply
                                 </button>
                                 <button
-                                    class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    class="subtab-btn text-grey border-b-2 border-transparent trouble-tab-btn"
                                     onclick="switchTroubleTab('trouble-tab-spindles', this)">
                                     Spindles
                                 </button>
                                 <button
-                                    class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    class="subtab-btn text-grey border-b-2 border-transparent trouble-tab-btn"
                                     onclick="switchTroubleTab('trouble-tab-led', this)">
                                     RGB LED
                                 </button>
                                 <button
-                                    class="px-5 py-2 text-sm font-bold text-grey border-b-2 border-transparent transition-colors hover:text-secondary-dark hover:bg-white whitespace-nowrap trouble-tab-btn"
+                                    class="subtab-btn text-grey border-b-2 border-transparent trouble-tab-btn"
                                     onclick="switchTroubleTab('trouble-tab-info', this)">
                                     Info
                                 </button>
@@ -3133,7 +3201,7 @@
     <script type="module">
         import { WebSerial } from './webserial.js';
         import { GCodeViewer } from './3dview.js';
-        import { ProbeHandler } from './probe.js';
+        import { ProbeHandler } from './probe.js?v=20260709';
         import { SDCardHandler } from './sdcard.js';
         import { AlarmsAndErrors } from './alarms_and_errors.js';
         import { DROHandler } from './dro.js';
@@ -3425,7 +3493,7 @@
         window.ws.on('sent', (line) => {
             if (window.sdHandler?.isDownloading) return;
             if (window.jobController.gcodeStreamer.active) return;
-            if (line === '?' || line === '$G') return;
+            if (line === '?') return;
             window.term.writeln(`\x1b[2m> ${line}\x1b[0m`);
             // After M104, refresh spindles for laser auto-detect
             if (line.startsWith('M104')) {
@@ -4066,6 +4134,13 @@
     -->
     <script>
         (function () {
+            var isCordovaContext =
+                location.protocol === 'file:' ||
+                /android_asset|capacitor|ionic/i.test(location.href) ||
+                /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+            if (!isCordovaContext) return;
+
             var s = document.createElement('script');
             s.src = 'cordova.js';
             s.onerror = function () { /* not running in Cordova - silent fail */ };

@@ -54,15 +54,25 @@ body[data-3d-probe-enabled="false"] .prb-3d-probe-only {
 }
 
 .single-sel-btn {
-    width: 48px;
+    width: 72px;
+    height: 72px;
     aspect-ratio: 1;
-    border-radius: 14px;
-    border-color: rgba(68, 157, 159, 0.18) !important;
-    background: rgba(255, 255, 255, 0.92);
 }
 
 .corner-sel-btn {
     aspect-ratio: 1;
+}
+
+.surface-pair .single-sel-btn:first-child {
+    border-radius: 14px 0 0 14px;
+}
+
+.surface-pair .single-sel-btn:last-child {
+    border-radius: 0 14px 14px 0;
+}
+
+#single-surface-grid > div:last-child .single-sel-btn {
+    border-radius: 14px;
 }
 
 #outside-corner-grid .corner-sel-btn:nth-child(1),

@@ -123,10 +123,14 @@ class LineProcessor {
         if (window.configWizard && window.configWizard.handleLine(line)) return;
 
         // SD card handler
-        if (window.sdHandler.processLine(line)) return;
+        if (window.sdHandler.processLine(line)) {
+            window.term.writeln(line);
+            return;
+        }
 
         // Settings handler
         if (window.grblSettings.handleLine(line)) {
+            window.term.writeln(line);
             // Debounce the viewer updates so we don't recalculate 3D bounds for every single setting parsed
             if (window.viewer && window.grblSettings.settings['130'] && window.grblSettings.settings['131'] && window.grblSettings.settings['132']) {
                 if (window._viewerSettingsUpdateTimeout) clearTimeout(window._viewerSettingsUpdateTimeout);

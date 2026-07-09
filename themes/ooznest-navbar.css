@@ -109,6 +109,26 @@
     color: #fff;
 }
 
+.subtabs {
+    display: flex;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--oz-grey-light);
+    scrollbar-width: none;
+}
+
+.subtabs::-webkit-scrollbar {
+    display: none;
+}
+
+.subtab-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
 .tools-tab-btn,
 .probe-tab-btn,
 .trouble-tab-btn {

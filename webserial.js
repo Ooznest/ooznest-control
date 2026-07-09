@@ -34,7 +34,6 @@ export class WebSerial {
         // --- Grbl v1.1 Character-Counting Flow Control (OpenBuilds pattern) ---
         this.rxBufSize = 128;
         this.sentBuffer = [];
-
         // Pop sentBuffer on ok/error (must be registered before UI listeners)
         this._onLine = (line) => {
             if (line === 'ok' || line.startsWith('error:')) {

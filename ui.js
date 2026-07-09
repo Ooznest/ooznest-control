@@ -140,6 +140,7 @@ class UIManager {
         }
     }
 
+
     /**
      * Apply button state locks based on Grbl machine state
      * @param {string} state - Grbl state (Idle, Alarm, Run, Hold, etc) or 'offline'
