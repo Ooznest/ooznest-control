@@ -199,6 +199,10 @@
             display: block;
         }
 
+        .probe-diagram-image {
+            object-fit: cover !important;
+        }
+
         .probe-instruction-card .calibration-choice-card__info {
             display: block;
             flex: 0 0 auto;
@@ -2110,7 +2114,7 @@
                                             <div class="min-h-[420px]">
                                                 <div class="probe-instruction-card">
                                                     <div class="calibration-choice-card__media relative">
-                                                        <img id="probe-corner-diagram" src="themes/FL.svg" alt="Probe corner diagram" style="max-width:100%;height:auto;max-height:340px;">
+                                                        <img id="probe-corner-diagram" class="probe-diagram-image" src="themes/FL.svg" alt="Probe corner diagram">
                                                     </div>
                                                     <div class="calibration-choice-card__info">
                                                         <div class="calibration-choice-card__title">Outside Corner Setup</div>
@@ -2166,7 +2170,7 @@
                                             <div class="min-h-[420px]">
                                                 <div class="probe-instruction-card">
                                                     <div class="calibration-choice-card__media relative">
-                                                        <img id="probe-single-diagram" src="themes/SS-RIGHT.svg" alt="Single surface diagram" style="max-width:100%;height:auto;max-height:340px;">
+                                                        <img id="probe-single-diagram" class="probe-diagram-image" src="themes/SS-RIGHT.svg" alt="Single surface diagram">
                                                     </div>
                                                     <div class="calibration-choice-card__info">
                                                         <div class="calibration-choice-card__title">Surface Setup</div>
