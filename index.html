@@ -201,6 +201,11 @@
 
         .probe-diagram-image {
             object-fit: cover !important;
+            image-rendering: auto;
+            image-rendering: optimizeQuality;
+            shape-rendering: geometricPrecision;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
 
         .probe-instruction-card .calibration-choice-card__info {

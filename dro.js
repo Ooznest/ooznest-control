@@ -24,7 +24,14 @@ export class DROHandler {
 
     // --- Command Senders ---
 
+    _requireConnectedForAction() {
+        if (this.ws && this.ws.isConnected) return true;
+        if (window.showToast) window.showToast('Machine not connected', 'plug-zap', 'error');
+        return false;
+    }
+
     setZero(axis) {
+        if (!this._requireConnectedForAction()) return;
         if (axis === 'XYZ') {
             this.ws.sendCommand('G10 L20 P0 X0 Y0 Z0');
         } else {
@@ -33,7 +40,7 @@ export class DROHandler {
     }
 
     home() {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this._requireConnectedForAction()) return;
         // Access the global reporter instance
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         if (!reporter) {
@@ -46,7 +53,7 @@ export class DROHandler {
     }
 
     goXY0() {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this._requireConnectedForAction()) return;
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         if (!reporter) {
             console.error('Reporter not available for modal');
@@ -64,7 +71,7 @@ export class DROHandler {
     }
 
     goZ0() {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this._requireConnectedForAction()) return;
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         if (!reporter) {
             console.error('Reporter not available for modal');
@@ -81,12 +88,13 @@ export class DROHandler {
     }
 
     goToPredefined(pos) {
+        if (!this._requireConnectedForAction()) return;
         this.ws.sendCommand(`G${pos}`);
         this.term.writeln(`\x1b[34m> Moving to G${pos} Position\x1b[0m`);
     }
 
     setPredefined(pos) {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this._requireConnectedForAction()) return;
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         if (!reporter) {
             console.error('Reporter not available for modal');
