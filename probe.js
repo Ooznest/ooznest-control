@@ -26,6 +26,7 @@ export class ProbeHandler {
         // Probe safety test
         this.probeSafe = false;
         this._probeTestInterval = null;
+        this._probeTestTimeout = null;
         this._testStage = null; // null, 'trigger', 'release'
 
         this.initUI();
@@ -33,7 +34,9 @@ export class ProbeHandler {
 
     initUI() {
         this.renderSettings();
+        this._mountProbeSafetyBar('tab-outside-corner');
         this._resetProbeTest();
+        this._syncProbeSelectionUI();
         document.body.setAttribute('data-3d-probe-enabled', String(this.enable3DProbe));
 
         // Reset safety when probe tab is shown
@@ -52,7 +55,14 @@ export class ProbeHandler {
         return dro && dro.inputPins && dro.inputPins.includes('P');
     }
 
+    _renderProbeTestWaiting(secondsRemaining) {
+        const btn = document.getElementById('probe-test-btn');
+        if (!btn) return;
+        btn.textContent = `Waiting (${secondsRemaining}s)`;
+    }
+
     runProbeTest() {
+        if (!this._requireConnected()) return;
         if (this._testStage) return; // already testing
 
         const s = this.store.data.probe;
@@ -69,13 +79,18 @@ export class ProbeHandler {
             ? 'Lift the probe plate and gently touch the endmill to the plate, then release'
             : 'Gently press the probe tip by hand, then release';
         btn.disabled = true;
-        btn.innerHTML = '<i data-lucide="hourglass" style="width:14px;height:14px"></i> Waiting...';
+        this._renderProbeTestWaiting(15);
         status.className = 'hidden';
         const skipBtn = document.getElementById('probe-skip-btn');
         if (skipBtn) skipBtn.classList.add('hidden');
 
         this._testStage = 'trigger';
+        const startedAt = Date.now();
         this._probeTestInterval = setInterval(() => {
+            const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+            const secondsRemaining = Math.max(0, 15 - elapsedSeconds);
+            this._renderProbeTestWaiting(secondsRemaining);
+
             if (this._testStage === 'trigger') {
                 if (this._isProbeTriggered()) {
                     this._testStage = 'release';
@@ -94,10 +109,14 @@ export class ProbeHandler {
                     const note = document.getElementById('probe-safety-note');
                     const actions = document.getElementById('probe-safety-actions');
                     bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
-                    msg.textContent = 'Probe test passed — all operations enabled';
-                    if (actions) actions.classList.add('hidden');
-                    status.className = 'text-green-600';
-                    status.innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px"></i> Probe OK';
+                    msg.textContent = 'Probe test passed';
+                    if (actions) actions.classList.remove('hidden');
+                    status.className = 'text-green-600 ml-2';
+                    const passBtn = document.getElementById('probe-test-btn');
+                    const passSkipBtn = document.getElementById('probe-skip-btn');
+                    if (passBtn) passBtn.classList.add('invisible');
+                    if (passSkipBtn) passSkipBtn.classList.add('invisible');
+                    status.textContent = 'Probe OK';
                     if (note) note.classList.add('hidden');
                     this.term.writeln('\x1b[32m> Probe safety test PASSED.\x1b[0m');
                 }
@@ -105,17 +124,18 @@ export class ProbeHandler {
         }, 100);
 
         // Timeout after 15 seconds
-        setTimeout(() => {
+        this._probeTestTimeout = setTimeout(() => {
             if (this._testStage) {
                 clearInterval(this._probeTestInterval);
                 this._probeTestInterval = null;
+                this._probeTestTimeout = null;
                 this._testStage = null;
                 this.probeSafe = false;
 
                 bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
                 msg.textContent = 'Test timed out — try again';
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="pointer" style="width:14px;height:14px"></i> Test Probe';
+                btn.textContent = 'Test Probe';
                 const skipBtn = document.getElementById('probe-skip-btn');
                 if (skipBtn) skipBtn.classList.remove('hidden');
                 this.term.writeln('\x1b[31m> Probe safety test TIMED OUT.\x1b[0m');
@@ -130,14 +150,18 @@ export class ProbeHandler {
         const bar = document.getElementById('probe-safety-bar');
         const msg = document.getElementById('probe-safety-msg');
         const actions = document.getElementById('probe-safety-actions');
+        const btn = document.getElementById('probe-test-btn');
+        const skipBtn = document.getElementById('probe-skip-btn');
         const status = document.getElementById('probe-safety-status');
         const note = document.getElementById('probe-safety-note');
 
         bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
-        msg.textContent = 'Probe test passed — all operations enabled';
-        if (actions) actions.classList.add('hidden');
-        status.className = 'text-green-600';
-        status.innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px"></i> Probe OK';
+        msg.textContent = 'Probe test skipped';
+        if (actions) actions.classList.remove('hidden');
+        status.className = 'text-green-600 ml-2';
+        status.textContent = 'Operator confirmed';
+        if (btn) btn.classList.add('invisible');
+        if (skipBtn) skipBtn.classList.add('invisible');
         if (note) note.classList.add('hidden');
         this.term.writeln('\x1b[32m> Probe safety check skipped (confirmed by user).\x1b[0m');
     }
@@ -146,6 +170,10 @@ export class ProbeHandler {
         if (this._probeTestInterval) {
             clearInterval(this._probeTestInterval);
             this._probeTestInterval = null;
+        }
+        if (this._probeTestTimeout) {
+            clearTimeout(this._probeTestTimeout);
+            this._probeTestTimeout = null;
         }
         this._testStage = null;
         this.probeSafe = false;
@@ -156,12 +184,23 @@ export class ProbeHandler {
         const status = document.getElementById('probe-safety-status');
         const note = document.getElementById('probe-safety-note');
         const actions = document.getElementById('probe-safety-actions');
+        const btn = document.getElementById('probe-test-btn');
+        const skipBtn = document.getElementById('probe-skip-btn');
 
         if (bar) bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
-        if (msg) msg.textContent = 'Probe not tested — test required before any operation';
+        if (msg) msg.textContent = 'Probe not tested — test required for safety';
         if (note) note.classList.add('hidden');
         if (actions) actions.classList.remove('hidden');
         if (status) status.className = 'hidden';
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('invisible');
+            btn.textContent = 'Test Probe';
+        }
+        if (skipBtn) {
+            skipBtn.classList.remove('hidden', 'invisible');
+            skipBtn.textContent = 'Bypass';
+        }
     }
 
     _updateProbeButtons() {
@@ -175,7 +214,30 @@ export class ProbeHandler {
         });
     }
 
+    _mountProbeSafetyBar(targetId) {
+        const bar = document.getElementById('probe-safety-bar');
+        if (!bar) return;
+        const hostMap = {
+            'tab-outside-corner': 'probe-safety-host-outside',
+            'tab-surfaces': 'probe-safety-host-surfaces'
+        };
+        const hostId = hostMap[targetId];
+        const host = document.getElementById(hostId);
+        if (host && bar.parentElement !== host) {
+            host.appendChild(bar);
+        }
+    }
+
+    _requireConnected() {
+        if (this.ws && this.ws.isConnected) return true;
+        if (window.showToast) {
+            window.showToast('Machine not connected', 'plug-zap', 'error');
+        }
+        return false;
+    }
+
     _requireProbeSafe() {
+        if (!this._requireConnected()) return false;
         if (!this.probeSafe) {
             const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
             if (reporter) {
@@ -190,6 +252,8 @@ export class ProbeHandler {
         const s = this.store.data.probe;
         if (!this.enable3DProbe && ['tab-centers', 'tab-rotation', 'tab-inside-corners'].includes(targetId)) return;
         if ((targetId === 'tab-centers' || targetId === 'tab-rotation' || targetId === 'tab-inside-corners') && this._getProbeMode(s) === 'plate') return;
+
+        this._mountProbeSafetyBar(targetId);
 
         // Hide all contents
         document.querySelectorAll('.probe-tab-content').forEach(el => el.classList.add('hidden'));
@@ -229,10 +293,16 @@ export class ProbeHandler {
     }
 
     saveSettings() {
-        const s = this.store.data.probe;
+        const readValue = (ids, fallback = 0) => {
+            for (const id of ids) {
+                const el = document.getElementById(id);
+                if (el && el.value !== '') return parseFloat(el.value) || fallback;
+            }
+            return fallback;
+        };
 
         // Basic Config
-        if (document.getElementById('prb-tool')) this.store.set('probe.toolDiameter', parseFloat(document.getElementById('prb-tool').value) || 0);
+        this.store.set('probe.toolDiameter', readValue(['prb-tool-outside', 'prb-tool-surface', 'prb-tool'], 0));
         if (document.getElementById('prb-z-thick')) this.store.set('probe.plateThickness', parseFloat(document.getElementById('prb-z-thick').value) || 0);
         if (document.getElementById('prb-xy-offset')) this.store.set('probe.xyPlateOffset', parseFloat(document.getElementById('prb-xy-offset').value) || 0);
 
@@ -255,6 +325,7 @@ export class ProbeHandler {
         if (document.getElementById('tlo-z')) this.store.set('probe.tloZ', parseFloat(document.getElementById('tlo-z').value) || -5);
 
         this.renderSettings();
+        if (window.showToast) window.showToast('Probe settings saved', 'save', 'success');
     }
 
     renderSettings() {
@@ -274,6 +345,8 @@ export class ProbeHandler {
         const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
 
         setVal('prb-tool', s.toolDiameter);
+        setVal('prb-tool-outside', s.toolDiameter);
+        setVal('prb-tool-surface', s.toolDiameter);
         setVal('prb-z-thick', s.plateThickness);
         setVal('prb-xy-offset', s.xyPlateOffset);
         setVal('prb-feed', s.feed);
@@ -290,17 +363,6 @@ export class ProbeHandler {
         setVal('tlo-y', s.tloY || 0);
         setVal('tlo-z', s.tloZ || -5);
 
-        const statusEls = document.querySelectorAll('.plate-status-text');
-        statusEls.forEach(el => {
-            if (isPlate) {
-                el.textContent = "Mode: Plate";
-                el.classList.replace('text-grey', 'text-primary-dark');
-            } else {
-                el.textContent = "Mode: Probe";
-                el.classList.replace('text-primary-dark', 'text-grey');
-            }
-        });
-
         ['tab-centers', 'tab-rotation', 'tab-inside-corners'].forEach(tab => {
             const btn = document.querySelector(`.probe-tab-btn[data-target="${tab}"]`);
             if (btn) {
@@ -308,8 +370,8 @@ export class ProbeHandler {
                     btn.classList.add('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
                     btn.classList.remove('hover:bg-white', 'hover:text-secondary-dark');
                     if (btn.classList.contains('text-primary-dark')) {
-                        const edgesBtn = document.querySelector('.probe-tab-btn[data-target="tab-edges"]');
-                        if (edgesBtn) this.switchProbeTab('tab-edges', edgesBtn);
+                        const outsideBtn = document.querySelector('.probe-tab-btn[data-target="tab-outside-corner"]');
+                        if (outsideBtn) this.switchProbeTab('tab-outside-corner', outsideBtn);
                     }
                 } else {
                     btn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
@@ -338,25 +400,33 @@ export class ProbeHandler {
         this.selections.singleAxis = axis;
         this.selections.singleDir = dir;
         this.selections.mode = 'single';
-        const txtClasses = 'text-[9px] font-bold leading-tight';
+        const txtClasses = 'text-[12px] font-bold leading-tight';
+        const baseClasses = 'single-sel-btn ' + txtClasses + ' flex flex-col items-center justify-center';
+        const variantClassMap = {
+            'Y-1': 'single-sel-btn--top',
+            'X1': 'single-sel-btn--left',
+            'Z-1': 'single-sel-btn--center',
+            'X-1': 'single-sel-btn--right',
+            'Y1': 'single-sel-btn--bottom'
+        };
         document.querySelectorAll('#single-surface-grid button').forEach(b => {
-            b.className = 'single-sel-btn rounded ' + txtClasses + ' bg-grey-bg border border-grey-light hover:bg-primary px-2 py-1 flex flex-col items-center';
+            const variant = variantClassMap[(b.dataset.axis || '') + (b.dataset.dir || '')] || '';
+            b.className = [baseClasses, variant, 'bg-grey-bg border border-grey-light hover:bg-primary'].filter(Boolean).join(' ');
         });
-        btn.className = 'single-sel-btn rounded ' + txtClasses + ' bg-primary-dark text-white border-2 border-primary-dark px-2 py-1 flex flex-col items-center';
+        const activeVariant = variantClassMap[axis + dir] || '';
+        btn.className = [baseClasses, activeVariant, 'bg-primary-dark text-white border-2 border-primary-dark'].filter(Boolean).join(' ');
         const singleImg = document.getElementById('probe-single-diagram');
-        const cornerImg = document.getElementById('probe-corner-diagram');
         const svgMap = { 'X1':'SS-RIGHT.svg', 'X-1':'SS-LEFT.svg', 'Y1':'SS-FRONT.svg', 'Y-1':'SS-REAR.svg', 'Z-1':'SS-TOP.svg' };
         if (singleImg) { singleImg.src = 'themes/' + (svgMap[axis + dir] || 'SS-TOP.svg'); singleImg.classList.remove('hidden'); }
-        if (cornerImg) cornerImg.classList.add('hidden');
-        // Deselect all outside corner buttons
-        document.querySelectorAll('#outside-corner-grid button').forEach(b => {
-            b.className = "corner-sel-btn h-full transition-colors rounded " + txtClasses + " bg-grey-bg border border-grey-light hover:bg-primary";
-        });
-        // Update run button
-        const lbl = document.getElementById('run-probe-label');
-        const desc = document.getElementById('run-probe-desc');
-        if (lbl) lbl.textContent = 'Probe ' + axis + (dir === 1 ? '+' : '-');
-        if (desc) desc.textContent = 'Probe the ' + axis + ' axis in the ' + (dir === 1 ? 'positive' : 'negative') + ' direction to set work zero.';
+        const help = document.getElementById('single-surface-help');
+        const surfaceMap = {
+            'X1': 'Place probe plate on the left surface. Position the tool beside the plate so it can probe toward it.',
+            'X-1': 'Place probe plate on the right surface. Position the tool beside the plate so it can probe toward it.',
+            'Y1': 'Place probe plate on the front surface. Position the tool in front of the plate so it can probe toward it.',
+            'Y-1': 'Place probe plate on the back surface. Position the tool behind the plate so it can probe toward it.',
+            'Z-1': 'Place probe plate on the top surface. Position the tool above the plate before probing.'
+        };
+        if (help) help.textContent = surfaceMap[axis + dir] || surfaceMap['Z-1'];
     }
 
     selectCorner(btn, type, corner) {
@@ -367,31 +437,35 @@ export class ProbeHandler {
         const parent = btn.parentElement;
         // Styles
         const selClasses = ['bg-primary-dark', 'text-white', 'border-2', 'border-primary-dark'];
-        const outUnsel = ['bg-grey-bg', 'border', 'border-grey-light'];
-        const inUnsel = ['bg-white', 'shadow-inner']; // simplified
-
-        const txtClasses = 'text-[10px] font-bold leading-tight';
+        const txtClasses = 'text-[12px] font-bold leading-tight flex flex-col items-center justify-center';
         parent.querySelectorAll('button').forEach(b => {
-            b.className = "corner-sel-btn h-full transition-colors rounded " + txtClasses + ' ' + (type === 'Outside' ? "bg-grey-bg border border-grey-light hover:bg-primary" : "bg-white shadow-inner hover:bg-primary");
+            b.className = "corner-sel-btn h-full transition-colors rounded-xl " + txtClasses + ' ' + (type === 'Outside' ? "bg-grey-bg border border-grey-light hover:bg-primary" : "bg-white shadow-inner hover:bg-primary");
         });
 
         // Apply active style
-        btn.className = "corner-sel-btn h-full rounded " + txtClasses + ' ' + selClasses.join(' ');
+        btn.className = "corner-sel-btn h-full rounded-xl " + txtClasses + ' ' + selClasses.join(' ');
 
         // Swap corner diagram
         const cImg = document.getElementById('probe-corner-diagram');
-        const sImg = document.getElementById('probe-single-diagram');
         if (cImg) { cImg.src = 'themes/' + corner + '.svg'; cImg.classList.remove('hidden'); }
-        if (sImg) sImg.classList.add('hidden');
-        // Deselect all single surface buttons
-        document.querySelectorAll('#single-surface-grid button').forEach(b => {
-            b.className = 'single-sel-btn rounded ' + txtClasses + ' bg-grey-bg border border-grey-light hover:bg-primary px-2 py-1 flex flex-col items-center';
-        });
-        // Update run button
-        const lbl = document.getElementById('run-probe-label');
-        const desc = document.getElementById('run-probe-desc');
-        if (lbl) lbl.textContent = 'Probe Corner';
-        if (desc) desc.textContent = 'Probe the selected corner to zero work coordinates.';
+        const help = document.getElementById('outside-corner-help');
+        const helpMap = {
+            RL: 'Place probe plate on the rear left outside corner. Position the tool above the Start Here hole before probing.',
+            RR: 'Place probe plate on the rear right outside corner. Position the tool above the Start Here hole before probing.',
+            FL: 'Place probe plate on the front left outside corner. Position the tool above the Start Here hole before probing.',
+            FR: 'Place probe plate on the front right outside corner. Position the tool above the Start Here hole before probing.'
+        };
+        if (help) help.textContent = helpMap[corner] || helpMap.FL;
+    }
+
+    _syncProbeSelectionUI() {
+        const defaultCornerBtn = document.querySelector(`#outside-corner-grid button[data-corner="${this.selections.outsideCorner}"]`);
+        if (defaultCornerBtn) this.selectCorner(defaultCornerBtn, 'Outside', this.selections.outsideCorner);
+
+        const singleBtn = document.querySelector(
+            `#single-surface-grid button[data-axis="${this.selections.singleAxis}"][data-dir="${this.selections.singleDir}"]`
+        ) || document.querySelector('#single-surface-grid button[data-axis="X"][data-dir="1"]');
+        if (singleBtn) this.selectSingleSurface(singleBtn, this.selections.singleAxis, this.selections.singleDir);
     }
 
     setTLOFromMachine() {

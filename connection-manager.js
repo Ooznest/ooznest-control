@@ -1,4 +1,5 @@
 import { GrblFlowControl } from './grbl-flow-control.js';
+import { registerModal } from './modal.js';
 
 export class ConnectionManager {
     constructor(webSerial) {
@@ -27,6 +28,7 @@ export class ConnectionManager {
 
         // UI element references
         this.modal = document.getElementById('connection-modal');
+        this.modalController = registerModal(this.modal, { closeOnBackdrop: true, closeOnEscape: true });
         this.btnConnect = document.getElementById('btn-connect');
 
         // Expose globals for UI callbacks
@@ -210,17 +212,17 @@ export class ConnectionManager {
     }
 
     toggleModal() {
-        if (!this.modal) return;
+        if (!this.modalController) return;
         // In direct mode only allow closing, never opening the modal
-        if (this._isDirectMode && this.modal.classList.contains('hidden')) return;
-        this.modal.classList.toggle('hidden');
+        if (this._isDirectMode && !this.modalController.isOpen()) return;
+        this.modalController.toggle();
 
-        if (!this.modal.classList.contains('hidden')) {
+        if (this.modalController.isOpen()) {
             this.setConnectionType(this.type);
         }
 
         // If showing USB tab and in Electron, refresh ports
-        if (!this.modal.classList.contains('hidden') && this.type === 'usb' && this.isElectron) {
+        if (this.modalController.isOpen() && this.type === 'usb' && this.isElectron) {
             this.refreshNodePorts();
         }
 
@@ -571,13 +573,9 @@ export class ConnectionManager {
         if (!this.btnConnect) return;
 
         if (isConnecting) {
+            this.btnConnect.innerHTML = '<i data-lucide="x-circle"></i> Disconnect';
             if (window.lucide) {
-                var xIcon = lucide.createElement('x-circle');
-                this.btnConnect.innerHTML = '';
-                this.btnConnect.appendChild(xIcon);
-                this.btnConnect.appendChild(document.createTextNode(' Disconnect'));
-            } else {
-                this.btnConnect.innerHTML = '<i data-lucide="x-circle"></i> Disconnect';
+                lucide.createIcons({ root: this.btnConnect });
             }
             this.btnConnect.className = "btn btn-secondary flex-1 h-9 text-xs shadow-none border border-white/10 px-2 py-0 !bg-yellow-500 !text-secondary-dark hover:!bg-yellow-400";
         } else if (!this.isConnected) {
@@ -676,7 +674,7 @@ export class ConnectionManager {
         } else if (this.type === 'websocket') {
             if (this.isCordova) {
                 this.emit('error', new Error('WebSocket is not supported on Cordova (HTTPS restricts ws://). Please use Telnet instead.'));
-                this.modal.classList.add('hidden');
+                this.modalController?.hide();
                 return;
             }
             const url = document.getElementById('url-websocket').value || `ws://${window.location.hostname}:81/ws`;
@@ -719,7 +717,7 @@ export class ConnectionManager {
                     this.emit('error', new Error(`Invalid WebSocket URL: ${wsErr}`));
                 }
                 this._setConnectingState(false);
-                this.modal.classList.add('hidden');
+                this.modalController?.hide();
                 return;
             }
 
@@ -776,7 +774,7 @@ export class ConnectionManager {
                 if (this.isConnected) this.handleDisconnect();
             };
         }
-        this.modal.classList.add('hidden');
+        this.modalController?.hide();
     }
 
     _handleDirectWsData(decoded) {
@@ -1602,7 +1600,7 @@ export class ConnectionManager {
 
         this.type = 'telnet';
         this.saveSettings();
-        this.modal.classList.add('hidden');
+        this.modalController?.hide();
         this._showConnectingStatus(`Auto-connecting to ${ip}:23 (Telnet)...`);
         if (this.isCordova) {
             this._connectCordovaTelnet(ip, 23).catch(err => {

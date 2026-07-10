@@ -154,7 +154,7 @@ export class BowlCutter {
 
     _loadToViewer(gcode) {
         if (window.viewer) {
-            window.viewer.processGCodeString(gcode);
+            window.viewer.processGCodeString(gcode, 'Bowl cutter job parsed');
         }
         window.currentGCodeContent = gcode;
         window.currentSDFile = null;

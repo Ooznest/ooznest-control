@@ -189,7 +189,7 @@ export class SpoilboardGridHandler {
         window.dispatchEvent(event);
 
         // Load into 3D viewer
-        window.viewer.processGCodeString(gcode);
+        window.viewer.processGCodeString(gcode, 'Spoilboard_Grid.gcode parsed');
 
         // Switch to 3D view tab
         const viewerTab = document.querySelector("button[onclick*='viewer-view']");

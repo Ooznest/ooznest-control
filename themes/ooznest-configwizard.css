@@ -1,0 +1,127 @@
+/* Ooznest configuration wizard patterns */
+
+#config-wizard-body input[type="checkbox"],
+#config-wizard-body input[type="radio"] {
+    accent-color: var(--oz-secondary);
+}
+
+#config-wizard-body .border,
+#config-wizard-body .border-grey-light {
+    border-color: rgba(68, 157, 159, 0.16) !important;
+}
+
+#config-wizard-body .bg-grey-bg,
+#config-wizard-status {
+    background: #ffffff !important;
+}
+
+#config-wizard-body button,
+.machine-select-item,
+.toolhead-option,
+.modbus-select-item,
+.dust-shoe-option,
+.enclosure-option {
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        background-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.machine-select-item:hover,
+.toolhead-option:hover,
+.modbus-select-item:hover,
+.dust-shoe-option:hover,
+.enclosure-option:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px rgba(13, 31, 34, 0.08);
+}
+
+.machine-select-item,
+.toolhead-option,
+.dust-shoe-option,
+.enclosure-option {
+    border-color: rgba(68, 157, 159, 0.18) !important;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.config-filter-group {
+    box-shadow: none;
+}
+
+.config-filter-group__header,
+.config-filter-group__header:hover,
+.config-filter-choice,
+.config-filter-choice:hover {
+    background: #fff;
+}
+
+.config-filter-group__title {
+    color: var(--oz-grey-dark);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.config-filter-group__chevron {
+    color: var(--oz-grey-dark);
+    font-size: 0.92rem;
+}
+
+.config-filter-choice {
+    display: flex !important;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.config-filter-choice:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.config-filter-choice__label {
+    display: block;
+    margin: 0;
+    color: var(--oz-grey-dark);
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.35;
+}
+
+.config-filter-choice__label--compact {
+    font-size: 0.78rem;
+}
+
+.config-filter-choice input[type="checkbox"],
+.config-filter-choice input[type="radio"] {
+    display: block;
+    margin: 0;
+}
+
+.config-filter-choice__control {
+    flex: 0 0 auto;
+    border: 1px solid rgba(68, 157, 159, 0.6);
+    background: #fff;
+    color: #fff;
+}
+
+.config-filter-choice__control.is-selected {
+    border-color: var(--oz-secondary);
+    background: var(--oz-secondary);
+}
+
+.config-filter-subtitle {
+    color: var(--oz-grey-dark);
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+#config-wizard-body button.bg-green-500 {
+    background: var(--oz-primary) !important;
+}
+
+#config-wizard-body button.bg-green-500:hover {
+    background: var(--oz-primary-light) !important;
+}

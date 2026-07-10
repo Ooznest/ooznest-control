@@ -24,7 +24,14 @@ export class DROHandler {
 
     // --- Command Senders ---
 
+    _requireConnectedForAction() {
+        if (this.ws && this.ws.isConnected) return true;
+        if (window.showToast) window.showToast('Machine not connected', 'plug-zap', 'error');
+        return false;
+    }
+
     setZero(axis) {
+        if (!this._requireConnectedForAction()) return;
         if (axis === 'XYZ') {
             this.ws.sendCommand('G10 L20 P0 X0 Y0 Z0');
         } else {
@@ -33,7 +40,7 @@ export class DROHandler {
     }
 
     home() {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this._requireConnectedForAction()) return;
         // Access the global reporter instance
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         if (!reporter) {
@@ -46,11 +53,33 @@ export class DROHandler {
     }
 
     goXY0() {
-        this.ws.sendCommand('G0 X0 Y0');
+        if (!this._requireConnectedForAction()) return;
+        const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+        if (!reporter) {
+            console.error('Reporter not available for modal');
+            return;
+        }
+        const originalMachineZ = Number.isFinite(this.mpos[2]) ? this.mpos[2] : null;
+        reporter.showConfirm('Go To XY Zero', 'Move to X0 Y0? Z will first raise to G53 Z-5, then move X, then Y, then return Z to its starting position. Ensure the path is clear.', () => {
+            this.ws.sendCommand('G53 G0 Z-5');
+            this.ws.sendCommand('G0 X0');
+            this.ws.sendCommand('G0 Y0');
+            if (originalMachineZ !== null) {
+                this.ws.sendCommand(`G53 G0 Z${originalMachineZ}`);
+            }
+        });
     }
 
     goZ0() {
-        this.ws.sendCommand('G0 Z0');
+        if (!this._requireConnectedForAction()) return;
+        const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+        if (!reporter) {
+            console.error('Reporter not available for modal');
+            return;
+        }
+        reporter.showConfirm('Go To Z Zero', 'Move to Z0? Ensure the path is clear.', () => {
+            this.ws.sendCommand('G0 Z0');
+        });
     }
 
     setWCS(wcs) {
@@ -59,12 +88,13 @@ export class DROHandler {
     }
 
     goToPredefined(pos) {
+        if (!this._requireConnectedForAction()) return;
         this.ws.sendCommand(`G${pos}`);
         this.term.writeln(`\x1b[34m> Moving to G${pos} Position\x1b[0m`);
     }
 
     setPredefined(pos) {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this._requireConnectedForAction()) return;
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         if (!reporter) {
             console.error('Reporter not available for modal');
@@ -315,25 +345,26 @@ export class DROHandler {
     _updateAccessories() {
         // A: S(CW), C(CCW), F(Flood), M(Mist)
         const mapping = {
-            'S': 'acc-spindle', // Icon generic spindle? Or direction?
-            'C': 'acc-spindle', // Both map to spindle icon, maybe change icon?
+            'S': 'acc-spindle',
+            'C': 'acc-spindle',
             'F': 'acc-flood',
             'M': 'acc-mist'
         };
 
-        // Reset all first? Or check presence
-        // Spindle (CW/CCW)
         const sEl = document.getElementById('acc-spindle');
         if (sEl) {
+            const iconEl = sEl.querySelector('svg, i, [data-lucide]');
             if (this.accessoryState.includes('S')) {
-                sEl.classList.add('text-secondary', 'animate-spin-slow'); // CW Orange
-                sEl.classList.remove('text-[#B0CACF]');
+                sEl.classList.add('active');
+                iconEl?.classList.remove('animate-spin-reverse');
+                iconEl?.classList.add('animate-spin-slow');
             } else if (this.accessoryState.includes('C')) {
-                sEl.classList.add('text-secondary', 'animate-spin-reverse'); // CCW Orange
-                sEl.classList.remove('text-[#B0CACF]');
+                sEl.classList.add('active');
+                iconEl?.classList.remove('animate-spin-slow');
+                iconEl?.classList.add('animate-spin-reverse');
             } else {
-                sEl.classList.remove('text-secondary', 'animate-spin-slow', 'animate-spin-reverse');
-                sEl.classList.add('text-[#B0CACF]');
+                sEl.classList.remove('active');
+                iconEl?.classList.remove('animate-spin-slow', 'animate-spin-reverse');
             }
         }
 
@@ -341,43 +372,62 @@ export class DROHandler {
             const id = mapping[char];
             const el = document.getElementById(id);
             if (el) {
+                const iconEl = el.querySelector('svg, i, [data-lucide]');
                 if (this.accessoryState.includes(char)) {
-                    el.classList.add('text-secondary'); // Active Orange
-                    el.classList.remove('text-[#B0CACF]');
+                    el.classList.add('active');
+                    if (char === 'F') iconEl?.classList.add('animate-flood-flow');
                 } else {
-                    el.classList.remove('text-secondary');
-                    el.classList.add('text-[#B0CACF]');
+                    el.classList.remove('active');
+                    if (char === 'F') iconEl?.classList.remove('animate-flood-flow');
                 }
             }
         });
     }
 
+    _setAccessoryState(char, enabled) {
+        const state = new Set((this.accessoryState || '').split('').filter(Boolean));
+        if (enabled) state.add(char);
+        else state.delete(char);
+        this.accessoryState = Array.from(state).join('');
+        this._updateAccessories();
+    }
+
     toggleAccessory(type) {
-        if (!this.ws || !this.ws.isConnected) return;
+        if (!this.ws || !this.ws.isConnected) { if (window.showToast) window.showToast('Not connected', 'plug-zap', 'error'); return; }
         var isActive = this.accessoryState ? this.accessoryState.includes(type) : false;
         if (type === 'F') {
             if (isActive) {
                 this.ws.sendCommand('M9');
-                if (window.showToast) window.showToast('Coolant off', 'droplet', 'info');
+                this._setAccessoryState('F', false);
+                this._setAccessoryState('M', false);
+                if (window.showToast) window.showToast('Coolant off', 'droplet', 'success');
             } else {
                 this.ws.sendCommand('M8');
-                if (window.showToast) window.showToast('Flood on', 'droplet', 'info');
+                this._setAccessoryState('F', true);
+                if (window.showToast) window.showToast('Flood on', 'droplet', 'success');
             }
         } else if (type === 'M') {
             if (isActive) {
                 this.ws.sendCommand('M9');
-                if (window.showToast) window.showToast('Coolant off', 'cloud-fog', 'info');
+                this._setAccessoryState('F', false);
+                this._setAccessoryState('M', false);
+                if (window.showToast) window.showToast('Coolant off', 'cloud-fog', 'success');
             } else {
                 this.ws.sendCommand('M7');
-                if (window.showToast) window.showToast('Mist on', 'cloud-fog', 'info');
+                this._setAccessoryState('M', true);
+                if (window.showToast) window.showToast('Mist on', 'cloud-fog', 'success');
             }
         } else if (type === 'S') {
             if (isActive) {
                 this.ws.sendCommand('M5');
-                if (window.showToast) window.showToast('Spindle off', 'fan', 'info');
+                this._setAccessoryState('S', false);
+                this._setAccessoryState('C', false);
+                if (window.showToast) window.showToast('Spindle off', 'fan', 'success');
             } else {
                 this.ws.sendCommand('M3');
-                if (window.showToast) window.showToast('Spindle on', 'fan', 'info');
+                this._setAccessoryState('S', true);
+                this._setAccessoryState('C', false);
+                if (window.showToast) window.showToast('Spindle on', 'fan', 'success');
             }
         }
     }

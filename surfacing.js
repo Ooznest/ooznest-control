@@ -389,7 +389,7 @@ export class SurfacingHandler {
             const event = new CustomEvent('gcode-loaded', { detail: gcode });
             window.dispatchEvent(event);
 
-            window.viewer.processGCodeString(gcode);
+            window.viewer.processGCodeString(gcode, 'Generated_Job.gcode parsed');
 
             document.querySelector("button[onclick*='viewer-view']").click();
             this.term.writeln("\x1b[32m> Surfacing Job Loaded to Viewer.\x1b[0m");

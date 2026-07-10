@@ -4,6 +4,67 @@
 class JoggingController {
     constructor() {
         this.initialized = false;
+        this.layoutSyncBound = null;
+        this.layoutResizeObserver = null;
+    }
+
+    syncLayout() {
+        const panel = document.getElementById('jog-panel');
+        const wrapper = panel?.querySelector('.jog-wrapper');
+        const sideStack = panel?.querySelector('.jog-side-stack');
+        if (!panel || !wrapper || !sideStack) return;
+
+        const visibleAxisCols = Array.from(sideStack.children).filter((child) => {
+            return child instanceof HTMLElement && getComputedStyle(child).display !== 'none';
+        }).length;
+
+        const wrapperGap = parseFloat(getComputedStyle(wrapper).gap) || 12;
+        const sideGap = parseFloat(getComputedStyle(sideStack).gap) || 6;
+        const wrapperWidth = wrapper.clientWidth;
+        const wrapperHeight = wrapper.clientHeight;
+
+        if (!wrapperWidth || !wrapperHeight) return;
+
+        let xySize = Math.floor(Math.min(wrapperHeight, wrapperWidth));
+        let sideWidth = 0;
+
+        // Recalculate width from the current XY size so the combined pad never exceeds the panel width.
+        for (let i = 0; i < 2; i += 1) {
+            sideWidth = visibleAxisCols > 0
+                ? Math.max(48, Math.min(72, Math.round(xySize * 0.3)))
+                : 0;
+
+            const totalSideWidth = visibleAxisCols > 0
+                ? (visibleAxisCols * sideWidth) + ((visibleAxisCols - 1) * sideGap)
+                : 0;
+            const availableWidth = Math.max(0, wrapperWidth - totalSideWidth - (visibleAxisCols > 0 ? wrapperGap : 0));
+
+            xySize = Math.floor(Math.min(wrapperHeight, availableWidth));
+        }
+
+        panel.style.setProperty('--jog-xy-size', `${Math.max(0, xySize)}px`);
+        panel.style.setProperty('--jog-z-width', `${sideWidth}px`);
+    }
+
+    initLayoutSync() {
+        if (this.layoutSyncBound) return;
+
+        this.layoutSyncBound = () => {
+            window.requestAnimationFrame(() => this.syncLayout());
+        };
+
+        window.addEventListener('resize', this.layoutSyncBound);
+        window.addEventListener('tab-shown', this.layoutSyncBound);
+
+        if ('ResizeObserver' in window) {
+            this.layoutResizeObserver = new ResizeObserver(this.layoutSyncBound);
+            const panel = document.getElementById('jog-panel');
+            const aPad = document.getElementById('jog-a-pad');
+            if (panel) this.layoutResizeObserver.observe(panel);
+            if (aPad) this.layoutResizeObserver.observe(aPad);
+        }
+
+        this.layoutSyncBound();
     }
 
     getFeedForDirection(dir, speedMode) {
@@ -63,6 +124,7 @@ class JoggingController {
 
             const startJog = (e) => {
                 if (!toggle.checked) return;
+                if (!window.ws || !window.ws.isConnected) { if (window.showToast) window.showToast('Cannot jog - not connected', 'plug-zap', 'error'); return; }
                 const speedMode = document.getElementById('feedRate').value || 'slow';
                 const f = this.getFeedForDirection(dir, speedMode);
                 const isMm = window.store.get('general.units') === 'mm';
@@ -133,6 +195,7 @@ class JoggingController {
 
             const clickJog = () => {
                 if (toggle.checked) return;
+                if (!window.ws || !window.ws.isConnected) { if (window.showToast) window.showToast('Cannot jog - not connected', 'plug-zap', 'error'); return; }
                 const s = document.getElementById('stepSize').value;
                 const speedMode = document.getElementById('feedRate').value || 'slow';
                 const f = this.getFeedForDirection(dir, speedMode);
@@ -174,6 +237,7 @@ class JoggingController {
             btn.addEventListener('click', clickJog);
         });
 
+        this.initLayoutSync();
         this.initialized = true;
     }
 }

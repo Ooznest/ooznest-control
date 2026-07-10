@@ -1,3 +1,5 @@
+import { registerModal } from './modal.js';
+
 export class ConfigWizard {
     constructor(ws, store) {
         console.log('[ConfigWizard] constructor');
@@ -28,9 +30,13 @@ export class ConfigWizard {
             probeType: 'ooznest',
             plateThickness: 5,
             xyPlateOffset: 10,
+            wifiMode: '0',
+            wifiSsid: '',
+            wifiPsk: '',
             dustShoe: false,
             enclosure: false
         };
+        this.modal = registerModal('config-wizard-overlay', { closeOnBackdrop: true, closeOnEscape: true });
         this.loadMachineJson();
     }
 
@@ -123,10 +129,15 @@ export class ConfigWizard {
 
         const size = sizeMap[configName[2]] || 'Unknown size';
         const dust = configName[3] === 'A' ? 'Dust shoe' : 'No dust shoe';
-        const enclosure = configName[4] === 'A' ? 'Enclosure' : 'Open frame';
+        const enclosure = configName[4] === 'A' ? 'Enclosure' : 'No Enclosure';
         const spindle = spindleMap[configName[5]] || 'Unknown spindle';
         const laser = configName[6] === 'A' ? 'Laser fitted' : 'No laser';
-        const probe = configName[7] === 'A' ? 'Ooznest XYZ Probe' : 'Custom probe';
+        const probeMap = {
+            A: 'Ooznest XYZ Probe',
+            B: 'Custom probe',
+            C: 'No probe'
+        };
+        const probe = probeMap[configName[7]] || 'Unknown probe';
         const category = categoryMap[configName[8]] || 'Unknown machine type';
 
         return `${category}, ${size}, ${spindle}, ${dust}, ${enclosure}, ${laser}, ${probe}`;
@@ -162,63 +173,9 @@ export class ConfigWizard {
     // --- Info Tab Rendering ---
 
     async renderInfoTab() {
-        const container = document.getElementById('trouble-tab-info-content');
-        if (!container) return;
-
-        const v = this.verInfo;
-        const computerCardHtml = window.troubleshooting?.getComputerInfo
-            ? window.troubleshooting.renderComputerInfoCard(await window.troubleshooting.getComputerInfo())
-            : '';
-        let html = '<div class="space-y-4">';
-
-        // Firmware card
-        html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-        html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-        html += '<i data-lucide="cpu" style="width:14px;height:14px"></i>';
-        html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Firmware</h3>';
-        html += '</div><div class="p-4 space-y-2">';
-        if (v) {
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${v.version || 'Unknown'}</span></div>`;
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine Config</span><span class="text-xs font-bold ${this._isUnconfigured(v.configName) ? 'text-red-500' : 'text-secondary-dark'}">${v.configName || 'None'}</span></div>`;
-            const decodedConfig = this._decodeMachineConfig(v.configName);
-            if (decodedConfig) {
-                html += `<div class="text-[10px] text-grey leading-relaxed">${decodedConfig}</div>`;
-            }
+        if (window.troubleshootingInfo?.render) {
+            await window.troubleshootingInfo.render();
         }
-        if (this.boardInfo) {
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Board</span><span class="text-xs font-bold text-secondary-dark">${this.boardInfo}</span></div>`;
-        }
-        html += '</div></div>';
-
-        // App version card
-        html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-        html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-        html += '<i data-lucide="smartphone" style="width:14px;height:14px"></i>';
-        html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Application</h3>';
-        html += '</div><div class="p-4 space-y-2">';
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Version</span><span class="text-xs font-bold text-secondary-dark">${document.title.replace('Ooznest Control ', '') || 'Unknown'}</span></div>`;
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Platform</span><span class="text-xs font-bold text-secondary-dark">${window.electron ? 'Desktop' : window.cordova ? 'Mobile' : 'Web'}</span></div>`;
-        html += '</div></div>';
-
-        html += computerCardHtml;
-
-        // Options card
-        if (this.optInfo) {
-            html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
-            html += '<div class="px-4 py-2.5 border-b border-grey-light bg-grey-bg flex items-center gap-2">';
-            html += '<i data-lucide="settings" style="width:14px;height:14px"></i>';
-            html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Options</h3>';
-            html += '</div><div class="p-4">';
-            html += `<span class="text-xs text-grey">${this.optInfo.slice(1, -1)}</span>`;
-            html += '</div></div>';
-        }
-
-        if (v && this._isUnconfigured(v.configName)) {
-            html += '<button onclick="window.configWizard.showWizard()" class="w-full py-3 rounded-lg font-bold text-sm bg-primary text-white hover:bg-primary-dark transition-colors shadow-sm">Run Configuration Wizard</button>';
-        }
-
-        html += '</div>';
-        container.innerHTML = html;
     }
 
     // --- Wizard Modal ---
@@ -228,6 +185,11 @@ export class ConfigWizard {
         this.wizardStep = 0;
         this.wizardData.machine = null;
         this.wizardData.toolheads = { spindle: null, vfdModbusEnabled: false, vfdModbus: null, laser: false };
+        this.wizardData.dustShoe = false;
+        this.wizardData.enclosure = false;
+        this.wizardData.wifiMode = '0';
+        this.wizardData.wifiSsid = '';
+        this.wizardData.wifiPsk = '';
         this.wizardData.customWidth = 500;
         this.wizardData.customLength = 500;
         this.wizardData.customDrives = { x: 'belt', y: 'belt', z: 'belt' };
@@ -235,10 +197,9 @@ export class ConfigWizard {
         this.wizardData.customPulleyTeeth = { x: 20, y: 20, z: 20 };
         this.wizardData.customLead = { x: 5, y: 5, z: 5 };
         this.wizardData.customEndstops = { x: 'min', y: 'min', z: 'min' };
-        const overlay = document.getElementById('config-wizard-overlay');
-        if (overlay) {
+        if (this.modal) {
             console.log('[ConfigWizard] Removing hidden class from overlay');
-            overlay.classList.remove('hidden');
+            this.modal.show();
         } else {
             console.warn('[ConfigWizard] overlay element not found');
         }
@@ -247,20 +208,21 @@ export class ConfigWizard {
 
     hideWizard() {
         console.log('[ConfigWizard] hideWizard');
-        const overlay = document.getElementById('config-wizard-overlay');
-        if (overlay) overlay.classList.add('hidden');
+        this.modal?.hide();
     }
 
     _renderWizardStep() {
         console.log('[ConfigWizard] _renderWizardStep step=' + this.wizardStep);
         const container = document.getElementById('config-wizard-body');
+        const footer = document.getElementById('config-wizard-footer');
         if (!container) { console.warn('[ConfigWizard] config-wizard-body not found'); return; }
-        if (!container) return;
+        if (!container || !footer) return;
 
-        const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'Apply'];
+        const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'WiFi Setup', 'Apply'];
         const totalSteps = steps.length;
 
         let html = '';
+        let footerHtml = '';
 
         // Step indicator
         html += '<div class="flex items-center gap-1 mb-6 px-1">';
@@ -277,41 +239,45 @@ export class ConfigWizard {
             } else {
                 html += `<span class="w-5 h-5 rounded-full ${isActive ? 'bg-white/20' : 'bg-grey-light'} flex items-center justify-center text-[10px] font-bold ${isActive ? 'text-white' : 'text-grey'}">${i + 1}</span>`;
             }
-            html += `<span class="text-[10px] font-bold ${isActive ? '' : 'hidden md:inline'}">${label}</span>`;
+            html += `<span class="text-[10px] font-bold">${label}</span>`;
             html += '</div>';
             html += '</div>';
         });
         html += '</div>';
 
         // Step content
-        html += '<div class="min-h-[200px]">';
+        html += '<div>';
         switch (this.wizardStep) {
             case 0: html += this._renderMachineStep(); break;
             case 1: html += this._renderRouterStep(); break;
             case 2: html += this._renderProbePlateStep(); break;
             case 3: html += this._renderDustShoeStep(); break;
             case 4: html += this._renderEnclosureStep(); break;
-            case 5: html += this._renderApplyStep(); break;
+            case 5: html += this._renderWifiSetupStep(); break;
+            case 6: html += this._renderApplyStep(); break;
         }
         html += '</div>';
 
         // Navigation buttons
-        html += '<div class="flex justify-between mt-6 pt-4 border-t border-grey-light">';
+        footerHtml += '<div class="flex w-full justify-between items-center gap-3">';
         if (this.wizardStep > 0) {
-            html += `<button onclick="window.configWizard._prevStep()" class="px-4 py-2 rounded-lg text-xs font-bold text-grey-dark border border-grey-light hover:bg-grey-bg transition-colors">Back</button>`;
+            footerHtml += `<button onclick="window.configWizard._prevStep()" class="btn btn-secondary">Back</button>`;
         } else {
-            html += '<div></div>';
+            footerHtml += '<div></div>';
         }
         if (this.wizardStep < totalSteps - 1) {
             const disabled = !this._canProceed();
-            html += `<button onclick="window.configWizard._nextStep()" class="px-6 py-2 rounded-lg text-xs font-bold ${disabled ? 'bg-grey-light text-grey cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-dark'} transition-colors shadow-sm" ${disabled ? 'disabled' : ''}>Continue</button>`;
+            footerHtml += `<button onclick="window.configWizard._nextStep()" class="btn btn-primary" ${disabled ? 'disabled' : ''}>Continue</button>`;
         } else {
-            html += `<button onclick="window.configWizard._applyConfig()" class="px-6 py-2 rounded-lg text-xs font-bold bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm">Apply Configuration</button>`;
+            footerHtml += `<button onclick="window.configWizard._applyConfig()" class="btn btn-primary">Apply Configuration</button>`;
         }
-        html += '</div>';
+        footerHtml += '</div>';
 
         container.innerHTML = html;
+        footer.innerHTML = footerHtml;
+        footer.classList.remove('hidden');
         this._wireStepEvents();
+        if (window.lucide) window.lucide.createIcons();
     }
 
     _renderMachineStep() {
@@ -335,26 +301,20 @@ export class ConfigWizard {
             if (!cat.items.length) return;
 
             const isExpanded = this._expandedMachineCat === catKey;
-            const hasSelection = this.wizardData.machine && this.wizardData.machine.category === catKey;
-
-            html += `<div class="border border-grey-light rounded-lg mb-2 overflow-hidden">`;
-            html += `<div class="flex items-center justify-between px-3 py-2.5 bg-grey-bg cursor-pointer select-none hover:bg-white transition-colors" onclick="window.configWizard._toggleMachineCategory('${catKey}')">`;
-            html += `<div class="flex items-center gap-2"><i class="${cat.icon} text-xs text-primary"></i><span class="font-bold text-xs text-secondary-dark">${cat.label}</span></div>`;
-            html += `<div class="flex items-center gap-2">`;
-            if (hasSelection) {
-                html += `<span class="text-[10px] text-green-600 font-bold"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Selected</span>`;
-            }
-            html += `<i class="bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} text-xs text-grey"></i>`;
-            html += `</div></div>`;
+            html += `<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden mb-2">`;
+            html += `<div class="config-filter-group__header flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none transition-colors" onclick="window.configWizard._toggleMachineCategory('${catKey}')">`;
+            html += `<span class="config-filter-group__title">${cat.label}</span>`;
+            html += `<i class="config-filter-group__chevron bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'}"></i>`;
+            html += `</div>`;
 
             if (isExpanded) {
                 html += `<div class="divide-y divide-grey-light/60">`;
                 cat.items.forEach(m => {
                     if (catKey === 'custom') {
                         const sel = this.wizardData.machine && this.wizardData.machine.id === m.id;
-                        html += `<div class="machine-select-item flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
-                        html += `<div class="w-4 h-4 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${m.name}</span>`;
+                        html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
+                        html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+                        html += `<span class="config-filter-choice__label">${m.name}</span>`;
                         html += `</div>`;
                         if (sel) {
                             html += '<div class="px-4 pb-3 space-y-2">';
@@ -365,31 +325,31 @@ export class ConfigWizard {
                                 const teeth = (this.wizardData.customPulleyTeeth || {})[lc] || 20;
                                 const lead = (this.wizardData.customLead || {})[lc] || 5;
                                 const endstop = (this.wizardData.customEndstops || {})[lc] || 'min';
-                                html += '<div class="border border-grey-light rounded-lg p-3">';
+                                html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light p-3">';
                                 html += `<div class="font-bold text-xs text-secondary-dark mb-2">${axis} Axis</div>`;
                                 html += '<div class="grid grid-cols-2 gap-x-3 gap-y-2">';
-                                html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Drive</label>';
-                                html += `<select onchange="window.configWizard.wizardData.customDrives.${lc}=this.value;window.configWizard._renderWizardStep()" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Drive</label>';
+                                html += `<select onchange="window.configWizard.wizardData.customDrives.${lc}=this.value;window.configWizard._renderWizardStep()" class="ooznest-select oz-select w-full text-xs">`;
                                 html += `<option value="belt" ${drive === 'belt' ? 'selected' : ''}>Belt</option>`;
                                 html += `<option value="leadscrew" ${drive === 'leadscrew' ? 'selected' : ''}>Leadscrew</option>`;
                                 html += '</select></div>';
-                                html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Travel (mm)</label>';
-                                html += `<input type="number" step="1" id="w-custom-travel-${lc}" value="${(this.wizardData.machine.travel || {})[lc] || 0}" placeholder="e.g. 270" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Travel (mm)</label>';
+                                html += `<input type="number" step="1" id="w-custom-travel-${lc}" value="${(this.wizardData.machine.travel || {})[lc] || 0}" placeholder="e.g. 270" class="ooznest-field input-field w-full">`;
                                 html += '</div>';
                                 if (drive === 'belt') {
-                                    html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Belt pitch (mm)</label>';
-                                    html += `<input type="number" step="0.1" value="${pitch}" onchange="window.configWizard.wizardData.customBeltPitch.${lc}=parseFloat(this.value)||2" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                    html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Belt pitch (mm)</label>';
+                                    html += `<input type="number" step="0.1" value="${pitch}" onchange="window.configWizard.wizardData.customBeltPitch.${lc}=parseFloat(this.value)||2" class="ooznest-field input-field w-full">`;
                                     html += '</div>';
-                                    html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Pulley teeth</label>';
-                                    html += `<input type="number" step="1" value="${teeth}" onchange="window.configWizard.wizardData.customPulleyTeeth.${lc}=parseInt(this.value)||20" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                    html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Pulley teeth</label>';
+                                    html += `<input type="number" step="1" value="${teeth}" onchange="window.configWizard.wizardData.customPulleyTeeth.${lc}=parseInt(this.value)||20" class="ooznest-field input-field w-full">`;
                                     html += '</div>';
                                 } else {
-                                    html += '<div><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Lead (mm/rev)</label>';
-                                    html += `<input type="number" step="0.1" value="${lead}" onchange="window.configWizard.wizardData.customLead.${lc}=parseFloat(this.value)||5" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                    html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Lead (mm/rev)</label>';
+                                    html += `<input type="number" step="0.1" value="${lead}" onchange="window.configWizard.wizardData.customLead.${lc}=parseFloat(this.value)||5" class="ooznest-field input-field w-full">`;
                                     html += '</div><div></div>';
                                 }
-                                html += '<div class="col-span-2"><label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Endstop</label>';
-                                html += `<select onchange="window.configWizard.wizardData.customEndstops.${lc}=this.value" class="w-full px-2 py-1.5 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                                html += '<div class="col-span-2"><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Endstop</label>';
+                                html += `<select onchange="window.configWizard.wizardData.customEndstops.${lc}=this.value" class="ooznest-select oz-select w-full text-xs">`;
                                 html += `<option value="min" ${endstop === 'min' ? 'selected' : ''}>${axis} min</option>`;
                                 html += `<option value="max" ${endstop === 'max' ? 'selected' : ''}>${axis} max</option>`;
                                 html += '</select></div>';
@@ -399,9 +359,9 @@ export class ConfigWizard {
                         }
                     } else {
                         const sel = this.wizardData.machine && this.wizardData.machine.id === m.id;
-                        html += `<div class="machine-select-item flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
-                        html += `<div class="w-4 h-4 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${m.name}</span>`;
+                        html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
+                        html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+                        html += `<span class="config-filter-choice__label">${m.name}</span>`;
                         html += `</div>`;
                     }
                 });
@@ -409,16 +369,16 @@ export class ConfigWizard {
                 // Z2 custom size option
                 if (catKey === 'z2') {
                     const isCustomSize = this.wizardData.machine && this.wizardData.machine.id === 'z2-custom';
-                    html += `<div class="machine-select-item flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer" data-machine-id="z2-custom">`;
-                    html += `<div class="w-4 h-4 rounded-full border-2 ${isCustomSize ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${isCustomSize ? 'bg-white' : ''}"></div></div>`;
-                    html += `<span class="font-bold text-xs text-secondary-dark">Custom Size</span>`;
+                    html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="z2-custom">`;
+                    html += `<div class="config-filter-choice__control ${isCustomSize ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${isCustomSize ? 'bg-white' : ''}"></div></div>`;
+                    html += `<span class="config-filter-choice__label">Custom Size</span>`;
                     html += `</div>`;
                     if (isCustomSize) {
                         html += '<div class="px-4 pb-3 space-y-2">';
-                        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Width (mm)</label>';
-                        html += `<input type="number" step="1" id="w-custom-width" value="${this.wizardData.customWidth || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=this.value&&document.getElementById('w-custom-length').value?'('+(Math.max(0,parseInt(this.value)-230))+'×'+(Math.max(0,parseInt(document.getElementById('w-custom-length').value)-230))+'×88mm)':''" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
-                        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5 mt-2">Length (mm)</label>';
-                        html += `<input type="number" step="1" id="w-custom-length" value="${this.wizardData.customLength || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=document.getElementById('w-custom-width').value&&this.value?'('+(Math.max(0,parseInt(document.getElementById('w-custom-width').value)-230))+'×'+(Math.max(0,parseInt(this.value)-230))+'×88mm)':''" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+                        html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Width (mm)</label>';
+                        html += `<input type="number" step="1" id="w-custom-width" value="${this.wizardData.customWidth || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=this.value&&document.getElementById('w-custom-length').value?'('+(Math.max(0,parseInt(this.value)-230))+'×'+(Math.max(0,parseInt(document.getElementById('w-custom-length').value)-230))+'×88mm)':''" class="ooznest-field input-field w-full">`;
+                        html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5 mt-2">Length (mm)</label>';
+                        html += `<input type="number" step="1" id="w-custom-length" value="${this.wizardData.customLength || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=document.getElementById('w-custom-width').value&&this.value?'('+(Math.max(0,parseInt(document.getElementById('w-custom-width').value)-230))+'×'+(Math.max(0,parseInt(this.value)-230))+'×88mm)':''" class="ooznest-field input-field w-full">`;
                         html += `<p id="w-custom-area" class="text-[10px] text-grey italic">${this.wizardData.customWidth && this.wizardData.customLength ? `(${Math.max(0, this.wizardData.customWidth - 230)}×${Math.max(0, this.wizardData.customLength - 230)}×88mm)` : ''}</p>`;
                         html += '</div>';
                     }
@@ -463,47 +423,37 @@ export class ConfigWizard {
             if (!cat.items.length) return;
 
             const isExpanded = this._expandedCat === catKey;
-            let hasSelection;
-            if (catKey === 'laser') hasSelection = th.laser;
-            else if (catKey === 'vfd-modbus') hasSelection = th.vfdModbusEnabled;
-            else hasSelection = th.spindle !== null;
-
-            html += `<div class="border border-grey-light rounded-lg mb-2 overflow-hidden">`;
-            html += `<div class="flex items-center justify-between px-3 py-2.5 bg-grey-bg cursor-pointer select-none hover:bg-white transition-colors" onclick="window.configWizard._toggleCategory('${catKey}')">`;
-            html += `<div class="flex items-center gap-2"><i class="${cat.icon} text-xs text-primary"></i><span class="font-bold text-xs text-secondary-dark">${cat.label}</span></div>`;
-            html += `<div class="flex items-center gap-2">`;
-            if (hasSelection) {
-                html += `<span class="text-[10px] text-green-600 font-bold"><i data-lucide="check-circle" style="width:14px;height:14px"></i> Selected</span>`;
-            }
-            html += `<i class="bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} text-xs text-grey"></i>`;
-            html += `</div></div>`;
+            html += `<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden mb-2">`;
+            html += `<div class="config-filter-group__header flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none transition-colors" onclick="window.configWizard._toggleCategory('${catKey}')">`;
+            html += `<span class="config-filter-group__title">${cat.label}</span>`;
+            html += `<i class="config-filter-group__chevron bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'}"></i>`;
+            html += `</div>`;
 
             if (isExpanded) {
                 html += `<div class="divide-y divide-grey-light/60">`;
                 cat.items.forEach(r => {
-                    const def = spindleDefs[r.id] || {};
                     if (catKey === 'laser') {
                         const checked = th.laser;
-                        html += `<label class="flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer">`;
-                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.laser = this.checked; window.configWizard._renderWizardStep()" class="w-4 h-4 accent-primary rounded">`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${r.name}</span>`;
+                        html += `<label class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer">`;
+                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.laser = this.checked; window.configWizard._renderWizardStep()" class="accent-primary rounded shrink-0" style="width:16px;height:16px;min-height:16px;padding:0;border:0;box-shadow:none;background:transparent;flex:0 0 auto;">`;
+                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
                         html += `</label>`;
                     } else if (catKey === 'vfd-modbus') {
                         const checked = th.vfdModbusEnabled;
-                        html += `<label class="flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer">`;
-                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.vfdModbusEnabled = this.checked; if(!this.checked)window.configWizard.wizardData.toolheads.vfdModbus=null; window.configWizard._renderWizardStep()" class="w-4 h-4 accent-primary rounded">`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${r.name}</span>`;
+                        html += `<label class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer">`;
+                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.vfdModbusEnabled = this.checked; if(!this.checked)window.configWizard.wizardData.toolheads.vfdModbus=null; window.configWizard._renderWizardStep()" class="accent-primary rounded shrink-0" style="width:16px;height:16px;min-height:16px;padding:0;border:0;box-shadow:none;background:transparent;flex:0 0 auto;">`;
+                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
                         html += `</label>`;
                         // Modbus protocol sub-select
                         if (checked) {
-                            html += '<div class="px-4 pb-2 bg-grey-bg/30">';
-                            html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5 mt-1">Modbus Protocol</label>';
+                            html += '<div class="px-4 pb-3 bg-grey-bg/30">';
+                            html += '<label class="ooznest-label config-filter-subtitle block mb-1.5 mt-1">Modbus Protocol</label>';
                             html += '<div class="grid gap-1">';
                             Object.entries(this.modbusProtocols).forEach(([key, proto]) => {
                                 const sel = th.vfdModbus === key;
-                                html += `<div class="modbus-select-item flex items-center gap-2 px-2.5 py-1.5 rounded border ${sel ? 'border-primary bg-primary-light/20' : 'border-grey-light hover:bg-grey-bg'} cursor-pointer transition-all" data-modbus-key="${key}">`;
-                                html += `<div class="w-3 h-3 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1 h-1 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-                                html += `<span class="text-[10px] font-bold text-secondary-dark">${proto.name}</span>`;
+                                html += `<div class="modbus-select-item config-filter-choice flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all" data-modbus-key="${key}">`;
+                                html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-3 h-3 rounded-full flex items-center justify-center"><div class="w-1 h-1 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+                                html += `<span class="config-filter-choice__label config-filter-choice__label--compact">${proto.name}</span>`;
                                 html += `<span class="text-[10px] text-grey ml-auto">$$396=${proto['$396']}</span>`;
                                 html += `</div>`;
                             });
@@ -511,9 +461,9 @@ export class ConfigWizard {
                         }
                     } else {
                         const selected = th.spindle === r.id;
-                        html += `<div class="flex items-center gap-3 px-3 py-2.5 hover:bg-grey-bg/50 transition-colors cursor-pointer toolhead-option" data-id="${r.id}">`;
-                        html += `<div class="w-4 h-4 rounded-full border-2 ${selected ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : ''}"></div></div>`;
-                        html += `<span class="font-bold text-xs text-secondary-dark">${r.name}</span>`;
+                        html += `<div class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer toolhead-option" data-id="${r.id}">`;
+                        html += `<div class="config-filter-choice__control ${selected ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : ''}"></div></div>`;
+                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
                         html += `</div>`;
                     }
                 });
@@ -566,6 +516,9 @@ export class ConfigWizard {
     }
 
     _syncGangedYAxisSteps(lines = []) {
+        // Only send $103 if the controller actually supports Y2 (ganged Y)
+        if (!window.grblSettings?.settings['103']) return lines;
+
         const y1Line = lines.find(line => line.startsWith('$101='));
         if (!y1Line) return lines;
 
@@ -610,34 +563,43 @@ export class ConfigWizard {
         const s = this.store.data.probe;
         const selected = this.wizardData.probeType;
         let html = '<p class="text-sm text-grey mb-4">Select your probe plate:</p>';
-
-        // Dropdown
-        html += '<div class="mb-4">';
-        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Probe Type</label>';
-        html += `<select id="wizard-probe-type" onchange="window.configWizard._onProbeTypeChange(this.value)" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
-        html += `<option value="ooznest" ${selected === 'ooznest' ? 'selected' : ''}>Ooznest XYZ Probe</option>`;
-        html += `<option value="custom" ${selected === 'custom' ? 'selected' : ''}>Custom</option>`;
-        html += '</select>';
-        html += '</div>';
-
-        // Custom dimensions (shown only when Custom is selected)
-        const showCustom = selected === 'custom' ? '' : 'hidden';
-        html += `<div id="wizard-custom-probe-dims" class="${showCustom} grid grid-cols-2 gap-4">`;
-        html += '<div>';
-        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
-        html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
-        html += '</div>';
-        html += '<div>';
-        html += '<label class="block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">XY Plate Offset (mm)</label>';
-        html += `<input type="number" step="0.1" id="wizard-plate-offset" value="${s.xyPlateOffset || 10}" class="w-full px-3 py-2 rounded-lg border border-grey-light text-xs font-bold text-secondary-dark bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none">`;
+        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+        html += '<div class="divide-y divide-grey-light/60">';
+        [
+            { value: 'ooznest', label: 'Ooznest XYZ Probe' },
+            { value: 'custom', label: 'Custom Probe' },
+            { value: 'none', label: 'No Probe' }
+        ].forEach(opt => {
+            const sel = selected === opt.value;
+            html += `<div class="probe-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+            html += `<span class="config-filter-choice__label">${opt.label}</span>`;
+            html += '</div>';
+            if (sel && opt.value === 'custom') {
+                html += '<div class="px-4 pb-3 bg-grey-bg/30">';
+                html += '<div class="grid grid-cols-2 gap-4">';
+                html += '<div>';
+                html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
+                html += `<input type="number" step="0.1" id="wizard-plate-thickness" value="${s.plateThickness || 5}" class="ooznest-field input-field w-full">`;
+                html += '</div>';
+                html += '<div>';
+                html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">XY Plate Offset (mm)</label>';
+                html += `<input type="number" step="0.1" id="wizard-plate-offset" value="${s.xyPlateOffset || 10}" class="ooznest-field input-field w-full">`;
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+        });
         html += '</div>';
         html += '</div>';
 
         // Description
         if (selected === 'ooznest') {
             html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Ooznest XYZ Probe: thickness 10mm, XY offset 10mm. These will be set automatically in your probe settings.</p>';
-        } else {
+        } else if (selected === 'custom') {
             html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Enter your custom probe plate dimensions above.</p>';
+        } else {
+            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> No probe plate will be configured.</p>';
         }
 
         return html;
@@ -646,18 +608,19 @@ export class ConfigWizard {
     _renderDustShoeStep() {
         const selected = this.wizardData.dustShoe;
         let html = '<p class="text-sm text-grey mb-4">Do you have a dust shoe?</p>';
-        html += '<div class="grid gap-2">';
+        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+        html += '<div class="divide-y divide-grey-light/60">';
         [
-            { value: true, label: 'Yes, I have one', icon: 'bi-fan' },
-            { value: false, label: 'No dust shoe', icon: 'bi-x-lg' }
+            { value: true, label: 'Yes, I have one' },
+            { value: false, label: 'No Dust Shoe' }
         ].forEach(opt => {
             const sel = selected === opt.value;
-            html += `<div class="dust-shoe-option border ${sel ? 'border-primary bg-primary-light/20 ring-1 ring-primary/30' : 'border-grey-light hover:border-primary/40 hover:bg-grey-bg'} rounded-lg p-3 cursor-pointer transition-all" data-value="${opt.value}">`;
-            html += `<div class="flex items-center gap-3">`;
-            html += `<div class="w-5 h-5 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-2 h-2 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-            html += `<span class="font-bold text-xs text-secondary-dark">${opt.label}</span>`;
-            html += '</div></div>';
+            html += `<div class="dust-shoe-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+            html += `<span class="config-filter-choice__label">${opt.label}</span>`;
+            html += '</div>';
         });
+        html += '</div>';
         html += '</div>';
         return html;
     }
@@ -665,18 +628,58 @@ export class ConfigWizard {
     _renderEnclosureStep() {
         const selected = this.wizardData.enclosure;
         let html = '<p class="text-sm text-grey mb-4">Do you have a <a href="https://ooznest.co.uk/product/original-workbee-enclosure/" target="_blank" class="text-primary hover:underline">WorkBee Enclosure</a>? </p>';
-        html += '<div class="grid gap-2">';
+        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+        html += '<div class="divide-y divide-grey-light/60">';
         [
-            { value: true, label: 'Yes, WorkBee Enclosure', icon: 'bi-box-seam' },
-            { value: false, label: 'Open frame', icon: 'bi-unlock' }
+            { value: true, label: 'Yes, WorkBee Enclosure' },
+            { value: false, label: 'No Enclosure' }
         ].forEach(opt => {
             const sel = selected === opt.value;
-            html += `<div class="enclosure-option border ${sel ? 'border-primary bg-primary-light/20 ring-1 ring-primary/30' : 'border-grey-light hover:border-primary/40 hover:bg-grey-bg'} rounded-lg p-3 cursor-pointer transition-all" data-value="${opt.value}">`;
-            html += `<div class="flex items-center gap-3">`;
-            html += `<div class="w-5 h-5 rounded-full border-2 ${sel ? 'border-primary bg-primary' : 'border-grey-light'} flex items-center justify-center"><div class="w-2 h-2 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-            html += `<span class="font-bold text-xs text-secondary-dark">${opt.label}</span>`;
-            html += '</div></div>';
+            html += `<div class="enclosure-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+            html += `<span class="config-filter-choice__label">${opt.label}</span>`;
+            html += '</div>';
         });
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    _renderWifiSetupStep() {
+        const isStation = this.wizardData.wifiMode === '1';
+        let html = '<p class="text-sm text-grey mb-4">Configure the controller network mode.</p>';
+        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+        html += '<div class="divide-y divide-grey-light/60">';
+        [
+            { value: '0', label: 'Wifi Off / Ethernet (Optional)' },
+            { value: '1', label: 'Wifi Enabled' }
+        ].forEach(opt => {
+            const sel = this.wizardData.wifiMode === opt.value;
+            html += `<div class="wifi-mode-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+            html += `<span class="config-filter-choice__label">${opt.label}</span>`;
+            html += '</div>';
+        });
+        if (isStation) {
+            html += '<div class="px-4 py-3 bg-grey-bg/30 space-y-4">';
+            html += '<div>';
+            html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Network Name ($74)</label>';
+            html += `<input type="text" maxlength="64" value="${this._escapeHtml(this.wizardData.wifiSsid || '')}" oninput="window.configWizard.wizardData.wifiSsid=this.value" class="ooznest-field input-field w-full" placeholder="WiFi network name">`;
+            html += '</div>';
+            html += '<div>';
+            html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Password ($75)</label>';
+            html += `<input type="password" minlength="8" maxlength="32" value="${this._escapeHtml(this.wizardData.wifiPsk || '')}" oninput="window.configWizard.wizardData.wifiPsk=this.value" class="ooznest-field input-field w-full" placeholder="8 to 32 characters">`;
+            html += '</div>';
+            html += '</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+
+        html += '<p class="text-[10px] text-grey">';
+        html += isStation
+            ? 'Station mode will save the SSID and password to the controller.'
+            : 'Use this when networking is handled over Ethernet, or when WiFi should remain disabled.';
+        html += '</p>';
         html += '</div>';
         return html;
     }
@@ -687,6 +690,7 @@ export class ConfigWizard {
         const assignments = this._computeToolheadAssignments();
         const modbusKey = th.vfdModbus;
         const modbusProto = modbusKey ? this.modbusProtocols[modbusKey] : null;
+        const wifiLines = this._getWifiConfigLines();
 
         let html = '<p class="text-sm text-grey mb-4">Review your configuration before applying:</p>';
         html += '<div class="bg-grey-bg rounded-lg p-4 space-y-3 border border-grey-light">';
@@ -709,17 +713,27 @@ export class ConfigWizard {
         }
 
         html += '<div class="border-t border-grey-light pt-2"></div>';
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe</span><span class="text-xs font-bold text-secondary-dark">${this.wizardData.probeType === 'ooznest' ? 'Ooznest XYZ Probe' : 'Custom'}</span></div>`;
+        const probeLabel = this.wizardData.probeType === 'ooznest'
+            ? 'Ooznest XYZ Probe'
+            : this.wizardData.probeType === 'custom'
+                ? 'Custom'
+                : 'None';
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe</span><span class="text-xs font-bold text-secondary-dark">${probeLabel}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Dust Shoe</span><span class="text-xs font-bold ${this.wizardData.dustShoe ? 'text-green-600' : 'text-grey'}">${this.wizardData.dustShoe ? 'Yes' : 'No'}</span></div>`;
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold ${this.wizardData.enclosure ? 'text-green-600' : 'text-grey'}">${this.wizardData.enclosure ? 'WorkBee Enclosure' : 'Open frame'}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold ${this.wizardData.enclosure ? 'text-green-600' : 'text-grey'}">${this.wizardData.enclosure ? 'WorkBee Enclosure' : 'No Enclosure'}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">WiFi Mode</span><span class="text-xs font-bold text-secondary-dark">${this.wizardData.wifiMode === '1' ? 'Wifi Enabled' : 'Wifi Off / Ethernet (Optional)'}</span></div>`;
+        if (this.wizardData.wifiMode === '1') {
+            html += `<div class="flex justify-between"><span class="text-xs text-grey">Wifi Network Name</span><span class="text-xs font-bold text-secondary-dark">${this._escapeHtml(this.wizardData.wifiSsid || '')}</span></div>`;
+        }
 
         html += '</div>';
 
         if (machine) {
             const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
-            html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${configLines.length} settings)</p>`;
+            const totalSettings = configLines.length + wifiLines.length;
+            html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${totalSettings} settings)</p>`;
             html += `<div class="bg-white border border-grey-light rounded-lg p-2 max-h-32 overflow-y-auto text-[10px] font-mono text-grey-dark leading-relaxed">`;
-            html += configLines.map(l => `<div>${l}</div>`).join('');
+            html += configLines.concat(wifiLines).map(l => `<div>${this._escapeHtml(l)}</div>`).join('');
             html += '</div></div>';
         }
 
@@ -727,6 +741,7 @@ export class ConfigWizard {
         html += '<i data-lucide="triangle-alert" style="width:14px;height:14px"></i>';
         html += '<p class="text-[10px] text-amber-700">This will overwrite your current Grbl settings and perform a soft reset. Make sure you have a backup of your current configuration.</p>';
         html += '</div>';
+        html += '<div id="config-wizard-status" class="mt-4"></div>';
 
         return html;
     }
@@ -764,6 +779,13 @@ export class ConfigWizard {
             };
         });
 
+        // Probe selection
+        document.querySelectorAll('.probe-option').forEach(el => {
+            el.onclick = () => {
+                this._onProbeTypeChange(el.dataset.value);
+            };
+        });
+
         // Modbus protocol selection
         document.querySelectorAll('.modbus-select-item').forEach(el => {
             el.onclick = () => {
@@ -784,6 +806,14 @@ export class ConfigWizard {
         document.querySelectorAll('.enclosure-option').forEach(el => {
             el.onclick = () => {
                 this.wizardData.enclosure = el.dataset.value === 'true';
+                this._renderWizardStep();
+            };
+        });
+
+        // WiFi mode selection
+        document.querySelectorAll('.wifi-mode-option').forEach(el => {
+            el.onclick = () => {
+                this.wizardData.wifiMode = el.dataset.value;
                 this._renderWizardStep();
             };
         });
@@ -813,6 +843,12 @@ export class ConfigWizard {
                 if (!hasAny) return false;
                 if (th.vfdModbusEnabled && !th.vfdModbus) return false;
                 return true;
+            }
+            case 5: {
+                if (this.wizardData.wifiMode !== '1') return true;
+                const ssid = (this.wizardData.wifiSsid || '').trim();
+                const psk = this.wizardData.wifiPsk || '';
+                return ssid.length > 0 && psk.length >= 8 && psk.length <= 32;
             }
             default: return true;
         }
@@ -859,7 +895,7 @@ export class ConfigWizard {
                 const offset = document.getElementById('wizard-plate-offset');
                 if (thick) this.wizardData.plateThickness = parseFloat(thick.value) || 5;
                 if (offset) this.wizardData.xyPlateOffset = parseFloat(offset.value) || 10;
-            } else {
+            } else if (this.wizardData.probeType === 'ooznest') {
                 this.wizardData.plateThickness = 5;
                 this.wizardData.xyPlateOffset = 10;
             }
@@ -892,17 +928,23 @@ export class ConfigWizard {
         // Save dust shoe and enclosure for future use
         this.store.set('machine.dustShoe', this.wizardData.dustShoe);
         this.store.set('machine.enclosure', this.wizardData.enclosure);
+        this.store.set('machine.wifi', JSON.stringify({
+            mode: this.wizardData.wifiMode,
+            ssid: this.wizardData.wifiSsid
+        }));
 
         // Apply grbl settings
         const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
-        this._showWizardStatus(`Applying ${configLines.length} settings...`, 'info');
+        const wifiLines = this._getWifiConfigLines();
+        const allConfigLines = configLines.concat(wifiLines);
+        this._showWizardStatus(`Applying ${allConfigLines.length} settings...`, 'info');
 
         try {
-            for (let i = 0; i < configLines.length; i++) {
-                const line = configLines[i].trim();
+            for (let i = 0; i < allConfigLines.length; i++) {
+                const line = allConfigLines[i].trim();
                 if (!line) continue;
                 if (i % 10 === 0) {
-                    this._showWizardStatus(`Setting ${i + 1} of ${configLines.length}...`, 'info');
+                    this._showWizardStatus(`Setting ${i + 1} of ${allConfigLines.length}...`, 'info');
                     await this._sleep(10);
                 }
                 await this.ws.sendCommand(line);
@@ -944,7 +986,7 @@ export class ConfigWizard {
             //   Pos 6 (spindle): A=WorkBee Router Head, B=Mafell FM 1000 (Digital), C=Mafell FM 1000 (Manual),
             //                    D=VFD (0-10v), E=VFD (Modbus), F=PWM Laser Module
             //   Pos 7 (laser): A=yes, B=no
-            //   Pos 8 (probe): A=Ooznest XYZ Probe, B=Custom Probe
+            //   Pos 8 (probe): A=Ooznest XYZ Probe, B=Custom Probe, C=None
             //   Pos 9 (cat):   A=Z1+, B=Z2, C=Custom
             const th = this.wizardData.toolheads;
             const sizeCodes = { '500x500':'A', '750x750':'B', '750x1000':'C', '1000x1000':'D', '1000x1500':'E', '1500x1500':'F' };
@@ -957,7 +999,8 @@ export class ConfigWizard {
             const dustCode = this.wizardData.dustShoe ? 'A' : 'B';
             const encCode = this.wizardData.enclosure ? 'A' : 'B';
             const lasCode = th.laser ? 'A' : 'B';
-            const prbCode = this.wizardData.probeType === 'ooznest' ? 'A' : 'B';
+            const probeCodes = { ooznest: 'A', custom: 'B', none: 'C' };
+            const prbCode = probeCodes[this.wizardData.probeType] || 'A';
             const wbCode = `WB${szCode}${dustCode}${encCode}${spCode}${lasCode}${prbCode}${catCode}`;
             await this.ws.sendCommand(`$I=${wbCode}`);
 
@@ -993,5 +1036,23 @@ export class ConfigWizard {
 
     _sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    _getWifiConfigLines() {
+        const lines = [`$73=${this.wizardData.wifiMode || '0'}`];
+        if ((this.wizardData.wifiMode || '0') === '1') {
+            lines.push(`$74=${(this.wizardData.wifiSsid || '').trim()}`);
+            lines.push(`$75=${this.wizardData.wifiPsk || ''}`);
+        }
+        return lines;
+    }
+
+    _escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 }

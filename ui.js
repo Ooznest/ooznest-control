@@ -4,6 +4,58 @@
 class UIManager {
     constructor() {
         this.statusInterval = null;
+        this.unlockInProgress = false;
+    }
+
+    getUnlockButton() {
+        return document.querySelector('button[title="Unlock ($X)"]');
+    }
+
+    setUnlockPending() {
+        this.unlockInProgress = true;
+        const btn = this.getUnlockButton();
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'pointer-events-none');
+        }
+        this.renderUnlockButton('unlocking');
+    }
+
+    clearUnlockPending() {
+        this.unlockInProgress = false;
+    }
+
+    renderUnlockButton(mode) {
+        const btn = this.getUnlockButton();
+        if (!btn) return;
+
+        btn.classList.remove(
+            'btn-secondary',
+            '!bg-red-600',
+            '!text-white',
+            'animate-pulse',
+            '!border-red-500',
+            'shockwave',
+            '!bg-amber-900/20',
+            '!text-amber-400/30',
+            '!text-amber-400',
+            '!border-amber-700/20',
+            '!border-amber-700/30',
+            '!opacity-100'
+        );
+
+        if (mode === 'alarm') {
+            btn.innerHTML = '<i data-lucide="unlock" style="width:12px;height:12px"></i> Unlock';
+            btn.classList.add('!bg-red-600', '!text-white', 'shockwave', '!border-red-500');
+        } else if (mode === 'unlocking') {
+            btn.innerHTML = '<i data-lucide="loader-circle" style="width:12px;height:12px"></i> Unlocking...';
+            btn.classList.add('!bg-amber-900/20', '!text-amber-400', '!border-amber-700/30', '!opacity-100');
+        } else {
+            btn.innerHTML = '<i data-lucide="unlock" style="width:12px;height:12px"></i> Unlock';
+            btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
+        }
+
+        if (window.lucide) window.lucide.createIcons();
     }
 
     /**
@@ -35,6 +87,24 @@ class UIManager {
             const pollingRate = ws.type === 'websocket' ? 500 : 250;
             this.statusInterval = setInterval(() => ws.sendRealtime('?'), pollingRate);
 
+            // Init progress tracking — advances on each 'ok' response
+            var initSteps = [
+                { label: 'Alarm Code Definitions Loaded', icon: 'alert-triangle' },
+                { label: 'Error Code Definitions Loaded', icon: 'x-circle' },
+                { label: 'Setting Groups Loaded', icon: 'folder-tree' },
+                { label: 'Settings Info Loaded', icon: 'list' },
+                { label: 'Grbl Settings Loaded', icon: 'settings' },
+                { label: 'Parameters Loaded', icon: 'sliders' },
+                { label: 'Firmware Build Info Loaded', icon: 'info' },
+                { label: 'CNC Connected', icon: 'plug' }
+            ];
+            window.lineProcessor.startInitTracking(initSteps, function(idx, step) {
+                if (window.showToast) window.showToast(step.label, step.icon, 'success');
+            }, function(idx, step) {
+                if (window.showToast) window.showToast('Failed: ' + step.label, 'plug-zap', 'error');
+                if (window.ws && window.ws.disconnect) window.ws.disconnect();
+            }, 5000);
+
             setTimeout(() => ws.sendCommand('$EA'), 500);
             setTimeout(() => ws.sendCommand('$EE'), 1000);
             setTimeout(() => sdHandler.refresh(), 1500);
@@ -44,11 +114,17 @@ class UIManager {
             setTimeout(() => ws.sendCommand('$#'), 3500);
             setTimeout(() => ws.sendCommand('$I+'), 4000);
             setTimeout(() => {
+                if (window.troubleshooting?.primeStartupDiscovery) {
+                    window.troubleshooting.primeStartupDiscovery();
+                }
+            }, 4250);
+            setTimeout(() => {
                 window.userRequestedStatus = true;
                 ws.sendRealtime('\x87');
             }, 4500);
         } else {
             if (this.statusInterval) clearInterval(this.statusInterval);
+            if (window.lineProcessor) window.lineProcessor.cancelInitTracking();
             btn.innerHTML = 'Connect';
             btn.className = "btn btn-primary flex-1 h-9 text-xs shadow-none border border-white/10 px-2 py-0";
 
@@ -64,13 +140,18 @@ class UIManager {
         }
     }
 
+
     /**
      * Apply button state locks based on Grbl machine state
      * @param {string} state - Grbl state (Idle, Alarm, Run, Hold, etc) or 'offline'
      */
     applyStateLock(state) {
         state = (state || 'offline').toLowerCase().split(':')[0];
-        
+
+        if (state !== 'alarm' && this.unlockInProgress) {
+            this.clearUnlockPending();
+        }
+
         const setDisabled = (selector, isDisabled) => {
             document.querySelectorAll(selector).forEach(el => {
                 if (!el) return;
@@ -96,37 +177,34 @@ class UIManager {
             setDisabled(macroControls, true);
             setDisabled(txtConsole, true);
             setDisabled(unlockBtn, true);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
-                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-            }
-            
+            this.renderUnlockButton('default');
+
             // Completely disable specific outer blocks remaining from previous UI styles
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => {
                 el.classList.add('opacity-50', 'pointer-events-none');
             });
-        } 
+        }
         else if (state === 'alarm') {
             setDisabled(jogControls, true);
             setDisabled(runControls, true);
             setDisabled(macroControls, true);
             setDisabled(txtConsole, false); // Keep console alive to query settings out of alarm
-            
+
             // Keep HOME button enabled during alarm (needed for homing-lock recovery)
             setDisabled('#home-all-btn', false);
             document.querySelectorAll('.dro-home-btn').forEach(el => {
                 el.disabled = false;
                 el.classList.remove('opacity-50', 'pointer-events-none');
             });
-            
-            setDisabled(unlockBtn, false);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-                btn.classList.add('!bg-red-600', '!text-white', 'shockwave', '!border-red-500');
+
+            if (this.unlockInProgress) {
+                setDisabled(unlockBtn, true);
+                this.renderUnlockButton('unlocking');
+            } else {
+                setDisabled(unlockBtn, false);
+                this.renderUnlockButton('alarm');
             }
-            
+
             // Clean up general offline locks if they were present
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
@@ -135,13 +213,9 @@ class UIManager {
             setDisabled(runControls, true);
             setDisabled(macroControls, true);
             setDisabled(txtConsole, false); // Keep console to send realtime intercepts
-            
+
             setDisabled(unlockBtn, true);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
-                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-            }
+            this.renderUnlockButton('default');
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else if (state === 'hold' || state === 'door' || state === 'sleep') {
@@ -149,28 +223,20 @@ class UIManager {
             setDisabled(runControls, true);
             setDisabled(macroControls, true);
             setDisabled(txtConsole, false);
-            
+
             setDisabled(unlockBtn, true);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
-                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-            }
+            this.renderUnlockButton('default');
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
-        else { 
+        else {
             // Idle Space
             setDisabled(jogControls, false);
             setDisabled(macroControls, false);
             setDisabled(txtConsole, false);
-            
+
             setDisabled(unlockBtn, true);
-            const btn = document.querySelector(unlockBtn);
-            if (btn) {
-                btn.classList.remove('btn-secondary', '!bg-red-600', '!text-white', 'animate-pulse', '!border-red-500', 'shockwave');
-                btn.classList.add('!bg-amber-900/20', '!text-amber-400/30', '!border-amber-700/20', '!opacity-100');
-            }
-            
+            this.renderUnlockButton('default');
+
             document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
 
             this.updateRunButtonsState();

@@ -1,0 +1,60 @@
+/* Ooznest 3D view overlays and controls */
+
+.viewer-controls {
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.viewer-controls-left {
+    position: absolute;
+    top: 12px;
+    left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.viewer-controls > *,
+.viewer-controls > * > .overlay-btn {
+    width: 100%;
+}
+
+.overlay-btn {
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(68, 157, 159, 0.14);
+    border-radius: 16px;
+    box-shadow: 0 16px 30px rgba(13, 31, 34, 0.1);
+    color: var(--oz-secondary-dark);
+    backdrop-filter: blur(8px);
+    padding: 8px 14px;
+    font-family: 'Nunito', 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.overlay-btn:hover {
+    background: #fff;
+    color: var(--oz-primary);
+}
+
+.viewer-controls .overlay-btn,
+.viewer-controls-left .overlay-btn {
+    min-height: 42px;
+}
+
+@media (max-width: 768px) {
+    .overlay-btn {
+        border-radius: 14px;
+    }
+}

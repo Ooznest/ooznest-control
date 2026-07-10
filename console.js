@@ -35,12 +35,12 @@ class ConsoleManager {
     initTerminal() {
         this.term = new Terminal({
             cursorBlink: true,
-            fontSize: 11,
+            fontSize: 13,
             fontFamily: '"JetBrains Mono", monospace',
             rightClickSelectsWord: true,
             minimumContrastRatio: 1,   /* Disable auto-contrast: xterm 5.x reads DOM bg color which may be white from sidebar CSS, then shifts all text towards white making it invisible */
             theme: {
-                background: '#B0CACF', // oz-teal-light
+                background: '#FFFFFF',
                 foreground: '#0D1F22', // oz-black
                 cursor: '#449D9F',
                 selectionBackground: 'rgba(68, 157, 159, 0.4)',

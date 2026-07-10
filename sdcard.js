@@ -11,6 +11,7 @@ export class SDCardHandler {
         this.path = "/";
         this.fileCount = 0;
         this.files = {}; // Map filename -> size (bytes)
+        this.listedEntries = []; // Current directory listing for troubleshooting/export
 
         // Download State
         this.isDownloading = false;
@@ -141,6 +142,7 @@ export class SDCardHandler {
         document.getElementById('sd-current-path').textContent = this.path;
         this.fileCount = 0;
         this.files = {}; // Clear cache
+        this.listedEntries = [];
         document.getElementById('sd-badge').classList.add('hidden');
 
         // Try HTTP first if available
@@ -350,6 +352,7 @@ export class SDCardHandler {
             this.files[name] = bytes; // Store for progress calculation
             this.term.writeln(`  \x1b[2m${name}  (${sizeDisplay})\x1b[0m`);
         }
+        this.listedEntries.push({ type: 'file', name, fullPath, bytes, sizeDisplay });
 
         // Update Badge
         this.fileCount++;
@@ -380,7 +383,7 @@ export class SDCardHandler {
 
         const row = `
           <tr class="hover:bg-grey-light border-b border-grey-light last:border-b-0 transition-colors group" data-filename="${name}">
-              <td class="px-4 py-2 md:px-6 md:py-3 font-medium text-grey-dark align-middle truncate overflow-hidden">
+              <td class="px-4 py-2 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
                   <div class="flex flex-col justify-center w-full">
                       <div class="flex items-center gap-2 truncate">
                           <i data-lucide="file-code" style="width:14px;height:14px" class="text-grey shrink-0"></i>
@@ -461,6 +464,7 @@ export class SDCardHandler {
         const content = line.replace('[DIR:', '').replace(']', '');
         const name = content.split('/').pop();
         const tbody = document.querySelector('#sd-table tbody');
+        this.listedEntries.push({ type: 'dir', name, fullPath: content });
 
         const row = document.createElement('tr');
         row.className = "hover:bg-grey-light border-b border-grey-light cursor-pointer transition-colors group";
@@ -471,7 +475,7 @@ export class SDCardHandler {
         };
 
         row.innerHTML = `
-          <td class="px-4 py-3 md:px-6 md:py-3 font-bold text-grey-dark align-middle truncate overflow-hidden">
+          <td class="px-4 py-3 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
               <div class="flex items-center gap-2 truncate">
                   <i data-lucide="folder" style="width:14px;height:14px" class="text-primary opacity-70 shrink-0"></i>
                   <span class="truncate" title="${name}">${name}</span>
@@ -516,7 +520,7 @@ export class SDCardHandler {
                 // Pass filename AND fullPath
                 this.callbacks.onDownloadComplete(cleanContent, filename, this.downloadingFullPath);
             }
-            this.viewer.processGCodeString(cleanContent);
+            this.viewer.processGCodeString(cleanContent, `${filename} parsed`);
             if (this.callbacks.switchToViewer) {
                 this.callbacks.switchToViewer();
             }
@@ -570,6 +574,10 @@ export class SDCardHandler {
 
     async startUpload(file, onComplete = null, options = {}) {
         if (!file) return;
+        if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
+            if (window.reporter) window.reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+            return;
+        }
         const name = file.name.replace(/\s/g, '_');
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         const skipConfirm = options.skipConfirm === true;

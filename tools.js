@@ -1,3 +1,5 @@
+import { registerModal } from './modal.js';
+
 /* --- START OF FILE tools.js --- */
 
 export class ToolsHandler {
@@ -18,6 +20,7 @@ export class ToolsHandler {
         this.tloReferenceTool = null; // Tool number of reference
         this.tloPreviousZ = null; // Machine Z of most recently measured tool
         this.tloPreviousTool = null; // Tool number of previous measurement
+        this.mtcModal = registerModal('tool-change-modal', { closeOnBackdrop: false, closeOnEscape: false });
 
         this.initUI();
     }
@@ -283,7 +286,7 @@ export class ToolsHandler {
         // Show current/next tool info in modal
         this._updateMTCToolInfo();
 
-        document.getElementById('tool-change-modal').classList.remove('hidden');
+        this.mtcModal?.show();
 
         // SEND ACK (0xA3) to allow jogging/macros
         this.ws.sendRealtime(String.fromCharCode(0xA3));
@@ -308,7 +311,7 @@ export class ToolsHandler {
     endMTC() {
         if (!this.mtcActive) return;
         this.mtcActive = false;
-        document.getElementById('tool-change-modal').classList.add('hidden');
+        this.mtcModal?.hide();
         // Clear measurement UI
         const refEl = document.getElementById('tlo-ref-info');
         if (refEl) refEl.classList.add('hidden');
