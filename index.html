@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="themes/ooznest-toggles.css">
     <link rel="stylesheet" href="themes/ooznest-forms.css">
     <link rel="stylesheet" href="themes/ooznest-calibration.css">
-    <link rel="stylesheet" href="themes/ooznest-probe.css">
+    <link rel="stylesheet" href="themes/ooznest-probe.css?v=20260710">
     <link rel="stylesheet" href="themes/ooznest-configwizard.css">
     <link rel="stylesheet" href="themes/ooznest-modals.css">
     <link rel="stylesheet" href="themes/ooznest-toasts.css">
@@ -160,7 +160,7 @@
 
         .probe-selector-card {
             background: #fff;
-            border: 1px solid var(--oz-secondary-dark);
+            border: none;
             border-radius: 0;
         }
 
@@ -177,23 +177,26 @@
 
         .probe-instruction-card .calibration-choice-card__media {
             display: flex;
-            flex: 1 1 auto;
+            flex: 1;
             align-items: center;
             justify-content: center;
-            min-height: 300px;
+            min-height: 0;
             margin-bottom: 0;
             border-radius: 18px;
+            overflow: hidden;
+            position: relative;
             background:
                 radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0) 52%),
                 linear-gradient(180deg, #f4f7f8 0%, #edf2f3 100%);
         }
 
         .probe-instruction-card .calibration-choice-card__media img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
-            max-width: 100%;
-            max-height: 100%;
             object-fit: contain;
+            display: block;
         }
 
         .probe-instruction-card .calibration-choice-card__info {
@@ -970,10 +973,10 @@
 
                 <!-- Macros View -->
                 <div id="macros-view" class="tab-pane hidden w-full h-full bg-grey-bg">
-                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-y-auto">
+                    <div class="w-full h-full tab-shell-padding overflow-y-auto">
                         <div class="w-full pb-20">
                             <div
-                                class="flex justify-end mb-6 gap-3">
+                                class="min-h-[3rem] h-auto flex items-center justify-end mb-6 gap-3 py-2">
                                 <button class="btn btn-primary shadow-soft w-full md:w-auto"
                                     onclick="window.macroHandler.openModal(null)">
                                     <i data-lucide="plus" ></i> Create New
@@ -991,10 +994,10 @@
 
                 <!-- SD Card -->
                 <div id="sd-view" class="tab-pane hidden w-full h-full bg-grey-bg">
-                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-y-auto">
+                    <div class="w-full h-full tab-shell-padding overflow-y-auto">
                         <div class="w-full pb-20">
                             <div
-                                class="flex justify-end mb-6 gap-3">
+                                class="min-h-[3rem] h-auto flex items-center justify-end mb-6 gap-3 py-2">
                                 <!-- SD Actions (Disabled when offline) -->
                                  <div id="sd-tools"
                                      class="flex gap-2 w-full md:w-auto transition-opacity duration-200">
@@ -1800,10 +1803,10 @@
 
                 <!-- Grbl Settings -->
                 <div id="settings-view" class="tab-pane hidden w-full h-full bg-grey-bg">
-                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-hidden flex flex-col min-h-0">
+                    <div class="w-full h-full tab-shell-padding overflow-hidden flex flex-col min-h-0">
                         <div class="w-full flex flex-col min-h-0 flex-1">
                             <div
-                                class="flex justify-end mb-6 gap-3 shrink-0">
+                                class="min-h-[3rem] h-auto flex items-center justify-end mb-6 gap-3 py-2 shrink-0">
                                 <div class="flex flex-wrap gap-2 w-full md:w-auto" id="settings-toolbar">
                                     <button class="btn btn-secondary flex-1"
                                         onclick="window.grblSettings.fetchSettings()">
@@ -1858,96 +1861,6 @@
                             <!-- Main Layout: Tabbed Content -->
                             <div class="w-full">
 
-                                <!-- Probe Config Modal -->
-                                <div id="probe-config-modal" class="oz-modal hidden z-[1100] modal-radial-overlay">
-                                    <div class="oz-modal__dialog w-full max-w-md max-h-[calc(100vh-5rem)] overflow-hidden" data-modal-panel>
-                                        <div class="oz-modal__header">
-                                            <h3><i data-lucide="settings-2"></i><span>Probe Config</span></h3>
-                                            <button type="button" data-modal-close><i data-lucide="x" ></i></button>
-                                        </div>
-                                        <div class="oz-modal__body space-y-3 overflow-y-auto max-h-[calc(100vh-12rem)]">
-                                            <!-- Probe Mode Toggle -->
-                                            <div
-                                                class="probe-config-subcard bg-grey-bg p-2 rounded border border-grey-light prb-3d-probe-only"
-                                            >
-                                                <span class="text-xs font-bold text-secondary-dark block mb-1.5">Probe Mode</span>
-                                                <label class="oz-segmented-toggle w-full h-12" for="prb-mode-toggle">
-                                                    <input type="checkbox" id="prb-mode-toggle" class="sr-only"
-                                                        onchange="window.probeHandler.toggleProbeMode()">
-                                                    <div class="oz-segmented-bg w-full h-12">
-                                                        <div class="oz-segmented-slider h-6 top-[2px]"></div>
-                                                        <span class="oz-segmented-option left-opt !text-[10px] font-bold w-1/2 flex items-center justify-center">Probe Plate</span>
-                                                        <span class="oz-segmented-option right-opt !text-[10px] font-bold w-1/2 flex items-center justify-center">3D Probe</span>
-                                                    </div>
-                                                </label>
-                                                <div id="probe-config-label" class="hidden mt-1.5 text-[10px] font-bold text-green-600">
-                                                    <i data-lucide="check-circle" class="text-[9px]"></i> <span id="probe-config-label-text">Plate configured as Ooznest XYZ Probe</span>
-                                                </div>
-                                            </div>
-
-                                            <!-- Basic Params -->
-                                            <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-z-thick">Plate
-                                                    Thickness
-                                                    (Z, mm)</label>
-                                                <input type="number" id="prb-z-thick"
-                                                    class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
-                                            </div>
-                                            <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-xy-offset">Plate Offset
-                                                    (XY, mm)</label>
-                                                <input type="number" id="prb-xy-offset"
-                                                    class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
-                                            </div>
-
-                                            <hr class="border-grey-light">
-
-                                            <!-- Speeds -->
-                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-feed">Fast
-                                                    Feed (mm/min)</label>
-                                                <input type="number" id="prb-feed"
-                                                    class="ooznest-field input-field font-mono text-xs h-8">
-                                            </div>
-                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-feed-latch">Seek
-                                                    Feed (mm/min)</label>
-                                                <input type="number" id="prb-feed-latch"
-                                                    class="ooznest-field input-field font-mono text-xs h-8">
-                                            </div>
-                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-dist">Max
-                                                    Dist (mm)</label>
-                                                <input type="number" id="prb-dist"
-                                                    class="ooznest-field input-field font-mono text-xs h-8">
-                                            </div>
-                                            <div><label
-                                                    class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-retract">Retract (mm)</label>
-                                                <input type="number" id="prb-retract"
-                                                    class="ooznest-field input-field font-mono text-xs h-8">
-                                            </div>
-                                            <div class="prb-plate-only"><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-edge-dist">Plate
-                                                    Clearance (XY, mm)</label>
-                                                <input type="number" id="prb-edge-dist"
-                                                    class="ooznest-field input-field font-mono text-xs h-8">
-                                            </div>
-                                            <div><label class="ooznest-label text-[10px] font-bold text-grey block mb-1"
-                                                    for="prb-z-depth">Probe
-                                                    Depth (mm)</label>
-                                                <input type="number" id="prb-z-depth"
-                                                    class="ooznest-field input-field font-mono text-xs h-8">
-                                            </div>
-                                        </div>
-                                        <div class="oz-modal__footer oz-modal__footer--actions">
-                                            <button class="btn btn-primary" type="button" onclick="window.probeHandler.saveSettings(); const modal = window.getAppModal && window.getAppModal('probe-config-modal'); if (modal) modal.hide();">
-                                                <i data-lucide="save" ></i> Apply
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <!-- RIGHT COLUMN: Tabbed Interface -->
                                 <div class="w-full flex flex-col">
 
@@ -1960,27 +1873,61 @@
                                         </button>
                                     </div>
 
-                                    <div class="flex justify-end mb-3">
-                                        <button class="btn btn-secondary shadow-soft" onclick="window.probeHandler.openConfigModal()">
-                                            <i data-lucide="settings-2" ></i> Probe Config
-                                        </button>
+                                    <div class="mb-3">
+                                        <!-- Internal Tabs -->
+                                        <div class="subtabs">
+
+                                            <button
+                                                class="subtab-btn text-primary-dark border-b-2 border-primary probe-tab-btn"
+                                                data-target="tab-outside-corner"
+                                                onclick="window.probeHandler.switchProbeTab('tab-outside-corner', this)">
+                                                Outside Corner
+                                            </button>
+                                            <button
+                                                class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn"
+                                                data-target="tab-surfaces"
+                                                onclick="window.probeHandler.switchProbeTab('tab-surfaces', this)">
+                                                Single Surface
+                                            </button>
+                                            <button
+                                                class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
+                                                data-target="tab-centers"
+                                                onclick="window.probeHandler.switchProbeTab('tab-centers', this)">
+                                                Center Finder
+                                            </button>
+                                            <button
+                                                class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
+                                                data-target="tab-rotation"
+                                                onclick="window.probeHandler.switchProbeTab('tab-rotation', this)">
+                                                Rotation
+                                            </button>
+                                            <button
+                                                class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
+                                                data-target="tab-inside-corners"
+                                                onclick="window.probeHandler.switchProbeTab('tab-inside-corners', this)">
+                                                Inside Corners
+                                            </button>
+                                            <button
+                                                class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn"
+                                                data-target="tab-probe-config"
+                                                onclick="window.probeHandler.switchProbeTab('tab-probe-config', this)">
+                                                Probe Config
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Probe Safety Test Bar -->
-                                    <div id="probe-safety-bar" class="mb-3 rounded-lg border text-xs font-bold bg-red-50 border-red-200 text-red-700">
-                                        <div class="flex items-center gap-3 p-2">
-                                            <i data-lucide="shield-alert" class="text-base"></i>
-                                            <span id="probe-safety-msg">Probe not tested — test required before any operation</span>
-                                            <span id="probe-safety-status" class="hidden text-green-600 ml-auto"><i data-lucide="check-circle" ></i> Probe OK</span>
-                                        </div>
-                                        <div class="flex gap-2 px-3 pb-4" id="probe-safety-actions">
-                                            <button id="probe-test-btn" class="btn btn-primary flex-1 flex flex-col items-center gap-0 !py-2 !px-2 !text-[10px] leading-tight" onclick="window.probeHandler.runProbeTest()">
-                                                <span><i data-lucide="pointer" ></i> Test Probe</span>
-                                                <span class="text-[9px] font-normal opacity-75">Touch endmill to plate</span>
+                                    <div id="probe-safety-bar" class="rounded-lg border text-xs font-bold bg-red-50 border-red-200 text-red-700">
+                                        <div id="probe-safety-actions" class="grid grid-cols-4 gap-2 items-center p-2">
+                                            <div class="col-span-2 min-h-9 flex items-center">
+                                                <span id="probe-safety-msg">Probe not tested — test required for safety</span>
+                                                <span id="probe-safety-status" class="hidden text-green-600 ml-2">Probe OK</span>
+                                            </div>
+                                            <button id="probe-test-btn" class="btn btn-primary h-8 !py-1 !px-1.5 !text-[10px] leading-tight" onclick="window.probeHandler.runProbeTest()">
+                                                Test Probe
                                             </button>
-                                            <button id="probe-skip-btn" class="btn btn-secondary flex-1 flex flex-col items-center gap-0 !py-2 !px-2 !text-[10px] leading-tight" onclick="window.probeHandler.skipSafetyCheck()">
-                                                <span><i data-lucide="check" ></i> Bypass</span>
-                                                <span class="text-[9px] font-normal opacity-75">I confirm clip is attached</span>
+                                            <button id="probe-skip-btn" class="btn btn-secondary h-8 !py-1 !px-1.5 !text-[10px] leading-tight" onclick="window.probeHandler.skipSafetyCheck()">
+                                                Bypass
                                             </button>
                                         </div>
                                         <div id="probe-safety-note" class="hidden px-3 pb-2 text-[10px] text-amber-700">
@@ -1988,47 +1935,68 @@
                                         </div>
                                     </div>
 
-                                    <!-- Internal Tabs -->
-                                    <div class="subtabs">
+                                    <div id="tab-probe-config" class="probe-tab-content hidden">
+                                        <div class="grid grid-cols-1 gap-4">
+                                            <div class="bg-white p-4 rounded-xl shadow-soft flex flex-col min-h-[420px]">
+                                                <div class="space-y-3 flex-1">
+                                                    <div
+                                                        class="probe-config-subcard bg-grey-bg p-2 rounded border border-grey-light prb-3d-probe-only">
+                                                        <span class="text-xs font-bold text-secondary-dark block mb-1.5">Probe Mode</span>
+                                                        <label class="oz-segmented-toggle w-full h-12" for="prb-mode-toggle">
+                                                            <input type="checkbox" id="prb-mode-toggle" class="sr-only"
+                                                                onchange="window.probeHandler.toggleProbeMode()">
+                                                            <div class="oz-segmented-bg w-full h-12">
+                                                                <div class="oz-segmented-slider h-6 top-[2px]"></div>
+                                                                <span class="oz-segmented-option left-opt !text-[10px] font-bold w-1/2 flex items-center justify-center">Probe Plate</span>
+                                                                <span class="oz-segmented-option right-opt !text-[10px] font-bold w-1/2 flex items-center justify-center">3D Probe</span>
+                                                            </div>
+                                                        </label>
+                                                        <div id="probe-config-label" class="hidden mt-1.5 text-[10px] font-bold text-green-600">
+                                                            <i data-lucide="check-circle" class="text-[9px]"></i> <span id="probe-config-label-text">Plate configured as Ooznest XYZ Probe</span>
+                                                        </div>
+                                                    </div>
 
-                                        <button
-                                            class="subtab-btn text-primary-dark border-b-2 border-primary probe-tab-btn"
-                                            data-target="tab-outside-corner"
-                                            onclick="window.probeHandler.switchProbeTab('tab-outside-corner', this)">
-                                            Outside Corner
-                                        </button>
-                                        <button
-                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn"
-                                            data-target="tab-surfaces"
-                                            onclick="window.probeHandler.switchProbeTab('tab-surfaces', this)">
-                                            Single Surface
-                                        </button>
-                                        <button
-                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
-                                            data-target="tab-centers"
-                                            onclick="window.probeHandler.switchProbeTab('tab-centers', this)">
-                                            Center Finder
-                                        </button>
-                                        <button
-                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
-                                            data-target="tab-rotation"
-                                            onclick="window.probeHandler.switchProbeTab('tab-rotation', this)">
-                                            Rotation
-                                        </button>
-                                        <button
-                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn prb-3d-probe-only"
-                                            data-target="tab-inside-corners"
-                                            onclick="window.probeHandler.switchProbeTab('tab-inside-corners', this)">
-                                            Inside Corners
-                                        </button>
-                                        <!--
-                                        <button
-                                            class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn"
-                                            data-target="tab-tlo"
-                                            onclick="window.probeHandler.switchProbeTab('tab-tlo', this)">
-                                            Tool Length Offset
-                                        </button>
-                                        -->
+                                                    <div class="prb-plate-only">
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-z-thick">Plate Thickness (Z, mm)</label>
+                                                        <input type="number" id="prb-z-thick" class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
+                                                    </div>
+                                                    <div class="prb-plate-only">
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-xy-offset">Plate Offset (XY, mm)</label>
+                                                        <input type="number" id="prb-xy-offset" class="ooznest-field input-field font-mono text-xs h-8" step="0.01">
+                                                    </div>
+
+                                                    <hr class="border-grey-light">
+
+                                                    <div>
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-feed">Fast Feed (mm/min)</label>
+                                                        <input type="number" id="prb-feed" class="ooznest-field input-field font-mono text-xs h-8">
+                                                    </div>
+                                                    <div>
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-feed-latch">Seek Feed (mm/min)</label>
+                                                        <input type="number" id="prb-feed-latch" class="ooznest-field input-field font-mono text-xs h-8">
+                                                    </div>
+                                                    <div>
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-dist">Max Dist (mm)</label>
+                                                        <input type="number" id="prb-dist" class="ooznest-field input-field font-mono text-xs h-8">
+                                                    </div>
+                                                    <div>
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-retract">Retract (mm)</label>
+                                                        <input type="number" id="prb-retract" class="ooznest-field input-field font-mono text-xs h-8">
+                                                    </div>
+                                                    <div class="prb-plate-only">
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-edge-dist">Plate Clearance (XY, mm)</label>
+                                                        <input type="number" id="prb-edge-dist" class="ooznest-field input-field font-mono text-xs h-8">
+                                                    </div>
+                                                    <div>
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-z-depth">Probe Depth (mm)</label>
+                                                        <input type="number" id="prb-z-depth" class="ooznest-field input-field font-mono text-xs h-8">
+                                                    </div>
+                                                </div>
+                                                <button class="btn btn-primary mt-4 self-start" type="button" onclick="window.probeHandler.saveSettings()">
+                                                    <i data-lucide="save" ></i> Apply
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- TAB CONTENT: Tool Length Offset -->
@@ -2131,6 +2099,9 @@
                                                             aria-label="Front-right outside corner">Front<br>Right</button>
                                                     </div>
                                                 </div>
+                                                <div id="probe-safety-host-outside" class="mt-4">
+                                                    <div id="probe-safety-bar-anchor-outside"></div>
+                                                </div>
                                                 <button class="btn btn-primary probe-compact-action py-3 mt-4 probe-btn" onclick="window.probeHandler.runAutoCorner()">
                                                     <i data-lucide="zap" ></i> Probe Outside Corner
                                                 </button>
@@ -2161,38 +2132,32 @@
                                                     <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-surface">Endmill / Dowel Pin Diameter (mm)</label>
                                                     <input type="number" id="prb-tool-surface" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
                                                 </div>
-                                                <div id="single-surface-grid" class="grid grid-cols-1 gap-3">
-                                                    <div class="probe-selector-card p-3 flex flex-col min-h-[148px]">
-                                                        <div class="text-[11px] font-bold text-grey mb-3 text-center uppercase tracking-wider">X Axis</div>
-                                                        <div class="surface-pair flex items-center justify-center gap-2 flex-1">
-                                                             <button class="single-sel-btn probe-axis-option bg-primary-dark text-white border-2 border-primary-dark text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
-                                                                 data-axis="X" data-dir="1"
-                                                                 onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)">Right<br>X+</button>
-                                                             <button class="single-sel-btn probe-axis-option bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
-                                                                 data-axis="X" data-dir="-1"
-                                                                 onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)">Left<br>X-</button>
-                                                        </div>
-                                                    </div>
-                                                    <div class="probe-selector-card p-3 flex flex-col min-h-[148px]">
-                                                        <div class="text-[11px] font-bold text-grey mb-3 text-center uppercase tracking-wider">Y Axis</div>
-                                                        <div class="surface-pair flex items-center justify-center gap-2 flex-1">
-                                                            <button class="single-sel-btn probe-axis-option bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
-                                                                data-axis="Y" data-dir="1"
-                                                                onclick="window.probeHandler.selectSingleSurface(this, 'Y', 1)">Front<br>Y+</button>
-                                                            <button class="single-sel-btn probe-axis-option bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
-                                                                data-axis="Y" data-dir="-1"
-                                                                onclick="window.probeHandler.selectSingleSurface(this, 'Y', -1)">Back<br>Y-</button>
-                                                        </div>
-                                                    </div>
-                                                    <div class="probe-selector-card p-3 flex flex-col min-h-[148px]">
-                                                        <div class="text-[11px] font-bold text-grey mb-3 text-center uppercase tracking-wider">Z Axis</div>
-                                                        <div class="flex items-center justify-center flex-1">
-                                                            <button class="single-sel-btn probe-axis-option rounded-xl bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight px-2 py-2 flex flex-col items-center justify-center"
-                                                                data-axis="Z" data-dir="-1"
-                                                                onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)">Top<br>Z-</button>
-                                                        </div>
+                                                <div id="single-surface-grid" class="probe-selector-card p-3 flex-1 flex items-center justify-center">
+                                                    <div class="single-surface-pad">
+                                                        <div class="single-surface-spacer" aria-hidden="true"></div>
+                                                        <button class="single-sel-btn single-sel-btn--top bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-axis="Y" data-dir="-1"
+                                                            onclick="window.probeHandler.selectSingleSurface(this, 'Y', -1)">Back</button>
+                                                        <div class="single-surface-spacer" aria-hidden="true"></div>
+
+                                                        <button class="single-sel-btn single-sel-btn--left bg-primary-dark text-white border-2 border-primary-dark text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-axis="X" data-dir="1"
+                                                            onclick="window.probeHandler.selectSingleSurface(this, 'X', 1)">Left</button>
+                                                        <button class="single-sel-btn single-sel-btn--center bg-grey-bg border-2 border-secondary-dark text-primary-dark text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-axis="Z" data-dir="-1"
+                                                            onclick="window.probeHandler.selectSingleSurface(this, 'Z', -1)">Top</button>
+                                                        <button class="single-sel-btn single-sel-btn--right bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-axis="X" data-dir="-1"
+                                                            onclick="window.probeHandler.selectSingleSurface(this, 'X', -1)">Right</button>
+
+                                                        <div class="single-surface-spacer" aria-hidden="true"></div>
+                                                        <button class="single-sel-btn single-sel-btn--bottom bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
+                                                            data-axis="Y" data-dir="1"
+                                                            onclick="window.probeHandler.selectSingleSurface(this, 'Y', 1)">Front</button>
+                                                        <div class="single-surface-spacer" aria-hidden="true"></div>
                                                     </div>
                                                 </div>
+                                                <div id="probe-safety-host-surfaces" class="mt-4"></div>
                                                 <button class="btn btn-primary probe-compact-action py-3 mt-4 probe-btn" onclick="window.probeHandler.runSingleSurface()">
                                                     <i data-lucide="zap" ></i> Probe Single Surface
                                                 </button>
@@ -2205,7 +2170,7 @@
                                                     </div>
                                                     <div class="calibration-choice-card__info">
                                                         <div class="calibration-choice-card__title">Surface Setup</div>
-                                                        <p id="single-surface-help" class="calibration-choice-card__text">Place probe plate on the right X+ surface. Position the tool beside the plate so it can probe toward it.</p>
+                                                        <p id="single-surface-help" class="calibration-choice-card__text">Place probe plate on the left surface. Position the tool beside the plate so it can probe toward it.</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2351,10 +2316,10 @@
 
                 <!-- TROUBLESHOOTING TAB PANE -->
                 <div id="troubleshooting-view" class="tab-pane hidden w-full h-full">
-                    <div class="w-full h-full tab-shell-padding py-4 md:py-8 overflow-y-auto">
+                    <div class="w-full h-full tab-shell-padding overflow-y-auto">
                         <div class="w-full pb-20">
                             <div
-                                class="flex justify-end mb-4 gap-3">
+                                class="min-h-[3rem] h-auto flex items-center justify-end mb-4 gap-3 py-2">
                                 <div class="flex flex-wrap gap-2 w-full md:w-auto" id="troubleshooting-toolbar">
                                     <button class="btn btn-primary flex-1 whitespace-nowrap" onclick="window.troubleshootingInfo.exportPdf()">
                                         <i data-lucide="file-text" ></i> Export Troubleshooting Information
@@ -3201,7 +3166,7 @@
     <script type="module">
         import { WebSerial } from './webserial.js';
         import { GCodeViewer } from './3dview.js';
-        import { ProbeHandler } from './probe.js?v=20260709';
+        import { ProbeHandler } from './probe.js?v=20260710';
         import { SDCardHandler } from './sdcard.js';
         import { AlarmsAndErrors } from './alarms_and_errors.js';
         import { DROHandler } from './dro.js';

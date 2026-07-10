@@ -34,6 +34,7 @@ export class ProbeHandler {
 
     initUI() {
         this.renderSettings();
+        this._mountProbeSafetyBar('tab-outside-corner');
         this._resetProbeTest();
         this._syncProbeSelectionUI();
         document.body.setAttribute('data-3d-probe-enabled', String(this.enable3DProbe));
@@ -57,11 +58,11 @@ export class ProbeHandler {
     _renderProbeTestWaiting(secondsRemaining) {
         const btn = document.getElementById('probe-test-btn');
         if (!btn) return;
-        btn.innerHTML = `<i data-lucide="hourglass" style="width:14px;height:14px"></i> Waiting... (${secondsRemaining}s)`;
-        if (window.lucide) window.lucide.createIcons();
+        btn.textContent = `Waiting (${secondsRemaining}s)`;
     }
 
     runProbeTest() {
+        if (!this._requireConnected()) return;
         if (this._testStage) return; // already testing
 
         const s = this.store.data.probe;
@@ -108,12 +109,15 @@ export class ProbeHandler {
                     const note = document.getElementById('probe-safety-note');
                     const actions = document.getElementById('probe-safety-actions');
                     bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
-                    msg.textContent = 'Probe test passed — all operations enabled';
-                    if (actions) actions.classList.add('hidden');
-                    status.className = 'text-green-600';
-                    status.innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px"></i> Probe OK';
+                    msg.textContent = 'Probe test passed';
+                    if (actions) actions.classList.remove('hidden');
+                    status.className = 'text-green-600 ml-2';
+                    const passBtn = document.getElementById('probe-test-btn');
+                    const passSkipBtn = document.getElementById('probe-skip-btn');
+                    if (passBtn) passBtn.classList.add('invisible');
+                    if (passSkipBtn) passSkipBtn.classList.add('invisible');
+                    status.textContent = 'Probe OK';
                     if (note) note.classList.add('hidden');
-                    if (window.lucide) window.lucide.createIcons();
                     this.term.writeln('\x1b[32m> Probe safety test PASSED.\x1b[0m');
                 }
             }
@@ -131,10 +135,9 @@ export class ProbeHandler {
                 bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
                 msg.textContent = 'Test timed out — try again';
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="pointer" style="width:14px;height:14px"></i> Test Probe';
+                btn.textContent = 'Test Probe';
                 const skipBtn = document.getElementById('probe-skip-btn');
                 if (skipBtn) skipBtn.classList.remove('hidden');
-                if (window.lucide) window.lucide.createIcons();
                 this.term.writeln('\x1b[31m> Probe safety test TIMED OUT.\x1b[0m');
             }
         }, 15000);
@@ -153,12 +156,13 @@ export class ProbeHandler {
         const note = document.getElementById('probe-safety-note');
 
         bar.className = 'mb-3 rounded-lg border text-xs font-bold safe';
-        msg.textContent = 'Probe test passed — all operations enabled';
-        if (actions) actions.classList.add('hidden');
-        status.className = 'text-green-600';
-        status.innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px"></i> Probe OK';
+        msg.textContent = 'Probe test skipped';
+        if (actions) actions.classList.remove('hidden');
+        status.className = 'text-green-600 ml-2';
+        status.textContent = 'Operator confirmed';
+        if (btn) btn.classList.add('invisible');
+        if (skipBtn) skipBtn.classList.add('invisible');
         if (note) note.classList.add('hidden');
-        if (window.lucide) window.lucide.createIcons();
         this.term.writeln('\x1b[32m> Probe safety check skipped (confirmed by user).\x1b[0m');
     }
 
@@ -184,16 +188,19 @@ export class ProbeHandler {
         const skipBtn = document.getElementById('probe-skip-btn');
 
         if (bar) bar.className = 'mb-3 rounded-lg border text-xs font-bold unsafe';
-        if (msg) msg.textContent = 'Probe not tested — test required before any operation';
+        if (msg) msg.textContent = 'Probe not tested — test required for safety';
         if (note) note.classList.add('hidden');
         if (actions) actions.classList.remove('hidden');
         if (status) status.className = 'hidden';
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<span><i data-lucide="pointer" ></i> Test Probe</span><span class="text-[8px] font-normal opacity-75">Touch endmill to plate</span>';
+            btn.classList.remove('invisible');
+            btn.textContent = 'Test Probe';
         }
-        if (skipBtn) skipBtn.classList.remove('hidden');
-        if (window.lucide) window.lucide.createIcons();
+        if (skipBtn) {
+            skipBtn.classList.remove('hidden', 'invisible');
+            skipBtn.textContent = 'Bypass';
+        }
     }
 
     _updateProbeButtons() {
@@ -207,7 +214,30 @@ export class ProbeHandler {
         });
     }
 
+    _mountProbeSafetyBar(targetId) {
+        const bar = document.getElementById('probe-safety-bar');
+        if (!bar) return;
+        const hostMap = {
+            'tab-outside-corner': 'probe-safety-host-outside',
+            'tab-surfaces': 'probe-safety-host-surfaces'
+        };
+        const hostId = hostMap[targetId];
+        const host = document.getElementById(hostId);
+        if (host && bar.parentElement !== host) {
+            host.appendChild(bar);
+        }
+    }
+
+    _requireConnected() {
+        if (this.ws && this.ws.isConnected) return true;
+        if (window.showToast) {
+            window.showToast('Machine not connected', 'plug-zap', 'error');
+        }
+        return false;
+    }
+
     _requireProbeSafe() {
+        if (!this._requireConnected()) return false;
         if (!this.probeSafe) {
             const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
             if (reporter) {
@@ -223,6 +253,8 @@ export class ProbeHandler {
         if (!this.enable3DProbe && ['tab-centers', 'tab-rotation', 'tab-inside-corners'].includes(targetId)) return;
         if ((targetId === 'tab-centers' || targetId === 'tab-rotation' || targetId === 'tab-inside-corners') && this._getProbeMode(s) === 'plate') return;
 
+        this._mountProbeSafetyBar(targetId);
+
         // Hide all contents
         document.querySelectorAll('.probe-tab-content').forEach(el => el.classList.add('hidden'));
         // Show target
@@ -237,12 +269,6 @@ export class ProbeHandler {
         // Active button
         btn.classList.replace('text-grey', 'text-primary-dark');
         btn.classList.replace('border-transparent', 'border-primary');
-    }
-
-    openConfigModal() {
-        const modal = window.getAppModal && window.getAppModal('probe-config-modal');
-        if (modal) modal.show();
-        if (window.lucide) window.lucide.createIcons();
     }
 
     toggleProbeMode() {
@@ -375,21 +401,30 @@ export class ProbeHandler {
         this.selections.singleDir = dir;
         this.selections.mode = 'single';
         const txtClasses = 'text-[12px] font-bold leading-tight';
-        const baseClasses = 'single-sel-btn probe-axis-option ' + txtClasses + ' px-2 py-2 flex flex-col items-center justify-center';
+        const baseClasses = 'single-sel-btn ' + txtClasses + ' flex flex-col items-center justify-center';
+        const variantClassMap = {
+            'Y-1': 'single-sel-btn--top',
+            'X1': 'single-sel-btn--left',
+            'Z-1': 'single-sel-btn--center',
+            'X-1': 'single-sel-btn--right',
+            'Y1': 'single-sel-btn--bottom'
+        };
         document.querySelectorAll('#single-surface-grid button').forEach(b => {
-            b.className = baseClasses + ' bg-grey-bg border border-grey-light hover:bg-primary';
+            const variant = variantClassMap[(b.dataset.axis || '') + (b.dataset.dir || '')] || '';
+            b.className = [baseClasses, variant, 'bg-grey-bg border border-grey-light hover:bg-primary'].filter(Boolean).join(' ');
         });
-        btn.className = baseClasses + ' bg-primary-dark text-white border-2 border-primary-dark';
+        const activeVariant = variantClassMap[axis + dir] || '';
+        btn.className = [baseClasses, activeVariant, 'bg-primary-dark text-white border-2 border-primary-dark'].filter(Boolean).join(' ');
         const singleImg = document.getElementById('probe-single-diagram');
         const svgMap = { 'X1':'SS-RIGHT.svg', 'X-1':'SS-LEFT.svg', 'Y1':'SS-FRONT.svg', 'Y-1':'SS-REAR.svg', 'Z-1':'SS-TOP.svg' };
         if (singleImg) { singleImg.src = 'themes/' + (svgMap[axis + dir] || 'SS-TOP.svg'); singleImg.classList.remove('hidden'); }
         const help = document.getElementById('single-surface-help');
         const surfaceMap = {
-            'X1': 'Place probe plate on the right X+ surface. Position the tool beside the plate so it can probe toward it.',
-            'X-1': 'Place probe plate on the left X- surface. Position the tool beside the plate so it can probe toward it.',
-            'Y1': 'Place probe plate on the front Y+ surface. Position the tool in front of the plate so it can probe toward it.',
-            'Y-1': 'Place probe plate on the rear Y- surface. Position the tool behind the plate so it can probe toward it.',
-            'Z-1': 'Place probe plate on the top Z surface. Position the tool above the plate before probing.'
+            'X1': 'Place probe plate on the left surface. Position the tool beside the plate so it can probe toward it.',
+            'X-1': 'Place probe plate on the right surface. Position the tool beside the plate so it can probe toward it.',
+            'Y1': 'Place probe plate on the front surface. Position the tool in front of the plate so it can probe toward it.',
+            'Y-1': 'Place probe plate on the back surface. Position the tool behind the plate so it can probe toward it.',
+            'Z-1': 'Place probe plate on the top surface. Position the tool above the plate before probing.'
         };
         if (help) help.textContent = surfaceMap[axis + dir] || surfaceMap['Z-1'];
     }
