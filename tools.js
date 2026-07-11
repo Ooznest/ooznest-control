@@ -50,10 +50,6 @@ export class ToolsHandler {
         btn.classList.replace('text-grey', 'text-primary-dark');
         btn.classList.replace('border-transparent', 'border-primary');
 
-        // If switching away from calibration, cancel any active wizard logic
-        if (targetId !== 'tab-tool-calibration' && window.calibration) {
-            window.calibration.cancel();
-        }
     }
 
     refresh() {

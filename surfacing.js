@@ -180,17 +180,33 @@ export class SurfacingHandler {
         setVal('surf-coolant', s.useCoolant);
         setVal('surf-framing', s.useFraming);
         setVal('surf-dim-toggle', s.useMaxArea);
-        
+
+        this._renderSpoilboardDimensions();
+        this._updateDimModeUI(!!s.useMaxArea);
+    }
+
+    _updateDimModeUI(useMaxArea) {
         const dimFields = document.getElementById('surf-dim-fields');
+        const spoilboardDims = document.getElementById('surf-dim-spoilboard');
         if (dimFields) {
-            if (s.useMaxArea) {
-                dimFields.style.maxHeight = '0px';
-                dimFields.style.opacity = '0';
-            } else {
-                dimFields.style.maxHeight = '500px';
-                dimFields.style.opacity = '1';
-            }
+            dimFields.style.maxHeight = useMaxArea ? '0px' : '500px';
+            dimFields.style.opacity = useMaxArea ? '0' : '1';
+            dimFields.classList.toggle('hidden', useMaxArea);
         }
+        if (spoilboardDims) {
+            spoilboardDims.style.maxHeight = useMaxArea ? '500px' : '0px';
+            spoilboardDims.style.opacity = useMaxArea ? '1' : '0';
+            spoilboardDims.classList.toggle('hidden', !useMaxArea);
+        }
+    }
+
+    _renderSpoilboardDimensions() {
+        const s = this.store.data.surfacing;
+        const unit = this.units === 'mm' ? 'mm' : 'in';
+        const xEl = document.getElementById('surf-dim-spoilboard-x');
+        const yEl = document.getElementById('surf-dim-spoilboard-y');
+        if (xEl) xEl.textContent = `${Number(s.width || 0).toFixed(this.units === 'mm' ? 2 : 4)} ${unit}`;
+        if (yEl) yEl.textContent = `${Number(s.height || 0).toFixed(this.units === 'mm' ? 2 : 4)} ${unit}`;
     }
 
     generateGCode() {
@@ -406,17 +422,12 @@ export class SurfacingHandler {
 
     toggleDimMode() {
         const toggle = document.getElementById('surf-dim-toggle');
-        const dimFields = document.getElementById('surf-dim-fields');
-        
         if (toggle.checked) {
-            dimFields.style.maxHeight = '0px';
-            dimFields.style.opacity = '0';
             this.autoSpoilboard();
         } else {
-            dimFields.style.maxHeight = '500px';
-            dimFields.style.opacity = '1';
             this.saveSettings();
         }
+        this._updateDimModeUI(toggle.checked);
     }
 
     autoSpoilboard() {
@@ -461,5 +472,6 @@ export class SurfacingHandler {
         document.getElementById('surf-x').value = Number(width.toFixed(2));
         document.getElementById('surf-y').value = Number(height.toFixed(2));
         this.saveSettings();
+        this._renderSpoilboardDimensions();
     }
 }

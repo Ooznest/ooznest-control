@@ -111,6 +111,10 @@
     background: var(--oz-secondary);
 }
 
+.cal-choice-item.is-selected {
+    background: rgba(68, 157, 159, 0.08) !important;
+}
+
 .config-filter-subtitle {
     color: var(--oz-grey-dark);
     font-size: 0.78rem;
