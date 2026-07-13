@@ -8,6 +8,7 @@ const os = require('os');
 const { SerialPort } = require('serialport');
 const { WebSocketServer } = require('ws');
 const { autoUpdater } = require('electron-updater');
+const { runFirmwareFlash } = require('./firmware-flash-backend.js');
 const expressApp = express();
 const port = 8081; // Pick a port for the internal server
 expressApp.use(express.static(__dirname));
@@ -102,6 +103,7 @@ ipcMain.handle('get-network-info', async () => {
 
 let activePort = null;
 let activeSocket = null;
+let firmwareFlashInProgress = false;
 
 function getActiveControllerHttpTarget () {
     if (status.comms.type !== 'telnet' || !status.comms.ip) {
@@ -427,6 +429,51 @@ async function handleMessage(data, ws) {
                 if (activePort.close) activePort.close();
                 if (activePort.destroy) activePort.destroy();
                 activePort = null;
+            }
+            break;
+
+        case 'firmwareFlash':
+            if (firmwareFlashInProgress) {
+                ws.send(JSON.stringify({ type: 'firmwareFlashError', message: 'A firmware flash is already in progress.' }));
+                break;
+            }
+
+            firmwareFlashInProgress = true;
+            try {
+                const result = await runFirmwareFlash({
+                    baseDir: __dirname,
+                    firmwareKey: data.firmwareKey,
+                    previousPort: data.previousPort,
+                    programmingPort: data.programmingPort,
+                    log: (line) => ws.send(JSON.stringify({ type: 'firmwareFlashLog', line })),
+                    progress: (percent) => ws.send(JSON.stringify({ type: 'firmwareFlashProgress', percent })),
+                    beforeFlashClose: async () => {
+                        if (!activePort) return;
+                        const portToClose = activePort;
+                        activePort = null;
+                        try {
+                            if (portToClose.close) {
+                                await new Promise((resolve) => portToClose.close(() => resolve()));
+                            }
+                        } catch (_) {
+                            // Best-effort close before flashing.
+                        }
+                        try {
+                            if (portToClose.destroy) portToClose.destroy();
+                        } catch (_) {
+                            // Ignore destroy errors.
+                        }
+                    }
+                });
+
+                ws.send(JSON.stringify({ type: 'firmwareFlashComplete', ...result }));
+            } catch (error) {
+                ws.send(JSON.stringify({
+                    type: 'firmwareFlashError',
+                    message: error?.message || String(error)
+                }));
+            } finally {
+                firmwareFlashInProgress = false;
             }
             break;
 

@@ -1512,6 +1512,9 @@
                                     <button class="btn btn-secondary flex-1" onclick="window.configWizard.showWizard()">
                                         <i data-lucide="wand" ></i> Wizard
                                     </button>
+                                    <button class="btn btn-secondary flex-1" onclick="window.firmwareFlasher.showModal()">
+                                        <i data-lucide="cpu" ></i> Firmware
+                                    </button>
                                     <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.calibration.showModal()">
                                         <i data-lucide="ruler" ></i> Calibration
                                     </button>
@@ -2904,6 +2907,7 @@
         import { TroubleshootingInfoView } from './troubleshooting-info.js';
         import { CalibrationHandler } from './calibration.js';
         import { ConfigWizard } from './config-wizard.js';
+        import { FirmwareFlasher } from './firmware-flasher.js';
         import { GCodeEditor } from './editor.js';
         import { initializeApp } from './init.js';
         import { SpoilboardGridHandler } from './spoilboard-grid.js';
@@ -2951,6 +2955,10 @@
 
         // --- ERROR HANDLING ---
         ws.on('error', (err) => {
+            if (window.firmwareFlasher?.shouldSuppressConnectionError?.(err)) {
+                return;
+            }
+
             let msg = err.message;
             let code = "Connection";
             if (msg.includes("Failed to open serial port")) {
@@ -3090,6 +3098,9 @@
             window.troubleshootingInfo = troubleshootingInfo;
             const configWizard = new ConfigWizard(ws, store);
             window.configWizard = configWizard;
+            const firmwareFlasher = new FirmwareFlasher(ws);
+            window.firmwareFlasher = firmwareFlasher;
+            ws.on('firmware', (msg) => firmwareFlasher.handleBackendMessage(msg));
             const spoilboardGrid = new SpoilboardGridHandler(ws, window.term, store);
             window.spoilboardGrid = spoilboardGrid;
 
@@ -3852,6 +3863,22 @@
                 </div>
             </div>
             <div id="config-wizard-footer" class="oz-modal__footer oz-modal__footer--actions hidden"></div>
+        </div>
+    </div>
+
+    <div id="firmware-flasher-overlay" class="oz-modal isolate hidden z-[100] modal-radial-overlay">
+        <div class="oz-modal__dialog w-full max-w-2xl" data-modal-panel>
+            <div class="oz-modal__header">
+                <h3><i data-lucide="cpu"></i><span>Firmware Flashing</span></h3>
+                <button type="button" data-modal-close><i data-lucide="x" ></i></button>
+            </div>
+            <div id="firmware-flasher-body" class="oz-modal__body">
+                <div class="text-center py-8">
+                    <i data-lucide="refresh-cw" class="animate-spin text-2xl text-grey"></i>
+                    <p class="text-xs text-grey mt-2">Loading...</p>
+                </div>
+            </div>
+            <div id="firmware-flasher-footer" class="oz-modal__footer oz-modal__footer--actions hidden"></div>
         </div>
     </div>
 
