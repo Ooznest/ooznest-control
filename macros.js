@@ -105,10 +105,10 @@ export class MacroHandler {
                 </div>
 
                 <div class="macro-card-actions">
-                    <button class="edit-btn p-1 bg-black/5 hover:bg-black/10 rounded-full text-grey-dark text-xs" title="Edit">
+                    <button class="edit-btn macro-card-action-btn" title="Edit" type="button" aria-label="Edit macro">
                         <i data-lucide="pencil" style="width:12px;height:12px"></i>
                     </button>
-                    <button class="del-btn p-1 bg-black/5 hover:bg-red-50 rounded-full text-grey-dark hover:text-red-600 text-xs" title="Delete">
+                    <button class="del-btn macro-card-action-btn" title="Delete" type="button" aria-label="Delete macro">
                         <i data-lucide="trash-2" style="width:12px;height:12px"></i>
                     </button>
                 </div>
@@ -138,10 +138,12 @@ export class MacroHandler {
 
         // Add "New Macro" Button
         const addBtn = document.createElement('div');
-        addBtn.className = "macro-card macro-card--add cursor-pointer border-2 border-dashed border-grey-light hover:border-primary hover:bg-white transition-colors flex flex-col items-center justify-center p-3 text-grey hover:text-primary";
+        addBtn.className = "macro-card macro-card--add cursor-pointer border-2 border-dashed border-grey-light hover:border-primary hover:bg-white transition-colors flex items-center gap-4 p-4 text-grey hover:text-primary";
         addBtn.innerHTML = `
-            <i data-lucide="plus" style="width:14px;height:14px"></i>
-            <span class="font-bold text-xs uppercase tracking-wider">Add Macro</span>
+            <span class="macro-card-add-icon">
+                <i data-lucide="plus" style="width:20px;height:20px"></i>
+            </span>
+            <span class="macro-card-add-label">Add Macro</span>
         `;
         addBtn.addEventListener('click', () => this.openModal(null));
         container.appendChild(addBtn);

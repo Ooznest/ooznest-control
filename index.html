@@ -100,6 +100,10 @@
             padding-right: 12px;
         }
 
+        #gcode-editor textarea {
+            padding: 16px 12px;
+        }
+
         .editor-actions-edge {
             margin-right: 0;
         }
@@ -119,6 +123,11 @@
                 padding-left: 16px;
                 padding-right: 16px;
             }
+
+            #gcode-editor textarea {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
         }
 
         @media (min-width: 768px) {
@@ -133,6 +142,11 @@
             }
 
             .editor-footer-padding {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            #gcode-editor textarea {
                 padding-left: 24px;
                 padding-right: 24px;
             }
@@ -927,7 +941,7 @@
 
                 <!-- G-Code Editor View -->
                 <div id="editor-view" class="tab-pane hidden w-full h-full flex flex-col bg-grey-bg relative">
-                    <div class="flex flex-col h-full overflow-y-auto tab-shell-padding">
+                    <div class="flex flex-col h-full overflow-y-auto">
                         <div class="w-full flex-1 flex flex-col">
 
                             <!-- Toolbar -->
@@ -983,15 +997,7 @@
                 <!-- Macros View -->
                 <div id="macros-view" class="tab-pane hidden w-full h-full bg-grey-bg">
                     <div class="w-full h-full tab-shell-padding overflow-y-auto">
-                        <div class="w-full pb-20">
-                            <div
-                                class="min-h-[3rem] h-auto flex items-center justify-end mb-6 gap-3 py-2">
-                                <button class="btn btn-primary shadow-soft w-full md:w-auto"
-                                    onclick="window.macroHandler.openModal(null)">
-                                    <i data-lucide="plus" ></i> Create New
-                                </button>
-                            </div>
-
+                        <div class="w-full pt-4 pb-20">
                             <!-- Macro Grid -->
                             <div id="macro-grid"
                                 class="macro-grid-responsive grid gap-3">
@@ -1618,7 +1624,7 @@
                                                 class="subtab-btn text-grey border-b-2 border-transparent probe-tab-btn"
                                                 data-target="tab-probe-config"
                                                 onclick="window.probeHandler.switchProbeTab('tab-probe-config', this)">
-                                                Probe Config
+                                                Probe Configuration
                                             </button>
                                         </div>
                                     </div>
@@ -1667,17 +1673,27 @@
 
                                                         <div class="grid grid-cols-2 gap-4 prb-plate-only">
                                                             <div>
-                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-z-thick">Plate Thickness (Z, mm)</label>
-                                                                <input type="number" id="prb-z-thick" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
+                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-x-offset">Plate Offset X (mm)</label>
+                                                                <input type="number" id="prb-x-offset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
+                                                                <p class="ooznest-form-info">The X distance from the plate contact face to the actual workpiece zero point.</p>
                                                             </div>
                                                             <div>
-                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-xy-offset">Plate Offset (XY, mm)</label>
-                                                                <input type="number" id="prb-xy-offset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
+                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-y-offset">Plate Offset Y (mm)</label>
+                                                                <input type="number" id="prb-y-offset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
+                                                                <p class="ooznest-form-info">The Y distance from the plate contact face to the actual workpiece zero point.</p>
                                                             </div>
                                                         </div>
                                                         <div class="prb-plate-only">
-                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-edge-dist">Plate Clearance (XY, mm)</label>
-                                                            <input type="number" id="prb-edge-dist" class="ooznest-field input-field font-mono text-sm h-8">
+                                                            <div>
+                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-z-thick">Plate Thickness (Z, mm)</label>
+                                                                <input type="number" id="prb-z-thick" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
+                                                                <p class="ooznest-form-info">The measured thickness of the probe plate used to set the correct Z zero after contact.</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="prb-plate-only">
+                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-corner-start-inset">Corner Start-Hole Inset (XY, mm)</label>
+                                                            <input type="number" id="prb-corner-start-inset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
+                                                            <p class="ooznest-form-info">How far the auto corner routine moves in X and Y from the Start Here hole toward the plate center before probing Z.</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1686,24 +1702,29 @@
                                                     <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Movement</h3>
                                                     <div class="grid grid-cols-2 gap-4">
                                                         <div>
-                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-feed">Fast Feed (mm/min)</label>
+                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-feed">Probe Feedrate (mm/min)</label>
                                                             <input type="number" id="prb-feed" class="ooznest-field input-field font-mono text-sm h-8">
+                                                            <p class="ooznest-form-info">The main probing speed used for the first approach move.</p>
                                                         </div>
                                                         <div>
-                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-feed-latch">Seek Feed (mm/min)</label>
-                                                            <input type="number" id="prb-feed-latch" class="ooznest-field input-field font-mono text-sm h-8">
-                                                        </div>
-                                                        <div>
-                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-dist">Max Dist (mm)</label>
+                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-dist">Max Distance (mm)</label>
                                                             <input type="number" id="prb-dist" class="ooznest-field input-field font-mono text-sm h-8">
+                                                            <p class="ooznest-form-info">The maximum distance the tool is allowed to travel while searching for a probe contact.</p>
                                                         </div>
                                                         <div>
-                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-retract">Retract (mm)</label>
+                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-retract">Probe Retract Distance (mm)</label>
                                                             <input type="number" id="prb-retract" class="ooznest-field input-field font-mono text-sm h-8">
+                                                            <p class="ooznest-form-info">How far the tool backs off immediately after a probe touch before continuing.</p>
+                                                        </div>
+                                                        <div>
+                                                            <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-edge-dist">Keep-Clear Distance (XY, mm)</label>
+                                                            <input type="number" id="prb-edge-dist" class="ooznest-field input-field font-mono text-sm h-8">
+                                                            <p class="ooznest-form-info">Extra X/Y spacing used when moving around the probe plate or feature so the tool stays clear before the next move.</p>
                                                         </div>
                                                         <div>
                                                             <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-z-depth">Probe Depth (mm)</label>
                                                             <input type="number" id="prb-z-depth" class="ooznest-field input-field font-mono text-sm h-8">
+                                                            <p class="ooznest-form-info">The starting Z depth used when positioning for corner probing routines.</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1795,6 +1816,7 @@
                                                 <div class="mb-4">
                                                     <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-outside">Endmill / Dowel Pin Diameter (mm)</label>
                                                     <input type="number" id="prb-tool-outside" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
+                                                    <p class="ooznest-form-info">Enter the diameter of the endmill or dowel pin currently in the collet. This is used to calculate the tool radius when setting the correct X/Y zero from the probe contact point.</p>
                                                 </div>
                                                 <div class="probe-selector-card p-3 flex-1 flex items-center justify-center">
                                                     <div id="outside-corner-grid" class="probe-corner-grid grid grid-cols-2 gap-2 w-full aspect-square">
@@ -1843,11 +1865,12 @@
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex flex-col min-h-[420px]">
                                                 <p class="text-xs text-grey leading-relaxed mb-4">
-                                                    Find the location of a single surface in X, Y, or Z.
+                                                    Probe a single surface to set its X/Y/Z zero.
                                                 </p>
                                                 <div class="mb-4">
                                                     <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-surface">Endmill / Dowel Pin Diameter (mm)</label>
                                                     <input type="number" id="prb-tool-surface" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
+                                                    <p class="ooznest-form-info">Enter the diameter of the endmill or dowel pin currently in the collet. This is used to calculate the tool radius when setting the correct X/Y zero from the probe contact point.</p>
                                                 </div>
                                                 <div id="single-surface-grid" class="probe-selector-card p-3 flex-1 flex items-center justify-center">
                                                     <div class="single-surface-pad">
@@ -2548,7 +2571,7 @@
                     <textarea id="macro-gcode-input"
                         class="ooznest-field ooznest-textarea w-full h-40 font-mono text-sm border-2 border-grey-light rounded-lg p-3 bg-grey-bg focus:bg-white focus:border-secondary outline-none resize-none"
                         placeholder="G21&#10;G91&#10;G0 Z10"></textarea>
-                    <p class="text-[10px] text-grey italic">Enter one G-code command per line.</p>
+                    <p class="ooznest-form-info">Enter one G-code command per line.</p>
                 </div>
             </div>
 

@@ -10,6 +10,15 @@
     text-transform: none;
 }
 
+.ooznest-form-info {
+    display: block;
+    margin-top: 4px;
+    color: rgba(47, 55, 60, 0.78);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
 .ooznest-field,
 .input-field,
 .tab-pane input[type="text"],

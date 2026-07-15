@@ -184,6 +184,34 @@ select {
     transition: opacity 0.15s ease;
 }
 
+.macro-card-action-btn {
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--oz-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.macro-card-action-btn:hover {
+    background: rgba(255, 102, 0, 0.12);
+    color: #FF6600;
+}
+
+.macro-card-action-btn:focus-visible {
+    outline: 2px solid rgba(255, 102, 0, 0.45);
+    outline-offset: 2px;
+}
+
+.macro-card-action-btn [data-lucide] {
+    pointer-events: none;
+}
+
 @media (min-width: 768px) {
     .macro-card-actions {
         opacity: 0;
@@ -207,6 +235,30 @@ select {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.macro-card--add {
+    min-height: 5.25rem;
+}
+
+.macro-card-add-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2f3;
+    color: #0b6172;
+    flex-shrink: 0;
+}
+
+.macro-card-add-label {
+    font-size: 1.15rem;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: rgb(107, 114, 128);
 }
 
 .macro-grid-responsive {
