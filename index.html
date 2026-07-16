@@ -151,10 +151,6 @@
                 padding-right: 24px;
             }
 
-            .editor-actions-edge {
-                margin-right: -20px;
-            }
-
         }
 
         .probe-compact-action {
@@ -1675,25 +1671,25 @@
                                                             <div>
                                                                 <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-x-offset">Plate Offset X (mm)</label>
                                                                 <input type="number" id="prb-x-offset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
-                                                                <p class="ooznest-form-info">The X distance from the plate contact face to the actual workpiece zero point.</p>
+                                                                <p class="ooznest-form-info">The X distance from the plate contact surface to the workpiece surface.</p>
                                                             </div>
                                                             <div>
                                                                 <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-y-offset">Plate Offset Y (mm)</label>
                                                                 <input type="number" id="prb-y-offset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
-                                                                <p class="ooznest-form-info">The Y distance from the plate contact face to the actual workpiece zero point.</p>
+                                                                <p class="ooznest-form-info">The Y distance from the plate contact surface to the workpiece surface.</p>
                                                             </div>
                                                         </div>
                                                         <div class="prb-plate-only">
                                                             <div>
                                                                 <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-z-thick">Plate Thickness (Z, mm)</label>
                                                                 <input type="number" id="prb-z-thick" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
-                                                                <p class="ooznest-form-info">The measured thickness of the probe plate used to set the correct Z zero after contact.</p>
+                                                                <p class="ooznest-form-info">The Z distance from the plate contact surface to the workpiece surface.</p>
                                                             </div>
                                                         </div>
                                                         <div class="prb-plate-only">
                                                             <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-corner-start-inset">Corner Start-Hole Inset (XY, mm)</label>
                                                             <input type="number" id="prb-corner-start-inset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
-                                                            <p class="ooznest-form-info">How far the auto corner routine moves in X and Y from the Start Here hole toward the plate center before probing Z.</p>
+                                                            <p class="ooznest-form-info">How far the outside corner routine moves in X and Y from the Start Here hole toward the plate centre before probing Z.</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1724,7 +1720,7 @@
                                                         <div>
                                                             <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-z-depth">Probe Depth (mm)</label>
                                                             <input type="number" id="prb-z-depth" class="ooznest-field input-field font-mono text-sm h-8">
-                                                            <p class="ooznest-form-info">The starting Z depth used when positioning for corner probing routines.</p>
+                                                            <p class="ooznest-form-info">The starting Z depth used when positioning for outside corner routines.</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2741,7 +2737,7 @@
             // Already on SD — run directly
             if (window.currentSDFile) {
                 window.reporter.showConfirm('Run from SD',
-                    `Run ${window.currentSDFile} directly from SD card?`,
+                    `Run ${window.currentSDFile} directly from SD Card?`,
                     () => window.ws.sendCommand(`$F=${window.currentSDFile}`)
                 );
                 return;
@@ -2754,7 +2750,7 @@
             const content = window.currentGCodeContent || window.editor.getValue();
             const defaultName = document.getElementById('editor-file-name')?.innerText || 'job.gcode';
             window.reporter.showConfirm('Upload & Run from SD',
-                'Upload the current job to the SD card and start running it?',
+                'Upload the current job to the SD Card and start running it?',
                 () => {
                     const file = new File([content], defaultName, { type: 'text/plain' });
                     window.sdHandler.startUpload(file, (uploadedName) => {
@@ -2896,6 +2892,18 @@
             }, 0);
             const shouldOverflow = tabsNaturalWidth > container.clientWidth + 2;
             bar.classList.add(shouldOverflow ? 'tabs-overflow' : 'tabs-fit');
+
+            buttons.forEach(button => {
+                button.style.removeProperty('--tab-flex-grow');
+            });
+
+            if (!shouldOverflow) {
+                const averageWidth = tabsNaturalWidth / Math.max(buttons.length, 1);
+                buttons.forEach(button => {
+                    const grow = Math.max(0.75, Math.ceil(button.scrollWidth) / averageWidth);
+                    button.style.setProperty('--tab-flex-grow', grow.toFixed(3));
+                });
+            }
         }
 
         window.updateTabsLayout = updateTabsLayout;
@@ -3319,7 +3327,7 @@
         window.uploadEditorToSD = function () {
             if (!window.editor) return;
             if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
-                reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+                reporter.showAlert('SD Card Unavailable', 'SD Card functions are currently unavailable.');
                 return;
             }
             const content = window.editor.getValue();
@@ -3336,12 +3344,12 @@
         // New function: Run from SD (Smart)
         window.runFromSD = function () {
             if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
-                reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+                reporter.showAlert('SD Card Unavailable', 'SD Card functions are currently unavailable.');
                 return;
             }
             // Case 1: File is already on SD (Context Aware)
             if (window.currentSDFile) {
-                reporter.showConfirm('Run from SD', `Run ${window.currentSDFile} directly from SD card?`, () => {
+                reporter.showConfirm('Run from SD', `Run ${window.currentSDFile} directly from SD Card?`, () => {
                     // Start SD Print
                     ws.sendCommand(`$F=${window.currentSDFile}`);
                     // UI will update via status reports
@@ -3354,7 +3362,7 @@
             const content = window.editor.getValue();
             const defaultName = document.getElementById('editor-file-name').innerText !== "No file loaded" ? document.getElementById('editor-file-name').innerText : "job.gcode";
 
-            reporter.showPrompt('Upload & Run', 'Upload this job to SD card and run it?', defaultName, (filename) => {
+            reporter.showPrompt('Upload & Run', 'Upload this job to SD Card and run it?', defaultName, (filename) => {
                 if (!filename) return;
                 const file = new File([content], filename, { type: "text/plain" });
 
@@ -3410,6 +3418,8 @@
             const uploadBtn = document.getElementById('sd-upload-btn');
             if (uploadBtn) {
                 uploadBtn.disabled = !available;
+                uploadBtn.classList.toggle('opacity-50', !available);
+                uploadBtn.classList.toggle('pointer-events-none', !available);
             }
 
             const editorUploadBtn = document.getElementById('editor-upload-sd-btn');
@@ -3427,6 +3437,7 @@
             const openFileSdBtn = document.getElementById('open-file-sd-option');
             if (openFileSdBtn) {
                 openFileSdBtn.disabled = !available;
+                openFileSdBtn.classList.toggle('hidden', !available);
                 openFileSdBtn.classList.toggle('opacity-50', !available);
                 openFileSdBtn.classList.toggle('pointer-events-none', !available);
             }
@@ -3436,9 +3447,17 @@
                 refreshBtn.disabled = !available;
             }
 
+            const sdTabBtn = document.getElementById('sd-tab-btn');
+            if (sdTabBtn) {
+                sdTabBtn.classList.remove('opacity-50', 'pointer-events-none');
+                sdTabBtn.disabled = false;
+            }
+
             const formatBtn = document.getElementById('sd-format-btn');
             if (formatBtn) {
                 formatBtn.disabled = !available;
+                formatBtn.classList.toggle('opacity-50', !available);
+                formatBtn.classList.toggle('pointer-events-none', !available);
             }
 
             const upLevelBtn = document.getElementById('sd-up-level-btn');
@@ -3454,19 +3473,15 @@
 
         window.addEventListener('sd-mount-state', (e) => {
             const state = e.detail && e.detail.state !== undefined ? e.detail.state : (window.sdMounted ? 1 : 0);
+            const reason = e.detail?.reason || '';
             const isMounted = (state === 1 || state === 3);
-            const sdLink = document.getElementById('sd-tab-btn');
             if (isMounted) {
-                if (sdLink) sdLink.classList.remove('opacity-50', 'pointer-events-none');
                 if (window._sdPrevMounted !== true && window.showToast) {
                     window.showToast('SD Card Found', 'hard-drive', 'success');
                 }
             } else {
-                if (sdLink && !window.sdJobActive) {
-                    sdLink.classList.add('opacity-50', 'pointer-events-none');
-                }
-                if (window._sdPrevMounted !== false && window.showToast) {
-                    window.showToast('SD Card Not Found', 'hard-drive-off', 'error');
+                if (reason === 'mount-failed' && window._sdPrevMounted !== false && window.showToast) {
+                    window.showToast('SD Card Not Found', 'hard-drive', 'warning');
                 }
             }
             window._sdPrevMounted = isMounted;

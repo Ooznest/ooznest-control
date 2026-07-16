@@ -34,6 +34,10 @@ export class SDCardHandler {
         };
 
         this.refreshPending = false;
+        this._mountProbe = null;
+        this._suppressNextSdError60 = false;
+        this._formatting = false;
+        this._formatSawCompletionMessage = false;
 
         // Listen for machine becoming idle so we can safely refresh if it was deferred (e.g., due to an Alarm on connect)
         window.addEventListener('machine-idle', () => {
@@ -50,6 +54,68 @@ export class SDCardHandler {
      * Returns true if the line was consumed by SD logic.
      */
     processLine(line) {
+        if (this._formatting) {
+            if (line.includes('File system format failed') || line.toLowerCase() === 'error:85') {
+                this._finishFormat(false);
+                return false;
+            }
+
+            if (line === '[MSG:]') {
+                this._formatSawCompletionMessage = true;
+                return false;
+            }
+
+            if (line === 'ok' && this._formatSawCompletionMessage) {
+                this._finishFormat(true);
+                return false;
+            }
+        }
+
+        if (this._suppressNextSdError60 && line.toLowerCase() === 'error:60') {
+            this._suppressNextSdError60 = false;
+            return true;
+        }
+
+        if (this._mountProbe) {
+            if (line.includes('Failed to initialize SD card')) {
+                this._mountProbe.failed = true;
+                return true;
+            }
+
+            if (line.includes('SD Card mount failed')) {
+                this._setMounted(false, { silent: this._getMountProbeSilent('failure'), reason: 'mount-failed' });
+                this._showNoSdCardMessage();
+                this._mountProbe = null;
+                this._suppressNextSdError60 = true;
+                return true;
+            }
+
+            if (line.toLowerCase() === 'error:60') {
+                this._setMounted(false, { silent: this._getMountProbeSilent('failure'), reason: 'mount-failed' });
+                this._showNoSdCardMessage();
+                this._mountProbe = null;
+                return true;
+            }
+
+            if (line === 'ok') {
+                const probe = this._mountProbe;
+                const failed = !!probe.failed;
+                const silent = this._getMountProbeSilent(failed ? 'failure' : 'success');
+                this._mountProbe = null;
+                if (failed) {
+                    this._setMounted(false, { silent, reason: 'mount-failed' });
+                    this._showNoSdCardMessage();
+                    return true;
+                }
+
+                this._setMounted(true, { silent, reason: 'mount-ok' });
+                if (probe.listAfterMount) {
+                    this._requestSerialList();
+                }
+                return true;
+            }
+        }
+
         // 1. Download Mode
         if (this.isDownloading) {
             // Ignore realtime status reports during download
@@ -96,10 +162,12 @@ export class SDCardHandler {
 
         // 2. File Listing
         if (line.startsWith('[FILE:')) {
+            this._setMounted(true);
             this._addSdFile(line);
             return true;
         }
         if (line.startsWith('[DIR:')) {
+            this._setMounted(true);
             this._addSdDir(line);
             return true;
         }
@@ -119,65 +187,101 @@ export class SDCardHandler {
         }
 
         this.refreshPending = false;
+        this._prepareListing();
 
-        // Clean Body
-        document.querySelector('#sd-table tbody').innerHTML = '';
+        if (window.sdMounted) {
+            this._requestSerialList();
+            return;
+        }
+
+        this.mountAndList({ silent: false });
+    }
+
+    probeAvailabilityOnBoot() {
+        this._prepareListing();
+        window.sdMounted = false;
+        if (window.syncSdUploadBtn) window.syncSdUploadBtn();
+        this._mountProbe = { silentSuccess: false, silentFailure: true, listAfterMount: true };
+        this.ws.sendCommand('$FM');
+    }
+
+    mountAndList(options = {}) {
+        this._mountProbe = {
+            silent: !!options.silent,
+            listAfterMount: true
+        };
+        this.ws.sendCommand('$FM');
+    }
+
+    _getMountProbeSilent(result) {
+        if (!this._mountProbe) return false;
+        if (result === 'success' && this._mountProbe.silentSuccess !== undefined) {
+            return !!this._mountProbe.silentSuccess;
+        }
+        if (result === 'failure' && this._mountProbe.silentFailure !== undefined) {
+            return !!this._mountProbe.silentFailure;
+        }
+        return !!this._mountProbe.silent;
+    }
+
+    _prepareListing() {
+        const tbody = document.querySelector('#sd-table tbody');
+        if (tbody) tbody.innerHTML = '';
 
         const table = document.getElementById('sd-table');
-        // FORCE table to fit screen: Remove min-width and add table-fixed
-        table.classList.remove('min-w-[500px]');
-        table.classList.add('w-full', 'table-fixed');
+        if (table) {
+            // FORCE table to fit screen: Remove min-width and add table-fixed
+            table.classList.remove('min-w-[500px]');
+            table.classList.add('w-full', 'table-fixed');
+        }
 
-        // Configure Headers for Fixed Layout
         const headers = document.querySelectorAll('#sd-table thead th');
         if (headers.length >= 3) {
-            // Header 0 (Filename): Auto width
             headers[0].className = 'px-4 py-3 font-bold text-left w-auto';
-            // Header 1 (Size)
             headers[1].className = 'px-6 py-4 font-bold w-32';
-            // Header 2 (Actions): Fixed width on mobile (120px) to ensure buttons fit
             headers[2].className = 'px-2 py-3 font-bold text-right w-[120px] md:w-auto';
         }
 
-        document.getElementById('sd-current-path').textContent = this.path;
+        const pathEl = document.getElementById('sd-current-path');
+        if (pathEl) pathEl.textContent = this.path;
+
         this.fileCount = 0;
-        this.files = {}; // Clear cache
+        this.files = {};
         this.listedEntries = [];
-        document.getElementById('sd-badge').classList.add('hidden');
 
-        // Try HTTP first if available
-        if (this.ws.httpBaseUrl) {
-            try {
-                let p = this.path;
-                if (!p.startsWith('/')) p = '/' + p;
-                const url = `${this.ws.httpBaseUrl}/sdfiles?path=${encodeURIComponent(p)}&action=list`;
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.status === 'ok' && data.files) {
-                        // Sort: Directories first, then alphabetical
-                        data.files.sort((a, b) => {
-                            if (a.size === -1 && b.size !== -1) return -1;
-                            if (a.size !== -1 && b.size === -1) return 1;
-                            return a.name.localeCompare(b.name);
-                        });
+        const badge = document.getElementById('sd-badge');
+        if (badge) badge.classList.add('hidden');
+    }
 
-                        data.files.forEach(f => {
-                            if (f.size === -1) {
-                                this._addSdDir(`[DIR:${f.name}]`);
-                            } else {
-                                this._addSdFile(`[FILE:${f.name}|SIZE:${f.size}]`);
-                            }
-                        });
-                        return; // Successfully listed via HTTP
-                    }
-                }
-            } catch (e) {
-                console.warn("HTTP SD listing failed, falling back to serial:", e);
-            }
-        }
+    _showNoSdCardMessage() {
+        const tbody = document.querySelector('#sd-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="px-6 py-12 text-center text-grey">
+                    <div class="flex flex-col items-center gap-2">
+                        <i data-lucide="hard-drive" class="w-8 h-8 text-grey"></i>
+                        <span class="font-bold text-secondary-dark">SD Card Not Found</span>
+                        <span class="text-xs text-grey">Insert an SD Card, then reboot the controller, and reconnect to try again.</span>
+                    </div>
+                </td>
+            </tr>`;
+        if (window.lucide) window.lucide.createIcons();
+    }
 
+    _requestSerialList() {
         this.ws.sendCommand('$F+');
+    }
+
+    _setMounted(isMounted, options = {}) {
+        window.sdMounted = !!isMounted;
+        window.dispatchEvent(new CustomEvent('sd-mount-state', {
+            detail: {
+                state: isMounted ? 1 : 0,
+                silent: !!options.silent,
+                reason: options.reason || (isMounted ? 'mounted' : 'unmounted')
+            }
+        }));
     }
 
     upLevel() {
@@ -217,7 +321,7 @@ export class SDCardHandler {
         };
 
         if (reporter) {
-            reporter.showConfirm('Delete File', `Are you sure you want to delete ${fileName} from the SD card?`, processDelete);
+            reporter.showConfirm('Delete File', `Are you sure you want to delete ${fileName} from the SD Card?`, processDelete);
         } else if (confirm(`Delete ${fileName}?`)) {
             processDelete();
         }
@@ -285,7 +389,7 @@ export class SDCardHandler {
                 () => { // No: Ask to run directly
                     reporter.showConfirm(
                         'Run Directly?',
-                        `Run ${fileName} directly from SD card without preview?`,
+                        `Run ${fileName} directly from SD Card without preview?`,
                         () => { // Yes
                             this.ws.sendCommand(`$F=${fullPath}`);
                         },
@@ -554,28 +658,42 @@ export class SDCardHandler {
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
 
         const processFormat = () => {
-            this.term.writeln('\x1b[33mFormatting SD card...\x1b[0m');
+            this.term.writeln('\x1b[33mFormatting SD Card...\x1b[0m');
+            this._formatting = true;
+            this._formatSawCompletionMessage = false;
             this.ws.sendCommand('$FF=yes');
-            setTimeout(() => this.refresh(), 2000);
         };
 
         if (reporter) {
             reporter.showConfirm('Format SD Card',
-                'This will permanently delete ALL files on the SD card. This cannot be undone.',
+                'This will permanently delete ALL files on the SD Card. This cannot be undone.',
                 processFormat,
                 null,
                 'Format',
                 'Cancel'
             );
-        } else if (confirm('Format the SD card? This will delete ALL files and cannot be undone.')) {
+        } else if (confirm('Format the SD Card? This will delete ALL files and cannot be undone.')) {
             processFormat();
+        }
+    }
+
+    _finishFormat(success) {
+        if (!this._formatting) return;
+        this._formatting = false;
+        this._formatSawCompletionMessage = false;
+
+        if (success) {
+            if (window.showToast) window.showToast('SD Card Formatted', 'hard-drive', 'success');
+            this.refresh();
+        } else {
+            if (window.showToast) window.showToast('SD Card Format Failed', 'triangle-alert', 'error');
         }
     }
 
     async startUpload(file, onComplete = null, options = {}) {
         if (!file) return;
         if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
-            if (window.reporter) window.reporter.showAlert('SD Card Unavailable', 'SD card functions are currently unavailable.');
+            if (window.reporter) window.reporter.showAlert('SD Card Unavailable', 'SD Card functions are currently unavailable.');
             return;
         }
         const name = file.name.replace(/\s/g, '_');
@@ -660,7 +778,7 @@ export class SDCardHandler {
         if (skipConfirm) {
             processUpload();
         } else if (reporter) {
-            reporter.showConfirm('SD Upload', `Upload ${name} (${this._formatBytes(file.size)}) to SD card?`, processUpload);
+            reporter.showConfirm('SD Upload', `Upload ${name} (${this._formatBytes(file.size)}) to SD Card?`, processUpload);
         } else if (confirm(`Upload ${name} (${this._formatBytes(file.size)})?`)) {
             processUpload();
         }
