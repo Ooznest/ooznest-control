@@ -185,7 +185,7 @@
             box-shadow: 0 16px 34px rgba(13, 31, 34, 0.08);
         }
 
-        .probe-instruction-card .calibration-choice-card__media {
+        .probe-instruction-card .ooznest-instruction-card__media {
             display: flex;
             flex: 1;
             align-items: center;
@@ -200,7 +200,7 @@
                 linear-gradient(180deg, #f4f7f8 0%, #edf2f3 100%);
         }
 
-        .probe-instruction-card .calibration-choice-card__media img {
+        .probe-instruction-card .ooznest-instruction-card__media img {
             position: absolute;
             inset: 0;
             width: 100%;
@@ -218,7 +218,34 @@
             backface-visibility: hidden;
         }
 
-        .probe-instruction-card .calibration-choice-card__info {
+        .tool-illustration-card {
+            display: block;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 56%),
+                linear-gradient(180deg, #f7fafb 0%, #eef3f4 100%);
+        }
+
+        .tool-illustration-media {
+            min-height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-illustration-image {
+            width: 100%;
+            height: 100%;
+            max-height: 260px;
+            object-fit: contain;
+            image-rendering: auto;
+            image-rendering: optimizeQuality;
+            shape-rendering: geometricPrecision;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        .ooznest-instruction-card__info {
             display: block;
             flex: 0 0 auto;
             min-height: 0;
@@ -229,8 +256,18 @@
             box-shadow: inset 0 0 0 1px rgba(230, 236, 238, 0.9);
         }
 
-        .probe-instruction-card .calibration-choice-card__title {
+        .ooznest-instruction-card__title {
             margin-bottom: 8px;
+            color: #4a555c;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+
+        .ooznest-instruction-card__text {
+            color: #718087;
+            font-size: 12px;
+            line-height: 1.5;
         }
 
         .probe-instruction-card__footer-chip {
@@ -1277,7 +1314,6 @@
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-tool">Tool Diameter (mm)</label><input type="number" id="surf-tool"
                                                             class="ooznest-field input-field font-mono text-sm">
-                                                        <p class="ooznest-form-info mt-1">Diameter of the surfacing cutter used to calculate toolpaths.</p>
                                                     </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-stepover">Stepover (%)</label><input type="number" id="surf-stepover"
@@ -1287,7 +1323,6 @@
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-feed">Feed Rate (mm/min)</label><input type="number" id="surf-feed"
                                                             class="ooznest-field input-field font-mono text-sm">
-                                                        <p class="ooznest-form-info mt-1">Horizontal cutting speed used while surfacing.</p>
                                                     </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-rpm">Spindle RPM</label><input type="number" id="surf-rpm"
@@ -1345,33 +1380,12 @@
 
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
-                                                    Required Setup</h3>
-                                                <ol id="surf-setup-custom" class="ooznest-form-steps">
-                                                    <li>Install a surfacing bit.</li>
-                                                    <li>Jog to the front-left corner of the custom surfacing area.</li>
-                                                    <li>Zero X and Y at the front-left corner.</li>
-                                                    <li>Zero Z at the highest point of the stock or spoilboard.</li>
-                                                    <li>Run the job. It starts from the front-left work zero and surfaces the width and height you entered.</li>
-                                                </ol>
-                                                <ol id="surf-setup-spoilboard" class="ooznest-form-steps hidden">
-                                                    <li>Install a surfacing bit.</li>
-                                                    <li>Home the machine before running this job.</li>
-                                                    <li>Zero Z at the highest point of the spoilboard using a probe or by jogging.</li>
-                                                    <li>Run the job. It moves to the machine's front-left limit, sets X/Y work zero automatically, then surfaces back and right to the machine's configured Max Travel.</li>
-                                                </ol>
-                                            </div>
-                                        </div>
-
-                                        <div class="space-y-6">
-                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Depth Control</h3>
                                                 <div class="space-y-3">
                                                     <div class="grid grid-cols-2 gap-4">
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                                 for="surf-z-step">Depth per Pass (mm)</label><input type="number" id="surf-z-step"
                                                                 class="ooznest-field input-field font-mono text-sm">
-                                                            <p class="ooznest-form-info mt-1">Maximum Z depth removed on each cutting pass.</p>
                                                         </div>
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                                 for="surf-z-final">Final Depth (mm)</label><input type="number" id="surf-z-final"
@@ -1382,7 +1396,6 @@
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-z-safe">Safe Z Clearance (mm)</label><input type="number" id="surf-z-safe"
                                                             class="ooznest-field input-field font-mono text-sm">
-                                                        <p class="ooznest-form-info mt-1">Height used for rapid moves above the work surface.</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1420,12 +1433,36 @@
                                                     <p class="ooznest-form-info mt-1">Adds a cleanup pass around the outside edge of the surfacing area.</p>
                                                 </div>
                                             </div>
+
+                                            <button class="btn btn-primary shadow-soft w-full h-12"
+                                                onclick="window.surfacing.loadToViewer()"><i data-lucide="check" ></i>
+                                                Generate G-Code</button>
+
                                         </div>
-                                    </div>
-                                    <div class="mt-6">
-                                        <button class="btn btn-primary shadow-soft w-full h-12"
-                                            onclick="window.surfacing.loadToViewer()"><i data-lucide="check" ></i>
-                                            Generate G-Code</button>
+
+                                        <div class="space-y-6">
+                                            <div class="tool-illustration-card bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <div class="tool-illustration-media">
+                                                    <img class="tool-illustration-image" src="themes/SURFACE.svg" alt="Surfacing illustration">
+                                                </div>
+                                                <div class="ooznest-instruction-card__info">
+                                                    <div class="ooznest-instruction-card__title">Required Setup</div>
+                                                    <ol id="surf-setup-custom" class="ooznest-form-steps">
+                                                        <li>Install a surfacing bit.</li>
+                                                        <li>Jog to the front-left corner of the custom surfacing area.</li>
+                                                        <li>Zero X and Y at the front-left corner.</li>
+                                                        <li>Zero Z at the highest point of the stock or spoilboard.</li>
+                                                        <li>Run the job. It starts from the front-left work zero and surfaces the width and height you entered.</li>
+                                                    </ol>
+                                                    <ol id="surf-setup-spoilboard" class="ooznest-form-steps hidden">
+                                                        <li>Install a surfacing bit.</li>
+                                                        <li>Home the machine before running this job.</li>
+                                                        <li>Zero Z at the highest point of the spoilboard using a probe or by jogging.</li>
+                                                        <li>Run the job. It moves to the machine's front-left limit, sets X/Y work zero automatically, then surfaces back and right to the machine's configured Max Travel.</li>
+                                                    </ol>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1445,19 +1482,15 @@
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-width">Width (X mm)</label><input type="number" id="sg-width"
                                                             class="ooznest-field input-field font-mono text-sm" value="300">
-                                                        <p class="ooznest-form-info mt-1">Total grid width along the X axis.</p>
                                                     </div>
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-height">Height (Y mm)</label><input type="number" id="sg-height"
                                                             class="ooznest-field input-field font-mono text-sm" value="300">
-                                                        <p class="ooznest-form-info mt-1">Total grid height along the Y axis.</p>
                                                     </div>
                                                 </div>
                                                 <div class="mt-4"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                         for="sg-spacing">Grid Spacing (mm)</label><input type="number" id="sg-spacing"
-                                                        class="ooznest-field input-field font-mono text-sm" value="50">
-                                                    <p class="ooznest-form-info mt-1">Distance between each engraved grid line.</p>
-                                                </div>
+                                                        class="ooznest-field input-field font-mono text-sm" value="50"></div>
                                             </div>
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
@@ -1465,30 +1498,19 @@
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-depth">Engrave Depth (mm)</label><input type="number" id="sg-depth"
-                                                            class="ooznest-field input-field font-mono text-sm" value="-0.3" step="0.1">
-                                                        <p class="ooznest-form-info mt-1">Cut depth for the engraved grid lines.</p>
-                                                    </div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="-0.3" step="0.1"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-up">Safe Z (mm)</label><input type="number" id="sg-up"
-                                                            class="ooznest-field input-field font-mono text-sm" value="1" step="0.1">
-                                                        <p class="ooznest-form-info mt-1">Height used for rapid moves between grid cuts.</p>
-                                                    </div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="1" step="0.1"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-feed">Feed Rate (mm/min)</label><input type="number" id="sg-feed"
-                                                            class="ooznest-field input-field font-mono text-sm" value="500">
-                                                        <p class="ooznest-form-info mt-1">Horizontal cutting speed while engraving.</p>
-                                                    </div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="500"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-plunge">Plunge Rate (mm/min)</label><input type="number" id="sg-plunge"
-                                                            class="ooznest-field input-field font-mono text-sm" value="100">
-                                                        <p class="ooznest-form-info mt-1">Z-axis speed used when lowering into the spoilboard.</p>
-                                                    </div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="100"></div>
                                                 </div>
                                             </div>
 
-                                        </div>
-
-                                        <div class="space-y-6">
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Options</h3>
@@ -1506,10 +1528,19 @@
                                                 </div>
                                             </div>
 
-                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
-                                                    Required Setup</h3>
-                                                <div id="sg-setup-info">
+                                            <button class="btn btn-primary shadow-soft w-full h-12"
+                                                onclick="window.spoilboardGrid.generateGrid()"><i data-lucide="check" ></i>
+                                                Generate G-Code</button>
+
+                                        </div>
+
+                                        <div class="space-y-6">
+                                            <div class="tool-illustration-card bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <div class="tool-illustration-media">
+                                                    <img class="tool-illustration-image" src="themes/GRID.svg" alt="Spoilboard grid illustration">
+                                                </div>
+                                                <div id="sg-setup-info" class="ooznest-instruction-card__info">
+                                                    <div class="ooznest-instruction-card__title">Required Setup</div>
                                                     <ol class="ooznest-form-steps">
                                                         <li>Install a V-bit.</li>
                                                         <li>Home the machine before running this job.</li>
@@ -1518,13 +1549,7 @@
                                                     </ol>
                                                 </div>
                                             </div>
-
                                         </div>
-                                    </div>
-                                    <div class="mt-6 flex flex-col gap-3">
-                                        <button class="btn btn-primary shadow-soft w-full h-12"
-                                            onclick="window.spoilboardGrid.generateGrid()"><i data-lucide="check" ></i>
-                                            Generate G-Code</button>
                                     </div>
                                 </div>
                             </div>
@@ -1532,64 +1557,66 @@
                             <!-- Sub-Tab Content: Bowl Cutter -->
                             <div id="tab-tool-bowl" class="tools-tab-content hidden">
                                 <div class="w-full">
-                                    <div class="space-y-6">
-                                        <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                            <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
-                                            <div class="grid grid-cols-2 gap-4">
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100">
-                                                    <p class="ooznest-form-info mt-1">Bowl size across the X axis.</p>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="space-y-6">
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20">
+                                                        <p class="ooznest-form-info mt-1">Maximum depth cut below the current Z zero.</p>
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="ooznest-field input-field font-mono text-sm" value="5">
+                                                        <p class="ooznest-form-info mt-1">Radius used to round the inside corners of the bowl.</p>
+                                                    </div>
                                                 </div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100">
-                                                    <p class="ooznest-form-info mt-1">Bowl size along the Y axis.</p>
+                                            </div>
+
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6">
+                                                        <p class="ooznest-form-info mt-1">Diameter of the cutter used to generate the bowl toolpath.</p>
+                                                    </div>
+                                                    <div>
+                                                        <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-type">Endmill Type</label>
+                                                        <select id="bc-tool-type" class="ooznest-select oz-select text-sm">
+                                                            <option value="flat">Flat</option>
+                                                            <option value="ball">Ball</option>
+                                                        </select>
+                                                        <p class="ooznest-form-info mt-1">Select the cutter shape so the generated toolpath matches the tool.</p>
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35">
+                                                        <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1">
+                                                        <p class="ooznest-form-info mt-1">Maximum Z depth removed on each cutting level.</p>
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100"></div>
                                                 </div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20">
-                                                    <p class="ooznest-form-info mt-1">Maximum depth cut below the current Z zero.</p>
+                                            </div>
+
+                                            <button class="btn btn-primary shadow-soft w-full h-12" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
+                                        </div>
+
+                                        <div class="space-y-6">
+                                            <div class="tool-illustration-card bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <div class="tool-illustration-media">
+                                                    <img class="tool-illustration-image" src="themes/BOWL.svg" alt="Bowl cutter illustration">
                                                 </div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="ooznest-field input-field font-mono text-sm" value="5">
-                                                    <p class="ooznest-form-info mt-1">Radius used to round the inside corners of the bowl.</p>
+                                                <div class="ooznest-instruction-card__info">
+                                                    <div class="ooznest-instruction-card__title">Required Setup</div>
+                                                    <ol class="ooznest-form-steps">
+                                                        <li>Install a ball end bit.</li>
+                                                        <li>Zero X and Y at the center of where the bowl should be.</li>
+                                                        <li>Zero Z at the top surface of the stock.</li>
+                                                        <li>Run the job. It cuts the bowl using the configured dimensions, depth, and feeds.</li>
+                                                    </ol>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                            <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
-                                            <div class="grid grid-cols-2 gap-4">
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6">
-                                                    <p class="ooznest-form-info mt-1">Diameter of the cutter used to generate the bowl toolpath.</p>
-                                                </div>
-                                                <div>
-                                                    <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-type">Endmill Type</label>
-                                                    <select id="bc-tool-type" class="ooznest-select oz-select text-sm">
-                                                        <option value="flat">Flat</option>
-                                                        <option value="ball">Ball</option>
-                                                    </select>
-                                                    <p class="ooznest-form-info mt-1">Select the cutter shape so the generated toolpath matches the tool.</p>
-                                                </div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35">
-                                                    <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
-                                                </div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1">
-                                                    <p class="ooznest-form-info mt-1">Maximum Z depth removed on each cutting level.</p>
-                                                </div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500">
-                                                    <p class="ooznest-form-info mt-1">Horizontal cutting speed used while machining the bowl.</p>
-                                                </div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100">
-                                                    <p class="ooznest-form-info mt-1">Z-axis speed used when stepping down into the material.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                            <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Required Setup</h3>
-                                            <ol class="ooznest-form-steps">
-                                                <li>Install a ball end bit.</li>
-                                                <li>Zero X and Y at the center of where the bowl should be.</li>
-                                                <li>Zero Z at the top surface of the stock.</li>
-                                                <li>Run the job. It cuts the bowl using the configured dimensions, depth, and feeds.</li>
-                                            </ol>
-                                        </div>
-                                    </div>
-                                    <div class="mt-6">
-                                        <button class="btn btn-primary shadow-soft w-full h-12" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
                                     </div>
                                 </div>
                             </div>
@@ -1879,7 +1906,7 @@
                                             </div>
                                             <div class="min-h-[420px]">
                                                 <div class="probe-instruction-card">
-                                                    <div class="calibration-choice-card__media relative">
+                                                    <div class="ooznest-instruction-card__media relative">
                                                         <div class="flex flex-col items-center justify-center text-secondary-dark gap-3">
                                                             <div class="w-24 h-24 rounded-full bg-white/80 border border-grey-light flex items-center justify-center shadow-sm">
                                                                 <i data-lucide="ruler" class="w-12 h-12"></i>
@@ -1887,9 +1914,9 @@
                                                             <div class="text-xs font-bold uppercase tracking-[0.2em] text-grey">Tool Length Offset</div>
                                                         </div>
                                                     </div>
-                                                    <div class="calibration-choice-card__info">
-                                                        <div class="calibration-choice-card__title">Tool Setter Setup</div>
-                                                        <p class="calibration-choice-card__text">Enter the fixed tool setter location in machine coordinates. Establish a reference with the first tool, then measure each subsequent tool to update Z automatically.</p>
+                                                    <div class="ooznest-instruction-card__info">
+                                                        <div class="ooznest-instruction-card__title">Tool Setter Setup</div>
+                                                        <p class="ooznest-instruction-card__text">Enter the fixed tool setter location in machine coordinates. Establish a reference with the first tool, then measure each subsequent tool to update Z automatically.</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1938,12 +1965,12 @@
 
                                             <div class="min-h-[420px]">
                                                 <div class="probe-instruction-card">
-                                                    <div class="calibration-choice-card__media relative">
+                                                    <div class="ooznest-instruction-card__media relative">
                                                         <img id="probe-corner-diagram" class="probe-diagram-image" src="themes/FL.svg" alt="Probe corner diagram">
                                                     </div>
-                                                    <div class="calibration-choice-card__info">
-                                                        <div class="calibration-choice-card__title">Outside Corner Setup</div>
-                                                        <p id="outside-corner-help" class="calibration-choice-card__text">Place probe plate on the front left outside corner. Position the tool above the Start Here hole before probing.</p>
+                                                    <div class="ooznest-instruction-card__info">
+                                                        <div class="ooznest-instruction-card__title">Outside Corner Setup</div>
+                                                        <p id="outside-corner-help" class="ooznest-instruction-card__text">Place probe plate on the front left outside corner. Position the tool above the Start Here hole before probing.</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1995,12 +2022,12 @@
 
                                             <div class="min-h-[420px]">
                                                 <div class="probe-instruction-card">
-                                                    <div class="calibration-choice-card__media relative">
+                                                    <div class="ooznest-instruction-card__media relative">
                                                         <img id="probe-single-diagram" class="probe-diagram-image" src="themes/SS-RIGHT.svg" alt="Single surface diagram">
                                                     </div>
-                                                    <div class="calibration-choice-card__info">
-                                                        <div class="calibration-choice-card__title">Surface Setup</div>
-                                                        <p id="single-surface-help" class="calibration-choice-card__text">Place probe plate on the left surface. Position the tool beside the plate so it can probe toward it.</p>
+                                                    <div class="ooznest-instruction-card__info">
+                                                        <div class="ooznest-instruction-card__title">Surface Setup</div>
+                                                        <p id="single-surface-help" class="ooznest-instruction-card__text">Place probe plate on the left surface. Position the tool beside the plate so it can probe toward it.</p>
                                                     </div>
                                                 </div>
                                             </div>
