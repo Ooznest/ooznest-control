@@ -293,10 +293,7 @@ export class SurfacingHandler {
 
         cmd(`G0 Z${fmt(s.clearance)}`);
         if (s.useMaxArea) {
-            comment('Move to machine front-left and set X/Y work zero automatically');
-            cmd(`G53 G0 X${fmt(-s.width)} Y${fmt(-s.height)}`);
-            cmd('G10 L20 P0 X0 Y0');
-            cmd('G0 X0 Y0');
+            comment('X/Y work zero must be set to the machine front-left before running');
         }
 
         // --- Calculations ---
@@ -427,7 +424,47 @@ export class SurfacingHandler {
 
             document.querySelector("button[onclick*='viewer-view']").click();
             this.term.writeln("\x1b[32m> Surfacing Job Loaded to Viewer.\x1b[0m");
+            if (this.store.data.surfacing.useMaxArea) {
+                this.promptAutoZeroXY(this.store.data.surfacing.width, this.store.data.surfacing.height);
+            }
         }
+    }
+
+    promptAutoZeroXY(width, height) {
+        if (!window.ws || !window.ws.isConnected) return;
+
+        const x = -Math.abs(Number(width) || 0);
+        const y = -Math.abs(Number(height) || 0);
+        if (!x || !y) return;
+
+        const activeP = this.getActiveWcsP();
+        const unitCmd = this.units === 'inch' ? 'G20' : 'G21';
+        const command = `${unitCmd} G10 L2 P${activeP} X${x.toFixed(3)} Y${y.toFixed(3)}`;
+        const title = 'Set Spoilboard X/Y Zero?';
+        const message = 'We can automatically set X/Y zero for this spoilboard job now. This does not move the machine. Make sure the machine has been homed, then set Z zero before running the job.';
+
+        const run = () => {
+            window.sendCmd(command);
+            if (window.showToast) window.showToast('X/Y zero set. Set Z zero before running.', 'crosshair', 'success');
+            if (this.term) this.term.writeln(`\x1b[32m[Surfacing] Sent ${command}. Set Z zero before running.\x1b[0m`);
+        };
+
+        if (window.reporter?.showConfirm) {
+            window.reporter.showConfirm(title, message, run, null, 'Set X/Y Zero', 'Later');
+        } else if (confirm(message)) {
+            run();
+        }
+    }
+
+    getActiveWcsP() {
+        if (window.lastStatus) {
+            const match = window.lastStatus.match(/WCS:G(\d+)/);
+            if (match) {
+                const val = parseInt(match[1], 10);
+                if (val >= 54 && val <= 59) return val - 53;
+            }
+        }
+        return 1;
     }
 
     uploadToSD() {

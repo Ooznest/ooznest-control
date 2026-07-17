@@ -94,12 +94,9 @@ export class SpoilboardGridHandler {
 
         let gcode = '';
         gcode += `; Spoilboard Grid\n`;
-        gcode += `; Home the machine before running. Z zero must be set by the user.\n`;
+        gcode += `; Home the machine before running. X/Y zero should be set to machine front-left. Z zero must be set by the user.\n`;
         gcode += `G21 G90 G17 F${feedrate}\n`;
         gcode += `G0 Z${up.toFixed(3)}\n`;
-        gcode += `G53 G0 X${(-widthX).toFixed(3)} Y${(-heightY).toFixed(3)}\n`;
-        gcode += `G10 L20 P0 X0 Y0\n`;
-        gcode += `G0 X0 Y0\n`;
 
         // 1. Outer boundary frame
         gcode += makeLine(rapide, 'X', X_grid_min, Y_grid_min, { z: up });
@@ -200,5 +197,42 @@ export class SpoilboardGridHandler {
         this.term.writeln(`\x1b[34m[Spoilboard Grid] Generated ${widthX}x${heightY}mm grid at ${gridSpacing}mm spacing.\x1b[0m`);
         this.term.writeln(`\x1b[32m[Spoilboard Grid] ${includeRuler ? 'With' : 'Without'} outward-facing rulers.\x1b[0m`);
         this.term.writeln('\x1b[32m[Spoilboard Grid] G-code loaded into viewer.\x1b[0m');
+        this.promptAutoZeroXY(widthX, heightY);
+    }
+
+    promptAutoZeroXY(width, height) {
+        if (!window.ws || !window.ws.isConnected) return;
+
+        const x = -Math.abs(Number(width) || 0);
+        const y = -Math.abs(Number(height) || 0);
+        if (!x || !y) return;
+
+        const activeP = this.getActiveWcsP();
+        const command = `G21 G10 L2 P${activeP} X${x.toFixed(3)} Y${y.toFixed(3)}`;
+        const title = 'Set Spoilboard X/Y Zero?';
+        const message = 'We can automatically set X/Y zero for this spoilboard job now. This does not move the machine. Make sure the machine has been homed, then set Z zero before running the job.';
+
+        const run = () => {
+            window.sendCmd(command);
+            if (window.showToast) window.showToast('X/Y zero set. Set Z zero before running.', 'crosshair', 'success');
+            if (this.term) this.term.writeln(`\x1b[32m[Spoilboard Grid] Sent ${command}. Set Z zero before running.\x1b[0m`);
+        };
+
+        if (window.reporter?.showConfirm) {
+            window.reporter.showConfirm(title, message, run, null, 'Set X/Y Zero', 'Later');
+        } else if (confirm(message)) {
+            run();
+        }
+    }
+
+    getActiveWcsP() {
+        if (window.lastStatus) {
+            const match = window.lastStatus.match(/WCS:G(\d+)/);
+            if (match) {
+                const val = parseInt(match[1], 10);
+                if (val >= 54 && val <= 59) return val - 53;
+            }
+        }
+        return 1;
     }
 }
