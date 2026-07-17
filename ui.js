@@ -176,6 +176,9 @@ class UIManager {
             sdTabBtn.disabled = false;
             sdTabBtn.classList.remove('opacity-50', 'pointer-events-none');
         };
+        const syncJogModeState = () => {
+            if (window.joggingController?.syncModeState) window.joggingController.syncModeState();
+        };
 
         if (state === 'offline') {
             setDisabled(jogControls, true);
@@ -249,6 +252,7 @@ class UIManager {
         }
 
         ensureSdTabEnabled();
+        syncJogModeState();
     }
 
     /**

@@ -21,6 +21,15 @@ export class GrblSettings {
         this.renderEmpty();
     }
 
+    hasLoadedData() {
+        return Object.keys(this.groups).length > 0 || Object.keys(this.settings).length > 0;
+    }
+
+    syncEmptyState() {
+        if (!this.tableContainer || this.hasLoadedData()) return;
+        this.renderEmpty();
+    }
+
     // --- Commands ---
 
     fetchSettings() {
@@ -276,12 +285,22 @@ export class GrblSettings {
     // --- Rendering ---
 
     renderEmpty() {
+        const isConnected = !!this.ws?.isConnected;
+        const icon = isConnected ? 'sliders-horizontal' : 'plug-zap';
+        const title = isConnected ? 'Settings Not Loaded' : 'Not Connected';
+        const message = isConnected ? 'Click "Refresh" to load settings.' : 'Please connect to load settings...';
+
         this.tableContainer.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-64 text-grey">
-                <i data-lucide="sliders-horizontal" style="width:14px;height:14px"></i>
-                <p>Click "Refresh" to load settings.</p>
+            <div class="flex items-center justify-center h-64">
+                <div class="flex flex-col items-center gap-2 text-center text-grey">
+                    <i data-lucide="${icon}" class="w-8 h-8 text-grey"></i>
+                    <span class="font-bold text-secondary-dark">${title}</span>
+                    <span class="text-xs text-grey">${message}</span>
+                </div>
             </div>
         `;
+
+        if (window.lucide) window.lucide.createIcons();
     }
 
     render() {

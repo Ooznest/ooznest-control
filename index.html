@@ -1056,8 +1056,12 @@
                                     </thead>
                                     <tbody class="divide-y divide-grey-light">
                                         <tr>
-                                            <td colspan="3" class="px-6 py-12 text-center text-grey italic">
-                                                Click Refresh to load files...
+                                            <td colspan="3" class="px-6 py-12 text-center text-grey">
+                                                <div class="flex flex-col items-center gap-2">
+                                                    <i data-lucide="plug-zap" class="w-8 h-8 text-grey"></i>
+                                                    <span class="font-bold text-secondary-dark">Not Connected</span>
+                                                    <span class="text-xs text-grey">Please connect to load files...</span>
+                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -1272,16 +1276,24 @@
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-tool">Tool Diameter (mm)</label><input type="number" id="surf-tool"
-                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Diameter of the surfacing cutter used to calculate toolpaths.</p>
+                                                    </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-stepover">Stepover (%)</label><input type="number" id="surf-stepover"
-                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
+                                                    </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-feed">Feed Rate (mm/min)</label><input type="number" id="surf-feed"
-                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Horizontal cutting speed used while surfacing.</p>
+                                                    </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-rpm">Spindle RPM</label><input type="number" id="surf-rpm"
-                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1311,16 +1323,22 @@
                                                                 for="surf-y">Height (Y)</label><input type="number" id="surf-y"
                                                                 class="ooznest-field input-field font-mono text-sm"></div>
                                                     </div>
+                                                    <p id="surf-dim-custom-info" class="ooznest-form-info">
+                                                        Starts at the front-left of the selected area and surfaces the width and height you enter. Useful for surfacing a piece of stock or a jig.
+                                                    </p>
                                                     <div id="surf-dim-spoilboard"
                                                         class="hidden grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
                                                         <div>
                                                             <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Width (X)</span>
-                                                            <div id="surf-dim-spoilboard-x" class="font-mono text-sm font-bold text-grey-dark">--</div>
+                                                            <div id="surf-dim-spoilboard-x" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
                                                         <div>
                                                             <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Height (Y)</span>
-                                                            <div id="surf-dim-spoilboard-y" class="font-mono text-sm font-bold text-grey-dark">--</div>
+                                                            <div id="surf-dim-spoilboard-y" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
+                                                        <p id="surf-dim-spoilboard-info" class="ooznest-form-info col-span-2">
+                                                            Jog to the machine's front-left limit, zero Z using a probe or by jogging, then run the job. The surfacing area is calculated from that position and runs back and right to the machine's configured Max Travel.
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1334,14 +1352,20 @@
                                                     <div class="grid grid-cols-2 gap-4">
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                                 for="surf-z-step">Depth per Pass (mm)</label><input type="number" id="surf-z-step"
-                                                                class="ooznest-field input-field font-mono text-sm"></div>
+                                                                class="ooznest-field input-field font-mono text-sm">
+                                                            <p class="ooznest-form-info mt-1">Maximum Z depth removed on each cutting pass.</p>
+                                                        </div>
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                                 for="surf-z-final">Final Depth (mm)</label><input type="number" id="surf-z-final"
-                                                                class="ooznest-field input-field font-mono text-sm"></div>
+                                                                class="ooznest-field input-field font-mono text-sm">
+                                                            <p class="ooznest-form-info mt-1">Total amount removed below the current Z zero.</p>
+                                                        </div>
                                                     </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-z-safe">Safe Z Clearance (mm)</label><input type="number" id="surf-z-safe"
-                                                            class="ooznest-field input-field font-mono text-sm"></div>
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Height used for rapid moves above the work surface.</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1355,20 +1379,27 @@
                                                         <option value="X">Along X-Axis</option>
                                                         <option value="Y">Along Y-Axis</option>
                                                     </select>
+                                                    <p class="ooznest-form-info mt-1">Chooses whether the main surfacing passes run along X or Y.</p>
                                                 </div>
-                                                <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light mb-2">
-                                                    <span class="text-xs font-bold text-secondary-dark">Use Coolant (M8)?</span>
-                                                    <label class="inline-flex items-center cursor-pointer">
-                                                        <input type="checkbox" id="surf-coolant" class="sr-only peer" aria-label="Use coolant">
-                                                        <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                                                    </label>
+                                                <div class="mb-2">
+                                                    <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
+                                                        <span class="text-xs font-bold text-secondary-dark">Use Coolant (M8)?</span>
+                                                        <label class="inline-flex items-center cursor-pointer">
+                                                            <input type="checkbox" id="surf-coolant" class="sr-only peer" aria-label="Use coolant">
+                                                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                                        </label>
+                                                    </div>
+                                                    <p class="ooznest-form-info mt-1">Adds M8 at the start of the job and turns coolant off at the end.</p>
                                                 </div>
-                                                <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                                    <span class="text-xs font-bold text-secondary-dark">Add Framing Pass?</span>
-                                                    <label class="inline-flex items-center cursor-pointer">
-                                                        <input type="checkbox" id="surf-framing" class="sr-only peer" aria-label="Add framing pass">
-                                                        <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                                                    </label>
+                                                <div>
+                                                    <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
+                                                        <span class="text-xs font-bold text-secondary-dark">Add Framing Pass?</span>
+                                                        <label class="inline-flex items-center cursor-pointer">
+                                                            <input type="checkbox" id="surf-framing" class="sr-only peer" aria-label="Add framing pass">
+                                                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                                        </label>
+                                                    </div>
+                                                    <p class="ooznest-form-info mt-1">Adds a cleanup pass around the outside edge of the surfacing area.</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -1395,10 +1426,14 @@
                                                 <div class="flex items-start gap-4">
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-width">Width (X mm)</label><input type="number" id="sg-width"
-                                                            class="ooznest-field input-field font-mono text-sm" value="300"></div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="300">
+                                                        <p class="ooznest-form-info mt-1">Total grid width along the X axis.</p>
+                                                    </div>
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-height">Height (Y mm)</label><input type="number" id="sg-height"
-                                                            class="ooznest-field input-field font-mono text-sm" value="300"></div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="300">
+                                                        <p class="ooznest-form-info mt-1">Total grid height along the Y axis.</p>
+                                                    </div>
                                                     <div class="shrink-0" style="margin-top: 20px;">
                                                         <button class="btn btn-secondary h-8 px-4 whitespace-nowrap"
                                                             onclick="window.spoilboardGrid.autoSpoilboard()"><i data-lucide="maximize" ></i> Auto</button>
@@ -1406,7 +1441,9 @@
                                                 </div>
                                                 <div class="mt-4"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                         for="sg-spacing">Grid Spacing (mm)</label><input type="number" id="sg-spacing"
-                                                        class="ooznest-field input-field font-mono text-sm" value="50"></div>
+                                                        class="ooznest-field input-field font-mono text-sm" value="50">
+                                                    <p class="ooznest-form-info mt-1">Distance between each engraved grid line.</p>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1417,16 +1454,24 @@
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-depth">Engrave Depth (mm)</label><input type="number" id="sg-depth"
-                                                            class="ooznest-field input-field font-mono text-sm" value="-0.3" step="0.1"></div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="-0.3" step="0.1">
+                                                        <p class="ooznest-form-info mt-1">Cut depth for the engraved grid lines.</p>
+                                                    </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-up">Safe Z (mm)</label><input type="number" id="sg-up"
-                                                            class="ooznest-field input-field font-mono text-sm" value="1" step="0.1"></div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="1" step="0.1">
+                                                        <p class="ooznest-form-info mt-1">Height used for rapid moves between grid cuts.</p>
+                                                    </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-feed">Feed Rate (mm/min)</label><input type="number" id="sg-feed"
-                                                            class="ooznest-field input-field font-mono text-sm" value="500"></div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="500">
+                                                        <p class="ooznest-form-info mt-1">Horizontal cutting speed while engraving.</p>
+                                                    </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-plunge">Plunge Rate (mm/min)</label><input type="number" id="sg-plunge"
-                                                            class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                            class="ooznest-field input-field font-mono text-sm" value="100">
+                                                        <p class="ooznest-form-info mt-1">Z-axis speed used when lowering into the spoilboard.</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1441,13 +1486,17 @@
                                                             <option value="Work">Work Coordinates</option>
                                                             <option value="Machine">Machine Coordinates</option>
                                                         </select>
+                                                        <p class="ooznest-form-info mt-1">Choose whether the grid is generated from the current work zero or machine coordinates.</p>
                                                     </div>
-                                                    <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                                        <span class="text-xs font-bold text-secondary-dark">Outward-Facing Rulers</span>
-                                                        <label class="inline-flex items-center cursor-pointer">
-                                                            <input type="checkbox" id="sg-ruler" class="sr-only peer" checked aria-label="Include rulers">
-                                                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                                                        </label>
+                                                    <div>
+                                                        <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
+                                                            <span class="text-xs font-bold text-secondary-dark">Outward-Facing Rulers</span>
+                                                            <label class="inline-flex items-center cursor-pointer">
+                                                                <input type="checkbox" id="sg-ruler" class="sr-only peer" checked aria-label="Include rulers">
+                                                                <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                                            </label>
+                                                        </div>
+                                                        <p class="ooznest-form-info mt-1">Adds ruler markings along the left and bottom edges of the grid.</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1470,27 +1519,46 @@
                                         <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                             <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
                                             <div class="grid grid-cols-2 gap-4">
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20"></div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="ooznest-field input-field font-mono text-sm" value="5"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100">
+                                                    <p class="ooznest-form-info mt-1">Bowl size across the X axis.</p>
+                                                </div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100">
+                                                    <p class="ooznest-form-info mt-1">Bowl size along the Y axis.</p>
+                                                </div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20">
+                                                    <p class="ooznest-form-info mt-1">Maximum depth cut below the current Z zero.</p>
+                                                </div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="ooznest-field input-field font-mono text-sm" value="5">
+                                                    <p class="ooznest-form-info mt-1">Radius used to round the inside corners of the bowl.</p>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                             <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
                                             <div class="grid grid-cols-2 gap-4">
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6">
+                                                    <p class="ooznest-form-info mt-1">Diameter of the cutter used to generate the bowl toolpath.</p>
+                                                </div>
                                                 <div>
                                                     <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-type">Endmill Type</label>
                                                     <select id="bc-tool-type" class="ooznest-select oz-select text-sm">
                                                         <option value="flat">Flat</option>
                                                         <option value="ball">Ball</option>
                                                     </select>
+                                                    <p class="ooznest-form-info mt-1">Select the cutter shape so the generated toolpath matches the tool.</p>
                                                 </div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35"></div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1"></div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500"></div>
-                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35">
+                                                    <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
+                                                </div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1">
+                                                    <p class="ooznest-form-info mt-1">Maximum Z depth removed on each cutting level.</p>
+                                                </div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500">
+                                                    <p class="ooznest-form-info mt-1">Horizontal cutting speed used while machining the bowl.</p>
+                                                </div>
+                                                <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100">
+                                                    <p class="ooznest-form-info mt-1">Z-axis speed used when stepping down into the material.</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -3213,10 +3281,12 @@
             window.uiManager.updateConnectionState(true, window.ws, window.sdHandler);
             setTimeout(window.updateLaserMode, 5000);
             if (window.syncSdUploadBtn) window.syncSdUploadBtn();
+            if (window.grblSettings?.syncEmptyState) window.grblSettings.syncEmptyState();
         });
         window.ws.on('disconnect', () => {
             window.uiManager.updateConnectionState(false, window.ws, window.sdHandler);
             if (window.syncSdUploadBtn) window.syncSdUploadBtn();
+            if (window.grblSettings?.syncEmptyState) window.grblSettings.syncEmptyState();
         });
         window.ws.on('line', (line) => {
             window.lineProcessor.processLine(line);

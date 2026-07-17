@@ -187,11 +187,15 @@ export class SurfacingHandler {
 
     _updateDimModeUI(useMaxArea) {
         const dimFields = document.getElementById('surf-dim-fields');
+        const customInfo = document.getElementById('surf-dim-custom-info');
         const spoilboardDims = document.getElementById('surf-dim-spoilboard');
         if (dimFields) {
             dimFields.style.maxHeight = useMaxArea ? '0px' : '500px';
             dimFields.style.opacity = useMaxArea ? '0' : '1';
             dimFields.classList.toggle('hidden', useMaxArea);
+        }
+        if (customInfo) {
+            customInfo.classList.toggle('hidden', useMaxArea);
         }
         if (spoilboardDims) {
             spoilboardDims.style.maxHeight = useMaxArea ? '500px' : '0px';

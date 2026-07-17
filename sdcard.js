@@ -47,6 +47,19 @@ export class SDCardHandler {
                 this.refresh();
             }
         });
+
+        if (this.ws?.on) {
+            this.ws.on('connect', () => {
+                if (!window.sdMounted && this.fileCount === 0) {
+                    this._prepareListing();
+                }
+            });
+
+            this.ws.on('disconnect', () => {
+                this._setMounted(false, { silent: true, reason: 'disconnected' });
+                this._prepareListing();
+            });
+        }
     }
 
     /**
@@ -251,6 +264,10 @@ export class SDCardHandler {
 
         const badge = document.getElementById('sd-badge');
         if (badge) badge.classList.add('hidden');
+
+        if (!this.ws?.isConnected) {
+            this._showConnectMessage();
+        }
     }
 
     _showNoSdCardMessage() {
@@ -263,6 +280,22 @@ export class SDCardHandler {
                         <i data-lucide="hard-drive" class="w-8 h-8 text-grey"></i>
                         <span class="font-bold text-secondary-dark">SD Card Not Found</span>
                         <span class="text-xs text-grey">Insert an SD Card, then reboot the controller, and reconnect to try again.</span>
+                    </div>
+                </td>
+            </tr>`;
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    _showConnectMessage() {
+        const tbody = document.querySelector('#sd-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="px-6 py-12 text-center text-grey">
+                    <div class="flex flex-col items-center gap-2">
+                        <i data-lucide="plug-zap" class="w-8 h-8 text-grey"></i>
+                        <span class="font-bold text-secondary-dark">Not Connected</span>
+                        <span class="text-xs text-grey">Please connect to load files...</span>
                     </div>
                 </td>
             </tr>`;
