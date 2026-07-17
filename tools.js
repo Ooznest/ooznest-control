@@ -40,6 +40,11 @@ export class ToolsHandler {
         // Show target
         document.getElementById(targetId).classList.remove('hidden');
 
+        if (targetId === 'tab-tool-spoilboard') {
+            window.spoilboardGrid?.syncAutoDimensions?.({ silent: true });
+            window.spoilboardGrid?.updateCoordinateInfo?.();
+        }
+
         // Reset buttons
         document.querySelectorAll('.tools-tab-btn').forEach(el => {
             el.classList.replace('text-primary-dark', 'text-grey');

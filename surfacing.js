@@ -188,6 +188,8 @@ export class SurfacingHandler {
     _updateDimModeUI(useMaxArea) {
         const dimFields = document.getElementById('surf-dim-fields');
         const customInfo = document.getElementById('surf-dim-custom-info');
+        const customSetup = document.getElementById('surf-setup-custom');
+        const spoilboardSetup = document.getElementById('surf-setup-spoilboard');
         const spoilboardDims = document.getElementById('surf-dim-spoilboard');
         if (dimFields) {
             dimFields.style.maxHeight = useMaxArea ? '0px' : '500px';
@@ -196,6 +198,12 @@ export class SurfacingHandler {
         }
         if (customInfo) {
             customInfo.classList.toggle('hidden', useMaxArea);
+        }
+        if (customSetup) {
+            customSetup.classList.toggle('hidden', useMaxArea);
+        }
+        if (spoilboardSetup) {
+            spoilboardSetup.classList.toggle('hidden', !useMaxArea);
         }
         if (spoilboardDims) {
             spoilboardDims.style.maxHeight = useMaxArea ? '500px' : '0px';
@@ -284,6 +292,12 @@ export class SurfacingHandler {
         const fmt = (n) => n.toFixed(this.units === 'mm' ? 3 : 4);
 
         cmd(`G0 Z${fmt(s.clearance)}`);
+        if (s.useMaxArea) {
+            comment('Move to machine front-left and set X/Y work zero automatically');
+            cmd(`G53 G0 X${fmt(-s.width)} Y${fmt(-s.height)}`);
+            cmd('G10 L20 P0 X0 Y0');
+            cmd('G0 X0 Y0');
+        }
 
         // --- Calculations ---
         const stepoverVal = s.toolDiameter * (s.stepover / 100.0);

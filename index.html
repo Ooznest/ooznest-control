@@ -1337,10 +1337,28 @@
                                                             <div id="surf-dim-spoilboard-y" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
                                                         <p id="surf-dim-spoilboard-info" class="ooznest-form-info col-span-2">
-                                                            Jog to the machine's front-left limit, zero Z using a probe or by jogging, then run the job. The surfacing area is calculated from that position and runs back and right to the machine's configured Max Travel.
+                                                            Uses the machine's configured Max Travel. The generated job moves to the machine's front-left limit and sets X/Y work zero automatically.
                                                         </p>
                                                     </div>
                                                 </div>
+                                            </div>
+
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
+                                                    Required Setup</h3>
+                                                <ol id="surf-setup-custom" class="ooznest-form-steps">
+                                                    <li>Install a surfacing bit.</li>
+                                                    <li>Jog to the front-left corner of the custom surfacing area.</li>
+                                                    <li>Zero X and Y at the front-left corner.</li>
+                                                    <li>Zero Z at the highest point of the stock or spoilboard.</li>
+                                                    <li>Run the job. It starts from the front-left work zero and surfaces the width and height you entered.</li>
+                                                </ol>
+                                                <ol id="surf-setup-spoilboard" class="ooznest-form-steps hidden">
+                                                    <li>Install a surfacing bit.</li>
+                                                    <li>Home the machine before running this job.</li>
+                                                    <li>Zero Z at the highest point of the spoilboard using a probe or by jogging.</li>
+                                                    <li>Run the job. It moves to the machine's front-left limit, sets X/Y work zero automatically, then surfaces back and right to the machine's configured Max Travel.</li>
+                                                </ol>
                                             </div>
                                         </div>
 
@@ -1434,10 +1452,6 @@
                                                             class="ooznest-field input-field font-mono text-sm" value="300">
                                                         <p class="ooznest-form-info mt-1">Total grid height along the Y axis.</p>
                                                     </div>
-                                                    <div class="shrink-0" style="margin-top: 20px;">
-                                                        <button class="btn btn-secondary h-8 px-4 whitespace-nowrap"
-                                                            onclick="window.spoilboardGrid.autoSpoilboard()"><i data-lucide="maximize" ></i> Auto</button>
-                                                    </div>
                                                 </div>
                                                 <div class="mt-4"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                         for="sg-spacing">Grid Spacing (mm)</label><input type="number" id="sg-spacing"
@@ -1445,9 +1459,6 @@
                                                     <p class="ooznest-form-info mt-1">Distance between each engraved grid line.</p>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <div class="space-y-6">
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Depth & Feeds</h3>
@@ -1475,19 +1486,13 @@
                                                 </div>
                                             </div>
 
+                                        </div>
+
+                                        <div class="space-y-6">
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Options</h3>
                                                 <div class="space-y-3">
-                                                    <div>
-                                                        <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="sg-coords">Coordinate System</label>
-                                                        <select id="sg-coords" class="ooznest-select oz-select text-sm">
-                                                            <option value="Work">Work Coordinates</option>
-                                                            <option value="Machine">Machine Coordinates</option>
-                                                        </select>
-                                                        <p class="ooznest-form-info mt-1">Choose whether the grid is generated from the current work zero or machine coordinates.</p>
-                                                    </div>
                                                     <div>
                                                         <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
                                                             <span class="text-xs font-bold text-secondary-dark">Outward-Facing Rulers</span>
@@ -1501,6 +1506,18 @@
                                                 </div>
                                             </div>
 
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
+                                                    Required Setup</h3>
+                                                <div id="sg-setup-info">
+                                                    <ol class="ooznest-form-steps">
+                                                        <li>Install a V-bit.</li>
+                                                        <li>Home the machine before running this job.</li>
+                                                        <li>Zero Z using a probe or by jogging.</li>
+                                                        <li>Run the job. It moves to the machine's front-left limit, sets X/Y work zero automatically, then engraves back and right to the machine's configured Max Travel.</li>
+                                                    </ol>
+                                                </div>
+                                            </div>
 
                                         </div>
                                     </div>
@@ -1560,6 +1577,15 @@
                                                     <p class="ooznest-form-info mt-1">Z-axis speed used when stepping down into the material.</p>
                                                 </div>
                                             </div>
+                                        </div>
+                                        <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                            <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Required Setup</h3>
+                                            <ol class="ooznest-form-steps">
+                                                <li>Install a ball end bit.</li>
+                                                <li>Zero X and Y at the center of where the bowl should be.</li>
+                                                <li>Zero Z at the top surface of the stock.</li>
+                                                <li>Run the job. It cuts the bowl using the configured dimensions, depth, and feeds.</li>
+                                            </ol>
                                         </div>
                                     </div>
                                     <div class="mt-6">

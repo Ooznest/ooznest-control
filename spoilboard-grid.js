@@ -5,49 +5,62 @@ export class SpoilboardGridHandler {
         this.ws = ws;
         this.term = term;
         this.store = store;
+
+        setTimeout(() => {
+            this.syncAutoDimensions({ silent: true });
+        }, 0);
+    }
+
+    getMaxTravelDimensions() {
+        const settings = window.grblSettings?.settings || {};
+        const xTravel = parseFloat(settings['130']?.val);
+        const yTravel = parseFloat(settings['131']?.val);
+
+        if (!Number.isFinite(xTravel) || !Number.isFinite(yTravel) || xTravel <= 0 || yTravel <= 0) {
+            return null;
+        }
+
+        return {
+            width: Math.round(xTravel),
+            height: Math.round(yTravel)
+        };
+    }
+
+    syncAutoDimensions({ silent = false } = {}) {
+        const dims = this.getMaxTravelDimensions();
+        if (!dims) {
+            if (!silent && this.term) this.term.writeln('\x1b[33m[Spoilboard Grid] Machine max travel settings are not available.\x1b[0m');
+            return false;
+        }
+
+        const widthInput = document.getElementById('sg-width');
+        const heightInput = document.getElementById('sg-height');
+        if (!widthInput || !heightInput) return false;
+
+        widthInput.value = dims.width;
+        heightInput.value = dims.height;
+
+        if (!silent && this.term) {
+            this.term.writeln(`\x1b[32m[Spoilboard Grid] Using machine max travel: ${dims.width}x${dims.height}mm\x1b[0m`);
+        }
+        return true;
     }
 
     autoSpoilboard() {
-        if (!window.viewer || !window.viewer.machineLimits) {
-            if (this.term) this.term.writeln('\x1b[33m[Spoilboard Grid] Machine limits not available.\x1b[0m');
-            return;
-        }
+        return this.syncAutoDimensions();
+    }
 
-        const limits = window.viewer.machineLimits;
-        const isPositiveSpace = window.viewer.isPositiveSpace || false;
-        const homingDirMask = window.viewer.homingDirMask || 0;
-
-        let xMin, xMax, yMin, yMax;
-
-        if (isPositiveSpace) {
-            if (homingDirMask & 1) { xMin = 0; xMax = limits.x; }
-            else { xMin = -limits.x; xMax = 0; }
-            if (homingDirMask & 2) { yMin = 0; yMax = limits.y; }
-            else { yMin = -limits.y; yMax = 0; }
-        } else {
-            xMin = -limits.x; xMax = 0;
-            yMin = -limits.y; yMax = 0;
-        }
-
-        const width = Math.round(xMax - xMin);
-        const height = Math.round(yMax - yMin);
-
-        if (width <= 0 || height <= 0) {
-            if (this.term) this.term.writeln('\x1b[33m[Spoilboard Grid] Invalid machine dimensions.\x1b[0m');
-            return;
-        }
-
-        document.getElementById('sg-width').value = width;
-        document.getElementById('sg-height').value = height;
-
-        if (this.term) this.term.writeln(`\x1b[32m[Spoilboard Grid] Auto-detected machine size: ${width}x${height}mm\x1b[0m`);
+    updateCoordinateInfo() {
+        // Kept for older inline handlers; Spoilboard Grid now uses one automatic XY setup mode.
     }
 
     generateGrid() {
+        this.syncAutoDimensions({ silent: true });
+        this.updateCoordinateInfo();
+
         const widthX = parseFloat(document.getElementById('sg-width').value) || 300;
         const heightY = parseFloat(document.getElementById('sg-height').value) || 300;
         const gridSpacing = parseFloat(document.getElementById('sg-spacing').value) || 50;
-        const coordSystem = document.getElementById('sg-coords').value;
         const includeRuler = document.getElementById('sg-ruler').checked;
 
         const depth = parseFloat(document.getElementById('sg-depth').value) || -0.3;
@@ -68,28 +81,25 @@ export class SpoilboardGridHandler {
         const gridHightLet = hightLet * gridScaleFactor;
         const gridSpace = space * gridScaleFactor;
 
-        const worstCaseLabelLeft = (coordSystem === 'Work') ? Math.round(heightY).toString() : Math.round(-heightY).toString();
+        const worstCaseLabelLeft = Math.round(heightY).toString();
         const maxLabelWidthLeft = getTextWidth(worstCaseLabelLeft, gridLengthLet, gridSpace);
 
         const X_offset = gridHightLet + maxLabelWidthLeft + 2.0;
         const Y_offset = gridHightLet + gridHightLet + 2.0;
 
-        let X_grid_min, X_grid_max, Y_grid_min, Y_grid_max;
-        if (coordSystem === 'Work') {
-            X_grid_min = X_offset;
-            X_grid_max = widthX;
-            Y_grid_min = Y_offset;
-            Y_grid_max = heightY;
-        } else {
-            X_grid_min = -widthX + X_offset;
-            X_grid_max = 0;
-            Y_grid_min = -heightY + Y_offset;
-            Y_grid_max = 0;
-        }
+        const X_grid_min = X_offset;
+        const X_grid_max = widthX;
+        const Y_grid_min = Y_offset;
+        const Y_grid_max = heightY;
 
         let gcode = '';
+        gcode += `; Spoilboard Grid\n`;
+        gcode += `; Home the machine before running. Z zero must be set by the user.\n`;
         gcode += `G21 G90 G17 F${feedrate}\n`;
-        gcode += `G0 X0 Y0 Z${up}\n`;
+        gcode += `G0 Z${up.toFixed(3)}\n`;
+        gcode += `G53 G0 X${(-widthX).toFixed(3)} Y${(-heightY).toFixed(3)}\n`;
+        gcode += `G10 L20 P0 X0 Y0\n`;
+        gcode += `G0 X0 Y0\n`;
 
         // 1. Outer boundary frame
         gcode += makeLine(rapide, 'X', X_grid_min, Y_grid_min, { z: up });
@@ -118,20 +128,16 @@ export class SpoilboardGridHandler {
 
         // 4. Outward-facing rulers
         if (includeRuler) {
-            const isMachine = coordSystem === 'Machine';
-
             // Left edge ruler (along Y axis, ticks point left)
             const totalTicksY = Math.round(Y_grid_max - Y_grid_min);
             for (let i = 0; i <= totalTicksY; i++) {
                 const Y = Y_grid_min + i;
-                const roundedY = Math.round(Y);
                 let tickHeight = gridHightLet * 0.4;
                 let isMajor = false;
-                const idx = isMachine ? roundedY : i;
-                if (idx % 10 === 0) {
+                if (i % 10 === 0) {
                     tickHeight = gridHightLet;
                     isMajor = true;
-                } else if (idx % 5 === 0) {
+                } else if (i % 5 === 0) {
                     tickHeight = gridHightLet * 0.65;
                 }
 
@@ -141,8 +147,7 @@ export class SpoilboardGridHandler {
                 gcode += makeLine(rapide, 'X', X_grid_min - tickHeight, Y, { z: up });
 
                 if (isMajor) {
-                    const labelVal = isMachine ? roundedY : i;
-                    const labelText = labelVal.toString();
+                    const labelText = i.toString();
                     const labelWidth = getTextWidth(labelText, gridLengthLet, gridSpace);
                     const yBaseline = Y - (gridHightLet / 2);
                     const xBaseline = X_grid_min - tickHeight - labelWidth - 1.5;
@@ -154,14 +159,12 @@ export class SpoilboardGridHandler {
             const totalTicksX = Math.round(X_grid_max - X_grid_min);
             for (let i = 0; i <= totalTicksX; i++) {
                 const X = X_grid_min + i;
-                const roundedX = Math.round(X);
                 let tickHeight = gridHightLet * 0.4;
                 let isMajor = false;
-                const idx = isMachine ? roundedX : i;
-                if (idx % 10 === 0) {
+                if (i % 10 === 0) {
                     tickHeight = gridHightLet;
                     isMajor = true;
-                } else if (idx % 5 === 0) {
+                } else if (i % 5 === 0) {
                     tickHeight = gridHightLet * 0.65;
                 }
 
@@ -171,8 +174,7 @@ export class SpoilboardGridHandler {
                 gcode += makeLine(rapide, 'X', X, Y_grid_min - tickHeight, { z: up });
 
                 if (isMajor) {
-                    const labelVal = isMachine ? roundedX : i;
-                    const labelText = labelVal.toString();
+                    const labelText = i.toString();
                     const labelWidth = getTextWidth(labelText, gridLengthLet, gridSpace);
                     const xStart = X - (labelWidth / 2);
                     const yBaseline = Y_grid_min - tickHeight - gridHightLet - 1.5;
