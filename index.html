@@ -270,6 +270,49 @@
             line-height: 1.5;
         }
 
+        .tool-setup-bar.safe {
+            background: var(--oz-notice-success) !important;
+            border-color: var(--oz-success) !important;
+            color: #166534 !important;
+        }
+
+        .tool-setup-bar.unsafe {
+            background: var(--oz-notice-error) !important;
+            border-color: var(--oz-error) !important;
+            color: var(--oz-error) !important;
+        }
+
+        .tool-setup-step.is-done {
+            background: rgba(22, 101, 52, 0.08) !important;
+            border-color: rgba(22, 101, 52, 0.22) !important;
+            color: #166534 !important;
+        }
+
+        .tool-setup-step:not(.is-next):not(.is-done) {
+            background: rgba(255, 255, 255, 0.72) !important;
+            color: var(--oz-error) !important;
+        }
+
+        .tool-setup-step.is-next {
+            background: var(--oz-primary) !important;
+            border-color: var(--oz-primary) !important;
+            color: #fff !important;
+        }
+
+        @media (min-width: 768px) {
+            .tool-setup-action {
+                margin-left: auto !important;
+                width: 11rem !important;
+                flex: 0 0 11rem !important;
+            }
+
+            .tool-setup-z-actions {
+                margin-left: auto !important;
+                width: 22.5rem !important;
+                flex: 0 0 22.5rem !important;
+            }
+        }
+
         .probe-instruction-card__footer-chip {
             display: inline-flex;
             align-items: center;
@@ -1372,7 +1415,7 @@
                                                             <div id="surf-dim-spoilboard-y" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
                                                         <p id="surf-dim-spoilboard-info" class="ooznest-form-info col-span-2">
-                                                            Uses the machine's configured Max Travel. The generated job moves to the machine's front-left limit and sets X/Y work zero automatically.
+                                                            Uses the machine's configured Max Travel. Complete the setup checklist to set X/Y zero before generating the job.
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1434,7 +1477,30 @@
                                                 </div>
                                             </div>
 
-                                            <button class="btn btn-primary shadow-soft w-full h-12"
+                                            <div id="surf-spoilboard-setup-checklist" class="tool-setup-bar unsafe hidden rounded-lg border text-xs font-bold p-2">
+                                                <div class="flex flex-col md:flex-row gap-2 md:items-center">
+                                                    <div id="surf-setup-msg" class="px-1 text-[10px] leading-tight md:flex-1">Complete setup before generating the spoilboard job.</div>
+                                                    <button id="surf-setup-connect-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="handleConnectClick()">
+                                                        1. Connect
+                                                    </button>
+                                                    <button id="surf-setup-home-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.markSpoilboardSetupStep('home')">
+                                                        2. Home All
+                                                    </button>
+                                                    <button id="surf-setup-xy-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px] hidden" onclick="window.surfacing.setSpoilboardXYZero()">
+                                                        3. Set X/Y Zero
+                                                    </button>
+                                                    <div id="surf-setup-z-actions" class="tool-setup-z-actions hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        <button id="surf-setup-z-probe-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.probeSpoilboardZZero()">
+                                                            Probe Z
+                                                        </button>
+                                                        <button id="surf-setup-z-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.setSpoilboardZZero()">
+                                                            Set Z Zero
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button id="surf-generate-btn" class="btn btn-primary shadow-soft w-full h-12"
                                                 onclick="window.surfacing.loadToViewer()"><i data-lucide="check" ></i>
                                                 Generate G-Code</button>
 
@@ -1456,9 +1522,10 @@
                                                     </ol>
                                                     <ol id="surf-setup-spoilboard" class="ooznest-form-steps hidden">
                                                         <li>Install a surfacing bit.</li>
-                                                        <li>Home the machine before running this job.</li>
+                                                        <li>Home the machine.</li>
+                                                        <li>Use the setup checklist to set X/Y zero automatically.</li>
                                                         <li>Zero Z at the highest point of the spoilboard using a probe or by jogging.</li>
-                                                        <li>Run the job. It moves to the machine's front-left limit, sets X/Y work zero automatically, then surfaces back and right to the machine's configured Max Travel.</li>
+                                                        <li>Generate and run the job. It surfaces back and right to the machine's configured Max Travel.</li>
                                                     </ol>
                                                 </div>
                                             </div>
@@ -1476,7 +1543,7 @@
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Grid Dimensions</h3>
                                                 <p class="text-xs text-grey leading-relaxed mb-3">
-                                                    Engrave a grid pattern with outward-facing rulers along the left and bottom edges. Use a V-bit or engraving tool for best results.
+                                                    Engrave a grid pattern that starts at the front-left work zero, with ruler ticks and numbers placed above and to the right. Use a V-bit or engraving tool for best results.
                                                 </p>
                                                 <div class="flex items-start gap-4">
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
@@ -1508,7 +1575,11 @@
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-plunge">Plunge Rate (mm/min)</label><input type="number" id="sg-plunge"
                                                             class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div class="col-span-2"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="sg-rpm">Spindle RPM</label><input type="number" id="sg-rpm"
+                                                            class="ooznest-field input-field font-mono text-sm" value="12000"></div>
                                                 </div>
+                                                <p class="ooznest-form-info mt-1">Adds an `M3 S...` spindle start command to the generated job.</p>
                                             </div>
 
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
@@ -1517,18 +1588,41 @@
                                                 <div class="space-y-3">
                                                     <div>
                                                         <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                                            <span class="text-xs font-bold text-secondary-dark">Outward-Facing Rulers</span>
+                                                            <span class="text-xs font-bold text-secondary-dark">Add Ruler Markings</span>
                                                             <label class="inline-flex items-center cursor-pointer">
                                                                 <input type="checkbox" id="sg-ruler" class="sr-only peer" checked aria-label="Include rulers">
                                                                 <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                                                             </label>
                                                         </div>
-                                                        <p class="ooznest-form-info mt-1">Adds ruler markings along the left and bottom edges of the grid.</p>
+                                                        <p class="ooznest-form-info mt-1">Include markings, and numeric markers.</p>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <button class="btn btn-primary shadow-soft w-full h-12"
+                                            <div id="sg-setup-checklist" class="tool-setup-bar unsafe rounded-lg border text-xs font-bold p-2">
+                                                <div class="flex flex-col md:flex-row gap-2 md:items-center">
+                                                    <div id="sg-setup-msg" class="px-1 text-[10px] leading-tight md:flex-1">Complete setup before generating the spoilboard grid.</div>
+                                                    <button id="sg-setup-connect-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="handleConnectClick()">
+                                                        1. Connect
+                                                    </button>
+                                                    <button id="sg-setup-home-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.markSetupStep('home')">
+                                                        2. Home All
+                                                    </button>
+                                                    <button id="sg-setup-xy-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px] hidden" onclick="window.spoilboardGrid.setSpoilboardXYZero()">
+                                                        3. Set X/Y Zero
+                                                    </button>
+                                                    <div id="sg-setup-z-actions" class="tool-setup-z-actions hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        <button id="sg-setup-z-probe-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.probeZZero()">
+                                                            Probe Z
+                                                        </button>
+                                                        <button id="sg-setup-z-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.setZZero()">
+                                                            Set Z Zero
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button id="sg-generate-btn" class="btn btn-primary shadow-soft w-full h-12"
                                                 onclick="window.spoilboardGrid.generateGrid()"><i data-lucide="check" ></i>
                                                 Generate G-Code</button>
 
@@ -1543,9 +1637,10 @@
                                                     <div class="ooznest-instruction-card__title">Required Setup</div>
                                                     <ol class="ooznest-form-steps">
                                                         <li>Install a V-bit.</li>
-                                                        <li>Home the machine before running this job.</li>
+                                                        <li>Home the machine.</li>
+                                                        <li>Use the setup checklist to set X/Y zero automatically.</li>
                                                         <li>Zero Z using a probe or by jogging.</li>
-                                                        <li>Run the job. It moves to the machine's front-left limit, sets X/Y work zero automatically, then engraves back and right to the machine's configured Max Travel.</li>
+                                                        <li>Generate and run the job. The grid starts at the front-left zero and engraves back/right, with rulers above and to the right.</li>
                                                     </ol>
                                                 </div>
                                             </div>
@@ -1578,14 +1673,6 @@
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6">
                                                         <p class="ooznest-form-info mt-1">Diameter of the cutter used to generate the bowl toolpath.</p>
-                                                    </div>
-                                                    <div>
-                                                        <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-type">Endmill Type</label>
-                                                        <select id="bc-tool-type" class="ooznest-select oz-select text-sm">
-                                                            <option value="flat">Flat</option>
-                                                            <option value="ball">Ball</option>
-                                                        </select>
-                                                        <p class="ooznest-form-info mt-1">Select the cutter shape so the generated toolpath matches the tool.</p>
                                                     </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35">
                                                         <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
@@ -3335,11 +3422,13 @@
             setTimeout(window.updateLaserMode, 5000);
             if (window.syncSdUploadBtn) window.syncSdUploadBtn();
             if (window.grblSettings?.syncEmptyState) window.grblSettings.syncEmptyState();
+            window.dispatchEvent(new CustomEvent('machine-connection-changed', { detail: { connected: true } }));
         });
         window.ws.on('disconnect', () => {
             window.uiManager.updateConnectionState(false, window.ws, window.sdHandler);
             if (window.syncSdUploadBtn) window.syncSdUploadBtn();
             if (window.grblSettings?.syncEmptyState) window.grblSettings.syncEmptyState();
+            window.dispatchEvent(new CustomEvent('machine-connection-changed', { detail: { connected: false } }));
         });
         window.ws.on('line', (line) => {
             window.lineProcessor.processLine(line);
