@@ -46,7 +46,6 @@ class EditorIntegration {
 
         window.reporter.showPrompt('Upload to SD Card', 'Enter filename for SD Card:', defaultName, (filename) => {
             if (!filename) return;
-
             const file = new File([content], filename, { type: "text/plain" });
             window.sdHandler.startUpload(file);
         });

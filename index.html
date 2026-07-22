@@ -1092,6 +1092,10 @@
                                 <!-- SD Actions (Disabled when offline) -->
                                  <div id="sd-tools"
                                      class="flex gap-2 w-full md:w-auto transition-opacity duration-200">
+                                    <button id="sd-mkdir-btn" class="btn btn-secondary flex-1 md:flex-initial disabled:opacity-40 disabled:cursor-not-allowed"
+                                        onclick="window.sdHandler.createDirectory()" disabled>
+                                        <i data-lucide="folder-plus" ></i> New Folder
+                                    </button>
                                     <button id="sd-upload-btn" class="btn btn-primary flex-1 md:flex-initial disabled:opacity-40 disabled:cursor-not-allowed"
                                         onclick="document.getElementById('sd-upload-input').click()" disabled>
                                         <i data-lucide="cloud-upload" ></i> Upload
@@ -1111,7 +1115,7 @@
                             <!-- Breadcrumb (Disabled when offline) -->
                             <div id="sd-breadcrumb"
                                 class="bg-white border border-grey-light rounded-lg p-3 mb-4 flex items-center gap-3 shadow-card opacity-50 pointer-events-none transition-opacity duration-200 overflow-hidden">
-                                <button id="sd-up-level-btn" class="btn-icon text-grey-dark shrink-0 disabled:opacity-40 disabled:cursor-not-allowed" onclick="window.sdHandler.upLevel()"
+                                <button id="sd-up-level-btn" class="btn-icon text-grey-dark shrink-0 pointer-events-auto disabled:opacity-40 disabled:cursor-not-allowed" onclick="window.sdHandler.upLevel()"
                                     aria-label="Go up one directory level" disabled>
                                     <i data-lucide="corner-up-left" ></i>
                                 </button>
@@ -2571,14 +2575,20 @@
 
                 <!-- CONSOLE TAB PANE -->
                 <div id="console-view" class="tab-pane hidden w-full h-full flex flex-col bg-grey-bg">
-                    <div class="flex flex-col h-full overflow-hidden tab-shell-padding py-4">
+                    <div class="flex flex-col h-full overflow-hidden tab-shell-padding pt-2 pb-4">
+                        <div id="console-toolbar" class="flex justify-end gap-2 mb-2 shrink-0">
+                            <button id="btnClearConsole" onclick="window.term.clear()" title="Clear log"
+                                class="btn btn-secondary flex-1 md:flex-initial">
+                                <i data-lucide="trash-2"></i> Clear Log
+                            </button>
+                        </div>
                         <div class="console-shell flex-1 flex flex-col min-h-0">
                             <div id="terminal-container" class="console-terminal w-full flex-1 min-h-0"></div>
                             <div id="console-input-area" class="flex gap-2 mt-3 shrink-0">
-                                <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
-                                <button id="btnSend" aria-label="Send G-Code"><i data-lucide="send" class="text-[12px]"></i></button>
-                                <button id="btnClearConsole" onclick="window.term.clear()" title="Clear console"
-                                    class="text-grey hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="text-[12px]"></i></button>
+                                <div class="console-input-card flex items-center gap-2 w-full">
+                                    <input type="text" id="cmdInput" class="font-mono flex-1 text-xs" placeholder="G-Code..." aria-label="G-Code command input">
+                                    <button id="btnSend" aria-label="Send G-Code"><i data-lucide="send" class="text-[12px]"></i><span>Send</span></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3134,7 +3144,7 @@
         import { WebSerial } from './webserial.js';
         import { GCodeViewer } from './3dview.js';
         import { ProbeHandler } from './probe.js?v=20260710';
-        import { SDCardHandler } from './sdcard.js';
+        import { SDCardHandler } from './sdcard.js?v=20260721a';
         import { AlarmsAndErrors } from './alarms_and_errors.js';
         import { DROHandler } from './dro.js';
         import { GrblSettings } from './grbl_settings.js';
@@ -3545,9 +3555,7 @@
             const content = window.editor.getValue();
             const defaultName = document.getElementById('editor-file-name').innerText !== "No file loaded" ? document.getElementById('editor-file-name').innerText : "edited.gcode";
             reporter.showPrompt('Upload to SD Card', 'Enter filename for SD Card:', defaultName, (filename) => {
-
                 if (!filename) return;
-
                 const file = new File([content], filename, { type: "text/plain" });
                 window.sdHandler.startUpload(file);
             });
@@ -3627,6 +3635,13 @@
 
         function syncSdUploadBtn() {
             const available = window.sdMounted && window.ws?.isConnected && !window.sdJobActive;
+            const mkdirBtn = document.getElementById('sd-mkdir-btn');
+            if (mkdirBtn) {
+                mkdirBtn.disabled = !available;
+                mkdirBtn.classList.toggle('opacity-50', !available);
+                mkdirBtn.classList.toggle('pointer-events-none', !available);
+            }
+
             const uploadBtn = document.getElementById('sd-upload-btn');
             if (uploadBtn) {
                 uploadBtn.disabled = !available;
@@ -3674,7 +3689,7 @@
 
             const upLevelBtn = document.getElementById('sd-up-level-btn');
             if (upLevelBtn) {
-                upLevelBtn.disabled = !available;
+                upLevelBtn.disabled = !available || (window.sdHandler?.path || '/') === '/';
             }
         }
 

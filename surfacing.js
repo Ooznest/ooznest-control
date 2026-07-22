@@ -4,6 +4,17 @@ export class SurfacingHandler {
         this.sdHandler = sdHandler;
         this.term = term;
         this.store = store;
+        this.spoilboardSetup = {
+            home: false,
+            xy: false,
+            z: false
+        };
+        this.pendingHomeAll = false;
+        this.pendingHomeAllMotion = false;
+        this.pendingZProbe = false;
+        this.pendingZProbeMotion = false;
+        window.addEventListener('machine-state-changed', (e) => this.handleSetupMachineState(e.detail?.state || ''));
+        window.addEventListener('machine-connection-changed', (e) => this.handleSetupConnectionState(!!e.detail?.connected));
 
         // Ensure store values match current global units before UI render
         this.syncStoreUnits();
@@ -183,6 +194,7 @@ export class SurfacingHandler {
 
         this._renderSpoilboardDimensions();
         this._updateDimModeUI(!!s.useMaxArea);
+        this.updateSpoilboardSetupUI();
     }
 
     _updateDimModeUI(useMaxArea) {
@@ -210,6 +222,7 @@ export class SurfacingHandler {
             spoilboardDims.style.opacity = useMaxArea ? '1' : '0';
             spoilboardDims.classList.toggle('hidden', !useMaxArea);
         }
+        this.updateSpoilboardSetupUI();
     }
 
     _renderSpoilboardDimensions() {
@@ -415,6 +428,15 @@ export class SurfacingHandler {
     }
 
     loadToViewer() {
+        if (document.getElementById('surf-dim-toggle')?.checked && !window.ws?.isConnected) {
+            if (window.showToast) window.showToast('Connect before generating the spoilboard job', 'plug-zap', 'warning');
+            return;
+        }
+        if (document.getElementById('surf-dim-toggle')?.checked && !this.isSpoilboardSetupComplete()) {
+            if (window.showToast) window.showToast('Complete spoilboard setup first', 'list-checks', 'warning');
+            return;
+        }
+
         const gcode = this.generateGCode();
         if (gcode && window.viewer) {
             const event = new CustomEvent('gcode-loaded', { detail: gcode });
@@ -424,36 +446,142 @@ export class SurfacingHandler {
 
             document.querySelector("button[onclick*='viewer-view']").click();
             this.term.writeln("\x1b[32m> Surfacing Job Loaded to Viewer.\x1b[0m");
-            if (this.store.data.surfacing.useMaxArea) {
-                this.promptAutoZeroXY(this.store.data.surfacing.width, this.store.data.surfacing.height);
-            }
         }
     }
 
-    promptAutoZeroXY(width, height) {
-        if (!window.ws || !window.ws.isConnected) return;
+    markSpoilboardSetupStep(step) {
+        if (!Object.prototype.hasOwnProperty.call(this.spoilboardSetup, step)) return;
+        if (step === 'home') {
+            if (!window.ws || !window.ws.isConnected) {
+                if (window.showToast) window.showToast('Connect before homing the machine', 'plug-zap', 'warning');
+                return;
+            }
+            window.sendCmd('$H');
+            this.pendingHomeAll = true;
+            this.pendingHomeAllMotion = false;
+            this.updateSpoilboardSetupUI();
+            if (this.term) this.term.writeln('\x1b[32m[Surfacing] Sent homing cycle ($H).\x1b[0m');
+            return;
+        }
+        this.spoilboardSetup[step] = true;
+        this.updateSpoilboardSetupUI();
+    }
 
+    handleSetupMachineState(state) {
+        const s = String(state || '').toLowerCase();
+        if (this.pendingHomeAll && (s.startsWith('home') || s.startsWith('run'))) {
+            this.pendingHomeAllMotion = true;
+        }
+        if ((this.pendingHomeAll || this.pendingZProbe) && s.startsWith('alarm')) {
+            this.pendingHomeAll = false;
+            this.pendingHomeAllMotion = false;
+            this.pendingZProbe = false;
+            this.pendingZProbeMotion = false;
+            this.updateSpoilboardSetupUI();
+            if (window.showToast) window.showToast('Setup action stopped by machine alarm', 'alert-triangle', 'error');
+            return;
+        }
+        if (this.pendingHomeAll && this.pendingHomeAllMotion && s === 'idle') {
+            this.pendingHomeAll = false;
+            this.pendingHomeAllMotion = false;
+            this.spoilboardSetup.home = true;
+            this.updateSpoilboardSetupUI();
+            if (window.showToast) window.showToast('Homing complete. Set X/Y zero next.', 'home', 'success');
+        }
+        if (this.pendingZProbe && s.startsWith('run')) {
+            this.pendingZProbeMotion = true;
+        }
+        if (this.pendingZProbe && this.pendingZProbeMotion && s === 'idle') {
+            this.pendingZProbe = false;
+            this.pendingZProbeMotion = false;
+            this.spoilboardSetup.z = true;
+            this.updateSpoilboardSetupUI();
+            if (window.showToast) window.showToast('Z zero set. Setup complete.', 'check-circle', 'success');
+        }
+    }
+
+    handleSetupConnectionState(connected) {
+        if (!connected) {
+            this.pendingHomeAll = false;
+            this.pendingHomeAllMotion = false;
+            this.pendingZProbe = false;
+            this.pendingZProbeMotion = false;
+        }
+        this.updateSpoilboardSetupUI();
+    }
+
+    setSpoilboardXYZero() {
+        if (!this.spoilboardSetup.home) {
+            if (window.showToast) window.showToast('Home the machine before setting X/Y zero', 'home', 'warning');
+            return;
+        }
+        if (!window.ws || !window.ws.isConnected) {
+            if (window.showToast) window.showToast('Connect before setting X/Y zero', 'plug-zap', 'warning');
+            return;
+        }
+
+        this.saveSettings();
+        const s = this.store.data.surfacing;
+        const command = this.getSpoilboardXYZeroCommand(s.width, s.height);
+        if (!command) return;
+
+        window.sendCmd(command);
+        this.spoilboardSetup.xy = true;
+        this.updateSpoilboardSetupUI();
+        if (window.showToast) window.showToast('X/Y zero set. Set Z zero before running.', 'crosshair', 'success');
+        if (this.term) this.term.writeln(`\x1b[32m[Surfacing] Sent ${command}. Set Z zero before running.\x1b[0m`);
+    }
+
+    probeSpoilboardZZero() {
+        if (!this.spoilboardSetup.xy) {
+            if (window.showToast) window.showToast('Set X/Y zero before setting Z zero', 'crosshair', 'warning');
+            return;
+        }
+        if (!window.ws || !window.ws.isConnected) {
+            if (window.showToast) window.showToast('Connect before probing Z zero', 'plug-zap', 'warning');
+            return;
+        }
+        if (!window.probeHandler || typeof window.probeHandler.sendBatch !== 'function') {
+            if (window.showToast) window.showToast('Probe controls are not ready', 'alert-triangle', 'error');
+            return;
+        }
+        if (!window.probeHandler._requireProbeSafe()) return;
+
+        window.probeHandler.saveSettings();
+        const s = window.probeHandler.store.data.probe;
+        const isPlate = window.probeHandler._getProbeMode(s) === 'plate';
+        const setVal = isPlate ? s.plateThickness : 0;
+        this.pendingZProbe = true;
+        this.pendingZProbeMotion = false;
+        window.probeHandler.sendBatch(['G91', `G38.2 Z-${s.travel} F${s.feed}`, `G10 L20 P0 Z${setVal}`, `G0 Z${s.retract}`, 'G90']);
+        if (this.term) this.term.writeln('\x1b[32m[Surfacing] Started Z probe for spoilboard setup.\x1b[0m');
+    }
+
+    setSpoilboardZZero() {
+        if (!this.spoilboardSetup.xy) {
+            if (window.showToast) window.showToast('Set X/Y zero before setting Z zero', 'crosshair', 'warning');
+            return;
+        }
+        if (!window.ws || !window.ws.isConnected) {
+            if (window.showToast) window.showToast('Connect before setting Z zero', 'plug-zap', 'warning');
+            return;
+        }
+
+        window.sendCmd('G10 L20 P0 Z0');
+        this.spoilboardSetup.z = true;
+        this.updateSpoilboardSetupUI();
+        if (window.showToast) window.showToast('Z zero set. Setup complete.', 'check-circle', 'success');
+        if (this.term) this.term.writeln('\x1b[32m[Surfacing] Sent G10 L20 P0 Z0.\x1b[0m');
+    }
+
+    getSpoilboardXYZeroCommand(width, height) {
         const x = -Math.abs(Number(width) || 0);
         const y = -Math.abs(Number(height) || 0);
-        if (!x || !y) return;
+        if (!x || !y) return null;
 
         const activeP = this.getActiveWcsP();
         const unitCmd = this.units === 'inch' ? 'G20' : 'G21';
-        const command = `${unitCmd} G10 L2 P${activeP} X${x.toFixed(3)} Y${y.toFixed(3)}`;
-        const title = 'Set Spoilboard X/Y Zero?';
-        const message = 'We can automatically set X/Y zero for this spoilboard job now. This does not move the machine. Make sure the machine has been homed, then set Z zero before running the job.';
-
-        const run = () => {
-            window.sendCmd(command);
-            if (window.showToast) window.showToast('X/Y zero set. Set Z zero before running.', 'crosshair', 'success');
-            if (this.term) this.term.writeln(`\x1b[32m[Surfacing] Sent ${command}. Set Z zero before running.\x1b[0m`);
-        };
-
-        if (window.reporter?.showConfirm) {
-            window.reporter.showConfirm(title, message, run, null, 'Set X/Y Zero', 'Later');
-        } else if (confirm(message)) {
-            run();
-        }
+        return `${unitCmd} G10 L2 P${activeP} X${x.toFixed(3)} Y${y.toFixed(3)}`;
     }
 
     getActiveWcsP() {
@@ -465,6 +593,64 @@ export class SurfacingHandler {
             }
         }
         return 1;
+    }
+
+    isSpoilboardSetupComplete() {
+        return this.spoilboardSetup.home && this.spoilboardSetup.xy && this.spoilboardSetup.z;
+    }
+
+    updateSpoilboardSetupUI() {
+        const useMaxArea = !!document.getElementById('surf-dim-toggle')?.checked;
+        const isConnected = !!window.ws?.isConnected;
+        const checklist = document.getElementById('surf-spoilboard-setup-checklist');
+        const generateBtn = document.getElementById('surf-generate-btn');
+        const msg = document.getElementById('surf-setup-msg');
+
+        if (checklist) checklist.classList.toggle('hidden', !useMaxArea);
+
+        const nextStep = ['home', 'xy', 'z'].find(step => !this.spoilboardSetup[step]);
+        const connectBtn = document.getElementById('surf-setup-connect-btn');
+        const homeBtn = document.getElementById('surf-setup-home-btn');
+        const xyBtn = document.getElementById('surf-setup-xy-btn');
+        const zActions = document.getElementById('surf-setup-z-actions');
+        const zBtn = document.getElementById('surf-setup-z-btn');
+        const zProbeBtn = document.getElementById('surf-setup-z-probe-btn');
+        if (connectBtn) {
+            connectBtn.classList.toggle('hidden', isConnected);
+            connectBtn.classList.toggle('is-next', !isConnected);
+        }
+        if (homeBtn) {
+            homeBtn.classList.toggle('hidden', !isConnected || (nextStep !== 'home' && !this.pendingHomeAll));
+            homeBtn.classList.toggle('is-next', isConnected && nextStep === 'home');
+            homeBtn.textContent = this.pendingHomeAll ? 'Homing...' : '2. Home All';
+        }
+        if (xyBtn) {
+            xyBtn.classList.toggle('hidden', !isConnected || nextStep !== 'xy');
+            xyBtn.classList.toggle('is-next', isConnected && nextStep === 'xy');
+        }
+        if (zActions) zActions.classList.toggle('hidden', !isConnected || nextStep !== 'z');
+        if (zProbeBtn) zProbeBtn.classList.toggle('is-next', isConnected && nextStep === 'z');
+        if (zBtn) zBtn.classList.remove('is-next');
+
+        const complete = this.isSpoilboardSetupComplete();
+        const ready = isConnected && complete;
+        if (checklist) {
+            checklist.classList.toggle('safe', ready);
+            checklist.classList.toggle('unsafe', !ready);
+        }
+        if (msg) {
+            if (!isConnected) msg.textContent = 'Connect to the machine before setup.';
+            else if (complete) msg.textContent = 'Setup complete. Generate the spoilboard job when ready.';
+            else if (this.pendingHomeAll) msg.textContent = 'Waiting for homing to complete...';
+            else if (nextStep === 'home') msg.textContent = 'Home the machine before setting up the spoilboard job.';
+            else if (nextStep === 'xy') msg.textContent = 'Set X/Y zero automatically.';
+            else msg.textContent = 'Use probe or jogging to set Z zero.';
+        }
+        if (generateBtn) {
+            generateBtn.disabled = useMaxArea && !ready;
+            generateBtn.classList.toggle('opacity-50', generateBtn.disabled);
+            generateBtn.classList.toggle('cursor-not-allowed', generateBtn.disabled);
+        }
     }
 
     uploadToSD() {
@@ -483,6 +669,7 @@ export class SurfacingHandler {
             this.saveSettings();
         }
         this._updateDimModeUI(toggle.checked);
+        this.updateSpoilboardSetupUI();
     }
 
     autoSpoilboard() {

@@ -12,6 +12,7 @@ export class SDCardHandler {
         this.fileCount = 0;
         this.files = {}; // Map filename -> size (bytes)
         this.listedEntries = []; // Current directory listing for troubleshooting/export
+        this.renderedDirPaths = new Set();
 
         // Download State
         this.isDownloading = false;
@@ -38,6 +39,7 @@ export class SDCardHandler {
         this._suppressNextSdError60 = false;
         this._formatting = false;
         this._formatSawCompletionMessage = false;
+        this._mkdirPending = null;
 
         // Listen for machine becoming idle so we can safely refresh if it was deferred (e.g., due to an Alarm on connect)
         window.addEventListener('machine-idle', () => {
@@ -51,12 +53,14 @@ export class SDCardHandler {
         if (this.ws?.on) {
             this.ws.on('connect', () => {
                 if (!window.sdMounted && this.fileCount === 0) {
+                    this.path = "/";
                     this._prepareListing();
                 }
             });
 
             this.ws.on('disconnect', () => {
                 this._setMounted(false, { silent: true, reason: 'disconnected' });
+                this.path = "/";
                 this._prepareListing();
             });
         }
@@ -67,6 +71,23 @@ export class SDCardHandler {
      * Returns true if the line was consumed by SD logic.
      */
     processLine(line) {
+        if (this._mkdirPending) {
+            const lowerLine = line.toLowerCase();
+            if (line === 'ok') {
+                const pending = this._mkdirPending;
+                this._mkdirPending = null;
+                if (window.showToast) window.showToast(`Folder Created`, 'folder-plus', 'success');
+                setTimeout(() => this.goToPath(pending.refreshPath), 150);
+                return true;
+            }
+
+            if (lowerLine.startsWith('error:') || lowerLine.includes('directory create failed')) {
+                this._mkdirPending = null;
+                if (window.showToast) window.showToast('Folder Create Failed', 'triangle-alert', 'error');
+                return false;
+            }
+        }
+
         if (this._formatting) {
             if (line.includes('File system format failed') || line.toLowerCase() === 'error:85') {
                 this._finishFormat(false);
@@ -243,7 +264,6 @@ export class SDCardHandler {
 
         const table = document.getElementById('sd-table');
         if (table) {
-            // FORCE table to fit screen: Remove min-width and add table-fixed
             table.classList.remove('min-w-[500px]');
             table.classList.add('w-full', 'table-fixed');
         }
@@ -255,12 +275,12 @@ export class SDCardHandler {
             headers[2].className = 'px-2 py-3 font-bold text-right w-[120px] md:w-auto';
         }
 
-        const pathEl = document.getElementById('sd-current-path');
-        if (pathEl) pathEl.textContent = this.path;
+        this._renderBreadcrumb();
 
         this.fileCount = 0;
         this.files = {};
         this.listedEntries = [];
+        this.renderedDirPaths = new Set();
 
         const badge = document.getElementById('sd-badge');
         if (badge) badge.classList.add('hidden');
@@ -306,6 +326,143 @@ export class SDCardHandler {
         this.ws.sendCommand('$F+');
     }
 
+    _normalizePath(path) {
+        const raw = String(path || '/').replace(/\\/g, '/').trim();
+        if (!raw || raw === '/') return '/';
+
+        const parts = raw.split('/').filter(Boolean);
+        return `/${parts.join('/')}`;
+    }
+
+    _joinPath(basePath, entryName) {
+        const base = this._normalizePath(basePath);
+        const child = String(entryName || '').replace(/^\/+|\/+$/g, '');
+        if (!child) return base;
+        return base === '/' ? `/${child}` : `${base}/${child}`;
+    }
+
+    _getParentPath(fullPath) {
+        const normalized = this._normalizePath(fullPath);
+        if (normalized === '/') return '/';
+
+        const parts = normalized.split('/').filter(Boolean);
+        return parts.length <= 1 ? '/' : `/${parts.slice(0, -1).join('/')}`;
+    }
+
+    _getRelativeParts(fullPath) {
+        const normalized = this._normalizePath(fullPath);
+        const currentPath = this._normalizePath(this.path);
+
+        if (currentPath === '/') return normalized.split('/').filter(Boolean);
+        if (!normalized.startsWith(`${currentPath}/`)) return [];
+
+        return normalized.slice(currentPath.length + 1).split('/').filter(Boolean);
+    }
+
+    _isVisibleInCurrentPath(fullPath) {
+        return this._getParentPath(fullPath) === this._normalizePath(this.path);
+    }
+
+    _ensureDirectoryVisible(dirPath) {
+        const normalized = this._normalizePath(dirPath);
+        const currentPath = this._normalizePath(this.path);
+        if (normalized === currentPath || this.renderedDirPaths.has(normalized)) return;
+        if (this._getParentPath(normalized) !== currentPath) return;
+
+        this.renderedDirPaths.add(normalized);
+        const name = normalized.split('/').filter(Boolean).pop();
+        const tbody = document.querySelector('#sd-table tbody');
+        if (!tbody) return;
+
+        this.listedEntries.push({ type: 'dir', name, fullPath: normalized });
+
+        const row = document.createElement('tr');
+        row.className = "hover:bg-grey-light border-b border-grey-light cursor-pointer transition-colors group";
+        row.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'SPAN') {
+                this.enterDir(name);
+            }
+        };
+
+        row.innerHTML = `
+          <td class="px-4 py-3 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
+              <button type="button" class="flex items-center gap-2 truncate w-full text-left text-primary hover:underline" onclick="window.sdHandler.enterDir('${name}')">
+                  <i data-lucide="folder" style="width:14px;height:14px" class="text-primary opacity-70 shrink-0"></i>
+                  <span class="truncate" title="${name}">${name}</span>
+              </button>
+          </td>
+
+          <td class="px-6 py-3 text-grey text-xs w-32">-</td>
+
+          <td class="px-2 md:px-6 py-3 text-right align-middle w-[120px] md:w-auto"></td>`;
+
+        tbody.insertBefore(row, tbody.firstChild);
+        if (window.lucide) lucide.createIcons();
+    }
+
+    _renderBreadcrumb() {
+        const pathEl = document.getElementById('sd-current-path');
+        const upLevelBtn = document.getElementById('sd-up-level-btn');
+        const currentPath = this._normalizePath(this.path);
+        const isConnected = !!this.ws?.isConnected;
+        const available = !!(window.sdMounted && isConnected && !window.sdJobActive);
+
+        if (upLevelBtn) {
+            upLevelBtn.disabled = !available || currentPath === '/';
+        }
+
+        if (!pathEl) {
+            if (window.syncSdUploadBtn) window.syncSdUploadBtn();
+            return;
+        }
+
+        pathEl.innerHTML = '';
+
+        const parts = currentPath.split('/').filter(Boolean);
+        const sepText = parts.length > 0 ? '' : '/';
+        const makeCrumb = (label, targetPath, isCurrent) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = label;
+            btn.disabled = !available || isCurrent;
+            btn.className = `truncate ${isCurrent ? 'text-secondary-dark cursor-default' : 'text-primary hover:underline disabled:text-grey disabled:no-underline'}`;
+            if (!isCurrent) {
+                btn.addEventListener('click', () => this.goToPath(targetPath));
+            }
+            return btn;
+        };
+
+        pathEl.appendChild(makeCrumb(sepText, '/', currentPath === '/'));
+
+        let runningPath = '';
+        for (let i = 0; i < parts.length; i++) {
+            runningPath = this._joinPath(runningPath || '/', parts[i]);
+
+            const sep = document.createElement('span');
+            sep.textContent = ' / ';
+            sep.className = 'text-grey';
+            pathEl.appendChild(sep);
+
+            pathEl.appendChild(makeCrumb(parts[i], runningPath, i === parts.length - 1));
+        }
+
+        if (window.syncSdUploadBtn) window.syncSdUploadBtn();
+    }
+
+    _changeDirectory(targetPath) {
+        if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
+            if (window.reporter) window.reporter.showAlert('SD Card Unavailable', 'SD Card functions are currently unavailable.');
+            return;
+        }
+
+        const normalized = this._normalizePath(targetPath);
+        this.path = normalized;
+        this._renderBreadcrumb();
+        this._prepareListing();
+        this.ws.sendCommand(`$F=${normalized}`);
+        setTimeout(() => this._requestSerialList(), 250);
+    }
+
     _setMounted(isMounted, options = {}) {
         window.sdMounted = !!isMounted;
         window.dispatchEvent(new CustomEvent('sd-mount-state', {
@@ -321,13 +478,46 @@ export class SDCardHandler {
         if (this.path === "/") return;
         const p = this.path.split('/');
         p.pop();
-        this.path = p.join('/') || "/";
-        this.refresh();
+        this.goToPath(p.join('/') || '/');
     }
 
     enterDir(dirName) {
-        this.path = this.path === "/" ? `/${dirName}` : `${this.path}/${dirName}`;
-        this.refresh();
+        this.goToPath(this._joinPath(this.path, dirName));
+    }
+
+    goToPath(path) {
+        const targetPath = this._normalizePath(path);
+        if (targetPath === this._normalizePath(this.path)) {
+            this.refresh();
+            return;
+        }
+
+        this._changeDirectory(targetPath);
+    }
+
+    createDirectory() {
+        if (!window.isSdActionAvailable || !window.isSdActionAvailable()) {
+            if (window.reporter) window.reporter.showAlert('SD Card Unavailable', 'SD Card functions are currently unavailable.');
+            return;
+        }
+
+        const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+        const defaultName = 'NewFolder';
+        const submit = (folderName) => {
+            const trimmed = String(folderName || '').trim();
+            if (!trimmed) return;
+
+            const fullPath = trimmed.startsWith('/') ? this._normalizePath(trimmed) : this._joinPath(this.path, trimmed);
+            this._mkdirPending = { refreshPath: this.path };
+            this.ws.sendCommand(`$FMD=${fullPath}`);
+        };
+
+        if (reporter) {
+            reporter.showPrompt('Create Folder', 'Enter folder name for the current SD directory:', defaultName, submit);
+        } else {
+            const folderName = prompt('Enter folder name for the current SD directory:', defaultName);
+            if (folderName !== null) submit(folderName);
+        }
     }
 
     delete(fileName) {
@@ -354,7 +544,7 @@ export class SDCardHandler {
         };
 
         if (reporter) {
-            reporter.showConfirm('Delete File', `Are you sure you want to delete ${fileName} from the SD Card?`, processDelete);
+            reporter.showConfirm('Delete File', `Delete ${fileName} from the SD Card?`, processDelete);
         } else if (confirm(`Delete ${fileName}?`)) {
             processDelete();
         }
@@ -414,7 +604,7 @@ export class SDCardHandler {
         if (reporter) {
             reporter.showConfirm(
                 'Load to Viewer?',
-                `Do you want to load ${fileName} into the 3D Viewer before running?`,
+                `Load ${fileName} into the 3D Preview before running?`,
                 () => { // Yes: Load
                     this.pendingRunFile = fileName;
                     this.preview(fileName, true);
@@ -475,7 +665,14 @@ export class SDCardHandler {
 
     _addSdFile(line) {
         const content = line.replace('[FILE:', '').replace(']', '').split('|');
-        const fullPath = content[0];
+        const fullPath = this._normalizePath(content[0]);
+        const relativeParts = this._getRelativeParts(fullPath);
+        if (relativeParts.length > 1) {
+            this._ensureDirectoryVisible(this._joinPath(this.path, relativeParts[0]));
+            return;
+        }
+        if (!this._isVisibleInCurrentPath(fullPath)) return;
+
         const name = fullPath.split('/').pop();
 
         // Parse Size
@@ -485,8 +682,12 @@ export class SDCardHandler {
 
         if (sizePart) {
             bytes = parseInt(sizePart.split(':')[1]);
+            if (bytes < 0) {
+                this._ensureDirectoryVisible(fullPath);
+                return;
+            }
             sizeDisplay = this._formatBytes(bytes);
-            this.files[name] = bytes; // Store for progress calculation
+            this.files[fullPath] = bytes; // Store for progress calculation
             this.term.writeln(`  \x1b[2m${name}  (${sizeDisplay})\x1b[0m`);
         }
         this.listedEntries.push({ type: 'file', name, fullPath, bytes, sizeDisplay });
@@ -503,23 +704,21 @@ export class SDCardHandler {
         if (macroMatch) {
             const pNum = macroMatch[1];
             runActionBtn = `
-            <button class="btn-ghost p-1.5 md:px-3 flex items-center justify-center md:justify-end gap-2 text-grey-dark hover:text-black" onclick="window.sdHandler.runMacro('${pNum}')" title="Run macro">
-                <i data-lucide="settings" style="width:16px;height:16px"></i>
-                <span class="hidden sm:inline">Run macro</span>
+            <button class="macro-card-action-btn" onclick="window.sdHandler.runMacro('${pNum}')" title="Run macro" type="button" aria-label="Run macro">
+                <i data-lucide="settings" style="width:12px;height:12px"></i>
             </button>`;
         } else {
             runActionBtn = `
-            <button class="btn-ghost p-1.5 md:px-3 flex items-center justify-center md:justify-end gap-2 text-green-600 hover:text-green-800" onclick="window.sdHandler.runFile('${name}')" title="Run">
-                <i data-lucide="play" style="width:16px;height:16px"></i>
-                <span class="hidden sm:inline flex-shrink-0">Run File</span>
+            <button class="macro-card-action-btn" onclick="window.sdHandler.runFile('${name}')" title="Run" type="button" aria-label="Run file">
+                <i data-lucide="play" style="width:12px;height:12px"></i>
             </button>`;
         }
 
         // Generate Safe ID for progress selection (base64 encoded to handle special chars)
-        const safeId = btoa(name).replace(/=/g, '');
+        const safeId = btoa(fullPath).replace(/=/g, '');
 
         const row = `
-          <tr class="hover:bg-grey-light border-b border-grey-light last:border-b-0 transition-colors group" data-filename="${name}">
+          <tr class="hover:bg-grey-light border-b border-grey-light last:border-b-0 transition-colors group" data-filename="${name}" data-fullpath="${fullPath}">
               <td class="px-4 py-2 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
                   <div class="flex flex-col justify-center w-full">
                       <div class="flex items-center gap-2 truncate">
@@ -527,7 +726,6 @@ export class SDCardHandler {
                           <span class="truncate" title="${name}">${name}</span>
                       </div>
 
-                      <!-- Progress Bar (Hidden by default) -->
                       <div id="sd-prog-${safeId}" class="hidden w-full max-w-[200px] mt-1.5 ml-6 md:ml-0 bg-grey-light rounded-full h-1">
                         <div class="bg-primary h-1 rounded-full transition-all duration-200" style="width: 0%"></div>
                       </div>
@@ -538,15 +736,13 @@ export class SDCardHandler {
               <td class="px-6 py-3 text-grey font-mono text-xs whitespace-nowrap w-32">${sizeDisplay}</td>
 
               <td class="px-1 md:px-6 py-2 md:py-3 text-right align-middle w-[120px] md:w-auto">
-                  <div class="flex justify-end gap-0 md:gap-2">
-                      <button class="btn-ghost p-1.5 flex items-center justify-center md:justify-end gap-2 text-grey-dark hover:text-red-600" onclick="window.sdHandler.delete('${name}')" title="Delete">
-                        <i data-lucide="trash-2" style="width:16px;height:16px"></i>
-                        <span class="hidden sm:inline">Delete</span>
+                  <div class="macro-card-actions justify-end ml-auto" style="position: static; opacity: 1;">
+                      <button class="macro-card-action-btn" onclick="window.sdHandler.delete('${name}')" title="Delete" type="button" aria-label="Delete file">
+                        <i data-lucide="trash-2" style="width:12px;height:12px"></i>
                       </button>
 
-                      <button class="btn-ghost p-1.5 flex items-center justify-center md:justify-end gap-2 text-grey-dark" onclick="window.sdHandler.preview('${name}')" title="Preview">
-                        <i data-lucide="eye" style="width:16px;height:16px"></i>
-                        <span class="hidden sm:inline">Preview</span>
+                      <button class="macro-card-action-btn" onclick="window.sdHandler.preview('${name}')" title="Preview" type="button" aria-label="Preview file">
+                        <i data-lucide="eye" style="width:12px;height:12px"></i>
                       </button>
 
                       ${runActionBtn}
@@ -559,7 +755,8 @@ export class SDCardHandler {
     }
 
     _toggleProgressUI(fileName, show) {
-        const safeId = btoa(fileName).replace(/=/g, '');
+        const fullPath = this._normalizePath(this.path === '/' ? `/${fileName}` : `${this.path}/${fileName}`);
+        const safeId = btoa(fullPath).replace(/=/g, '');
         const container = document.getElementById(`sd-prog-${safeId}`);
         if (container) {
             if (show) {
@@ -581,7 +778,7 @@ export class SDCardHandler {
         const pct = Math.min(100, Math.round((currentBytes / this.downloadTotal) * 100));
         // console.log(`Download Progress: ${currentBytes}/${this.downloadTotal} (${pct}%)`);
 
-        const safeId = btoa(this.downloadingFile).replace(/=/g, '');
+        const safeId = btoa(this._normalizePath(this.downloadingFullPath)).replace(/=/g, '');
         const bar = document.querySelector(`#sd-prog-${safeId} > div`);
         if (bar) {
             bar.style.width = `${pct}%`;
@@ -598,36 +795,7 @@ export class SDCardHandler {
     }
 
     _addSdDir(line) {
-        const content = line.replace('[DIR:', '').replace(']', '');
-        const name = content.split('/').pop();
-        const tbody = document.querySelector('#sd-table tbody');
-        this.listedEntries.push({ type: 'dir', name, fullPath: content });
-
-        const row = document.createElement('tr');
-        row.className = "hover:bg-grey-light border-b border-grey-light cursor-pointer transition-colors group";
-        row.onclick = (e) => {
-            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'SPAN') {
-                this.enterDir(name);
-            }
-        };
-
-        row.innerHTML = `
-          <td class="px-4 py-3 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
-              <div class="flex items-center gap-2 truncate">
-                  <i data-lucide="folder" style="width:14px;height:14px" class="text-primary opacity-70 shrink-0"></i>
-                  <span class="truncate" title="${name}">${name}</span>
-              </div>
-          </td>
-
-          <td class="px-6 py-3 text-grey text-xs w-32">-</td>
-
-          <td class="px-2 md:px-6 py-3 text-right align-middle w-[120px] md:w-auto">
-              <div class="flex justify-end">
-                  <button class="btn btn-secondary text-xs py-1 px-3" onclick="window.sdHandler.enterDir('${name}')">Open</button>
-              </div>
-          </td>`;
-
-        tbody.insertBefore(row, tbody.firstChild);
+        this._ensureDirectoryVisible(line.replace('[DIR:', '').replace(']', ''));
     }
 
     _finishDownload() {
@@ -811,7 +979,7 @@ export class SDCardHandler {
         if (skipConfirm) {
             processUpload();
         } else if (reporter) {
-            reporter.showConfirm('SD Upload', `Upload ${name} (${this._formatBytes(file.size)}) to SD Card?`, processUpload);
+            reporter.showConfirm('SD Upload', `Upload ${name} (${this._formatBytes(file.size)}) to the SD Card`, processUpload);
         } else if (confirm(`Upload ${name} (${this._formatBytes(file.size)})?`)) {
             processUpload();
         }

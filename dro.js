@@ -448,6 +448,7 @@ export class DROHandler {
         stateEl.textContent = cleanState;
         stateEl.className = "machine-status-pill text-center transition-all duration-300";
         const s = cleanState.toLowerCase();
+        window.dispatchEvent(new CustomEvent('machine-state-changed', { detail: { state: s } }));
 
         // Detect alarm → non-alarm transition (alarm cleared via $X or reset)
         const wasAlarmed = this._lastState && this._lastState.startsWith('alarm');
