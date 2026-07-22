@@ -79,10 +79,10 @@ export class FirmwareFlasher {
         html += this._renderStepIndicator();
         html += '<p class="text-sm text-grey mb-4">Select the firmware to install:</p>';
         html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
-        html += '<div class="divide-y divide-grey-light/60">';
+        html += '<div>';
         FIRMWARE_OPTIONS.forEach((option) => {
             const sel = this.selectedFirmware === option.key;
-            html += `<div class="firmware-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${option.key}">`;
+            html += `<div class="firmware-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${option.key}">`;
             html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
             html += `<span class="config-filter-choice__label">${option.label}</span>`;
             html += '</div>';
@@ -158,22 +158,18 @@ export class FirmwareFlasher {
     _renderStepIndicator() {
         const steps = ['Firmware', 'Flash', 'Reconnect'];
         const currentStage = this._getStageIndex();
-        let html = '<div class="flex items-center gap-1 mb-6 px-1">';
+        let html = '<div class="wizard-stepper mb-6 px-1">';
         steps.forEach((label, i) => {
             const isActive = i === currentStage;
             const isDone = i < currentStage;
-            html += `<div class="flex items-center ${i > 0 ? 'flex-1' : ''}">`;
-            if (i > 0) {
-                html += `<div class="h-0.5 flex-1 ${isDone ? 'bg-primary' : 'bg-grey-light'}"></div>`;
-            }
-            html += `<div class="flex items-center gap-1.5 px-2 py-1 rounded-lg ${isActive ? 'bg-primary text-white' : isDone ? 'text-primary' : 'text-grey'} transition-colors whitespace-nowrap">`;
+            html += `<div class="wizard-stepper__item ${isActive ? 'is-active' : ''} ${isDone ? 'is-complete' : ''}">`;
             if (isDone) {
-                html += '<i data-lucide="check-circle" style="width:14px;height:14px"></i>';
+                html += '<span class="wizard-stepper__circle"><i data-lucide="check" style="width:16px;height:16px"></i></span>';
             } else {
-                html += `<span class="w-5 h-5 rounded-full ${isActive ? 'bg-white/20' : 'bg-grey-light'} flex items-center justify-center text-[10px] font-bold ${isActive ? 'text-white' : 'text-grey'}">${i + 1}</span>`;
+                html += `<span class="wizard-stepper__circle">${i + 1}</span>`;
             }
-            html += `<span class="text-[10px] font-bold">${label}</span>`;
-            html += '</div></div>';
+            html += `<span class="wizard-stepper__label">${label}</span>`;
+            html += '</div>';
         });
         html += '</div>';
         return html;

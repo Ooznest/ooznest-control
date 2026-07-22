@@ -225,22 +225,17 @@ export class ConfigWizard {
         let footerHtml = '';
 
         // Step indicator
-        html += '<div class="flex items-center gap-1 mb-6 px-1">';
+        html += '<div class="wizard-stepper wizard-stepper--compact mb-6 px-1">';
         steps.forEach((label, i) => {
             const isActive = i === this.wizardStep;
             const isDone = i < this.wizardStep;
-            html += `<div class="flex items-center ${i > 0 ? 'flex-1' : ''}">`;
-            if (i > 0) {
-                html += `<div class="h-0.5 flex-1 ${isDone ? 'bg-primary' : 'bg-grey-light'}"></div>`;
-            }
-            html += `<div class="flex items-center gap-1.5 px-2 py-1 rounded-lg ${isActive ? 'bg-primary text-white' : isDone ? 'text-primary' : 'text-grey'} transition-colors whitespace-nowrap">`;
+            html += `<div class="wizard-stepper__item ${isActive ? 'is-active' : ''} ${isDone ? 'is-complete' : ''}">`;
             if (isDone) {
-                html += '<i data-lucide="check-circle" style="width:14px;height:14px"></i>';
+                html += '<span class="wizard-stepper__circle"><i data-lucide="check" style="width:16px;height:16px"></i></span>';
             } else {
-                html += `<span class="w-5 h-5 rounded-full ${isActive ? 'bg-white/20' : 'bg-grey-light'} flex items-center justify-center text-[10px] font-bold ${isActive ? 'text-white' : 'text-grey'}">${i + 1}</span>`;
+                html += `<span class="wizard-stepper__circle">${i + 1}</span>`;
             }
-            html += `<span class="text-[10px] font-bold">${label}</span>`;
-            html += '</div>';
+            html += `<span class="wizard-stepper__label">${label}</span>`;
             html += '</div>';
         });
         html += '</div>';
@@ -308,11 +303,11 @@ export class ConfigWizard {
             html += `</div>`;
 
             if (isExpanded) {
-                html += `<div class="divide-y divide-grey-light/60">`;
+                html += `<div>`;
                 cat.items.forEach(m => {
                     if (catKey === 'custom') {
                         const sel = this.wizardData.machine && this.wizardData.machine.id === m.id;
-                        html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
+                        html += `<div class="config-filter-choice machine-select-item ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
                         html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
                         html += `<span class="config-filter-choice__label">${m.name}</span>`;
                         html += `</div>`;
@@ -359,7 +354,7 @@ export class ConfigWizard {
                         }
                     } else {
                         const sel = this.wizardData.machine && this.wizardData.machine.id === m.id;
-                        html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
+                        html += `<div class="config-filter-choice machine-select-item ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
                         html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
                         html += `<span class="config-filter-choice__label">${m.name}</span>`;
                         html += `</div>`;
@@ -369,7 +364,7 @@ export class ConfigWizard {
                 // Z2 custom size option
                 if (catKey === 'z2') {
                     const isCustomSize = this.wizardData.machine && this.wizardData.machine.id === 'z2-custom';
-                    html += `<div class="config-filter-choice machine-select-item flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="z2-custom">`;
+                    html += `<div class="config-filter-choice machine-select-item ${isCustomSize ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="z2-custom">`;
                     html += `<div class="config-filter-choice__control ${isCustomSize ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${isCustomSize ? 'bg-white' : ''}"></div></div>`;
                     html += `<span class="config-filter-choice__label">Custom Size</span>`;
                     html += `</div>`;
@@ -430,7 +425,7 @@ export class ConfigWizard {
             html += `</div>`;
 
             if (isExpanded) {
-                html += `<div class="divide-y divide-grey-light/60">`;
+                html += `<div>`;
                 cat.items.forEach(r => {
                     if (catKey === 'laser') {
                         const checked = th.laser;
@@ -451,7 +446,7 @@ export class ConfigWizard {
                             html += '<div class="grid gap-1">';
                             Object.entries(this.modbusProtocols).forEach(([key, proto]) => {
                                 const sel = th.vfdModbus === key;
-                                html += `<div class="modbus-select-item config-filter-choice flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all" data-modbus-key="${key}">`;
+                                html += `<div class="modbus-select-item config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all" data-modbus-key="${key}">`;
                                 html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-3 h-3 rounded-full flex items-center justify-center"><div class="w-1 h-1 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
                                 html += `<span class="config-filter-choice__label config-filter-choice__label--compact">${proto.name}</span>`;
                                 html += `<span class="text-[10px] text-grey ml-auto">$$396=${proto['$396']}</span>`;
@@ -461,7 +456,7 @@ export class ConfigWizard {
                         }
                     } else {
                         const selected = th.spindle === r.id;
-                        html += `<div class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer toolhead-option" data-id="${r.id}">`;
+                        html += `<div class="config-filter-choice ${selected ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer toolhead-option" data-id="${r.id}">`;
                         html += `<div class="config-filter-choice__control ${selected ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : ''}"></div></div>`;
                         html += `<span class="config-filter-choice__label">${r.name}</span>`;
                         html += `</div>`;
@@ -564,14 +559,14 @@ export class ConfigWizard {
         const selected = this.wizardData.probeType;
         let html = '<p class="text-sm text-grey mb-4">Select your probe plate:</p>';
         html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
-        html += '<div class="divide-y divide-grey-light/60">';
+        html += '<div>';
         [
             { value: 'ooznest', label: 'Ooznest XYZ Probe' },
             { value: 'custom', label: 'Custom Probe' },
             { value: 'none', label: 'No Probe' }
         ].forEach(opt => {
             const sel = selected === opt.value;
-            html += `<div class="probe-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="probe-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
             html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
             html += `<span class="config-filter-choice__label">${opt.label}</span>`;
             html += '</div>';
@@ -609,13 +604,13 @@ export class ConfigWizard {
         const selected = this.wizardData.dustShoe;
         let html = '<p class="text-sm text-grey mb-4">Do you have a dust shoe?</p>';
         html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
-        html += '<div class="divide-y divide-grey-light/60">';
+        html += '<div>';
         [
             { value: true, label: 'Yes, I have one' },
             { value: false, label: 'No Dust Shoe' }
         ].forEach(opt => {
             const sel = selected === opt.value;
-            html += `<div class="dust-shoe-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="dust-shoe-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
             html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
             html += `<span class="config-filter-choice__label">${opt.label}</span>`;
             html += '</div>';
@@ -629,13 +624,13 @@ export class ConfigWizard {
         const selected = this.wizardData.enclosure;
         let html = '<p class="text-sm text-grey mb-4">Do you have a <a href="https://ooznest.co.uk/product/original-workbee-enclosure/" target="_blank" class="text-primary hover:underline">WorkBee Enclosure</a>? </p>';
         html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
-        html += '<div class="divide-y divide-grey-light/60">';
+        html += '<div>';
         [
             { value: true, label: 'Yes, WorkBee Enclosure' },
             { value: false, label: 'No Enclosure' }
         ].forEach(opt => {
             const sel = selected === opt.value;
-            html += `<div class="enclosure-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="enclosure-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
             html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
             html += `<span class="config-filter-choice__label">${opt.label}</span>`;
             html += '</div>';
@@ -649,13 +644,13 @@ export class ConfigWizard {
         const isStation = this.wizardData.wifiMode === '1';
         let html = '<p class="text-sm text-grey mb-4">Configure the controller network mode.</p>';
         html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
-        html += '<div class="divide-y divide-grey-light/60">';
+        html += '<div>';
         [
             { value: '0', label: 'Wifi Off / Ethernet (Optional)' },
             { value: '1', label: 'Wifi Enabled' }
         ].forEach(opt => {
             const sel = this.wizardData.wifiMode === opt.value;
-            html += `<div class="wifi-mode-option config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
+            html += `<div class="wifi-mode-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
             html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
             html += `<span class="config-filter-choice__label">${opt.label}</span>`;
             html += '</div>';
