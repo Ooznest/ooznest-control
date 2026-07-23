@@ -299,7 +299,7 @@ export class SDCardHandler {
                     <div class="flex flex-col items-center gap-2">
                         <i data-lucide="hard-drive" class="w-8 h-8 text-grey"></i>
                         <span class="font-bold text-secondary-dark">SD Card Not Found</span>
-                        <span class="text-xs text-grey">Insert an SD Card, then reboot the controller, and reconnect to try again.</span>
+                        <span class="text-xs text-grey">Disconnect and power down. Insert a SD Card, then power on and reconnect.</span>
                     </div>
                 </td>
             </tr>`;
@@ -1143,3 +1143,4 @@ export class SDCardHandler {
         if (this.callbacks.resumePolling) this.callbacks.resumePolling();
     }
 }
+
