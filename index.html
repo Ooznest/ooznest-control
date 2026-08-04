@@ -1493,17 +1493,11 @@
                                                         1. Connect
                                                     </button>
                                                     <button id="surf-setup-home-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.markSpoilboardSetupStep('home')">
-                                                        2. Home All
+                                                        Confirm Homed
                                                     </button>
-                                                    <button id="surf-setup-xy-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px] hidden" onclick="window.surfacing.setSpoilboardXYZero()">
-                                                        3. Set X/Y Zero
-                                                    </button>
-                                                    <div id="surf-setup-z-actions" class="tool-setup-z-actions hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                        <button id="surf-setup-z-probe-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.probeSpoilboardZZero()">
-                                                            Probe Z
-                                                        </button>
+                                                    <div id="surf-setup-z-actions" class="tool-setup-z-actions hidden">
                                                         <button id="surf-setup-z-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.setSpoilboardZZero()">
-                                                            Set Z Zero
+                                                            Confirm Z Zero
                                                         </button>
                                                     </div>
                                                 </div>
@@ -1534,7 +1528,6 @@
                                                     <ol id="surf-setup-spoilboard" class="ooznest-form-steps hidden">
                                                         <li>Install the Router Bit.</li>
                                                         <li>Home the machine.</li>
-                                                        <li>Set X/Y Zero.</li>
                                                         <li>Zero Z to the highest point of the spoilboard.</li>
                                                         <li>Turn on your Router Head &amp; Dust Extractor (If applicable).</li>
                                                         <li>Press Run Job.</li>
@@ -1618,17 +1611,11 @@
                                                         1. Connect
                                                     </button>
                                                     <button id="sg-setup-home-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.markSetupStep('home')">
-                                                        2. Home All
+                                                        Confirm Homed
                                                     </button>
-                                                    <button id="sg-setup-xy-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px] hidden" onclick="window.spoilboardGrid.setSpoilboardXYZero()">
-                                                        3. Set X/Y Zero
-                                                    </button>
-                                                    <div id="sg-setup-z-actions" class="tool-setup-z-actions hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                        <button id="sg-setup-z-probe-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.probeZZero()">
-                                                            Probe Z
-                                                        </button>
+                                                    <div id="sg-setup-z-actions" class="tool-setup-z-actions hidden">
                                                         <button id="sg-setup-z-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.setZZero()">
-                                                            Set Z Zero
+                                                            Confirm Z Zero
                                                         </button>
                                                     </div>
                                                 </div>
@@ -1650,9 +1637,9 @@
                                                     <ol class="ooznest-form-steps">
                                                         <li>Install a V-bit.</li>
                                                         <li>Home the machine.</li>
-                                                        <li>Use the setup checklist to set X/Y zero automatically.</li>
-                                                        <li>Zero Z using a probe or by jogging.</li>
-                                                        <li>Generate and run the job. The grid starts at the front-left zero and engraves back/right, with rulers above and to the right.</li>
+                                                        <li>Zero Z to the highest point of the spoilboard.</li>
+                                                        <li>Turn on your Router Head &amp; Dust Extractor (If applicable).</li>
+                                                        <li>Press Run Job.</li>
                                                     </ol>
                                                 </div>
                                             </div>

@@ -7,7 +7,6 @@ export class SpoilboardGridHandler {
         this.store = store;
         this.setup = {
             home: false,
-            xy: false,
             z: false
         };
         this.pendingHomeAll = false;
@@ -120,10 +119,14 @@ export class SpoilboardGridHandler {
             return;
         }
 
+        const xyZeroCommand = this.getSpoilboardXYZeroCommand(widthX, heightY, 1);
+        if (xyZeroCommand) window.sendCmd(xyZeroCommand);
+
         let gcode = '';
         gcode += `; Spoilboard Grid\n`;
-        gcode += `; Home the machine before running. X/Y zero should be set to machine front-left. Z zero must be set by the user.\n`;
-        gcode += `G21 G90 G17 F${feedrate}\n`;
+        gcode += `; Home the machine and set Z zero before running.\n`;
+        gcode += `G21 G90 G17 G54 F${feedrate}\n`;
+        gcode += `${this.getSpoilboardXYZeroCommand(widthX, heightY, 1)}\n`;
         if (spindleRpm > 0) gcode += `M3 S${spindleRpm}\n`;
         gcode += `G0 Z${up.toFixed(3)}\n`;
 
@@ -230,18 +233,6 @@ export class SpoilboardGridHandler {
 
     markSetupStep(step) {
         if (!Object.prototype.hasOwnProperty.call(this.setup, step)) return;
-        if (step === 'home') {
-            if (!window.ws || !window.ws.isConnected) {
-                if (window.showToast) window.showToast('Connect before homing the machine', 'plug-zap', 'warning');
-                return;
-            }
-            window.sendCmd('$H');
-            this.pendingHomeAll = true;
-            this.pendingHomeAllMotion = false;
-            this.updateSetupUI();
-            if (this.term) this.term.writeln('\x1b[32m[Spoilboard Grid] Sent homing cycle ($H).\x1b[0m');
-            return;
-        }
         this.setup[step] = true;
         this.updateSetupUI();
     }
@@ -263,9 +254,7 @@ export class SpoilboardGridHandler {
         if (this.pendingHomeAll && this.pendingHomeAllMotion && s === 'idle') {
             this.pendingHomeAll = false;
             this.pendingHomeAllMotion = false;
-            this.setup.home = true;
             this.updateSetupUI();
-            if (window.showToast) window.showToast('Homing complete. Set X/Y zero next.', 'home', 'success');
         }
         if (this.pendingZProbe && s.startsWith('run')) {
             this.pendingZProbeMotion = true;
@@ -289,78 +278,23 @@ export class SpoilboardGridHandler {
         this.updateSetupUI();
     }
 
-    setSpoilboardXYZero() {
-        if (!this.setup.home) {
-            if (window.showToast) window.showToast('Home the machine before setting X/Y zero', 'home', 'warning');
-            return;
-        }
-        if (!window.ws || !window.ws.isConnected) {
-            if (window.showToast) window.showToast('Connect before setting X/Y zero', 'plug-zap', 'warning');
-            return;
-        }
-
-        this.syncAutoDimensions({ silent: true });
-        const width = parseFloat(document.getElementById('sg-width')?.value) || 0;
-        const height = parseFloat(document.getElementById('sg-height')?.value) || 0;
-        const command = this.getSpoilboardXYZeroCommand(width, height);
-        if (!command) return;
-
-        window.sendCmd(command);
-        this.setup.xy = true;
-        this.updateSetupUI();
-        if (window.showToast) window.showToast('X/Y zero set. Set Z zero before running.', 'crosshair', 'success');
-        if (this.term) this.term.writeln(`\x1b[32m[Spoilboard Grid] Sent ${command}. Set Z zero before running.\x1b[0m`);
-    }
-
-    probeZZero() {
-        if (!this.setup.xy) {
-            if (window.showToast) window.showToast('Set X/Y zero before setting Z zero', 'crosshair', 'warning');
-            return;
-        }
-        if (!window.ws || !window.ws.isConnected) {
-            if (window.showToast) window.showToast('Connect before probing Z zero', 'plug-zap', 'warning');
-            return;
-        }
-        if (!window.probeHandler || typeof window.probeHandler.sendBatch !== 'function') {
-            if (window.showToast) window.showToast('Probe controls are not ready', 'alert-triangle', 'error');
-            return;
-        }
-        if (!window.probeHandler._requireProbeSafe()) return;
-
-        window.probeHandler.saveSettings();
-        const s = window.probeHandler.store.data.probe;
-        const isPlate = window.probeHandler._getProbeMode(s) === 'plate';
-        const setVal = isPlate ? s.plateThickness : 0;
-        this.pendingZProbe = true;
-        this.pendingZProbeMotion = false;
-        window.probeHandler.sendBatch(['G91', `G38.2 Z-${s.travel} F${s.feed}`, `G10 L20 P0 Z${setVal}`, `G0 Z${s.retract}`, 'G90']);
-        if (this.term) this.term.writeln('\x1b[32m[Spoilboard Grid] Started Z probe for setup.\x1b[0m');
-    }
-
     setZZero() {
-        if (!this.setup.xy) {
-            if (window.showToast) window.showToast('Set X/Y zero before setting Z zero', 'crosshair', 'warning');
-            return;
-        }
         if (!window.ws || !window.ws.isConnected) {
             if (window.showToast) window.showToast('Connect before setting Z zero', 'plug-zap', 'warning');
             return;
         }
 
-        window.sendCmd('G10 L20 P0 Z0');
         this.setup.z = true;
         this.updateSetupUI();
-        if (window.showToast) window.showToast('Z zero set. Setup complete.', 'check-circle', 'success');
-        if (this.term) this.term.writeln('\x1b[32m[Spoilboard Grid] Sent G10 L20 P0 Z0.\x1b[0m');
+        if (window.showToast) window.showToast('Z zero confirmed. Setup complete.', 'check-circle', 'success');
     }
 
-    getSpoilboardXYZeroCommand(width, height) {
+    getSpoilboardXYZeroCommand(width, height, workCoordinate = this.getActiveWcsP()) {
         const x = -Math.abs(Number(width) || 0);
         const y = -Math.abs(Number(height) || 0);
         if (!x || !y) return null;
 
-        const activeP = this.getActiveWcsP();
-        return `G21 G10 L2 P${activeP} X${x.toFixed(3)} Y${y.toFixed(3)}`;
+        return `G21 G10 L2 P${workCoordinate} X${x.toFixed(3)} Y${y.toFixed(3)}`;
     }
 
     getActiveWcsP() {
@@ -375,34 +309,27 @@ export class SpoilboardGridHandler {
     }
 
     isSetupComplete() {
-        return this.setup.home && this.setup.xy && this.setup.z;
+        return this.setup.home && this.setup.z;
     }
 
     updateSetupUI() {
         const isConnected = !!window.ws?.isConnected;
-        const nextStep = ['home', 'xy', 'z'].find(step => !this.setup[step]);
+        const nextStep = ['home', 'z'].find(step => !this.setup[step]);
         const connectBtn = document.getElementById('sg-setup-connect-btn');
         const homeBtn = document.getElementById('sg-setup-home-btn');
-        const xyBtn = document.getElementById('sg-setup-xy-btn');
         const zActions = document.getElementById('sg-setup-z-actions');
         const zBtn = document.getElementById('sg-setup-z-btn');
-        const zProbeBtn = document.getElementById('sg-setup-z-probe-btn');
         if (connectBtn) {
             connectBtn.classList.toggle('hidden', isConnected);
             connectBtn.classList.toggle('is-next', !isConnected);
         }
         if (homeBtn) {
-            homeBtn.classList.toggle('hidden', !isConnected || (nextStep !== 'home' && !this.pendingHomeAll));
+            homeBtn.classList.toggle('hidden', !isConnected || nextStep !== 'home');
             homeBtn.classList.toggle('is-next', isConnected && nextStep === 'home');
-            homeBtn.textContent = this.pendingHomeAll ? 'Homing...' : '2. Home All';
-        }
-        if (xyBtn) {
-            xyBtn.classList.toggle('hidden', !isConnected || nextStep !== 'xy');
-            xyBtn.classList.toggle('is-next', isConnected && nextStep === 'xy');
+            homeBtn.textContent = 'Confirm Homed';
         }
         if (zActions) zActions.classList.toggle('hidden', !isConnected || nextStep !== 'z');
-        if (zProbeBtn) zProbeBtn.classList.toggle('is-next', isConnected && nextStep === 'z');
-        if (zBtn) zBtn.classList.remove('is-next');
+        if (zBtn) zBtn.classList.toggle('is-next', isConnected && nextStep === 'z');
 
         const complete = this.isSetupComplete();
         const ready = isConnected && complete;
@@ -417,10 +344,8 @@ export class SpoilboardGridHandler {
         if (msg) {
             if (!isConnected) msg.textContent = 'Connect to the machine before setup.';
             else if (complete) msg.textContent = 'Setup complete. Generate the spoilboard grid when ready.';
-            else if (this.pendingHomeAll) msg.textContent = 'Waiting for homing to complete...';
-            else if (nextStep === 'home') msg.textContent = 'Home the machine before setting up the spoilboard grid.';
-            else if (nextStep === 'xy') msg.textContent = 'Set X/Y zero automatically.';
-            else msg.textContent = 'Use probe or jogging to set Z zero.';
+            else if (nextStep === 'home') msg.innerHTML = 'Use <kbd class="inline-flex rounded border border-current px-1 font-mono text-[10px] leading-4">Home All</kbd>, then confirm once it is complete.';
+            else msg.textContent = 'Please zero Z on the spoilboard, then confirm once it is complete.';
         }
         if (generateBtn) {
             generateBtn.disabled = !ready;
