@@ -1929,7 +1929,7 @@ body {
 }
 
 #settings-sidebar {
-    background: var(--oz-grey-light) !important;
+    background: transparent !important;
 }
 
 #settings-sidebar > div:first-child {
@@ -2024,6 +2024,20 @@ body {
     border-spacing: 0;
 }
 
+#sd-table {
+    table-layout: fixed;
+}
+
+#sd-table th:nth-child(2),
+#sd-table td:nth-child(2) {
+    width: 64px;
+}
+
+#sd-table th:nth-child(3),
+#sd-table td:nth-child(3) {
+    width: 120px;
+}
+
 #settings-main-panel thead th,
 #tools-view thead th,
 #sd-table thead th {
@@ -2049,6 +2063,10 @@ body {
 #tool-table-body tr:hover,
 #sd-table tbody tr:hover {
     background: rgba(68, 157, 159, 0.05) !important;
+}
+
+#sd-table tbody tr:hover {
+    background: transparent !important;
 }
 
 #settings-main-panel tbody tr.bg-yellow-50 {

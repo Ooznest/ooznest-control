@@ -11,7 +11,7 @@
     <link rel="icon" href="./favicon-16x16.png" sizes="16x16">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
     <!-- Themes -->
-    <link id="theme-stylesheet" rel="stylesheet" href="themes/ooznest.css">
+    <link id="theme-stylesheet" rel="stylesheet" href="themes/ooznest.css?v=20260804b">
     <link rel="stylesheet" href="themes/ooznest-navbar.css">
     <link rel="stylesheet" href="themes/ooznest-sidebar.css">
     <link rel="stylesheet" href="themes/ooznest-3dview.css">
@@ -36,7 +36,7 @@
             if (stored) {
                 const config = JSON.parse(stored);
                 if (config.uiTheme) {
-                    document.getElementById('theme-stylesheet').href = `themes/${config.uiTheme}.css`;
+                    document.getElementById('theme-stylesheet').href = `themes/${config.uiTheme}.css?v=20260804b`;
                 }
             }
         } catch (e) { console.error("Theme Init:", e); }
@@ -1129,13 +1129,18 @@
                                 <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                     <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">File Listing</h3>
                                 </div>
-                                <table class="w-full text-left text-sm" id="sd-table">
+                                <table class="w-full table-fixed text-left text-sm" id="sd-table">
+                                    <colgroup>
+                                        <col>
+                                        <col style="width: 64px">
+                                        <col style="width: 120px">
+                                    </colgroup>
                                     <thead
                                         class="border-b border-grey-light text-grey uppercase text-[10px] tracking-wider">
                                         <tr>
-                                            <th class="px-6 py-4 font-bold">Filename</th>
-                                            <th class="px-6 py-4 font-bold">Size</th>
-                                            <th class="px-6 py-4 font-bold text-right">Actions</th>
+                                            <th class="px-4 py-3 font-bold">Filename</th>
+                                            <th class="w-[64px] px-2 py-3 font-bold whitespace-nowrap">Size</th>
+                                            <th class="w-[120px] px-1 py-3 font-bold text-right whitespace-nowrap">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-grey-light">
@@ -1349,14 +1354,14 @@
                             <!-- Sub-Tab Content: Surfacing -->
                             <div id="tab-tool-surfacing" class="tools-tab-content">
                                 <div class="w-full">
+                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
+                                        Flatten a spoilboard or stock material. For best results use a surfacing router bit and ensure your router head is trammed perpendicular to the bed.
+                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Tool & Speeds</h3>
-                                                <p class="text-xs text-grey leading-relaxed mb-3">
-                                                    Flatten a spoilboard or stock material using a surfacing bit. Ensure your spindle is trammed perpendicular to the bed, and set Z zero at the highest point.
-                                                </p>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-tool">Tool Diameter (mm)</label><input type="number" id="surf-tool"
@@ -1389,8 +1394,8 @@
                                                                 onchange="window.surfacing.toggleDimMode()">
                                                             <div class="oz-segmented-bg h-full w-full">
                                                                 <div class="oz-segmented-slider"></div>
-                                                                <span class="oz-segmented-option left-opt">Custom</span>
-                                                                <span class="oz-segmented-option right-opt">Spoilboard</span>
+                                                                <span class="oz-segmented-option left-opt">Spoilboard</span>
+                                                                <span class="oz-segmented-option right-opt">Custom</span>
                                                             </div>
                                                         </label>
                                                     </div>
@@ -1406,7 +1411,7 @@
                                                                 class="ooznest-field input-field font-mono text-sm"></div>
                                                     </div>
                                                     <p id="surf-dim-custom-info" class="ooznest-form-info">
-                                                        Starts at the front-left of the selected area and surfaces the width and height you enter. Useful for surfacing a piece of stock or a jig.
+                                                        Starts at the front-left of the entered area and surfaces the width and length.
                                                     </p>
                                                     <div id="surf-dim-spoilboard"
                                                         class="hidden grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
@@ -1418,9 +1423,9 @@
                                                             <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Height (Y)</span>
                                                             <div id="surf-dim-spoilboard-y" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
-                                                        <p id="surf-dim-spoilboard-info" class="ooznest-form-info col-span-2">
-                                                            Uses the machine's configured Max Travel. Complete the setup checklist to set X/Y zero before generating the job.
-                                                        </p>
+                                                    <p id="surf-dim-spoilboard-info" class="ooznest-form-info col-span-2">
+                                                            Starts at the front-left of the entered area and surfaces the width and length.
+                                                    </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1460,21 +1465,21 @@
                                                     <p class="ooznest-form-info mt-1">Chooses whether the main surfacing passes run along X or Y.</p>
                                                 </div>
                                                 <div class="mb-2">
-                                                    <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                                        <span class="text-xs font-bold text-secondary-dark">Use Coolant (M8)?</span>
-                                                        <label class="inline-flex items-center cursor-pointer">
+                                                    <div class="flex items-center justify-between">
+                                                        <label for="surf-coolant" class="ooznest-label text-secondary-dark text-xs">Use Coolant (M8)?</label>
+                                                        <label class="relative inline-flex items-center cursor-pointer">
                                                             <input type="checkbox" id="surf-coolant" class="sr-only peer" aria-label="Use coolant">
-                                                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                                            <div class="w-9 h-5 bg-grey-light rounded-full peer-checked:bg-primary peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
                                                         </label>
                                                     </div>
                                                     <p class="ooznest-form-info mt-1">Adds M8 at the start of the job and turns coolant off at the end.</p>
                                                 </div>
                                                 <div>
-                                                    <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                                        <span class="text-xs font-bold text-secondary-dark">Add Framing Pass?</span>
-                                                        <label class="inline-flex items-center cursor-pointer">
+                                                    <div class="flex items-center justify-between">
+                                                        <label for="surf-framing" class="ooznest-label text-secondary-dark text-xs">Add Framing Pass?</label>
+                                                        <label class="relative inline-flex items-center cursor-pointer">
                                                             <input type="checkbox" id="surf-framing" class="sr-only peer" aria-label="Add framing pass">
-                                                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                                            <div class="w-9 h-5 bg-grey-light rounded-full peer-checked:bg-primary peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
                                                         </label>
                                                     </div>
                                                     <p class="ooznest-form-info mt-1">Adds a cleanup pass around the outside edge of the surfacing area.</p>
@@ -1483,7 +1488,7 @@
 
                                             <div id="surf-spoilboard-setup-checklist" class="tool-setup-bar unsafe hidden rounded-lg border text-xs font-bold p-2">
                                                 <div class="flex flex-col md:flex-row gap-2 md:items-center">
-                                                    <div id="surf-setup-msg" class="px-1 text-[10px] leading-tight md:flex-1">Complete setup before generating the spoilboard job.</div>
+                                                    <div id="surf-setup-msg" class="px-1 md:flex-1">Complete setup before generating the spoilboard job.</div>
                                                     <button id="surf-setup-connect-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="handleConnectClick()">
                                                         1. Connect
                                                     </button>
@@ -1516,20 +1521,23 @@
                                                     <img class="tool-illustration-image" src="themes/SURFACE.svg" alt="Surfacing illustration">
                                                 </div>
                                                 <div class="ooznest-instruction-card__info">
-                                                    <div class="ooznest-instruction-card__title">Required Setup</div>
+                                                    <div id="surf-setup-custom-title" class="ooznest-instruction-card__title">Custom Surfacing Setup</div>
                                                     <ol id="surf-setup-custom" class="ooznest-form-steps">
-                                                        <li>Install a surfacing bit.</li>
-                                                        <li>Jog to the front-left corner of the custom surfacing area.</li>
-                                                        <li>Zero X and Y at the front-left corner.</li>
-                                                        <li>Zero Z at the highest point of the stock or spoilboard.</li>
-                                                        <li>Run the job. It starts from the front-left work zero and surfaces the width and height you entered.</li>
+                                                        <li>Install the Router Bit.</li>
+                                                        <li>Jog the machine so the centre of the router bit is over the front left corner of the stock material.</li>
+                                                        <li>Zero X and Y.</li>
+                                                        <li>Zero Z to the highest point of the stock material.</li>
+                                                        <li>Turn on your Router Head &amp; Dust Extractor (If applicable).</li>
+                                                        <li>Press Run Job.</li>
                                                     </ol>
+                                                    <div id="surf-setup-spoilboard-title" class="ooznest-instruction-card__title hidden">Spoilboard Surfacing Setup</div>
                                                     <ol id="surf-setup-spoilboard" class="ooznest-form-steps hidden">
-                                                        <li>Install a surfacing bit.</li>
+                                                        <li>Install the Router Bit.</li>
                                                         <li>Home the machine.</li>
-                                                        <li>Use the setup checklist to set X/Y zero automatically.</li>
-                                                        <li>Zero Z at the highest point of the spoilboard using a probe or by jogging.</li>
-                                                        <li>Generate and run the job. It surfaces back and right to the machine's configured Max Travel.</li>
+                                                        <li>Set X/Y Zero.</li>
+                                                        <li>Zero Z to the highest point of the spoilboard.</li>
+                                                        <li>Turn on your Router Head &amp; Dust Extractor (If applicable).</li>
+                                                        <li>Press Run Job.</li>
                                                     </ol>
                                                 </div>
                                             </div>
@@ -1541,14 +1549,14 @@
                             <!-- Sub-Tab Content: Spoilboard Grid -->
                             <div id="tab-tool-spoilboard" class="tools-tab-content hidden">
                                 <div class="w-full">
+                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
+                                        Engrave a grid pattern that starts at the front-left work zero, with ruler ticks and numbers placed above and to the right. Use a V-bit or engraving tool for best results.
+                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Grid Dimensions</h3>
-                                                <p class="text-xs text-grey leading-relaxed mb-3">
-                                                    Engrave a grid pattern that starts at the front-left work zero, with ruler ticks and numbers placed above and to the right. Use a V-bit or engraving tool for best results.
-                                                </p>
                                                 <div class="flex items-start gap-4">
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-width">Width (X mm)</label><input type="number" id="sg-width"
@@ -1591,11 +1599,11 @@
                                                     Options</h3>
                                                 <div class="space-y-3">
                                                     <div>
-                                                        <div class="flex items-center justify-between bg-grey-bg p-3 rounded-lg border border-grey-light">
-                                                            <span class="text-xs font-bold text-secondary-dark">Add Ruler Markings</span>
-                                                            <label class="inline-flex items-center cursor-pointer">
+                                                        <div class="flex items-center justify-between">
+                                                            <label for="sg-ruler" class="ooznest-label text-secondary-dark text-xs">Add Ruler Markings</label>
+                                                            <label class="relative inline-flex items-center cursor-pointer">
                                                                 <input type="checkbox" id="sg-ruler" class="sr-only peer" checked aria-label="Include rulers">
-                                                                <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                                                <div class="w-9 h-5 bg-grey-light rounded-full peer-checked:bg-primary peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
                                                             </label>
                                                         </div>
                                                         <p class="ooznest-form-info mt-1">Include markings, and numeric markers.</p>
@@ -1605,7 +1613,7 @@
 
                                             <div id="sg-setup-checklist" class="tool-setup-bar unsafe rounded-lg border text-xs font-bold p-2">
                                                 <div class="flex flex-col md:flex-row gap-2 md:items-center">
-                                                    <div id="sg-setup-msg" class="px-1 text-[10px] leading-tight md:flex-1">Complete setup before generating the spoilboard grid.</div>
+                                                    <div id="sg-setup-msg" class="px-1 md:flex-1">Complete setup before generating the spoilboard grid.</div>
                                                     <button id="sg-setup-connect-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="handleConnectClick()">
                                                         1. Connect
                                                     </button>
@@ -1638,7 +1646,7 @@
                                                     <img class="tool-illustration-image" src="themes/GRID.svg" alt="Spoilboard grid illustration">
                                                 </div>
                                                 <div id="sg-setup-info" class="ooznest-instruction-card__info">
-                                                    <div class="ooznest-instruction-card__title">Required Setup</div>
+                                                    <div class="ooznest-instruction-card__title">Grid Setup</div>
                                                     <ol class="ooznest-form-steps">
                                                         <li>Install a V-bit.</li>
                                                         <li>Home the machine.</li>
@@ -1656,6 +1664,9 @@
                             <!-- Sub-Tab Content: Bowl Cutter -->
                             <div id="tab-tool-bowl" class="tools-tab-content hidden">
                                 <div class="w-full">
+                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
+                                        Cut a recessed bowl or tray with rounded inside corners. Set its overall size, depth, and corner radius, then use an endmill to machine the pocket.
+                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
@@ -1698,7 +1709,7 @@
                                                     <img class="tool-illustration-image" src="themes/BOWL.svg" alt="Bowl cutter illustration">
                                                 </div>
                                                 <div class="ooznest-instruction-card__info">
-                                                    <div class="ooznest-instruction-card__title">Required Setup</div>
+                                                    <div class="ooznest-instruction-card__title">Bowl Cut Setup</div>
                                                     <ol class="ooznest-form-steps">
                                                         <li>Install a ball end bit.</li>
                                                         <li>Zero X and Y at the center of where the bowl should be.</li>
@@ -2117,7 +2128,7 @@
                                                         <img id="probe-single-diagram" class="probe-diagram-image" src="themes/SS-RIGHT.svg" alt="Single surface diagram">
                                                     </div>
                                                     <div class="ooznest-instruction-card__info">
-                                                        <div class="ooznest-instruction-card__title">Surface Setup</div>
+                                                        <div class="ooznest-instruction-card__title">Single Surface Setup</div>
                                                         <p id="single-surface-help" class="ooznest-instruction-card__text">Place probe plate on the left surface. Position the tool beside the plate so it can probe toward it.</p>
                                                     </div>
                                                 </div>

@@ -9,6 +9,11 @@ const FLASH_BAUDRATE = 115200;
 const FLASH_MODE = 'dio';
 const FLASH_FREQ = '40m';
 const FLASH_SIZE = '4MB';
+const FIRMWARE_FILE_MAP = {
+    firmwarez1: 'ooznest-workbee-z1plus.bin',
+    firmwarez2: 'ooznest-workbee-z2plus.bin',
+    firmwareactuator: 'ooznest-actuator.bin'
+};
 
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -218,11 +223,12 @@ async function loadEsptool() {
 
 async function loadFirmwareImages(baseDir, firmwareKey) {
     const firmwareDir = path.join(baseDir, 'firmware');
+    const firmwareFile = FIRMWARE_FILE_MAP[firmwareKey] || `${firmwareKey}.bin`;
     const read = (name) => fs.promises.readFile(path.join(firmwareDir, name));
     return {
         bootloader: Uint8Array.from(await read('bootloader.bin')),
         partitions: Uint8Array.from(await read('partitions.bin')),
-        firmware: Uint8Array.from(await read(`${firmwareKey}.bin`))
+        firmware: Uint8Array.from(await read(firmwareFile))
     };
 }
 

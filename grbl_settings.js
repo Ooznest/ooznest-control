@@ -347,9 +347,9 @@ export class GrblSettings {
         let html = `<div class="flex flex-row h-[calc(100vh-220px)] border border-grey-light rounded-lg bg-white overflow-hidden">`;
 
         // --- Left Sidebar ---
-        html += `<div id="settings-sidebar" class="w-[140px] md:w-1/3 bg-grey-bg border-r border-grey-light flex flex-col shrink-0">`;
+        html += `<div id="settings-sidebar" class="w-[140px] md:w-1/3 flex flex-col shrink-0">`;
         html += `
-            <div class="p-2 md:p-3 sticky top-0 z-20">
+            <div class="p-0 sticky top-0 z-20">
                 <div class="settings-sidebar-search-card">
                     <label for="settings-search-input" class="ooznest-label settings-sidebar-search-label">Search</label>
                     <div class="relative">
@@ -361,7 +361,7 @@ export class GrblSettings {
                     </div>
                 </div>
             </div>
-            <div class="overflow-y-auto flex-1 p-2 md:p-3 space-y-2">
+            <div class="overflow-y-auto flex-1 bg-grey-bg p-2 md:p-3 space-y-2">
         `;
 
         if (sortedGroups.length === 0) {

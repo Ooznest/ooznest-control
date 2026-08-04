@@ -12,9 +12,9 @@ const FLASH_SIZE = '4MB';
 const RESET_DELAY_MS = 1200;
 
 const FIRMWARE_OPTIONS = [
-    { key: 'firmwarez1', label: 'WorkBee Z1+' },
-    { key: 'firmwarez2', label: 'WorkBee Z2' },
-    { key: 'firmwareactuator', label: 'Actuator System' }
+    { key: 'firmwarez1', label: 'WorkBee Z1+', fileName: 'ooznest-workbee-z1plus.bin' },
+    { key: 'firmwarez2', label: 'WorkBee Z2', fileName: 'ooznest-workbee-z2plus.bin' },
+    { key: 'firmwareactuator', label: 'Actuator System', fileName: 'ooznest-actuator.bin' }
 ];
 
 export class FirmwareFlasher {
@@ -22,6 +22,7 @@ export class FirmwareFlasher {
         this.ws = ws;
         this.modal = registerModal('firmware-flasher-overlay', { closeOnBackdrop: true, closeOnEscape: true });
         this.selectedFirmware = FIRMWARE_OPTIONS[0].key;
+        this.selectionLocked = false;
         this.busy = false;
         this.progress = 0;
         this.logLines = [];
@@ -42,13 +43,30 @@ export class FirmwareFlasher {
     }
 
     showModal() {
+        if (!this.busy) {
+            this._resetSession();
+        }
         if (!this.ws?.isConnected) {
-            this.programmingPortSelectionOpen = false;
             this.availableProgrammingPorts = [];
-            this.selectedProgrammingPort = null;
         }
         this._render();
         this.modal?.show();
+    }
+
+    _resetSession() {
+        this.selectedFirmware = FIRMWARE_OPTIONS[0].key;
+        this.selectionLocked = false;
+        this.progress = 0;
+        this.logLines = [];
+        this.browserReconnectPending = false;
+        this.previousConnection = null;
+        this._lastBackendEvent = null;
+        this._expectedDisconnectUntil = 0;
+        this._browserReconnectAttempted = false;
+        this._reconnectSucceeded = false;
+        this.programmingPortSelectionOpen = false;
+        this.availableProgrammingPorts = [];
+        this.selectedProgrammingPort = null;
     }
 
     hideModal() {
@@ -82,7 +100,10 @@ export class FirmwareFlasher {
         html += '<div>';
         FIRMWARE_OPTIONS.forEach((option) => {
             const sel = this.selectedFirmware === option.key;
-            html += `<div class="firmware-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${option.key}">`;
+            const lockedClass = this.selectionLocked
+                ? (sel ? 'cursor-default' : 'cursor-not-allowed opacity-50')
+                : 'cursor-pointer';
+            html += `<div class="firmware-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors ${lockedClass}" data-value="${option.key}">`;
             html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
             html += `<span class="config-filter-choice__label">${option.label}</span>`;
             html += '</div>';
@@ -156,7 +177,7 @@ export class FirmwareFlasher {
     }
 
     _renderStepIndicator() {
-        const steps = ['Firmware', 'Flash', 'Reconnect'];
+        const steps = ['Firmware', 'Flash', 'Complete'];
         const currentStage = this._getStageIndex();
         let html = '<div class="wizard-stepper mb-6 px-1">';
         steps.forEach((label, i) => {
@@ -184,7 +205,7 @@ export class FirmwareFlasher {
     _wireEvents() {
         document.querySelectorAll('.firmware-option').forEach((el) => {
             el.onclick = () => {
-                if (this.busy) return;
+                if (this.busy || this.selectionLocked) return;
                 this.selectedFirmware = el.dataset.value;
                 this._render();
             };
@@ -219,6 +240,7 @@ export class FirmwareFlasher {
         if (!this.ws?.isConnected && !(window.electron && this.programmingPortSelectionOpen && this.selectedProgrammingPort)) return;
 
         this.busy = true;
+        this.selectionLocked = true;
         this.progress = 0;
         this.logLines = [];
         this.browserReconnectPending = false;
@@ -372,6 +394,7 @@ export class FirmwareFlasher {
 
     async _flashWithSelectedProgrammingPortBrowser(device) {
         this.busy = true;
+        this.selectionLocked = true;
         this.progress = 0;
         this.logLines = [];
         this.browserReconnectPending = false;
@@ -468,6 +491,8 @@ export class FirmwareFlasher {
     }
 
     async _loadFirmwareImages(firmwareKey) {
+        const firmwareOption = FIRMWARE_OPTIONS.find((option) => option.key === firmwareKey);
+        const firmwareFile = firmwareOption?.fileName || `${firmwareKey}.bin`;
         const loadFile = async (name) => {
             const response = await fetch(`./firmware/${name}`);
             if (!response.ok) {
@@ -479,7 +504,7 @@ export class FirmwareFlasher {
         const [bootloader, partitions, firmware] = await Promise.all([
             loadFile('bootloader.bin'),
             loadFile('partitions.bin'),
-            loadFile(`${firmwareKey}.bin`)
+            loadFile(firmwareFile)
         ]);
 
         return { bootloader, partitions, firmware };

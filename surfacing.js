@@ -202,6 +202,8 @@ export class SurfacingHandler {
         const customInfo = document.getElementById('surf-dim-custom-info');
         const customSetup = document.getElementById('surf-setup-custom');
         const spoilboardSetup = document.getElementById('surf-setup-spoilboard');
+        const customSetupTitle = document.getElementById('surf-setup-custom-title');
+        const spoilboardSetupTitle = document.getElementById('surf-setup-spoilboard-title');
         const spoilboardDims = document.getElementById('surf-dim-spoilboard');
         if (dimFields) {
             dimFields.style.maxHeight = useMaxArea ? '0px' : '500px';
@@ -214,8 +216,14 @@ export class SurfacingHandler {
         if (customSetup) {
             customSetup.classList.toggle('hidden', useMaxArea);
         }
+        if (customSetupTitle) {
+            customSetupTitle.classList.toggle('hidden', useMaxArea);
+        }
         if (spoilboardSetup) {
             spoilboardSetup.classList.toggle('hidden', !useMaxArea);
+        }
+        if (spoilboardSetupTitle) {
+            spoilboardSetupTitle.classList.toggle('hidden', !useMaxArea);
         }
         if (spoilboardDims) {
             spoilboardDims.style.maxHeight = useMaxArea ? '500px' : '0px';

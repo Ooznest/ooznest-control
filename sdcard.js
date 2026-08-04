@@ -13,6 +13,7 @@ export class SDCardHandler {
         this.files = {}; // Map filename -> size (bytes)
         this.listedEntries = []; // Current directory listing for troubleshooting/export
         this.renderedDirPaths = new Set();
+        this.folderChildren = new Map();
 
         // Download State
         this.isDownloading = false;
@@ -40,6 +41,7 @@ export class SDCardHandler {
         this._formatting = false;
         this._formatSawCompletionMessage = false;
         this._mkdirPending = null;
+        this._rmdirPending = null;
 
         // Listen for machine becoming idle so we can safely refresh if it was deferred (e.g., due to an Alarm on connect)
         window.addEventListener('machine-idle', () => {
@@ -84,6 +86,23 @@ export class SDCardHandler {
             if (lowerLine.startsWith('error:') || lowerLine.includes('directory create failed')) {
                 this._mkdirPending = null;
                 if (window.showToast) window.showToast('Folder Create Failed', 'triangle-alert', 'error');
+                return false;
+            }
+        }
+
+        if (this._rmdirPending) {
+            const lowerLine = line.toLowerCase();
+            if (line === 'ok') {
+                const pending = this._rmdirPending;
+                this._rmdirPending = null;
+                if (window.showToast) window.showToast('Folder Deleted', 'folder-minus', 'success');
+                setTimeout(() => this.goToPath(pending.refreshPath), 150);
+                return true;
+            }
+
+            if (lowerLine.startsWith('error:') || lowerLine.includes('directory remove failed')) {
+                this._rmdirPending = null;
+                if (window.showToast) window.showToast('Folder Delete Failed', 'triangle-alert', 'error');
                 return false;
             }
         }
@@ -270,9 +289,9 @@ export class SDCardHandler {
 
         const headers = document.querySelectorAll('#sd-table thead th');
         if (headers.length >= 3) {
-            headers[0].className = 'px-4 py-3 font-bold text-left w-auto';
-            headers[1].className = 'px-6 py-4 font-bold w-32';
-            headers[2].className = 'px-2 py-3 font-bold text-right w-[120px] md:w-auto';
+            headers[0].className = 'px-4 py-3 font-bold text-left';
+            headers[1].className = 'w-[64px] px-2 py-3 font-bold whitespace-nowrap';
+            headers[2].className = 'w-[120px] px-1 py-3 font-bold text-right whitespace-nowrap';
         }
 
         this._renderBreadcrumb();
@@ -281,6 +300,7 @@ export class SDCardHandler {
         this.files = {};
         this.listedEntries = [];
         this.renderedDirPaths = new Set();
+        this.folderChildren = new Map();
 
         const badge = document.getElementById('sd-badge');
         if (badge) badge.classList.add('hidden');
@@ -363,6 +383,82 @@ export class SDCardHandler {
         return this._getParentPath(fullPath) === this._normalizePath(this.path);
     }
 
+    _escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    _escapeJsString(value) {
+        return String(value ?? '').split('\\').join('\\\\').split("'").join("\\'");
+    }
+
+    _ensureFolderMeta(dirPath) {
+        const normalized = this._normalizePath(dirPath);
+        if (!this.folderChildren.has(normalized)) {
+            this.folderChildren.set(normalized, new Set());
+        }
+        return this.folderChildren.get(normalized);
+    }
+
+    _registerFolderChild(parentPath, childPath) {
+        const parent = this._normalizePath(parentPath);
+        const child = this._normalizePath(childPath);
+        if (parent === child) return;
+
+        const children = this._ensureFolderMeta(parent);
+        const beforeSize = children.size;
+        children.add(child);
+
+        if (children.size !== beforeSize) {
+            this._updateDirectoryRow(parent);
+        }
+    }
+
+    _getFolderChildCount(dirPath) {
+        return this._ensureFolderMeta(dirPath).size;
+    }
+
+    _isDirectoryEmpty(dirPath) {
+        return this._getFolderChildCount(dirPath) === 0;
+    }
+
+    _renderDirectoryActions(dirPath) {
+        if (!this._isDirectoryEmpty(dirPath)) return '';
+
+        const safePath = this._escapeJsString(dirPath);
+        return `
+            <button class="macro-card-action-btn" onclick="window.sdHandler.removeDirectory('${safePath}')" title="Delete folder" type="button" aria-label="Delete folder">
+                <i data-lucide="trash-2" style="width:12px;height:12px"></i>
+            </button>`;
+    }
+
+    _renderDirectoryBadge(dirPath) {
+        const count = this._getFolderChildCount(dirPath);
+        return `<span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary/10 text-secondary-dark text-[11px] font-extrabold leading-none shrink-0" title="${count} item${count === 1 ? '' : 's'}">${count}</span>`;
+    }
+
+    _updateDirectoryRow(dirPath) {
+        const normalized = this._normalizePath(dirPath);
+        const row = document.querySelector(`#sd-table tbody tr[data-dirpath="${CSS.escape(normalized)}"]`);
+        if (!row) return;
+
+        const badgeSlot = row.querySelector('[data-folder-count]');
+        if (badgeSlot) {
+            badgeSlot.innerHTML = this._renderDirectoryBadge(normalized);
+        }
+
+        const actions = row.querySelector('[data-folder-actions]');
+        if (actions) {
+            actions.innerHTML = this._renderDirectoryActions(normalized);
+        }
+
+        if (window.lucide) lucide.createIcons();
+    }
+
     _ensureDirectoryVisible(dirPath) {
         const normalized = this._normalizePath(dirPath);
         const currentPath = this._normalizePath(this.path);
@@ -370,6 +466,7 @@ export class SDCardHandler {
         if (this._getParentPath(normalized) !== currentPath) return;
 
         this.renderedDirPaths.add(normalized);
+        this._ensureFolderMeta(normalized);
         const name = normalized.split('/').filter(Boolean).pop();
         const tbody = document.querySelector('#sd-table tbody');
         if (!tbody) return;
@@ -377,7 +474,7 @@ export class SDCardHandler {
         this.listedEntries.push({ type: 'dir', name, fullPath: normalized });
 
         const row = document.createElement('tr');
-        row.className = "hover:bg-grey-light border-b border-grey-light cursor-pointer transition-colors group";
+        row.className = "border-b border-grey-light cursor-pointer group";
         row.onclick = (e) => {
             if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'SPAN') {
                 this.enterDir(name);
@@ -386,16 +483,22 @@ export class SDCardHandler {
 
         row.innerHTML = `
           <td class="px-4 py-3 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
-              <button type="button" class="flex items-center gap-2 truncate w-full text-left text-primary hover:underline" onclick="window.sdHandler.enterDir('${name}')">
+              <button type="button" class="flex items-center gap-2 truncate w-full text-left text-primary hover:underline" onclick="window.sdHandler.enterDir('${this._escapeJsString(name)}')">
                   <i data-lucide="folder" style="width:14px;height:14px" class="text-primary opacity-70 shrink-0"></i>
-                  <span class="truncate" title="${name}">${name}</span>
+                  <span class="truncate" title="${this._escapeHtml(name)}">${this._escapeHtml(name)}</span>
+                  <span data-folder-count>${this._renderDirectoryBadge(normalized)}</span>
               </button>
           </td>
 
-          <td class="px-6 py-3 text-grey text-xs w-32">-</td>
+          <td class="w-[64px] px-2 py-3 text-grey text-xs whitespace-nowrap">-</td>
 
-          <td class="px-2 md:px-6 py-3 text-right align-middle w-[120px] md:w-auto"></td>`;
+          <td class="w-[120px] px-1 py-3 text-right align-middle whitespace-nowrap">
+              <div class="macro-card-actions justify-end ml-auto" data-folder-actions style="position: static; opacity: 1;">
+                  ${this._renderDirectoryActions(normalized)}
+              </div>
+          </td>`;
 
+        row.dataset.dirpath = normalized;
         tbody.insertBefore(row, tbody.firstChild);
         if (window.lucide) lucide.createIcons();
     }
@@ -459,7 +562,7 @@ export class SDCardHandler {
         this.path = normalized;
         this._renderBreadcrumb();
         this._prepareListing();
-        this.ws.sendCommand(`$F=${normalized}`);
+        this.ws.sendCommand(`$CWD=${normalized}`);
         setTimeout(() => this._requestSerialList(), 250);
     }
 
@@ -517,6 +620,29 @@ export class SDCardHandler {
         } else {
             const folderName = prompt('Enter folder name for the current SD directory:', defaultName);
             if (folderName !== null) submit(folderName);
+        }
+    }
+
+    removeDirectory(dirPath) {
+        const normalized = this._normalizePath(dirPath);
+        const folderName = normalized.split('/').filter(Boolean).pop() || '/';
+        if (!this._isDirectoryEmpty(normalized)) {
+            if (window.reporter) {
+                window.reporter.showAlert('Folder Not Empty', 'Only empty folders can be deleted.');
+            }
+            return;
+        }
+
+        const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+        const processDelete = () => {
+            this._rmdirPending = { refreshPath: this.path };
+            this.ws.sendCommand(`$FRD=${normalized}`);
+        };
+
+        if (reporter) {
+            reporter.showConfirm('Delete Folder', `Delete ${folderName} from the SD Card?`, processDelete);
+        } else if (confirm(`Delete ${folderName}?`)) {
+            processDelete();
         }
     }
 
@@ -666,6 +792,7 @@ export class SDCardHandler {
     _addSdFile(line) {
         const content = line.replace('[FILE:', '').replace(']', '').split('|');
         const fullPath = this._normalizePath(content[0]);
+        this._registerFolderChild(this._getParentPath(fullPath), fullPath);
         const relativeParts = this._getRelativeParts(fullPath);
         if (relativeParts.length > 1) {
             this._ensureDirectoryVisible(this._joinPath(this.path, relativeParts[0]));
@@ -718,7 +845,7 @@ export class SDCardHandler {
         const safeId = btoa(fullPath).replace(/=/g, '');
 
         const row = `
-          <tr class="hover:bg-grey-light border-b border-grey-light last:border-b-0 transition-colors group" data-filename="${name}" data-fullpath="${fullPath}">
+          <tr class="border-b border-grey-light last:border-b-0 group" data-filename="${name}" data-fullpath="${fullPath}">
               <td class="px-4 py-2 md:px-6 md:py-3 text-grey-dark align-middle truncate overflow-hidden">
                   <div class="flex flex-col justify-center w-full">
                       <div class="flex items-center gap-2 truncate">
@@ -733,9 +860,9 @@ export class SDCardHandler {
                   </div>
               </td>
 
-              <td class="px-6 py-3 text-grey font-mono text-xs whitespace-nowrap w-32">${sizeDisplay}</td>
+              <td class="w-[64px] px-2 py-3 text-grey font-mono text-xs whitespace-nowrap">${sizeDisplay}</td>
 
-              <td class="px-1 md:px-6 py-2 md:py-3 text-right align-middle w-[120px] md:w-auto">
+              <td class="w-[120px] px-1 py-2 text-right align-middle whitespace-nowrap">
                   <div class="macro-card-actions justify-end ml-auto" style="position: static; opacity: 1;">
                       <button class="macro-card-action-btn" onclick="window.sdHandler.delete('${name}')" title="Delete" type="button" aria-label="Delete file">
                         <i data-lucide="trash-2" style="width:12px;height:12px"></i>
@@ -795,7 +922,9 @@ export class SDCardHandler {
     }
 
     _addSdDir(line) {
-        this._ensureDirectoryVisible(line.replace('[DIR:', '').replace(']', ''));
+        const fullPath = this._normalizePath(line.replace('[DIR:', '').replace(']', ''));
+        this._registerFolderChild(this._getParentPath(fullPath), fullPath);
+        this._ensureDirectoryVisible(fullPath);
     }
 
     _finishDownload() {
@@ -1051,6 +1180,7 @@ export class SDCardHandler {
     }
 
     async _sendPacket0() {
+        // The plugin receiver opens the path from packet 0 directly, so include the full SD destination path here.
         const nameEnc = new TextEncoder().encode(this.ymodem.filePath);
         const sizeEnc = new TextEncoder().encode(this.ymodem.fileSize.toString());
         const packet = new Uint8Array(128);
