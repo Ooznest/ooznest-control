@@ -657,12 +657,19 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-    createWindow();
-    
     // Auto-Updater Logic
     let updateDownloadWatchdog = null;
+    let updateCheckStarted = false;
+    const updateEvents = new Map();
     const sendUpdateEvent = (channel, payload) => {
+        updateEvents.set(channel, payload);
         BrowserWindow.getAllWindows().forEach(win => win.webContents.send(channel, payload));
+    };
+    const replayUpdateEvents = (webContents) => {
+        ['update-checking', 'update-available', 'update-download-progress', 'update-download-timeout', 'update-error', 'update-downloaded', 'update-not-available']
+            .forEach(channel => {
+                if (updateEvents.has(channel)) webContents.send(channel, updateEvents.get(channel));
+            });
     };
     const clearUpdateDownloadWatchdog = () => {
         if (updateDownloadWatchdog) clearTimeout(updateDownloadWatchdog);
@@ -677,10 +684,6 @@ app.whenReady().then(() => {
         }, 120000);
     };
 
-    autoUpdater.checkForUpdatesAndNotify().catch(err => {
-        console.error('Auto-update check failed:', err.message);
-        sendUpdateEvent('update-error', { message: err.message || String(err) });
-    });
     autoUpdater.on('update-available', (info) => {
         sendUpdateEvent('update-available', info);
         armUpdateDownloadWatchdog();
@@ -698,10 +701,27 @@ app.whenReady().then(() => {
         console.error('Auto-updater error:', err.message || err);
         sendUpdateEvent('update-error', { message: err.message || String(err) });
     });
+    autoUpdater.on('update-not-available', (info) => {
+        sendUpdateEvent('update-not-available', info);
+    });
+
+    ipcMain.on('updater-ready', (event) => {
+        replayUpdateEvents(event.sender);
+        if (updateCheckStarted) return;
+
+        updateCheckStarted = true;
+        sendUpdateEvent('update-checking', { message: 'Checking for updates...' });
+        autoUpdater.checkForUpdatesAndNotify().catch(err => {
+            console.error('Auto-update check failed:', err.message);
+            sendUpdateEvent('update-error', { message: err.message || String(err) });
+        });
+    });
 
     ipcMain.on('install-update', () => {
         autoUpdater.quitAndInstall();
     });
+
+    createWindow();
 
     // Renderer asks to open a G-code file via native dialog
     ipcMain.handle('load-gcode-dialog', async () => {
