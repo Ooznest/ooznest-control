@@ -3368,8 +3368,25 @@
             window.bowlCutter = bowlCutter;
 
             if (window.electron && window.electron.on) {
+                let lastUpdateProgress = -5;
                 window.electron.on('update-available', (info) => {
+                    lastUpdateProgress = -5;
                     window.term.writeln(`\x1b[33m[Update] v${info.version} available — downloading...\x1b[0m`);
+                });
+                window.electron.on('update-download-progress', (progress) => {
+                    const percent = Math.floor(progress.percent || 0);
+                    if (percent >= lastUpdateProgress + 5 || percent === 100) {
+                        lastUpdateProgress = percent;
+                        window.term.writeln(`\x1b[33m[Update] Downloading: ${percent}%\x1b[0m`);
+                    }
+                });
+                window.electron.on('update-download-timeout', (detail) => {
+                    window.term.writeln(`\x1b[33m[Update] ${detail.message}\x1b[0m`);
+                    if (window.showToast) window.showToast('Update download stalled', 'triangle-alert', 'warning');
+                });
+                window.electron.on('update-error', (detail) => {
+                    window.term.writeln(`\x1b[31m[Update] Download failed: ${detail.message}\x1b[0m`);
+                    if (window.showToast) window.showToast('Update download failed', 'triangle-alert', 'error');
                 });
                 window.electron.on('update-downloaded', () => {
                     reporter.showConfirm(

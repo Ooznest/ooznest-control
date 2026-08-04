@@ -660,21 +660,43 @@ app.whenReady().then(() => {
     createWindow();
     
     // Auto-Updater Logic
+    let updateDownloadWatchdog = null;
+    const sendUpdateEvent = (channel, payload) => {
+        BrowserWindow.getAllWindows().forEach(win => win.webContents.send(channel, payload));
+    };
+    const clearUpdateDownloadWatchdog = () => {
+        if (updateDownloadWatchdog) clearTimeout(updateDownloadWatchdog);
+        updateDownloadWatchdog = null;
+    };
+    const armUpdateDownloadWatchdog = () => {
+        clearUpdateDownloadWatchdog();
+        updateDownloadWatchdog = setTimeout(() => {
+            sendUpdateEvent('update-download-timeout', {
+                message: 'No update download progress has been received for two minutes. Check your internet connection and try restarting the app.'
+            });
+        }, 120000);
+    };
+
     autoUpdater.checkForUpdatesAndNotify().catch(err => {
         console.error('Auto-update check failed:', err.message);
+        sendUpdateEvent('update-error', { message: err.message || String(err) });
     });
     autoUpdater.on('update-available', (info) => {
-        BrowserWindow.getAllWindows().forEach(win => {
-            win.webContents.send('update-available', info);
-        });
+        sendUpdateEvent('update-available', info);
+        armUpdateDownloadWatchdog();
+    });
+    autoUpdater.on('download-progress', (progress) => {
+        sendUpdateEvent('update-download-progress', progress);
+        armUpdateDownloadWatchdog();
     });
     autoUpdater.on('update-downloaded', (info) => {
-        BrowserWindow.getAllWindows().forEach(win => {
-            win.webContents.send('update-downloaded');
-        });
+        clearUpdateDownloadWatchdog();
+        sendUpdateEvent('update-downloaded', info);
     });
     autoUpdater.on('error', (err) => {
+        clearUpdateDownloadWatchdog();
         console.error('Auto-updater error:', err.message || err);
+        sendUpdateEvent('update-error', { message: err.message || String(err) });
     });
 
     ipcMain.on('install-update', () => {
