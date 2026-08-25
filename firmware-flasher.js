@@ -42,9 +42,14 @@ export class FirmwareFlasher {
         }
     }
 
-    showModal() {
+    showModal(options = {}) {
         if (!this.busy) {
             this._resetSession();
+            if (options.firmwareKey) {
+                this.selectedFirmware = options.firmwareKey;
+            }
+            this.selectionLocked = !!options.lockSelection;
+            this.onFlashComplete = typeof options.onFlashComplete === 'function' ? options.onFlashComplete : null;
         }
         if (!this.ws?.isConnected) {
             this.availableProgrammingPorts = [];
@@ -67,6 +72,8 @@ export class FirmwareFlasher {
         this.programmingPortSelectionOpen = false;
         this.availableProgrammingPorts = [];
         this.selectedProgrammingPort = null;
+        this.onFlashComplete = null;
+        this._completionNotified = false;
     }
 
     hideModal() {
@@ -348,6 +355,7 @@ export class FirmwareFlasher {
             this._appendLog('[RESET] Booting application...');
             await this._resetIntoApplication(esploader, transport, device);
             this._appendLog('[COMPLETE] Firmware flashed successfully.');
+            this._notifyFlashComplete();
             this.browserReconnectPending = true;
             this._appendLog('[SYSTEM] Reconnecting to controller...');
             this._render();
@@ -438,6 +446,7 @@ export class FirmwareFlasher {
             this._appendLog('[RESET] Booting application...');
             await this._resetIntoApplication(esploader, transport, device);
             this._appendLog('[COMPLETE] Firmware flashed successfully.');
+            this._notifyFlashComplete();
             this.browserReconnectPending = true;
             this._appendLog('[SYSTEM] Reconnecting to controller...');
             this._render();
@@ -567,6 +576,7 @@ export class FirmwareFlasher {
         if (msg.type === 'firmwareFlashComplete') {
             this._setProgress(100);
             this._appendLog('[COMPLETE] Firmware flashed successfully.');
+            this._notifyFlashComplete();
             this.busy = false;
             this.browserReconnectPending = !!msg.reconnect;
             this._render();
@@ -601,6 +611,12 @@ export class FirmwareFlasher {
             }
             this._render();
         }
+    }
+
+    _notifyFlashComplete() {
+        if (this._completionNotified) return;
+        this._completionNotified = true;
+        this.onFlashComplete?.(this.selectedFirmware);
     }
 
     async _reconnectAfterElectronFlash(reconnect) {

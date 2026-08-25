@@ -34,7 +34,8 @@ export class ConfigWizard {
             wifiSsid: '',
             wifiPsk: '',
             dustShoe: false,
-            enclosure: false
+            enclosure: false,
+            firmwareFlashed: false
         };
         this.modal = registerModal('config-wizard-overlay', { closeOnBackdrop: true, closeOnEscape: true });
         this.loadMachineJson();
@@ -190,6 +191,7 @@ export class ConfigWizard {
         this.wizardData.wifiMode = '0';
         this.wizardData.wifiSsid = '';
         this.wizardData.wifiPsk = '';
+        this.wizardData.firmwareFlashed = false;
         this.wizardData.customWidth = 500;
         this.wizardData.customLength = 500;
         this.wizardData.customDrives = { x: 'belt', y: 'belt', z: 'belt' };
@@ -218,7 +220,7 @@ export class ConfigWizard {
         if (!container) { console.warn('[ConfigWizard] config-wizard-body not found'); return; }
         if (!container || !footer) return;
 
-        const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'WiFi Setup', 'Apply'];
+        const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'WiFi Setup', 'Firmware', 'Apply'];
         const totalSteps = steps.length;
 
         let html = '';
@@ -249,7 +251,8 @@ export class ConfigWizard {
             case 3: html += this._renderDustShoeStep(); break;
             case 4: html += this._renderEnclosureStep(); break;
             case 5: html += this._renderWifiSetupStep(); break;
-            case 6: html += this._renderApplyStep(); break;
+            case 6: html += this._renderFirmwareStep(); break;
+            case 7: html += this._renderApplyStep(); break;
         }
         html += '</div>';
 
@@ -679,6 +682,32 @@ export class ConfigWizard {
         return html;
     }
 
+    _getFirmwareForMachine() {
+        const category = this.wizardData.machine?.category;
+        if (category === 'z1+') return { key: 'firmwarez1', label: 'WorkBee Z1+' };
+        if (category === 'z2') return { key: 'firmwarez2', label: 'WorkBee Z2' };
+        return null;
+    }
+
+    _renderFirmwareStep() {
+        const firmware = this._getFirmwareForMachine();
+        if (!firmware) {
+            return '<div class="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2"><i data-lucide="info" style="width:14px;height:14px"></i><p class="text-xs text-blue-700">Firmware flashing is not available for custom machines. Continue to review and apply the configuration.</p></div>';
+        }
+
+        let html = '<p class="text-sm text-grey mb-4">Flash firmware before applying your configuration.</p>';
+        html += '<div class="bg-grey-bg rounded-lg p-4 space-y-3 border border-grey-light">';
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Firmware</span><span class="text-xs font-bold text-secondary-dark">${firmware.label}</span></div>`;
+        html += '<p class="text-xs text-grey">Flashing restores the controller settings, so it must finish successfully before this wizard applies your configuration.</p></div>';
+        if (this.wizardData.firmwareFlashed) {
+            html += '<div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2"><i data-lucide="check-circle" style="width:14px;height:14px"></i><p class="text-xs text-green-700">Firmware flashed successfully. Continue to review and apply your configuration.</p></div>';
+        } else {
+            html += '<button id="config-wizard-flash-firmware" class="btn btn-primary mt-4"><i data-lucide="cpu"></i> Flash ' + firmware.label + ' Firmware</button>';
+            html += '<p class="text-[10px] text-grey mt-2">The firmware selection is based on the machine selected in this wizard.</p>';
+        }
+        return html;
+    }
+
     _renderApplyStep() {
         const machine = this.wizardData.machine;
         const th = this.wizardData.toolheads;
@@ -760,7 +789,8 @@ export class ConfigWizard {
                 } else {
                     this.wizardData.machine = this.machines.find(m => m.id === id) || null;
                 }
-        this.wizardData.toolheads = { spindle: null, vfdModbusEnabled: false, vfdModbus: null, laser: false };
+                this.wizardData.firmwareFlashed = false;
+                this.wizardData.toolheads = { spindle: null, vfdModbusEnabled: false, vfdModbus: null, laser: false };
                 this._renderWizardStep();
             };
         });
@@ -812,6 +842,23 @@ export class ConfigWizard {
                 this._renderWizardStep();
             };
         });
+
+        const flashButton = document.getElementById('config-wizard-flash-firmware');
+        if (flashButton) {
+            flashButton.onclick = () => {
+                const firmware = this._getFirmwareForMachine();
+                if (!firmware || !window.firmwareFlasher) return;
+                window.firmwareFlasher.showModal({
+                    firmwareKey: firmware.key,
+                    lockSelection: true,
+                    onFlashComplete: (firmwareKey) => {
+                        if (firmwareKey !== this._getFirmwareForMachine()?.key) return;
+                        this.wizardData.firmwareFlashed = true;
+                        this._renderWizardStep();
+                    }
+                });
+            };
+        }
     }
 
     _canProceed() {
@@ -845,6 +892,8 @@ export class ConfigWizard {
                 const psk = this.wizardData.wifiPsk || '';
                 return ssid.length > 0 && psk.length >= 8 && psk.length <= 32;
             }
+            case 6:
+                return this.wizardData.machine?.category === 'custom' || this.wizardData.firmwareFlashed;
             default: return true;
         }
     }
@@ -910,6 +959,10 @@ export class ConfigWizard {
         const machine = this.wizardData.machine;
         if (!machine || !this.ws || !this.ws.isConnected) {
             this._showWizardStatus('Cannot apply config: not connected.', 'error');
+            return;
+        }
+        if (this._getFirmwareForMachine() && !this.wizardData.firmwareFlashed) {
+            this._showWizardStatus('Flash firmware successfully before applying configuration.', 'error');
             return;
         }
 
