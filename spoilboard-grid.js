@@ -344,7 +344,7 @@ export class SpoilboardGridHandler {
         if (msg) {
             if (!isConnected) msg.textContent = 'Connect to the machine before setup.';
             else if (complete) msg.textContent = 'Setup complete. Generate the spoilboard grid when ready.';
-            else if (nextStep === 'home') msg.innerHTML = 'Use <kbd class="inline-flex rounded border border-current px-1 font-mono text-[10px] leading-4">Home All</kbd>, then confirm once it is complete.';
+            else if (nextStep === 'home') msg.innerHTML = 'Use <kbd class="tool-setup-kbd rounded border border-current px-1 font-mono text-[10px]">Home All</kbd> then confirm once it is complete.';
             else msg.textContent = 'Please zero Z on the spoilboard, then confirm once it is complete.';
         }
         if (generateBtn) {

@@ -226,7 +226,7 @@ export class ConfigWizard {
             container.innerHTML = `
                 <div class="flex min-h-52 flex-col items-center justify-center text-center">
                     <div class="text-sm font-bold text-primary">Not Connected</div>
-                    <p class="mt-2 text-xs text-grey">Please connect to configure your machine.</p>
+                    <p class="mt-2 text-xs text-grey" style="padding-bottom:4rem">Please connect to configure your machine.</p>
                 </div>`;
             footer.innerHTML = '';
             footer.classList.add('hidden');
@@ -241,10 +241,10 @@ export class ConfigWizard {
 
         // Step indicator
         html += '<div class="wizard-stepper wizard-stepper--compact wizard-stepper--config mb-6 px-1">';
-        [steps.slice(0, 5), steps.slice(5)].forEach((rowSteps, rowIndex) => {
+        [steps.slice(0, 4), steps.slice(4)].forEach((rowSteps, rowIndex) => {
             html += '<div class="wizard-stepper__row">';
             rowSteps.forEach((label, rowStepIndex) => {
-                const i = rowIndex * 5 + rowStepIndex;
+                const i = (rowIndex * 4) + rowStepIndex;
                 const isActive = i === this.wizardStep;
                 const isDone = i < this.wizardStep;
                 const isRowEnd = rowStepIndex === rowSteps.length - 1;

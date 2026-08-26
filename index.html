@@ -282,6 +282,12 @@
             color: var(--oz-error) !important;
         }
 
+        .tool-setup-kbd {
+            display: inline;
+            line-height: inherit;
+            vertical-align: 1px;
+        }
+
         .tool-setup-step.is-done {
             background: rgba(22, 101, 52, 0.08) !important;
             border-color: rgba(22, 101, 52, 0.22) !important;
@@ -308,8 +314,8 @@
 
             .tool-setup-z-actions {
                 margin-left: auto !important;
-                width: 22.5rem !important;
-                flex: 0 0 22.5rem !important;
+                width: auto !important;
+                flex: 0 0 auto !important;
             }
         }
 
@@ -1495,7 +1501,7 @@
                                                     <button id="surf-setup-home-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.markSpoilboardSetupStep('home')">
                                                         Confirm Homed
                                                     </button>
-                                                    <div id="surf-setup-z-actions" class="tool-setup-z-actions hidden">
+                                                    <div id="surf-setup-z-actions" class="tool-setup-z-actions hidden self-end md:self-auto md:ml-auto">
                                                         <button id="surf-setup-z-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.setSpoilboardZZero()">
                                                             Confirm Z Zero
                                                         </button>
@@ -1613,7 +1619,7 @@
                                                     <button id="sg-setup-home-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.markSetupStep('home')">
                                                         Confirm Homed
                                                     </button>
-                                                    <div id="sg-setup-z-actions" class="tool-setup-z-actions hidden">
+                                                    <div id="sg-setup-z-actions" class="tool-setup-z-actions hidden self-end md:self-auto md:ml-auto">
                                                         <button id="sg-setup-z-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.setZZero()">
                                                             Confirm Z Zero
                                                         </button>
