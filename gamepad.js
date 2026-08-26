@@ -1,7 +1,9 @@
 import { registerModal } from './modal.js';
 
 const DEAD_ZONE = 0.25;
-const SEGMENT_MS = 40;
+// AltMill-class acceleration can follow the low end of GRBL's recommended
+// 25–60 ms joystick segment range, keeping the motion fluid and responsive.
+const SEGMENT_MS = 25;
 const INCREMENTS_MM = [0.1, 1, 5, 10];
 
 const BUTTONS = [
