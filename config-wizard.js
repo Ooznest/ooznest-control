@@ -37,7 +37,7 @@ export class ConfigWizard {
             enclosure: false,
             firmwareFlashed: false
         };
-        this.modal = registerModal('config-wizard-overlay', { closeOnBackdrop: true, closeOnEscape: true });
+        this.modal = registerModal('config-wizard-overlay', { closeOnBackdrop: false, closeOnEscape: true });
         this.loadMachineJson();
     }
 
@@ -148,8 +148,10 @@ export class ConfigWizard {
         console.log('[ConfigWizard] _onVerComplete', this.verInfo);
         if (!this.verInfo) return;
         this.renderInfoTab();
-        if (this._isUnconfigured(this.verInfo.configName)) {
-            setTimeout(() => this.showWizard(), 500);
+        if (this._isUnconfigured(this.verInfo.configName) && !this.modal?.isOpen()) {
+            setTimeout(() => {
+                if (!this.modal?.isOpen()) this.showWizard();
+            }, 500);
         }
     }
 
@@ -220,24 +222,41 @@ export class ConfigWizard {
         if (!container) { console.warn('[ConfigWizard] config-wizard-body not found'); return; }
         if (!container || !footer) return;
 
-        const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'WiFi Setup', 'Firmware', 'Apply'];
+        if (!this.ws?.isConnected && this.wizardStep === 0) {
+            container.innerHTML = `
+                <div class="flex min-h-52 flex-col items-center justify-center text-center">
+                    <div class="text-sm font-bold text-primary">Not Connected</div>
+                    <p class="mt-2 text-xs text-grey">Please connect to configure your machine.</p>
+                </div>`;
+            footer.innerHTML = '';
+            footer.classList.add('hidden');
+            return;
+        }
+
+        const steps = ['Machine', 'Toolhead', 'Probe Plate', 'Dust Shoe', 'Enclosure', 'WiFi Setup', 'Apply'];
         const totalSteps = steps.length;
 
         let html = '';
         let footerHtml = '';
 
         // Step indicator
-        html += '<div class="wizard-stepper wizard-stepper--compact mb-6 px-1">';
-        steps.forEach((label, i) => {
-            const isActive = i === this.wizardStep;
-            const isDone = i < this.wizardStep;
-            html += `<div class="wizard-stepper__item ${isActive ? 'is-active' : ''} ${isDone ? 'is-complete' : ''}">`;
-            if (isDone) {
-                html += '<span class="wizard-stepper__circle"><i data-lucide="check" style="width:16px;height:16px"></i></span>';
-            } else {
-                html += `<span class="wizard-stepper__circle">${i + 1}</span>`;
-            }
-            html += `<span class="wizard-stepper__label">${label}</span>`;
+        html += '<div class="wizard-stepper wizard-stepper--compact wizard-stepper--config mb-6 px-1">';
+        [steps.slice(0, 5), steps.slice(5)].forEach((rowSteps, rowIndex) => {
+            html += '<div class="wizard-stepper__row">';
+            rowSteps.forEach((label, rowStepIndex) => {
+                const i = rowIndex * 5 + rowStepIndex;
+                const isActive = i === this.wizardStep;
+                const isDone = i < this.wizardStep;
+                const isRowEnd = rowStepIndex === rowSteps.length - 1;
+                html += `<div class="wizard-stepper__item ${isActive ? 'is-active' : ''} ${isDone ? 'is-complete' : ''} ${isRowEnd ? 'is-row-end' : ''}">`;
+                if (isDone) {
+                    html += '<span class="wizard-stepper__circle"><i data-lucide="check" style="width:16px;height:16px"></i></span>';
+                } else {
+                    html += `<span class="wizard-stepper__circle">${i + 1}</span>`;
+                }
+                html += `<span class="wizard-stepper__label">${label}</span>`;
+                html += '</div>';
+            });
             html += '</div>';
         });
         html += '</div>';
@@ -251,8 +270,7 @@ export class ConfigWizard {
             case 3: html += this._renderDustShoeStep(); break;
             case 4: html += this._renderEnclosureStep(); break;
             case 5: html += this._renderWifiSetupStep(); break;
-            case 6: html += this._renderFirmwareStep(); break;
-            case 7: html += this._renderApplyStep(); break;
+            case 6: html += this._renderApplyStep(); break;
         }
         html += '</div>';
 
@@ -263,9 +281,18 @@ export class ConfigWizard {
         } else {
             footerHtml += '<div></div>';
         }
-        if (this.wizardStep < totalSteps - 1) {
+        if (this.wizardStep === 0) {
+            const firmware = this._getFirmwareForMachine();
+            if (firmware) {
+                const disabled = !this._canProceed();
+                footerHtml += `<button id="config-wizard-flash-firmware" class="btn btn-primary" ${disabled ? 'disabled' : ''}><i data-lucide="cpu"></i> Flash ${firmware.label} Firmware</button>`;
+            } else {
+                const disabled = !this._canProceed();
+                footerHtml += `<button id="config-wizard-continue" onclick="window.configWizard._nextStep()" class="btn btn-primary" ${disabled ? 'disabled' : ''}>Continue</button>`;
+            }
+        } else if (this.wizardStep < totalSteps - 1) {
             const disabled = !this._canProceed();
-            footerHtml += `<button onclick="window.configWizard._nextStep()" class="btn btn-primary" ${disabled ? 'disabled' : ''}>Continue</button>`;
+            footerHtml += `<button id="config-wizard-continue" onclick="window.configWizard._nextStep()" class="btn btn-primary" ${disabled ? 'disabled' : ''}>Continue</button>`;
         } else {
             footerHtml += `<button onclick="window.configWizard._applyConfig()" class="btn btn-primary">Apply Configuration</button>`;
         }
@@ -662,11 +689,11 @@ export class ConfigWizard {
             html += '<div class="px-4 py-3 bg-grey-bg/30 space-y-4">';
             html += '<div>';
             html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Network Name ($74)</label>';
-            html += `<input type="text" maxlength="64" value="${this._escapeHtml(this.wizardData.wifiSsid || '')}" oninput="window.configWizard.wizardData.wifiSsid=this.value" class="ooznest-field input-field w-full" placeholder="WiFi network name">`;
+            html += `<input type="text" maxlength="64" value="${this._escapeHtml(this.wizardData.wifiSsid || '')}" oninput="window.configWizard.wizardData.wifiSsid=this.value;window.configWizard._updateContinueState()" class="ooznest-field input-field w-full" placeholder="WiFi network name">`;
             html += '</div>';
             html += '<div>';
             html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Password ($75)</label>';
-            html += `<input type="password" minlength="8" maxlength="32" value="${this._escapeHtml(this.wizardData.wifiPsk || '')}" oninput="window.configWizard.wizardData.wifiPsk=this.value" class="ooznest-field input-field w-full" placeholder="8 to 32 characters">`;
+            html += `<input type="password" minlength="8" maxlength="32" value="${this._escapeHtml(this.wizardData.wifiPsk || '')}" oninput="window.configWizard.wizardData.wifiPsk=this.value;window.configWizard._updateContinueState()" class="ooznest-field input-field w-full" placeholder="8 to 32 characters">`;
             html += '</div>';
             html += '</div>';
         }
@@ -695,15 +722,11 @@ export class ConfigWizard {
             return '<div class="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2"><i data-lucide="info" style="width:14px;height:14px"></i><p class="text-xs text-blue-700">Firmware flashing is not available for custom machines. Continue to review and apply the configuration.</p></div>';
         }
 
-        let html = '<p class="text-sm text-grey mb-4">Flash firmware before applying your configuration.</p>';
-        html += '<div class="bg-grey-bg rounded-lg p-4 space-y-3 border border-grey-light">';
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Firmware</span><span class="text-xs font-bold text-secondary-dark">${firmware.label}</span></div>`;
-        html += '<p class="text-xs text-grey">Flashing restores the controller settings, so it must finish successfully before this wizard applies your configuration.</p></div>';
+        let html = '<p class="text-sm text-grey mb-4">Click Flash to install the correct firmware for your machine onto your controller.</p>';
         if (this.wizardData.firmwareFlashed) {
             html += '<div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2"><i data-lucide="check-circle" style="width:14px;height:14px"></i><p class="text-xs text-green-700">Firmware flashed successfully. Continue to review and apply your configuration.</p></div>';
         } else {
             html += '<button id="config-wizard-flash-firmware" class="btn btn-primary mt-4"><i data-lucide="cpu"></i> Flash ' + firmware.label + ' Firmware</button>';
-            html += '<p class="text-[10px] text-grey mt-2">The firmware selection is based on the machine selected in this wizard.</p>';
         }
         return html;
     }
@@ -720,7 +743,9 @@ export class ConfigWizard {
         html += '<div class="bg-grey-bg rounded-lg p-4 space-y-3 border border-grey-light">';
 
         if (machine) {
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine</span><span class="text-xs font-bold text-secondary-dark">${machine.name}</span></div>`;
+            const machineFamilies = { 'z1+': 'WorkBee Z1+', z2: 'WorkBee Z2', custom: 'Other' };
+            const machineLabel = `${machineFamilies[machine.category] || 'Other'} ${machine.name}`;
+            html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine</span><span class="text-xs font-bold text-secondary-dark">${this._escapeHtml(machineLabel)}</span></div>`;
         }
 
         // Toolhead assignments
@@ -754,10 +779,11 @@ export class ConfigWizard {
 
         if (machine) {
             const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
-            const totalSettings = configLines.length + wifiLines.length;
+            const defaultLines = ['$22=7'];
+            const totalSettings = configLines.length + wifiLines.length + defaultLines.length;
             html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${totalSettings} settings)</p>`;
             html += `<div class="bg-white border border-grey-light rounded-lg p-2 max-h-32 overflow-y-auto text-[10px] font-mono text-grey-dark leading-relaxed">`;
-            html += configLines.concat(wifiLines).map(l => `<div>${this._escapeHtml(l)}</div>`).join('');
+            html += configLines.concat(wifiLines, defaultLines).map(l => `<div>${this._escapeHtml(l)}</div>`).join('');
             html += '</div></div>';
         }
 
@@ -848,12 +874,14 @@ export class ConfigWizard {
             flashButton.onclick = () => {
                 const firmware = this._getFirmwareForMachine();
                 if (!firmware || !window.firmwareFlasher) return;
+                this._captureMachineStep();
                 window.firmwareFlasher.showModal({
                     firmwareKey: firmware.key,
                     lockSelection: true,
                     onFlashComplete: (firmwareKey) => {
                         if (firmwareKey !== this._getFirmwareForMachine()?.key) return;
                         this.wizardData.firmwareFlashed = true;
+                        this.wizardStep = 1;
                         this._renderWizardStep();
                     }
                 });
@@ -892,10 +920,13 @@ export class ConfigWizard {
                 const psk = this.wizardData.wifiPsk || '';
                 return ssid.length > 0 && psk.length >= 8 && psk.length <= 32;
             }
-            case 6:
-                return this.wizardData.machine?.category === 'custom' || this.wizardData.firmwareFlashed;
             default: return true;
         }
+    }
+
+    _updateContinueState() {
+        const continueButton = document.getElementById('config-wizard-continue');
+        if (continueButton) continueButton.disabled = !this._canProceed();
     }
 
     _onProbeTypeChange(value) {
@@ -910,28 +941,7 @@ export class ConfigWizard {
     _nextStep() {
         // Capture form values before moving
         if (this.wizardStep === 0) {
-            const m = this.wizardData.machine;
-            if (m && m.id === 'z2-custom') {
-                const width = parseFloat(document.getElementById('w-custom-width')?.value) || 500;
-                const length = parseFloat(document.getElementById('w-custom-length')?.value) || 500;
-                this.wizardData.customWidth = width;
-                this.wizardData.customLength = length;
-                const x = Math.max(0, width - 230);
-                const y = Math.max(0, length - 230);
-                m.travel = { x, y, z: 88 };
-                m.name = `${width}×${length}mm`;
-            } else if (m && m.category === 'custom') {
-                const x = parseFloat(document.getElementById('w-custom-travel-x')?.value) || 0;
-                const y = parseFloat(document.getElementById('w-custom-travel-y')?.value) || 0;
-                const z = parseFloat(document.getElementById('w-custom-travel-z')?.value) || 0;
-                m.travel = { x, y, z };
-                // Store custom drive config for later use
-                m.customDrives = { ...this.wizardData.customDrives };
-                m.customBeltPitch = { ...this.wizardData.customBeltPitch };
-                m.customPulleyTeeth = { ...this.wizardData.customPulleyTeeth };
-                m.customLead = { ...this.wizardData.customLead };
-                m.customEndstops = { ...this.wizardData.customEndstops };
-            }
+            this._captureMachineStep();
         }
         if (this.wizardStep === 2) {
             if (this.wizardData.probeType === 'custom') {
@@ -946,6 +956,28 @@ export class ConfigWizard {
         }
         this.wizardStep++;
         this._renderWizardStep();
+    }
+
+    _captureMachineStep() {
+        const m = this.wizardData.machine;
+        if (m && m.id === 'z2-custom') {
+            const width = parseFloat(document.getElementById('w-custom-width')?.value) || 500;
+            const length = parseFloat(document.getElementById('w-custom-length')?.value) || 500;
+            this.wizardData.customWidth = width;
+            this.wizardData.customLength = length;
+            m.travel = { x: Math.max(0, width - 230), y: Math.max(0, length - 230), z: 88 };
+            m.name = `${width}×${length}mm`;
+        } else if (m && m.category === 'custom') {
+            const x = parseFloat(document.getElementById('w-custom-travel-x')?.value) || 0;
+            const y = parseFloat(document.getElementById('w-custom-travel-y')?.value) || 0;
+            const z = parseFloat(document.getElementById('w-custom-travel-z')?.value) || 0;
+            m.travel = { x, y, z };
+            m.customDrives = { ...this.wizardData.customDrives };
+            m.customBeltPitch = { ...this.wizardData.customBeltPitch };
+            m.customPulleyTeeth = { ...this.wizardData.customPulleyTeeth };
+            m.customLead = { ...this.wizardData.customLead };
+            m.customEndstops = { ...this.wizardData.customEndstops };
+        }
     }
 
     _prevStep() {
@@ -1008,6 +1040,10 @@ export class ConfigWizard {
 
             // Enable probe ($6=1)
             await this.ws.sendCommand('$6=1');
+            await this._sleep(15);
+
+            // Apply Ooznest controller defaults
+            await this.ws.sendCommand('$22=7');
             await this._sleep(15);
 
             // Apply modbus protocol $396 setting

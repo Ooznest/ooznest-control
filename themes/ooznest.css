@@ -1352,6 +1352,23 @@ select {
     font-size: 12px;
 }
 
+.wizard-stepper--config {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wizard-stepper--config .wizard-stepper__row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+}
+
+.wizard-stepper--config .wizard-stepper__item.is-row-end::after {
+    content: none;
+}
+
 @media screen and (max-width: 1159px) {
     .wizard-stepper__circle {
         width: 28px;

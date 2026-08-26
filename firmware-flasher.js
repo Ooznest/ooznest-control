@@ -102,20 +102,21 @@ export class FirmwareFlasher {
         }
 
         html += this._renderStepIndicator();
-        html += '<p class="text-sm text-grey mb-4">Select the firmware to install:</p>';
-        html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
-        html += '<div>';
-        FIRMWARE_OPTIONS.forEach((option) => {
-            const sel = this.selectedFirmware === option.key;
-            const lockedClass = this.selectionLocked
-                ? (sel ? 'cursor-default' : 'cursor-not-allowed opacity-50')
-                : 'cursor-pointer';
-            html += `<div class="firmware-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors ${lockedClass}" data-value="${option.key}">`;
-            html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-            html += `<span class="config-filter-choice__label">${option.label}</span>`;
-            html += '</div>';
-        });
-        html += '</div></div>';
+        if (this.selectionLocked) {
+            html += `<p class="text-sm text-grey mb-4">Flashing firmware for <strong>${this._getSelectedFirmwareLabel()}</strong>.</p>`;
+        } else {
+            html += '<p class="text-sm text-grey mb-4">Select the firmware to install:</p>';
+            html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
+            html += '<div>';
+            FIRMWARE_OPTIONS.forEach((option) => {
+                const sel = this.selectedFirmware === option.key;
+                html += `<div class="firmware-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${option.key}">`;
+                html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
+                html += `<span class="config-filter-choice__label">${option.label}</span>`;
+                html += '</div>';
+            });
+            html += '</div></div>';
+        }
 
         html += '<div class="mt-4 bg-white rounded-xl border border-grey-light overflow-hidden">';
         html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center justify-between gap-4">';
