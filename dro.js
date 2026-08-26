@@ -135,7 +135,7 @@ export class DROHandler {
         // Step Options
         const select = document.getElementById('stepSize');
         if (select) {
-            const mmSteps = [0.1, 1, 10, 100];
+            const mmSteps = [0.1, 1, 5, 10, 100];
             const inSteps = [0.001, 0.01, 0.1, 1];
             const steps = this.isMm ? mmSteps : inSteps;
             const unit = this.isMm ? 'mm' : 'in';

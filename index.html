@@ -1736,6 +1736,9 @@
                                     <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.calibration.showModal()">
                                         <i data-lucide="ruler" ></i> Calibration
                                     </button>
+                                    <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.gamepadController?.showSettings()">
+                                        <i data-lucide="gamepad-2" ></i> Gamepad
+                                    </button>
                                     <button class="btn btn-secondary flex-1"
                                         onclick="window.grblSettings.fetchSettings()">
                                         <i data-lucide="refresh-cw" ></i> Refresh
@@ -3165,6 +3168,7 @@
         import { initializeApp } from './init.js';
         import { SpoilboardGridHandler } from './spoilboard-grid.js';
         import { BowlCutter } from './tools/bowl-cutter.js';
+        import { GamepadController } from './gamepad.js';
         import './modal.js';
 
         // Import new modules
@@ -3267,6 +3271,9 @@
             const droHandler = new DROHandler(ws, window.term, store);
             window.droHandler = droHandler;
             window.dro = droHandler;
+
+            const gamepadController = new GamepadController(ws, store);
+            window.gamepadController = gamepadController;
 
             const grblSettings = new GrblSettings(ws, window.term);
             window.grblSettings = grblSettings;
@@ -4174,6 +4181,19 @@
             <div id="firmware-flasher-footer" class="oz-modal__footer oz-modal__footer--actions hidden"></div>
         </div>
     </div>
+
+    <div id="gamepad-settings-overlay" class="oz-modal isolate hidden z-[100] modal-radial-overlay">
+        <div class="oz-modal__dialog w-full max-w-2xl" data-modal-panel>
+            <div class="oz-modal__header">
+                <h3><i data-lucide="gamepad-2"></i><span>Gamepad Settings</span></h3>
+                <button type="button" data-modal-close><i data-lucide="x" ></i></button>
+            </div>
+            <div id="gamepad-settings-body" class="oz-modal__body"></div>
+            <div id="gamepad-settings-footer" class="oz-modal__footer oz-modal__footer--actions hidden"></div>
+        </div>
+    </div>
+
+    <div id="gamepad-increment-overlay" aria-live="polite"></div>
 
     <!-- Toast Container -->
     <div id="toast-container"></div>

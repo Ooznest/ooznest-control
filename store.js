@@ -14,6 +14,17 @@ export class AppStore {
                 step: 10,
                 feed: 1000
             },
+            gamepad: {
+                increment: 1,
+                mappings: {
+                    a: 'none',
+                    b: 'none',
+                    x: 'none',
+                    y: 'none',
+                    select: 'feed-hold',
+                    start: 'cycle-start'
+                }
+            },
             probe: {
                 toolDiameter: 6.0,
                 plateThickness: 5,
