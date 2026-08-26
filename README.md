@@ -1,7 +1,7 @@
 # Ooznest Control
 
 [![Cross-Platform Builds](https://github.com/ooznest/ooznest-control/actions/workflows/cross-platform-builds.yml/badge.svg)](https://github.com/ooznest/ooznest-control/actions/workflows/cross-platform-builds.yml)
-[![GitHub Pages](https://github.com/ooznest/ooznest-control/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/ooznest/ooznest-control/actions/workflows/pages/pages-build-deployment)
+[![GitHub Pages](https://github.com/ooznest/ooznest-control/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/ooznest/ooznest-control/actions/workflows/deploy-pages.yml)
 
 A modern, cross-platform control interface for **grblHAL CNC controllers** — primarily designed for the **Ooznest WorkBee Z2** running the **Ooznest Motion Control Core**.
 
