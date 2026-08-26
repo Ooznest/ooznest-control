@@ -620,7 +620,7 @@ export class ConfigWizard {
 
         // Description
         if (selected === 'ooznest') {
-            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Ooznest XYZ Probe: thickness 10mm, XY offset 10mm. These will be set automatically in your probe settings.</p>';
+            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Ooznest XYZ Probe: thickness 5mm, XY offset 10mm. These will be set automatically in your probe settings.</p>';
         } else if (selected === 'custom') {
             html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Enter your custom probe plate dimensions above.</p>';
         } else {
