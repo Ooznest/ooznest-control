@@ -1,9 +1,10 @@
 import { registerModal } from './modal.js';
 
 const DEAD_ZONE = 0.25;
-// AltMill-class acceleration can follow the low end of GRBL's recommended
-// 25–60 ms joystick segment range, keeping the motion fluid and responsive.
+// GRBL recommends a 25–60 ms joystick block. Small blocks keep direction
+// changes responsive, while the scheduler below keeps a short planner runway.
 const SEGMENT_MS = 25;
+const PLANNER_TARGET_MS = 300;
 const INCREMENTS_MM = [0.1, 1, 5, 10];
 
 const BUTTONS = [
@@ -41,7 +42,8 @@ export class GamepadController {
         this.initialising = true;
         this.wasJogging = false;
         this.waitingForOk = false;
-        this.nextSegmentAt = 0;
+        this.plannerUntil = 0;
+        this.latestJog = null;
         this.previousButtons = [];
         this.incrementIndex = this._currentIncrementIndex();
         this.raf = null;
@@ -101,7 +103,13 @@ export class GamepadController {
 
     _handleLine(line) {
         const value = String(line || '').trim().toLowerCase();
-        if (value === 'ok' || value.startsWith('error:')) this.waitingForOk = false;
+        if (value === 'ok') {
+            this.waitingForOk = false;
+            this._queueJogIfNeeded(performance.now());
+        } else if (value.startsWith('error:')) {
+            this.waitingForOk = false;
+            this.stopJog();
+        }
     }
 
     _loop() {
@@ -137,14 +145,24 @@ export class GamepadController {
         const activeAxes = Object.entries(vector).filter(([, value]) => Math.abs(value) > 0);
 
         if (!activeAxes.length) {
+            this.latestJog = null;
             this.stopJog();
             return;
         }
 
         const magnitude = Math.min(1, Math.hypot(...activeAxes.map(([, value]) => value)));
         const normalised = Object.fromEntries(activeAxes.map(([axis, value]) => [axis, value / magnitude]));
-        const now = performance.now();
-        if (this.waitingForOk || now < this.nextSegmentAt) return;
+        this.latestJog = { normalised, magnitude };
+        this._queueJogIfNeeded(performance.now());
+    }
+
+    _queueJogIfNeeded(now) {
+        if (!this.ws?.isConnected || !this.latestJog || this.waitingForOk) return;
+
+        const queuedMs = Math.max(0, this.plannerUntil - now);
+        if (queuedMs >= PLANNER_TARGET_MS) return;
+
+        const { normalised, magnitude } = this.latestJog;
 
         // The trigger-selected increment also acts as a precision scale for sticks:
         // 10 mm = full speed, 1 mm = 10%, 5 mm = 50%, and 0.1 mm = 1%.
@@ -157,7 +175,7 @@ export class GamepadController {
             .join(' ');
 
         this.waitingForOk = true;
-        this.nextSegmentAt = now + SEGMENT_MS;
+        this.plannerUntil = Math.max(this.plannerUntil, now) + SEGMENT_MS;
         this.wasJogging = true;
         this.ws.sendCommand(`$J=G91 G21 ${words} F${feed.toFixed(0)}`).catch(() => {
             this.waitingForOk = false;
@@ -168,7 +186,8 @@ export class GamepadController {
         if (!this.wasJogging) return;
         this.wasJogging = false;
         this.waitingForOk = false;
-        this.nextSegmentAt = 0;
+        this.plannerUntil = 0;
+        this.latestJog = null;
         if (this.ws?.isConnected) this.ws.sendRealtime('\x85');
     }
 
