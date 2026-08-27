@@ -8,11 +8,13 @@ const PLANNER_TARGET_MS = 300;
 const INCREMENTS_MM = [0.1, 1, 5, 10];
 
 const BUTTONS = [
-    { id: 'a', index: 0, label: 'A' },
-    { id: 'b', index: 1, label: 'B' },
     { id: 'x', index: 2, label: 'X' },
     { id: 'y', index: 3, label: 'Y' },
-    { id: 'select', index: 8, label: 'Select' },
+    { id: 'a', index: 0, label: 'A' },
+    { id: 'b', index: 1, label: 'B' },
+    { id: 'left-button', index: 4, label: 'LB' },
+    { id: 'right-button', index: 5, label: 'RB' },
+    { id: 'select', index: 8, label: 'Back' },
     { id: 'start', index: 9, label: 'Start' }
 ];
 
@@ -51,9 +53,11 @@ export class GamepadController {
         this._onConnected = (event) => this._handleConnected(event.gamepad, !this.initialising);
         this._onDisconnected = (event) => this._handleDisconnected(event.gamepad);
         this._onLine = (line) => this._handleLine(line);
+        this._onResize = () => this._positionGuideOverlay();
 
         window.addEventListener('gamepadconnected', this._onConnected);
         window.addEventListener('gamepaddisconnected', this._onDisconnected);
+        window.addEventListener('resize', this._onResize);
         window.addEventListener('blur', () => this.stopJog());
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) this.stopJog();
@@ -273,7 +277,7 @@ export class GamepadController {
     }
 
     _mapping(button) {
-        return this.store.get(`gamepad.mappings.${button}`) || (button === 'start' ? 'cycle-start' : button === 'select' ? 'feed-hold' : 'none');
+        return this.store.get(`gamepad.mappings.${button}`) || 'none';
     }
 
     _runAction(action) {
@@ -308,41 +312,132 @@ export class GamepadController {
         if (!body || !footer) return;
         const gamepad = this._getActiveGamepad();
         const status = gamepad
-            ? `<span class="text-green-600 font-bold">Connected: ${this._escape(gamepad.id)}</span>`
-            : '<span class="text-grey">No controller detected. Connect one and press any button.</span>';
+            ? `<i data-lucide="circle-check"></i><span>Connected: ${this._escape(gamepad.id)}</span>`
+            : '<i data-lucide="gamepad-2"></i><span>No controller detected. Connect one and press any button.</span>';
         const mappingRows = BUTTONS.map((button) => {
             const selected = this._mapping(button.id);
             const options = ACTIONS.map((action) => `<option value="${action.value}" ${action.value === selected ? 'selected' : ''}>${action.label}</option>`).join('');
-            return `<label class="flex items-center gap-3 rounded-lg border border-grey-light bg-white px-3 py-2">
-                <span class="w-14 text-xs font-bold text-secondary-dark">${button.label}</span>
-                <select data-gamepad-mapping="${button.id}" class="ooznest-field input-field flex-1 text-xs">${options}</select>
+            const primaryRow = ['x', 'y', 'a', 'b'].indexOf(button.id);
+            const column = primaryRow === -1 ? 'secondary' : 'primary';
+            const row = primaryRow === -1 ? BUTTONS.slice(4).findIndex((item) => item.id === button.id) : primaryRow;
+            return `<label class="gamepad-mapping gamepad-mapping--${column}" style="grid-row: ${row + 1}">
+                <span class="gamepad-mapping__button gamepad-mapping__button--${button.id}">${button.label}</span>
+                <select aria-label="${button.label} button action" data-gamepad-mapping="${button.id}" class="ooznest-field input-field flex-1">${options}</select>
             </label>`;
         }).join('');
 
         body.innerHTML = `
-            <div class="space-y-5">
-                <div class="rounded-lg border border-grey-light bg-grey-bg/50 px-4 py-3 text-xs">${status}</div>
-                <div>
-                    <h4 class="text-xs font-black uppercase tracking-wider text-grey-dark">Jog controls</h4>
-                    <div class="mt-3 grid grid-cols-1 gap-2 text-xs text-grey-dark sm:grid-cols-2">
-                        <div class="rounded-lg border border-grey-light bg-white p-3"><strong>Left stick</strong><br>Continuous X / Y jog</div>
-                        <div class="rounded-lg border border-grey-light bg-white p-3"><strong>Right stick</strong><br>Continuous Z / A jog</div>
-                        <div class="rounded-lg border border-grey-light bg-white p-3"><strong>D-pad</strong><br>Incremental X / Y jog</div>
-                        <div class="rounded-lg border border-grey-light bg-white p-3"><strong>Triggers</strong><br>Change increment and stick precision: 0.1, 1, 5, 10 mm</div>
+            <div class="space-y-3">
+                <div class="gamepad-status">${status}</div>
+                <div class="gamepad-guide" aria-label="Gamepad control guide">
+                    <img class="gamepad-guide__image" src="themes/GAMEPAD.svg" alt="Xbox controller showing gamepad control locations">
+                    <svg class="gamepad-guide__leaders" aria-hidden="true"></svg>
+                    <div class="gamepad-callout gamepad-callout--compact gamepad-callout--lb">
+                        <span class="gamepad-callout__icon"><i data-lucide="chevrons-left"></i></span><span>LB</span>
                     </div>
-                    <p class="mt-3 text-[10px] text-grey">Analog sticks use a generous centre dead zone and scale speed smoothly as they are pushed further out.</p>
+                    <div class="gamepad-callout gamepad-callout--compact gamepad-callout--rb">
+                        <span class="gamepad-callout__icon"><i data-lucide="chevrons-right"></i></span><span>RB</span>
+                    </div>
+                    <div class="gamepad-callout gamepad-callout--compact gamepad-callout--xyab">
+                        <span class="gamepad-callout__icon"><i data-lucide="circle-dot"></i></span><span>A / B / X / Y</span>
+                    </div>
+                    <div class="gamepad-callout gamepad-callout--compact gamepad-callout--key gamepad-callout--select">
+                        <span class="gamepad-callout__icon"><i data-lucide="corner-up-left"></i></span><span>Back</span>
+                    </div>
+                    <div class="gamepad-callout gamepad-callout--compact gamepad-callout--key gamepad-callout--start">
+                        <span class="gamepad-callout__icon"><i data-lucide="play"></i></span><span>Start</span>
+                    </div>
+                    <div class="gamepad-callout gamepad-callout--lt">
+                        <span class="gamepad-callout__icon"><i data-lucide="chevron-down"></i></span>
+                        <span class="gamepad-callout__text">Left trigger<small>Lower increment / speed</small></span>
+                    </div>
+                    <div class="gamepad-callout gamepad-callout--rt">
+                        <span class="gamepad-callout__icon"><i data-lucide="chevron-up"></i></span>
+                        <span class="gamepad-callout__text">Right trigger<small>Raise increment / speed</small></span>
+                    </div>
+                    <div class="gamepad-callout gamepad-callout--xy">
+                        <span class="gamepad-callout__icon"><i data-lucide="move"></i></span>
+                        <span class="gamepad-callout__text">Left stick<small>Continuous X / Y</small></span>
+                    </div>
+                    <div class="gamepad-callout gamepad-callout--dpad">
+                        <span class="gamepad-callout__icon"><i data-lucide="crosshair"></i></span>
+                        <span class="gamepad-callout__text">D-pad<small>Incremental X / Y</small></span>
+                    </div>
+                    <div class="gamepad-callout gamepad-callout--z">
+                        <span class="gamepad-callout__icon"><i data-lucide="move-vertical"></i></span>
+                        <span class="gamepad-callout__text">Right stick<small>Continuous Z / A</small></span>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="text-xs font-black uppercase tracking-wider text-grey-dark">Button mappings</h4>
-                    <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">${mappingRows}</div>
+                <div class="gamepad-customisation">
+                    <div class="gamepad-customisation__header">
+                        <h4>Button customisation</h4>
+                    </div>
+                    <div class="gamepad-mappings">${mappingRows}</div>
                 </div>
             </div>`;
-        footer.innerHTML = '<button type="button" class="btn btn-primary" data-modal-close>Done</button>';
+        footer.innerHTML = '<button type="button" class="btn btn-primary" data-modal-close>Apply</button>';
         footer.classList.remove('hidden');
         body.querySelectorAll('[data-gamepad-mapping]').forEach((select) => {
             select.addEventListener('change', () => this.store.set(`gamepad.mappings.${select.dataset.gamepadMapping}`, select.value));
         });
         if (window.lucide) window.lucide.createIcons();
+        window.requestAnimationFrame(() => this._positionGuideOverlay());
+    }
+
+    _positionGuideOverlay() {
+        const guide = document.querySelector('.gamepad-guide');
+        const image = guide?.querySelector('.gamepad-guide__image');
+        const leaders = guide?.querySelector('.gamepad-guide__leaders');
+        if (!guide || !image || !leaders || !this.modal?.isOpen()) return;
+
+        const guideBox = guide.getBoundingClientRect();
+        const imageBox = image.getBoundingClientRect();
+        if (!guideBox.width || !imageBox.width) return;
+
+        const svgWidth = 132.29166;
+        const svgHeight = 87.841664;
+        const sourceAspect = 500 / 332;
+        const boxAspect = imageBox.width / imageBox.height;
+        const drawnWidth = boxAspect > sourceAspect ? imageBox.height * sourceAspect : imageBox.width;
+        const drawnHeight = boxAspect > sourceAspect ? imageBox.height : imageBox.width / sourceAspect;
+        const drawnLeft = imageBox.left + (imageBox.width - drawnWidth) / 2;
+        const drawnTop = imageBox.top + (imageBox.height - drawnHeight) / 2;
+        const point = (x, y) => ({
+            x: drawnLeft - guideBox.left + (x / svgWidth) * drawnWidth,
+            y: drawnTop - guideBox.top + (y / svgHeight) * drawnHeight
+        });
+
+        const targets = {
+            lt: point(30.5, 2.6),
+            rt: point(101.3, 2.6),
+            xy: point(26.5, 30.5),
+            dpad: point(43.9, 49.5),
+            z: point(82.7, 50.9),
+            lb: point(22, 8.7),
+            rb: point(112, 8.7),
+            select: point(50.6, 30.15),
+            start: point(79.8, 30.15),
+            xyab: point(100.37, 28.46)
+        };
+        const side = {
+            lt: 'right', rt: 'left', xy: 'right', dpad: 'right', z: 'left',
+            lb: 'right', rb: 'left', xyab: 'left',
+            select: 'bottom', start: 'bottom'
+        };
+        leaders.setAttribute('viewBox', `0 0 ${guideBox.width} ${guideBox.height}`);
+        leaders.innerHTML = Object.entries(targets).map(([key, target]) => {
+            const label = guide.querySelector(`.gamepad-callout--${key}`);
+            if (!label) return '';
+            const labelBox = label.getBoundingClientRect();
+            const direction = side[key];
+            const start = direction === 'bottom'
+                ? { x: labelBox.left - guideBox.left + labelBox.width / 2, y: labelBox.bottom - guideBox.top }
+                : { x: (direction === 'right' ? labelBox.right : labelBox.left) - guideBox.left, y: labelBox.top - guideBox.top + labelBox.height / 2 };
+            const elbow = direction === 'bottom'
+                ? { x: start.x, y: start.y + (target.y - start.y) * 0.45 }
+                : { x: start.x + (target.x - start.x) * 0.48, y: start.y };
+            return `<polyline points="${start.x},${start.y} ${elbow.x},${elbow.y} ${target.x},${target.y}"></polyline>`;
+        }).join('');
     }
 
     _renderStatus() {
