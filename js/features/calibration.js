@@ -1,5 +1,5 @@
-import { makeLine, getTextWidth, drawTextString } from './gcode-draw.js';
-import { registerModal } from './modal.js';
+import { makeLine, getTextWidth, drawTextString } from '../viewer/gcode-draw.js';
+import { registerModal } from '../ui/modal.js';
 
 export class CalibrationHandler {
     constructor(ws, term, store) {

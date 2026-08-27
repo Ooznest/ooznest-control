@@ -1,5 +1,5 @@
 import { GrblFlowControl } from './grbl-flow-control.js';
-import { registerModal } from './modal.js';
+import { registerModal } from '../ui/modal.js';
 
 export class ConnectionManager {
     constructor(webSerial) {

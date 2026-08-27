@@ -1,4 +1,4 @@
-import { registerModal } from './modal.js';
+import { registerModal } from '../../ui/modal.js';
 
 /* --- START OF FILE tools.js --- */
 

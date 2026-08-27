@@ -936,7 +936,7 @@ export class GCodeViewer {
 
     sendToWorker(data, successMessage = 'G-code parsed') {
         this.currentGCode = data; // Store for tool parsing
-        const worker = new Worker('gcview.worker.js', { type: 'module' });
+        const worker = new Worker(new URL('./gcview.worker.js', import.meta.url), { type: 'module' });
         worker.onmessage = (msg) => {
             const payload = msg.data;
             if (payload.progress !== undefined) return;

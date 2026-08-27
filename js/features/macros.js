@@ -1,4 +1,4 @@
-import { registerModal } from './modal.js';
+import { registerModal } from '../ui/modal.js';
 
 export class MacroHandler {
     constructor(ws, term) {

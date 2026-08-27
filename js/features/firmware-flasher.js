@@ -1,5 +1,5 @@
-import { registerModal } from './modal.js';
-import { ESPLoader, Transport, ClassicReset, HardReset, UsbJtagSerialReset } from './vendor/esptool-js.bundle.js';
+import { registerModal } from '../ui/modal.js';
+import { ESPLoader, Transport, ClassicReset, HardReset, UsbJtagSerialReset } from '../../vendor/esptool-js.bundle.js';
 
 const BOOTLOADER_COMMAND = '$bootloader';
 const BOOTLOADER_MESSAGE = '[MSG:Warning: Entering ESP32 Bootloader]';

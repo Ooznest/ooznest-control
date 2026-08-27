@@ -1,4 +1,4 @@
-import { registerModal } from './modal.js';
+import { registerModal } from '../ui/modal.js';
 
 const DEAD_ZONE = 0.25;
 // GRBL recommends a 25–60 ms joystick block. Small blocks keep direction

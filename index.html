@@ -3148,38 +3148,38 @@
 
     <script src="vendor/clipper.js"></script>
     <script type="module">
-        import { WebSerial } from './webserial.js';
-        import { GCodeViewer } from './3dview.js';
-        import { ProbeHandler } from './probe.js?v=20260710';
-        import { SDCardHandler } from './sdcard.js?v=20260721a';
-        import { AlarmsAndErrors } from './alarms_and_errors.js';
-        import { DROHandler } from './dro.js';
-        import { GrblSettings } from './grbl_settings.js';
-        import { AppStore } from './store.js';
-        import { SurfacingHandler } from './surfacing.js';
-        import { MacroHandler } from './macros.js';
-        import { ToolsHandler } from './tools.js';
-        import { TroubleshootingHandler } from './troubleshooting.js';
-        import { TroubleshootingInfoView } from './troubleshooting-info.js';
-        import { CalibrationHandler } from './calibration.js';
-        import { ConfigWizard } from './config-wizard.js';
-        import { FirmwareFlasher } from './firmware-flasher.js';
-        import { GCodeEditor } from './editor.js';
-        import { initializeApp } from './init.js';
-        import { SpoilboardGridHandler } from './spoilboard-grid.js';
-        import { BowlCutter } from './tools/bowl-cutter.js';
-        import { GamepadController } from './gamepad.js';
-        import './modal.js';
+        import { WebSerial } from './js/machine/webserial.js';
+        import { GCodeViewer } from './js/viewer/3dview.js';
+        import { ProbeHandler } from './js/machine/probe.js?v=20260710';
+        import { SDCardHandler } from './js/features/sdcard.js?v=20260721a';
+        import { AlarmsAndErrors } from './js/ui/alarms_and_errors.js';
+        import { DROHandler } from './js/machine/dro.js';
+        import { GrblSettings } from './js/machine/grbl_settings.js';
+        import { AppStore } from './js/core/store.js';
+        import { SurfacingHandler } from './js/features/tools/surfacing.js';
+        import { MacroHandler } from './js/features/macros.js';
+        import { ToolsHandler } from './js/features/tools/tools.js';
+        import { TroubleshootingHandler } from './js/ui/troubleshooting.js';
+        import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js';
+        import { CalibrationHandler } from './js/features/calibration.js';
+        import { ConfigWizard } from './js/features/config-wizard.js';
+        import { FirmwareFlasher } from './js/features/firmware-flasher.js';
+        import { GCodeEditor } from './js/editor/editor.js';
+        import { initializeApp } from './js/core/init.js';
+        import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
+        import { BowlCutter } from './js/features/tools/bowl-cutter.js';
+        import { GamepadController } from './js/features/gamepad.js';
+        import './js/ui/modal.js';
 
         // Import new modules
-        import './ui.js';
-        import './job-control.js';
-        import './jogging.js';
-        import './console.js?v=2';
-        import './editor-integration.js';
-        import './camera-controls.js';
-        import './line-processor.js';
-        import { ConnectionManager } from './connection-manager.js';
+        import './js/ui/ui.js';
+        import './js/features/job-control.js';
+        import './js/machine/jogging.js';
+        import './js/ui/console.js?v=2';
+        import './js/editor/editor-integration.js';
+        import './js/ui/camera-controls.js';
+        import './js/machine/line-processor.js';
+        import { ConnectionManager } from './js/machine/connection-manager.js';
 
         // Globals
         const webSerial = new WebSerial();

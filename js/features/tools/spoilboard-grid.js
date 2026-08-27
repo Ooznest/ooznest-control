@@ -1,4 +1,4 @@
-import { makeLine, getTextWidth, drawTextString } from './gcode-draw.js';
+import { makeLine, getTextWidth, drawTextString } from '../../viewer/gcode-draw.js';
 
 export class SpoilboardGridHandler {
     constructor(ws, term, store) {
