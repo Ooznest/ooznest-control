@@ -96,6 +96,12 @@ class LineProcessor {
 
         // Options (homing configuration)
         if (line.startsWith('[OPT:')) {
+            // [OPT:] is also part of the extended $I+ response. Preserve it in
+            // the raw troubleshooting capture while still updating the viewer.
+            if (window.configWizard?._collectingVer) {
+                window.configWizard._verLines.push(line);
+                window.configWizard.optInfo = line;
+            }
             const optString = line.split(':')[1].split(',')[0];
             if (optString.includes('Z')) {
                 console.log("Homing Force Origin (Positive Space) detected");

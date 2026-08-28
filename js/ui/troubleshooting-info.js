@@ -31,12 +31,14 @@ export class TroubleshootingInfoView {
     _getFirmwareInfo() {
         const wizard = window.configWizard;
         const verInfo = wizard?.verInfo || null;
+        const update = window.firmwareVersionChecker?.getStatus?.() || null;
         return {
             version: verInfo?.version || 'Unknown',
             machineConfig: verInfo?.configName || 'None',
             decodedConfig: wizard?._decodeMachineConfig?.(verInfo?.configName) || null,
             board: wizard?.boardInfo || null,
-            options: wizard?.optInfo ? wizard.optInfo.slice(1, -1) : null
+            options: wizard?.optInfo ? wizard.optInfo.slice(1, -1) : null,
+            update
         };
     }
 
@@ -96,6 +98,70 @@ export class TroubleshootingInfoView {
             if (mask === null || mask === undefined) return `${axis} Axis: Unknown`;
             return `${axis} Axis: ${((mask >> index) & 1) ? 'HOMED' : 'Not homed'}`;
         });
+    }
+
+    _getRawBuildInfoLines() {
+        const lines = window.configWizard?._verLines || [];
+        return lines.length ? [...lines] : [];
+    }
+
+    _getPnLines() {
+        const pins = window.droHandler?.inputPins ?? window.troubleshooting?.lastPins;
+        return [`Pn:${pins || '(no active input signals)'}`];
+    }
+
+    _formatRelativeTime(timestamp) {
+        const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} min ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hr ago`;
+        return `${Math.floor(hours / 24)} days ago`;
+    }
+
+    _getSessionEventLines() {
+        const history = window.reporter?.getSessionHistory?.() || [];
+        return history.map(event => `${this._formatRelativeTime(event.timestamp)} — ${event.type} ${event.code}: ${event.description}`);
+    }
+
+    _getSettingChangeHistoryLines() {
+        const history = window.grblSettings?.getSettingChangeHistory?.() || [];
+        return history.map(change => {
+            const label = change.label && change.label !== 'Unknown setting' ? ` (${change.label})` : '';
+            return `${this._formatRelativeTime(change.timestamp)} — $${change.id}${label}: ${change.from} → ${change.to}`;
+        });
+    }
+
+    _getLimitSwitchLines() {
+        const trouble = window.troubleshooting;
+        if (!trouble) return [];
+
+        const axes = ['X', 'Y', 'Z'];
+        if (trouble.hasAAxis?.()) axes.push('A');
+        const realtimePins = trouble.lastPins;
+        const lines = axes.map(axis => {
+            if (typeof realtimePins !== 'string') return `${axis} Limit: Unknown`;
+            return `${axis} Limit: ${realtimePins.includes(axis) ? 'TRIGGERED' : 'Not triggered'}`;
+        });
+
+        const physicalLimits = (trouble.pinStateDIN || []).map(pin => {
+            const definition = trouble.inputDefsByPin?.[pin.pin] || trouble.pinDefsByPin?.[pin.pin];
+            const label = definition?.label || pin.name || `P${pin.pin}`;
+            const functionName = definition?.func || '';
+            return { pin, label, functionName };
+        }).filter(({ label, functionName, pin }) => /(?:limit|home)/i.test(`${label} ${functionName} ${pin.name || ''}`));
+
+        if (physicalLimits.length) {
+            lines.push('');
+            lines.push('Physical limit inputs:');
+            physicalLimits.forEach(({ pin, label }) => {
+                const state = pin.state === '1' ? 'TRIGGERED' : pin.state === '0' ? 'Not triggered' : pin.state || 'Unknown';
+                lines.push(`${label} (P${pin.pin}): ${state}`);
+            });
+        }
+
+        return lines;
     }
 
     _getBitmaskLabels(setting) {
@@ -225,6 +291,11 @@ export class TroubleshootingInfoView {
             },
             computer,
             homing: this._getHomingLines(),
+            limitSwitches: this._getLimitSwitchLines(),
+            inputPins: this._getPnLines(),
+            rawBuildInfo: this._getRawBuildInfoLines(),
+            sessionEvents: this._getSessionEventLines(),
+            settingChangeHistory: this._getSettingChangeHistoryLines(),
             powerSupply: this._getPowerSupplyLines(),
             sdCard: this._getSdCardLines(),
             probeConfig: this._getProbeConfigLines(),
@@ -293,6 +364,11 @@ export class TroubleshootingInfoView {
             ...this._snapshotSectionLines('Scanner Ranges', scanRangeLines),
             ...this._snapshotSectionLines('WebUI Environment', snapshot.computer?.userAgent ? [snapshot.computer.userAgent] : []),
             ...this._snapshotSectionLines('Homing', snapshot.homing),
+            ...this._snapshotSectionLines('Limit Switches', snapshot.limitSwitches),
+            ...this._snapshotSectionLines('Live Input Signals (Pn)', snapshot.inputPins),
+            ...this._snapshotSectionLines('Full Controller Build Info ($I+)', snapshot.rawBuildInfo),
+            ...this._snapshotSectionLines('Session Alarm & Error History', snapshot.sessionEvents, 'No alarms or errors in this session.'),
+            ...this._snapshotSectionLines('GRBL Setting Change History', snapshot.settingChangeHistory, 'No locally recorded setting changes.'),
             ...this._snapshotSectionLines('Power Supply', snapshot.powerSupply),
             ...this._snapshotSectionLines('SD Card', snapshot.sdCard),
             ...this._snapshotSectionLines('Probe Config', snapshot.probeConfig),
@@ -347,8 +423,17 @@ export class TroubleshootingInfoView {
         html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
         html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
         html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Firmware</h3>';
+        if (firmware.update?.updateAvailable) {
+            html += '<span class="ml-auto rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">Newer available</span>';
+        }
         html += '</div><div class="p-4 space-y-2">';
         html += this._infoRow('Version', firmware.version);
+        if (firmware.update?.availableBuild) {
+            html += this._infoRow('Bundled firmware build', firmware.update.availableBuild);
+        }
+        if (firmware.update?.updateAvailable) {
+            html += '<button class="btn btn-primary w-full mt-2" onclick="window.firmwareFlasher?.showModal()"><i data-lucide="cpu"></i> Update now</button>';
+        }
         html += this._infoRow('Machine Config', firmware.machineConfig, `text-xs font-bold ${window.configWizard?._isUnconfigured?.(firmware.machineConfig) ? 'text-red-500' : 'text-secondary-dark'} text-right break-all`);
         html += firmware.decodedConfig ? `<div class="text-[10px] text-grey leading-relaxed">${this._escapeHtml(firmware.decodedConfig)}</div>` : '';
         html += this._infoRow('Board', firmware.board);
@@ -364,6 +449,10 @@ export class TroubleshootingInfoView {
         html += this._detailBlock('SD Card', sdCardLines);
         html += this._detailBlock('Probe Config', probeConfigLines);
         html += this._detailBlock('Macros', macroLines);
+        html += this._detailBlock('Live Input Signals (Pn)', this._getPnLines());
+        html += this._detailBlock('Full Controller Build Info ($I+)', this._getRawBuildInfoLines());
+        html += this._detailBlock('Session Alarm & Error History', this._getSessionEventLines(), 'No alarms or errors in this session.');
+        html += this._detailBlock('GRBL Setting Change History', this._getSettingChangeHistoryLines(), 'No locally recorded setting changes.');
         html += '</div></div>';
 
         html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
@@ -404,7 +493,7 @@ export class TroubleshootingInfoView {
             ? ''
             : `<div class="row"><div class="label">${this._escapeHtml(label)}</div><div class="value">${this._escapeHtml(value)}</div></div>`;
         const rows = items => `<div class="kv">${items.filter(Boolean).join('')}</div>`;
-        const pre = lines => `<pre>${this._escapeHtml(lines?.length ? lines.join('\n') : 'Not available yet.')}</pre>`;
+        const pre = (lines, emptyMessage = 'Not available yet.') => `<pre>${this._escapeHtml(lines?.length ? lines.join('\n') : emptyMessage)}</pre>`;
         const adapters = snapshot.computer?.adapters?.length
             ? snapshot.computer.adapters.map(adapter => `<div class="subcard">
                 <div><strong>${this._escapeHtml(adapter.name || 'Adapter')}</strong></div>
@@ -571,6 +660,11 @@ export class TroubleshootingInfoView {
             ${section('Scanner Ranges', pre(scanRanges))}
             ${section('WebUI Environment', pre(snapshot.computer?.userAgent ? [snapshot.computer.userAgent] : []))}
             ${section('Homing', pre(snapshot.homing))}
+            ${section('Limit Switches', pre(snapshot.limitSwitches))}
+            ${section('Live Input Signals (Pn)', pre(snapshot.inputPins))}
+            ${section('Full Controller Build Info ($I+)', pre(snapshot.rawBuildInfo))}
+            ${section('Session Alarm & Error History', pre(snapshot.sessionEvents, 'No alarms or errors in this session.'))}
+            ${section('GRBL Setting Change History', pre(snapshot.settingChangeHistory, 'No locally recorded setting changes.'))}
             ${section('Power Supply', pre(snapshot.powerSupply))}
             ${section('SD Card', pre(snapshot.sdCard))}
             ${section('Probe Config', pre(snapshot.probeConfig))}

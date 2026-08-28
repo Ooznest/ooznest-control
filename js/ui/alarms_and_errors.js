@@ -127,6 +127,7 @@ export class AlarmsAndErrors {
         // Track current active alarm
         this.currentAlarm = null;
         this.currentAlarmCode = null;
+        this.sessionHistory = [];
 
         // Initialize the DOM elements for the modal
         this.initModal();
@@ -138,11 +139,25 @@ export class AlarmsAndErrors {
                 if (this.currentAlarmCode !== newCode) {
                     this.currentAlarmCode = newCode;
                     this.currentAlarm = this.alarms[newCode] || 'Unknown Alarm';
+                    this._recordSessionEvent('Alarm', newCode, this.currentAlarm);
                     // Automatically trigger the Unlock Modal on startup or async status change
                     this.showModal('ALARM', newCode, this.currentAlarm);
                 }
             }
         });
+    }
+
+    _recordSessionEvent(type, code, description) {
+        const now = Date.now();
+        const previous = this.sessionHistory[0];
+        if (previous && previous.type === type && previous.code === code && now - previous.timestamp < 30000) return;
+
+        this.sessionHistory.unshift({ type, code, description, timestamp: now });
+        this.sessionHistory.splice(100);
+    }
+
+    getSessionHistory() {
+        return [...this.sessionHistory];
     }
 
     initModal() {
@@ -614,6 +629,8 @@ export class AlarmsAndErrors {
             const desc = this.errors[code] || "Unknown Error";
             const msg = desc;
 
+            this._recordSessionEvent('Error', code, desc);
+
             if (code !== '253') {
                 this.showModal('ERROR', code, msg);
             }
@@ -631,6 +648,7 @@ export class AlarmsAndErrors {
             // Track current alarm state
             this.currentAlarm = desc;
             this.currentAlarmCode = code;
+            this._recordSessionEvent('Alarm', code, desc);
 
             this.showModal('ALARM', code, msg);
             return `\x1b[33mAlarm ${code}: ${desc}\x1b[0m`;

@@ -209,6 +209,7 @@ function createObjectFromGCode(gcode) {
   let isUnitsMm = true;
   let totalDist = 0;
   let totalTime = 0;
+  let hasRotaryMotion = false;
   let relative = false;
   const segmentLengthStats = new Array(16).fill(0);
   const rapidGeo = new GrowableBuffer();
@@ -257,6 +258,7 @@ function createObjectFromGCode(gcode) {
   }
 
   function addSegment(p1, p2, args, parser) {
+    let arcPoints = null;
     if (p2.arc) {
       const v1 = new THREE.Vector3(p1.x, p1.y, p1.z);
       const v2 = new THREE.Vector3(p2.x, p2.y, p2.z);
@@ -274,41 +276,74 @@ function createObjectFromGCode(gcode) {
       } else {
         vArc = new THREE.Vector3(p2.arci, p2.arcj, p2.arck);
       }
-      const pts = drawArcFrom2PtsAndCenter(v1, v2, vArc, args);
-      let dSum = 0;
-      const startIdx = feedGeo.length / 3;
-      for (let i = 0; i < pts.length; i++) {
-        const pt = pts[i];
-        const prev = i === 0 ? p1 : pts[i - 1];
-        const d = Math.sqrt((pt.x - prev.x) ** 2 + (pt.y - prev.y) ** 2 + (pt.z - prev.z) ** 2);
-        dSum += d;
-        feedGeo.push(prev.x, prev.y, prev.z, pt.x, pt.y, pt.z);
-        feedTypes.push(2, 2);
+      arcPoints = drawArcFrom2PtsAndCenter(v1, v2, vArc, args);
+    }
+
+    const startA = p1.a || 0;
+    const endA = p2.a || 0;
+    const angleDelta = endA - startA;
+    const rotarySegments = Math.ceil(Math.abs(angleDelta) / 5);
+    const segments = arcPoints
+      ? Math.max(arcPoints.length, rotarySegments || 1)
+      : Math.max(1, rotarySegments || 1);
+    const isRapid = Boolean(p2.g0);
+    const buf = isRapid ? rapidGeo : feedGeo;
+    const startIdx = buf.length / 3;
+
+    // A is expressed in degrees. Rotate the programmed Y/Z point around the
+    // machine X axis, producing a true 3D helical path for simultaneous 4-axis jobs.
+    const startAngle = -startA * Math.PI / 180;
+    let prevX = p1.x;
+    let prevY = p1.y * Math.cos(startAngle) - p1.z * Math.sin(startAngle);
+    let prevZ = p1.y * Math.sin(startAngle) + p1.z * Math.cos(startAngle);
+    let dSum = 0;
+
+    if (Math.abs(angleDelta) > 0.001) hasRotaryMotion = true;
+
+    for (let i = 1; i <= segments; i++) {
+      const t = i / segments;
+      let rawX, rawY, rawZ;
+
+      if (arcPoints) {
+        const scaledIndex = t * arcPoints.length;
+        const index = Math.min(arcPoints.length - 1, Math.floor(scaledIndex));
+        const nextIndex = Math.min(arcPoints.length - 1, index + 1);
+        const localT = scaledIndex - index;
+        const first = arcPoints[index];
+        const second = arcPoints[nextIndex];
+        rawX = first.x + (second.x - first.x) * localT;
+        rawY = first.y + (second.y - first.y) * localT;
+        rawZ = first.z + (second.z - first.z) * localT;
+      } else {
+        rawX = p1.x + (p2.x - p1.x) * t;
+        rawY = p1.y + (p2.y - p1.y) * t;
+        rawZ = p1.z + (p2.z - p1.z) * t;
       }
+
+      const angle = -(startA + angleDelta * t) * Math.PI / 180;
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const nextY = rawY * cosA - rawZ * sinA;
+      const nextZ = rawY * sinA + rawZ * cosA;
+      const d = Math.sqrt((rawX - prevX) ** 2 + (nextY - prevY) ** 2 + (nextZ - prevZ) ** 2);
+
+      dSum += d;
+      buf.push(prevX, prevY, prevZ, rawX, nextY, nextZ);
+      if (!isRapid) feedTypes.push(arcPoints ? 2 : 1, 2);
+
+      prevX = rawX;
+      prevY = nextY;
+      prevZ = nextZ;
+    }
+
+    if (dSum > 0) {
       totalDist += dSum;
-      if (args.indx !== undefined) {
-        parser.lineMap[args.indx * 2] = startIdx;
-        parser.lineMap[args.indx * 2 + 1] = pts.length * 2;
-      }
       segmentLengthStats[sortSegmentIntoBin(dSum)]++;
-      totalTime += (dSum / (args.feedrate || 1000)) * 1.32;
-    } else {
-      const d = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2 + (p2.z - p1.z) ** 2);
-      if (d > 0) {
-        totalDist += d;
-        segmentLengthStats[sortSegmentIntoBin(d)]++;
-        totalTime += (d / (args.feedrate || 100)) * 1.32;
-      }
-      const buf = p2.g0 ? rapidGeo : feedGeo;
-      const startIdx = buf.length / 3;
-      buf.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
-      if (!p2.g0) {
-        feedTypes.push(1, 2);
-        if (args.indx !== undefined) {
-          parser.lineMap[args.indx * 2] = startIdx;
-          parser.lineMap[args.indx * 2 + 1] = 2;
-        }
-      }
+      totalTime += (dSum / (args.feedrate || (arcPoints ? 1000 : 100))) * 1.32;
+    }
+    if (!isRapid && args.indx !== undefined) {
+      parser.lineMap[args.indx * 2] = startIdx;
+      parser.lineMap[args.indx * 2 + 1] = segments * 2;
     }
   }
 
@@ -318,6 +353,7 @@ function createObjectFromGCode(gcode) {
         x: args.x !== undefined ? (relative ? lastLine.x + args.x : args.x) + offsetG92.x : lastLine.x,
         y: args.y !== undefined ? (relative ? lastLine.y + args.y : args.y) + offsetG92.y : lastLine.y,
         z: args.z !== undefined ? (relative ? lastLine.z + args.z : args.z) + offsetG92.z : lastLine.z,
+        a: args.a !== undefined ? (relative ? lastLine.a + args.a : args.a) : lastLine.a,
         g0: true
       };
       addSegment(lastLine, nl, args, gcp);
@@ -328,6 +364,7 @@ function createObjectFromGCode(gcode) {
         x: args.x !== undefined ? (relative ? lastLine.x + args.x : args.x) + offsetG92.x : lastLine.x,
         y: args.y !== undefined ? (relative ? lastLine.y + args.y : args.y) + offsetG92.y : lastLine.y,
         z: args.z !== undefined ? (relative ? lastLine.z + args.z : args.z) + offsetG92.z : lastLine.z,
+        a: args.a !== undefined ? (relative ? lastLine.a + args.a : args.a) : lastLine.a,
         g1: true
       };
       addSegment(lastLine, nl, args, gcp);
@@ -338,6 +375,7 @@ function createObjectFromGCode(gcode) {
         x: args.x !== undefined ? (relative ? lastLine.x + args.x : args.x) + offsetG92.x : lastLine.x,
         y: args.y !== undefined ? (relative ? lastLine.y + args.y : args.y) + offsetG92.y : lastLine.y,
         z: args.z !== undefined ? (relative ? lastLine.z + args.z : args.z) + offsetG92.z : lastLine.z,
+        a: args.a !== undefined ? (relative ? lastLine.a + args.a : args.a) : lastLine.a,
         arci: args.i !== undefined ? lastLine.x + args.i : lastLine.x,
         arcj: args.j !== undefined ? lastLine.y + args.j : lastLine.y,
         arck: args.k !== undefined ? lastLine.z + args.k : lastLine.z,
@@ -367,7 +405,7 @@ function createObjectFromGCode(gcode) {
     lineMap: parser.lineMap,
     extraObjects,
     inch: !isUnitsMm,
-    totalDist, totalTime, segmentLengthStats
+    totalDist, totalTime, segmentLengthStats, hasRotaryMotion
   };
 }
 

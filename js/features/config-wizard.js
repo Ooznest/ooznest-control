@@ -77,6 +77,7 @@ export class ConfigWizard {
         }
         if (!this._collectingVer) return false;
 
+        this._verLines.push(line);
         window.term.writeln(line);
         if (line.startsWith('[OPT:')) {
             this.optInfo = line;
@@ -147,6 +148,7 @@ export class ConfigWizard {
     _onVerComplete() {
         console.log('[ConfigWizard] _onVerComplete', this.verInfo);
         if (!this.verInfo) return;
+        window.firmwareVersionChecker?.setControllerVersion(this.verInfo.version);
         this.renderInfoTab();
         if (this._isUnconfigured(this.verInfo.configName) && !this.modal?.isOpen()) {
             setTimeout(() => {

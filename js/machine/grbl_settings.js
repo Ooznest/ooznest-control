@@ -7,6 +7,7 @@ export class GrblSettings {
         this.groups = {};       // Map: id -> { id, label, parentId }
         this.settings = {};     // Map: id -> { id, val, label, unit, type, format, min, max, groupId, desc }
         this.pendingChanges = {}; // Map: id -> newValue
+        this.settingChangeHistory = this._loadSettingChangeHistory();
 
         // UI State
         this.activeGroupId = null;
@@ -28,6 +29,47 @@ export class GrblSettings {
     syncEmptyState() {
         if (!this.tableContainer || this.hasLoadedData()) return;
         this.renderEmpty();
+    }
+
+    _loadSettingChangeHistory() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('ooznest_grbl_setting_history') || '[]');
+            return Array.isArray(saved) ? saved.slice(0, 100) : [];
+        } catch {
+            return [];
+        }
+    }
+
+    _saveSettingChangeHistory() {
+        try {
+            localStorage.setItem('ooznest_grbl_setting_history', JSON.stringify(this.settingChangeHistory));
+        } catch (error) {
+            console.warn('[GrblSettings] Unable to save setting change history:', error);
+        }
+    }
+
+    recordSentCommand(command) {
+        const match = String(command || '').trim().match(/^\$(\d+)=([^\s]+)$/);
+        if (!match) return;
+
+        const [, id, to] = match;
+        const setting = this.settings[id];
+        const from = setting?.val ?? 'Unknown';
+        if (String(from) === to) return;
+
+        this.settingChangeHistory.unshift({
+            id,
+            label: setting?.label || 'Unknown setting',
+            from: String(from),
+            to,
+            timestamp: Date.now()
+        });
+        this.settingChangeHistory.splice(100);
+        this._saveSettingChangeHistory();
+    }
+
+    getSettingChangeHistory() {
+        return [...this.settingChangeHistory];
     }
 
     // --- Commands ---

@@ -1731,18 +1731,15 @@
                                     <button class="btn btn-secondary flex-1" onclick="window.configWizard.showWizard()">
                                         <i data-lucide="wand" ></i> Wizard
                                     </button>
-                                    <button class="btn btn-secondary flex-1" onclick="window.firmwareFlasher.showModal()">
+                                    <button id="settings-firmware-button" class="btn btn-secondary flex-1" onclick="window.firmwareFlasher.showModal()">
                                         <i data-lucide="cpu" ></i> Firmware
+                                        <span id="settings-firmware-update-badge" class="hidden rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">New</span>
                                     </button>
                                     <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.calibration.showModal()">
                                         <i data-lucide="ruler" ></i> Calibration
                                     </button>
                                     <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.gamepadController?.showSettings()">
                                         <i data-lucide="gamepad-2" ></i> Gamepad
-                                    </button>
-                                    <button class="btn btn-secondary flex-1"
-                                        onclick="window.grblSettings.fetchSettings()">
-                                        <i data-lucide="refresh-cw" ></i> Refresh
                                     </button>
                                     <button class="btn btn-secondary flex-1" onclick="window.grblSettings.backup()">
                                         <i data-lucide="download" ></i> Backup
@@ -1753,6 +1750,11 @@
                                     </button>
                                     <input type="file" id="settings-restore-input" hidden
                                         onchange="window.grblSettings.restore(this.files[0])">
+
+                                    <button class="btn btn-secondary flex-1"
+                                        onclick="window.grblSettings.fetchSettings()">
+                                        <i data-lucide="refresh-cw" ></i> Refresh
+                                    </button>
 
                                     <button class="btn btn-primary flex-1 whitespace-nowrap" onclick="window.grblSettings.saveChanges()">
                                         <i data-lucide="save" ></i> Save
@@ -3150,7 +3152,7 @@
     <script src="vendor/clipper.js"></script>
     <script type="module">
         import { WebSerial } from './js/machine/webserial.js';
-        import { GCodeViewer } from './js/viewer/3dview.js';
+        import { GCodeViewer } from './js/viewer/3dview.js?v=20260828a';
         import { ProbeHandler } from './js/machine/probe.js?v=20260710';
         import { SDCardHandler } from './js/features/sdcard.js?v=20260721a';
         import { AlarmsAndErrors } from './js/ui/alarms_and_errors.js';
@@ -3161,10 +3163,11 @@
         import { MacroHandler } from './js/features/macros.js';
         import { ToolsHandler } from './js/features/tools/tools.js';
         import { TroubleshootingHandler } from './js/ui/troubleshooting.js';
-        import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js';
+        import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20260828b';
         import { CalibrationHandler } from './js/features/calibration.js';
-        import { ConfigWizard } from './js/features/config-wizard.js';
+        import { ConfigWizard } from './js/features/config-wizard.js?v=20260828b';
         import { FirmwareFlasher } from './js/features/firmware-flasher.js';
+        import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=20260828a';
         import { GCodeEditor } from './js/editor/editor.js';
         import { initializeApp } from './js/core/init.js';
         import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
@@ -3361,6 +3364,7 @@
             window.configWizard = configWizard;
             const firmwareFlasher = new FirmwareFlasher(ws);
             window.firmwareFlasher = firmwareFlasher;
+            window.firmwareVersionChecker = new FirmwareVersionChecker();
             ws.on('firmware', (msg) => firmwareFlasher.handleBackendMessage(msg));
             const spoilboardGrid = new SpoilboardGridHandler(ws, window.term, store);
             window.spoilboardGrid = spoilboardGrid;
@@ -3481,6 +3485,7 @@
             if (window.toolsHandler) window.toolsHandler.handleLine(line);
         });
         window.ws.on('sent', (line) => {
+            window.grblSettings?.recordSentCommand(line);
             if (window.sdHandler?.isDownloading) return;
             if (window.jobController.gcodeStreamer.active) return;
             if (line === '?') return;
