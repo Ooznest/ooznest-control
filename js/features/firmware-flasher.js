@@ -41,6 +41,22 @@ export class FirmwareFlasher {
         if (this.ws?.on) {
             this.ws.on('ports', (ports) => this._handleProgrammingPorts(ports));
         }
+
+        // Flashing cannot be cancelled by hiding this modal. Keep the progress
+        // visible until the backend reports a completed or failed operation.
+        this.modal?.root.addEventListener('click', (event) => {
+            if (!this.busy) return;
+            const requestedClose = event.target === this.modal.root || event.target.closest('[data-modal-close]');
+            if (!requestedClose) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }, true);
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape' || !this.busy || !this.modal?.isOpen()) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }, true);
     }
 
     showModal(options = {}) {

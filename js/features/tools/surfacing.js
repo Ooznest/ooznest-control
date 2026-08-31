@@ -167,6 +167,11 @@ export class SurfacingHandler {
             }
         });
 
+        [['surf-dim-spoilboard-x', 'Width (X)'], ['surf-dim-spoilboard-y', 'Length (Y)']].forEach(([id, name]) => {
+            const label = document.getElementById(id)?.previousElementSibling;
+            if (label) label.textContent = `${name} (${isMM ? 'mm' : 'in'})`;
+        });
+
         const setVal = (id, v) => {
             const el = document.getElementById(id);
             if (!el) return;

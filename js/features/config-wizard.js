@@ -35,7 +35,8 @@ export class ConfigWizard {
             wifiPsk: '',
             dustShoe: false,
             enclosure: false,
-            firmwareFlashed: false
+            firmwareFlashed: false,
+            skipFirmware: false
         };
         this.modal = registerModal('config-wizard-overlay', { closeOnBackdrop: false, closeOnEscape: true });
         this.loadMachineJson();
@@ -199,6 +200,7 @@ export class ConfigWizard {
         this.wizardData.wifiSsid = '';
         this.wizardData.wifiPsk = '';
         this.wizardData.firmwareFlashed = false;
+        this.wizardData.skipFirmware = false;
         this.wizardData.customWidth = 500;
         this.wizardData.customLength = 500;
         this.wizardData.customDrives = { x: 'belt', y: 'belt', z: 'belt' };
@@ -288,7 +290,7 @@ export class ConfigWizard {
         }
         if (this.wizardStep === 0) {
             const firmware = this._getFirmwareForMachine();
-            if (firmware) {
+            if (firmware && !this.wizardData.skipFirmware) {
                 const disabled = !this._canProceed();
                 footerHtml += `<button id="config-wizard-flash-firmware" class="btn btn-primary" ${disabled ? 'disabled' : ''}><i data-lucide="cpu"></i> Flash ${firmware.label} Firmware</button>`;
             } else {
@@ -419,6 +421,14 @@ export class ConfigWizard {
 
             html += `</div>`;
         });
+
+        if (this._getFirmwareForMachine()) {
+            const checked = this.wizardData.skipFirmware ? ' checked' : '';
+            html += '<label class="mt-4 flex items-center gap-3 rounded-xl border border-grey-light bg-white px-4 py-3 text-xs text-grey-dark cursor-pointer">';
+            html += `<input id="config-wizard-skip-firmware" type="checkbox"${checked} class="accent-primary rounded shrink-0" style="width:16px;height:16px;min-height:16px;padding:0;border:0;box-shadow:none;background:transparent;flex:0 0 auto;">`;
+            html += '<span><span class="font-bold text-secondary-dark">Don\'t flash firmware</span><br><span class="text-[11px] text-grey">Continue with the settings configuration only.</span></span>';
+            html += '</label>';
+        }
 
         return html;
     }
@@ -826,6 +836,14 @@ export class ConfigWizard {
             };
         });
 
+        const skipFirmwareCheckbox = document.getElementById('config-wizard-skip-firmware');
+        if (skipFirmwareCheckbox) {
+            skipFirmwareCheckbox.onchange = () => {
+                this.wizardData.skipFirmware = skipFirmwareCheckbox.checked;
+                this._renderWizardStep();
+            };
+        }
+
         // Toolhead selection (radio-style for spindle options)
         document.querySelectorAll('.toolhead-option').forEach(el => {
             el.onclick = () => {
@@ -999,7 +1017,7 @@ export class ConfigWizard {
             this._showWizardStatus('Cannot apply config: not connected.', 'error');
             return;
         }
-        if (this._getFirmwareForMachine() && !this.wizardData.firmwareFlashed) {
+        if (this._getFirmwareForMachine() && !this.wizardData.firmwareFlashed && !this.wizardData.skipFirmware) {
             this._showWizardStatus('Flash firmware successfully before applying configuration.', 'error');
             return;
         }

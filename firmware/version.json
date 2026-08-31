@@ -5,7 +5,9 @@
       "grbl_build": 20260831,
       "date": "2026-08-31",
       "changes": [
-        "Fixed Z1+ plain asymmetric Y ganging so both Y lead-screw motors receive STEP pulses during homing.",
+        "Fixed Z1+ asymmetric Y homing: the single Y switch now keeps both Y motors stepping and ignores the unassigned A limit input.",
+        "Restored the multi-spindle selector settings ($511/$512) and M104 slot selection.",
+        "Removed the homing initial-lock override from the Z1+, Z2+, and Actuator firmware configurations.",
         "Rebuilt Z1+, Z2+, and Actuator firmware images."
       ]
     },

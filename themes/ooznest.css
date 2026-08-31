@@ -1980,6 +1980,7 @@ body {
     border: 1px solid rgba(68, 157, 159, 0.10);
     border-radius: 10px;
     box-shadow: none;
+    cursor: pointer;
 }
 
 #settings-sidebar .settings-nav-item:hover {
@@ -2047,7 +2048,7 @@ body {
 
 #sd-table th:nth-child(2),
 #sd-table td:nth-child(2) {
-    width: 64px;
+    width: 88px;
 }
 
 #sd-table th:nth-child(3),

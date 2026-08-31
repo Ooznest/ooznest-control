@@ -290,7 +290,7 @@ export class SDCardHandler {
         const headers = document.querySelectorAll('#sd-table thead th');
         if (headers.length >= 3) {
             headers[0].className = 'px-4 py-3 font-bold text-left';
-            headers[1].className = 'w-[64px] px-2 py-3 font-bold whitespace-nowrap';
+            headers[1].className = 'w-[88px] px-2 py-3 font-bold whitespace-nowrap';
             headers[2].className = 'w-[120px] px-1 py-3 font-bold text-right whitespace-nowrap';
         }
 
@@ -490,7 +490,7 @@ export class SDCardHandler {
               </button>
           </td>
 
-          <td class="w-[64px] px-2 py-3 text-grey text-xs whitespace-nowrap">-</td>
+          <td class="w-[88px] px-2 py-3 text-grey text-xs whitespace-nowrap">-</td>
 
           <td class="w-[120px] px-1 py-3 text-right align-middle whitespace-nowrap">
               <div class="macro-card-actions justify-end ml-auto" data-folder-actions style="position: static; opacity: 1;">
@@ -860,7 +860,7 @@ export class SDCardHandler {
                   </div>
               </td>
 
-              <td class="w-[64px] px-2 py-3 text-grey font-mono text-xs whitespace-nowrap">${sizeDisplay}</td>
+              <td class="w-[88px] px-2 py-3 text-grey font-mono text-xs whitespace-nowrap">${sizeDisplay}</td>
 
               <td class="w-[120px] px-1 py-2 text-right align-middle whitespace-nowrap">
                   <div class="macro-card-actions justify-end ml-auto" style="position: static; opacity: 1;">

@@ -1139,14 +1139,14 @@
                                 <table class="w-full table-fixed text-left text-sm" id="sd-table">
                                     <colgroup>
                                         <col>
-                                        <col style="width: 64px">
+                                        <col style="width: 88px">
                                         <col style="width: 120px">
                                     </colgroup>
                                     <thead
                                         class="border-b border-grey-light text-grey uppercase text-[10px] tracking-wider">
                                         <tr>
                                             <th class="px-4 py-3 font-bold">Filename</th>
-                                            <th class="w-[64px] px-2 py-3 font-bold whitespace-nowrap">Size</th>
+                                            <th class="w-[88px] px-2 py-3 font-bold whitespace-nowrap">Size</th>
                                             <th class="w-[120px] px-1 py-3 font-bold text-right whitespace-nowrap">Actions</th>
                                         </tr>
                                     </thead>
@@ -1361,36 +1361,13 @@
                             <!-- Sub-Tab Content: Surfacing -->
                             <div id="tab-tool-surfacing" class="tools-tab-content">
                                 <div class="w-full">
-                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
-                                        Flatten a spoilboard or stock material. For best results use a surfacing router bit and ensure your router head is trammed perpendicular to the bed.
-                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
-                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
-                                                    Tool & Speeds</h3>
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="surf-tool">Tool Diameter (mm)</label><input type="number" id="surf-tool"
-                                                            class="ooznest-field input-field font-mono text-sm">
-                                                    </div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="surf-stepover">Stepover (%)</label><input type="number" id="surf-stepover"
-                                                            class="ooznest-field input-field font-mono text-sm">
-                                                        <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
-                                                    </div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="surf-feed">Feed Rate (mm/min)</label><input type="number" id="surf-feed"
-                                                            class="ooznest-field input-field font-mono text-sm">
-                                                    </div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="surf-rpm">Spindle RPM</label><input type="number" id="surf-rpm"
-                                                            class="ooznest-field input-field font-mono text-sm">
-                                                        <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
-                                                    </div>
-                                                </div>
+                                            <div class="bg-white p-4 rounded-xl border border-grey-light shadow-soft">
+                                                <p class="text-xs text-grey leading-relaxed">
+                                                    Flatten a spoilboard or stock material. For best results use a surfacing router bit and ensure your router head is trammed perpendicular to the bed.
+                                                </p>
                                             </div>
-
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <div class="mb-4 border-b border-grey-light pb-2">
                                                     <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-0 flex items-center">
@@ -1411,10 +1388,10 @@
                                                     <div id="surf-dim-fields"
                                                         class="grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                                for="surf-x">Width (X)</label><input type="number" id="surf-x"
+                                                                for="surf-x">Width (X) (mm)</label><input type="number" id="surf-x"
                                                                 class="ooznest-field input-field font-mono text-sm"></div>
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                                for="surf-y">Height (Y)</label><input type="number" id="surf-y"
+                                                                for="surf-y">Length (Y) (mm)</label><input type="number" id="surf-y"
                                                                 class="ooznest-field input-field font-mono text-sm"></div>
                                                     </div>
                                                     <p id="surf-dim-custom-info" class="ooznest-form-info">
@@ -1423,11 +1400,11 @@
                                                     <div id="surf-dim-spoilboard"
                                                         class="hidden grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
                                                         <div>
-                                                            <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Width (X)</span>
+                                                            <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Width (X) (mm)</span>
                                                             <div id="surf-dim-spoilboard-x" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
                                                         <div>
-                                                            <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Height (Y)</span>
+                                                            <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Length (Y) (mm)</span>
                                                             <div id="surf-dim-spoilboard-y" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
                                                     <p id="surf-dim-spoilboard-info" class="ooznest-form-info col-span-2">
@@ -1443,8 +1420,9 @@
                                                 <div class="space-y-3">
                                                     <div class="grid grid-cols-2 gap-4">
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                                for="surf-z-step">Depth per Pass (mm)</label><input type="number" id="surf-z-step"
+                                                                for="surf-z-step">Stepdown (mm)</label><input type="number" id="surf-z-step"
                                                                 class="ooznest-field input-field font-mono text-sm">
+                                                            <p class="ooznest-form-info mt-1">Maximum Z depth removed on each pass.</p>
                                                         </div>
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                                 for="surf-z-final">Final Depth (mm)</label><input type="number" id="surf-z-final"
@@ -1455,6 +1433,31 @@
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-z-safe">Safe Z Clearance (mm)</label><input type="number" id="surf-z-safe"
                                                             class="ooznest-field input-field font-mono text-sm">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
+                                                    Tool &amp; Speeds</h3>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-tool">Tool Diameter (mm)</label><input type="number" id="surf-tool"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-stepover">Stepover (%)</label><input type="number" id="surf-stepover"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-feed">Feed Rate (mm/min)</label><input type="number" id="surf-feed"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-rpm">Spindle RPM</label><input type="number" id="surf-rpm"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1549,21 +1552,23 @@
                             <!-- Sub-Tab Content: Spoilboard Grid -->
                             <div id="tab-tool-spoilboard" class="tools-tab-content hidden">
                                 <div class="w-full">
-                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
-                                        Engrave a grid pattern that starts at the front-left work zero, with ruler ticks and numbers placed above and to the right. Use a V-bit or engraving tool for best results.
-                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
+                                            <div class="bg-white p-4 rounded-xl border border-grey-light shadow-soft">
+                                                <p class="text-xs text-grey leading-relaxed">
+                                                    Engrave a grid pattern of lines with optional ruler marks and numbers. For best results, use a V-bit.
+                                                </p>
+                                            </div>
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Grid Dimensions</h3>
                                                 <div class="flex items-start gap-4">
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="sg-width">Width (X mm)</label><input type="number" id="sg-width"
+                                                            for="sg-width">Width (X) (mm)</label><input type="number" id="sg-width"
                                                             class="ooznest-field input-field font-mono text-sm" value="300">
                                                     </div>
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="sg-height">Height (Y mm)</label><input type="number" id="sg-height"
+                                                            for="sg-height">Length (Y) (mm)</label><input type="number" id="sg-height"
                                                             class="ooznest-field input-field font-mono text-sm" value="300">
                                                     </div>
                                                 </div>
@@ -1591,7 +1596,7 @@
                                                             for="sg-rpm">Spindle RPM</label><input type="number" id="sg-rpm"
                                                             class="ooznest-field input-field font-mono text-sm" value="12000"></div>
                                                 </div>
-                                                <p class="ooznest-form-info mt-1">Adds an `M3 S...` spindle start command to the generated job.</p>
+                                                <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
                                             </div>
 
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
@@ -1606,7 +1611,7 @@
                                                                 <div class="w-9 h-5 bg-grey-light rounded-full peer-checked:bg-primary peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
                                                             </label>
                                                         </div>
-                                                        <p class="ooznest-form-info mt-1">Include markings, and numeric markers.</p>
+                                                        <p class="ooznest-form-info mt-1">Include markings and numbers.</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1658,16 +1663,18 @@
                             <!-- Sub-Tab Content: Bowl Cutter -->
                             <div id="tab-tool-bowl" class="tools-tab-content hidden">
                                 <div class="w-full">
-                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
-                                        Cut a recessed bowl or tray with rounded inside corners. Set its overall size, depth, and corner radius, then use an endmill to machine the pocket.
-                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
+                                            <div class="bg-white p-4 rounded-xl border border-grey-light shadow-soft">
+                                                <p class="text-xs text-grey leading-relaxed">
+                                                    Cut a recessed bowl or tray with rounded inside corners. For best results use a ball nose bit.
+                                                </p>
+                                            </div>
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (X) (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (Y) (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20">
                                                         <p class="ooznest-form-info mt-1">Maximum depth cut below the current Z zero.</p>
                                                     </div>
@@ -1680,17 +1687,18 @@
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6">
-                                                        <p class="ooznest-form-info mt-1">Diameter of the cutter used to generate the bowl toolpath.</p>
-                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Tool Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35">
                                                         <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
                                                     </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1">
-                                                        <p class="ooznest-form-info mt-1">Maximum Z depth removed on each cutting level.</p>
+                                                        <p class="ooznest-form-info mt-1">Maximum Z depth removed on each pass.</p>
                                                     </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-rpm">Spindle RPM</label><input type="number" id="bc-rpm" class="ooznest-field input-field font-mono text-sm" value="12000">
+                                                        <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1705,10 +1713,10 @@
                                                 <div class="ooznest-instruction-card__info">
                                                     <div class="ooznest-instruction-card__title">Bowl Cut Setup</div>
                                                     <ol class="ooznest-form-steps">
-                                                        <li>Install a ball end bit.</li>
-                                                        <li>Zero X and Y at the center of where the bowl should be.</li>
-                                                        <li>Zero Z at the top surface of the stock.</li>
-                                                        <li>Run the job. It cuts the bowl using the configured dimensions, depth, and feeds.</li>
+                                                        <li>Install a ball nose bit.</li>
+                                                        <li>Zero X and Y at the centre of the intended bowl position.</li>
+                                                        <li>Zero Z to the highest point of the stock material.</li>
+                                                        <li>Press Run Job.</li>
                                                     </ol>
                                                 </div>
                                             </div>
@@ -2319,8 +2327,7 @@
                                 <div class="flex flex-col lg:flex-row gap-4 mb-4">
                                     <!-- LEFT: Limits -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
-                                        <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
-                                            <i data-lucide="maximize" class="text-primary text-xs"></i>
+                                        <div class="px-4 py-2.5 border-b border-grey-light">
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Limits</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
@@ -2364,8 +2371,7 @@
                                     </div>
                                     <!-- MIDDLE: Control + Probe -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
-                                        <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
-                                            <i data-lucide="git-branch" class="text-primary text-xs"></i>
+                                        <div class="px-4 py-2.5 border-b border-grey-light">
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Control &amp; Probe</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
@@ -3154,24 +3160,24 @@
         import { WebSerial } from './js/machine/webserial.js';
         import { GCodeViewer } from './js/viewer/3dview.js?v=20260828a';
         import { ProbeHandler } from './js/machine/probe.js?v=20260710';
-        import { SDCardHandler } from './js/features/sdcard.js?v=20260721a';
+        import { SDCardHandler } from './js/features/sdcard.js?v=20260831a';
         import { AlarmsAndErrors } from './js/ui/alarms_and_errors.js';
         import { DROHandler } from './js/machine/dro.js';
         import { GrblSettings } from './js/machine/grbl_settings.js';
         import { AppStore } from './js/core/store.js';
-        import { SurfacingHandler } from './js/features/tools/surfacing.js';
+        import { SurfacingHandler } from './js/features/tools/surfacing.js?v=20260831a';
         import { MacroHandler } from './js/features/macros.js';
         import { ToolsHandler } from './js/features/tools/tools.js';
         import { TroubleshootingHandler } from './js/ui/troubleshooting.js';
         import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20260831c';
         import { CalibrationHandler } from './js/features/calibration.js';
-        import { ConfigWizard } from './js/features/config-wizard.js?v=20260831b';
-        import { FirmwareFlasher } from './js/features/firmware-flasher.js';
+        import { ConfigWizard } from './js/features/config-wizard.js?v=20260831c';
+        import { FirmwareFlasher } from './js/features/firmware-flasher.js?v=20260831a';
         import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=20260831d';
         import { GCodeEditor } from './js/editor/editor.js';
         import { initializeApp } from './js/core/init.js';
         import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
-        import { BowlCutter } from './js/features/tools/bowl-cutter.js';
+        import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20260831a';
         import { GamepadController } from './js/features/gamepad.js?v=20260827o';
         import './js/ui/modal.js';
 
