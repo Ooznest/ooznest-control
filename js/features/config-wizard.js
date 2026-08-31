@@ -150,10 +150,13 @@ export class ConfigWizard {
         if (!this.verInfo) return;
         window.firmwareVersionChecker?.setControllerVersion(this.verInfo.version);
         this.renderInfoTab();
-        if (this._isUnconfigured(this.verInfo.configName) && !this.modal?.isOpen()) {
+        const isUnconfigured = this._isUnconfigured(this.verInfo.configName);
+        if (isUnconfigured && !this.modal?.isOpen()) {
             setTimeout(() => {
                 if (!this.modal?.isOpen()) this.showWizard();
             }, 500);
+        } else if (!isUnconfigured) {
+            window.firmwareVersionChecker?.promptForConfiguredController?.();
         }
     }
 
@@ -781,7 +784,7 @@ export class ConfigWizard {
 
         if (machine) {
             const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
-            const defaultLines = ['$22=7'];
+            const defaultLines = ['$22=3'];
             const totalSettings = configLines.length + wifiLines.length + defaultLines.length;
             html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${totalSettings} settings)</p>`;
             html += `<div class="bg-white border border-grey-light rounded-lg p-2 max-h-32 overflow-y-auto text-[10px] font-mono text-grey-dark leading-relaxed">`;
@@ -880,6 +883,7 @@ export class ConfigWizard {
                 window.firmwareFlasher.showModal({
                     firmwareKey: firmware.key,
                     lockSelection: true,
+                    backupSettingsBeforeFlash: false,
                     onFlashComplete: (firmwareKey) => {
                         if (firmwareKey !== this._getFirmwareForMachine()?.key) return;
                         this.wizardData.firmwareFlashed = true;
@@ -1045,7 +1049,7 @@ export class ConfigWizard {
             await this._sleep(15);
 
             // Apply Ooznest controller defaults
-            await this.ws.sendCommand('$22=7');
+            await this.ws.sendCommand('$22=3');
             await this._sleep(15);
 
             // Apply modbus protocol $396 setting
@@ -1095,6 +1099,10 @@ export class ConfigWizard {
             // Soft reset
             await this._sleep(500);
             this.ws.sendRealtime('\x18');
+
+            // The reset applies the configuration in the controller. Refresh the
+            // settings model afterwards so Settings does not retain stale values.
+            setTimeout(() => window.grblSettings?.fetchSettings?.(), 2000);
 
             // Update viewer with new machine limits
             if (window.viewer) {

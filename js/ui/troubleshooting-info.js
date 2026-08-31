@@ -429,9 +429,27 @@ export class TroubleshootingInfoView {
         html += '</div><div class="p-4 space-y-2">';
         html += this._infoRow('Version', firmware.version);
         if (firmware.update?.availableBuild) {
-            html += this._infoRow('Bundled firmware build', firmware.update.availableBuild);
+            html += this._infoRow('Available firmware version', firmware.update.availableBuild);
         }
         if (firmware.update?.updateAvailable) {
+            const releaseNotes = firmware.update.releaseNotes || [];
+            if (releaseNotes.length) {
+                html += '<div class="mt-3 max-h-52 overflow-y-auto pr-1">';
+                html += '<div class="ooznest-instruction-card__info" style="margin-top:0">';
+                html += '<p class="ooznest-instruction-card__title mb-0">Newer firmware available</p>';
+                releaseNotes.forEach((release) => {
+                    const releaseLabel = [release.date, `Firmware version ${release.grblBuild}`].filter(Boolean).join(' · ');
+                    if (releaseLabel) html += `<p class="mt-2 text-xs font-bold" style="color:#718087">${this._escapeHtml(releaseLabel)}</p>`;
+                    if (release.changes?.length) {
+                        html += '<ul class="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed" style="color:#718087">';
+                        release.changes.forEach((change) => {
+                            html += `<li>${this._escapeHtml(change)}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                });
+                html += '</div></div>';
+            }
             html += '<button class="btn btn-primary w-full mt-2" onclick="window.firmwareFlasher?.showModal()"><i data-lucide="cpu"></i> Update now</button>';
         }
         html += this._infoRow('Machine Config', firmware.machineConfig, `text-xs font-bold ${window.configWizard?._isUnconfigured?.(firmware.machineConfig) ? 'text-red-500' : 'text-secondary-dark'} text-right break-all`);

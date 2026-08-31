@@ -1,3 +1,20 @@
 {
-  "grbl_build": 20260824
+  "grbl_build": 20260831,
+  "changelog": [
+    {
+      "grbl_build": 20260831,
+      "date": "2026-08-31",
+      "changes": [
+        "Fixed Z1+ plain asymmetric Y ganging so both Y lead-screw motors receive STEP pulses during homing.",
+        "Rebuilt Z1+, Z2+, and Actuator firmware images."
+      ]
+    },
+    {
+      "grbl_build": 20260824,
+      "date": "2026-08-28",
+      "changes": [
+        "Initial tracked firmware release."
+      ]
+    }
+  ]
 }

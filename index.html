@@ -3163,11 +3163,11 @@
         import { MacroHandler } from './js/features/macros.js';
         import { ToolsHandler } from './js/features/tools/tools.js';
         import { TroubleshootingHandler } from './js/ui/troubleshooting.js';
-        import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20260828b';
+        import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20260831c';
         import { CalibrationHandler } from './js/features/calibration.js';
-        import { ConfigWizard } from './js/features/config-wizard.js?v=20260828b';
+        import { ConfigWizard } from './js/features/config-wizard.js?v=20260831b';
         import { FirmwareFlasher } from './js/features/firmware-flasher.js';
-        import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=20260828a';
+        import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=20260831d';
         import { GCodeEditor } from './js/editor/editor.js';
         import { initializeApp } from './js/core/init.js';
         import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
@@ -4185,6 +4185,20 @@
                 </div>
             </div>
             <div id="firmware-flasher-footer" class="oz-modal__footer oz-modal__footer--actions hidden"></div>
+        </div>
+    </div>
+
+    <div id="firmware-update-available-overlay" class="oz-modal isolate hidden z-[110] modal-radial-overlay">
+        <div class="oz-modal__dialog w-full max-w-lg" data-modal-panel>
+            <div class="oz-modal__header">
+                <h3><i data-lucide="cpu"></i><span>Firmware Update Available</span></h3>
+                <button type="button" data-modal-close><i data-lucide="x"></i></button>
+            </div>
+            <div id="firmware-update-available-body" class="oz-modal__body"></div>
+            <div class="oz-modal__footer oz-modal__footer--actions">
+                <button type="button" class="btn btn-secondary" data-modal-close>Not now</button>
+                <button id="firmware-update-available-start" type="button" class="btn btn-primary" data-modal-primary><i data-lucide="cpu"></i> Update firmware</button>
+            </div>
         </div>
     </div>
 

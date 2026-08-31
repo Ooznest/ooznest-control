@@ -36,6 +36,7 @@ export class FirmwareFlasher {
         this.programmingPortSelectionOpen = false;
         this.availableProgrammingPorts = [];
         this.selectedProgrammingPort = null;
+        this.backupSettingsBeforeFlash = true;
 
         if (this.ws?.on) {
             this.ws.on('ports', (ports) => this._handleProgrammingPorts(ports));
@@ -50,6 +51,7 @@ export class FirmwareFlasher {
             }
             this.selectionLocked = !!options.lockSelection;
             this.onFlashComplete = typeof options.onFlashComplete === 'function' ? options.onFlashComplete : null;
+            this.backupSettingsBeforeFlash = options.backupSettingsBeforeFlash !== false;
         }
         if (!this.ws?.isConnected) {
             this.availableProgrammingPorts = [];
@@ -73,6 +75,7 @@ export class FirmwareFlasher {
         this.availableProgrammingPorts = [];
         this.selectedProgrammingPort = null;
         this.onFlashComplete = null;
+        this.backupSettingsBeforeFlash = true;
         this._completionNotified = false;
     }
 
@@ -116,6 +119,10 @@ export class FirmwareFlasher {
                 html += '</div>';
             });
             html += '</div></div>';
+        }
+
+        if (this.backupSettingsBeforeFlash && this.ws?.isConnected) {
+            html += '<p class="mt-3 text-[11px] text-grey">Your current Grbl settings will download as a backup before flashing.</p>';
         }
 
         html += '<div class="mt-4 bg-white rounded-xl border border-grey-light overflow-hidden">';
@@ -247,6 +254,7 @@ export class FirmwareFlasher {
         if (this.busy || window.cordova) return;
         if (!this.ws?.isConnected && !(window.electron && this.programmingPortSelectionOpen && this.selectedProgrammingPort)) return;
 
+        this._backupSettingsForManualFlash();
         this.busy = true;
         this.selectionLocked = true;
         this.progress = 0;
@@ -402,6 +410,7 @@ export class FirmwareFlasher {
     }
 
     async _flashWithSelectedProgrammingPortBrowser(device) {
+        this._backupSettingsForManualFlash();
         this.busy = true;
         this.selectionLocked = true;
         this.progress = 0;
@@ -460,6 +469,22 @@ export class FirmwareFlasher {
             }
             this.busy = false;
             this._render();
+        }
+    }
+
+    _backupSettingsForManualFlash() {
+        if (!this.backupSettingsBeforeFlash) return;
+
+        if (!this.ws?.isConnected) {
+            this._appendLog('[WARN] Settings backup skipped because the controller is not connected.');
+            return;
+        }
+
+        const backup = window.grblSettings?.backup?.({ prefix: 'grblhal_pre_firmware_update' });
+        if (backup) {
+            this._appendLog(`[SYSTEM] Saved ${backup.count} Grbl settings to ${backup.fileName}`);
+        } else {
+            this._appendLog('[WARN] Settings backup skipped because no controller settings have been loaded.');
         }
     }
 
