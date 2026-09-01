@@ -149,7 +149,7 @@ export class ConfigWizard {
     _onVerComplete() {
         console.log('[ConfigWizard] _onVerComplete', this.verInfo);
         if (!this.verInfo) return;
-        window.firmwareVersionChecker?.setControllerVersion(this.verInfo.version);
+        window.firmwareVersionChecker?.setControllerVersion(this.verInfo.version, this.boardInfo);
         this.renderInfoTab();
         const isUnconfigured = this._isUnconfigured(this.verInfo.configName);
         if (isUnconfigured && !this.modal?.isOpen()) {

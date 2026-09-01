@@ -9,6 +9,7 @@ export class FirmwareVersionChecker {
     constructor() {
         this.availableBuild = null;
         this.controllerBuild = null;
+        this.controllerBoard = null;
         this.changelog = [];
         this.promptedUpdateKey = null;
         this.updateModal = registerModal('firmware-update-available-overlay', { closeOnBackdrop: true, closeOnEscape: true });
@@ -40,13 +41,16 @@ export class FirmwareVersionChecker {
         this._notify();
     }
 
-    setControllerVersion(version) {
+    setControllerVersion(version, board) {
         this.controllerBuild = parseGrblBuild(version);
+        this.controllerBoard = typeof board === 'string' ? board.trim() : null;
         this._notify();
     }
 
     getStatus() {
-        const updateAvailable = this.controllerBuild !== null
+        const isSupportedBoard = this.controllerBoard === 'Ooznest-Motion-Control-Core';
+        const updateAvailable = isSupportedBoard
+            && this.controllerBuild !== null
             && this.availableBuild !== null
             && this.controllerBuild < this.availableBuild;
         const releaseNotes = updateAvailable
@@ -56,6 +60,8 @@ export class FirmwareVersionChecker {
         return {
             availableBuild: this.availableBuild,
             controllerBuild: this.controllerBuild,
+            controllerBoard: this.controllerBoard,
+            isSupportedBoard,
             updateAvailable,
             releaseNotes
         };
