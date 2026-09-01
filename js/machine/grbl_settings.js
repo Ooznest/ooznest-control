@@ -611,6 +611,13 @@ export class GrblSettings {
         return html;
     }
 
+    _getOptionDisplayLabel(setting, index, label) {
+        if (index === 0 && (String(setting.id) === '9' || setting.label === 'PWM spindle options')) {
+            return 'Variable Speed PWM 0-10v Spindle';
+        }
+        return label;
+    }
+
     _renderInput(s, val) {
         // 0: Boolean
         if (s.type === 0 || s.type === 'bool') {
@@ -638,6 +645,7 @@ export class GrblSettings {
 
             options.forEach((label, index) => {
                 if (!label || label.toUpperCase() === 'N/A') return;
+                const displayLabel = this._getOptionDisplayLabel(s, index, label);
                 const bitMask = 1 << index;
                 const isSet = (intVal & bitMask) !== 0;
 
@@ -646,7 +654,7 @@ export class GrblSettings {
                         <input type="checkbox" class="rounded text-primary focus:ring-primary h-3 w-3 border-grey-light"
                             onchange="window.grblSettings.updateMask('${s.id}', ${bitMask}, this.checked)"
                             ${isSet ? 'checked' : ''}>
-                        <span class="text-[9px] md:text-[11px] text-grey-dark leading-none pt-0.5 truncate">${label}</span>
+                        <span class="text-[9px] md:text-[11px] text-grey-dark leading-none pt-0.5 truncate">${displayLabel}</span>
                     </label>
                 `;
             });
@@ -665,6 +673,7 @@ export class GrblSettings {
 
             options.forEach((label, index) => {
                 if (!label || label.toUpperCase() === 'N/A') return;
+                const displayLabel = this._getOptionDisplayLabel(s, index, label);
                 const bitMask = 1 << index;
                 const isSet = (intVal & bitMask) !== 0;
                 const disabled = index > 0 && !bit0Set ? 'disabled' : '';
@@ -674,7 +683,7 @@ export class GrblSettings {
                         <input type="checkbox" class="rounded text-primary focus:ring-primary h-3 w-3 border-grey-light"
                             onchange="window.grblSettings.updateMask('${s.id}', ${bitMask}, this.checked)"
                             ${isSet ? 'checked' : ''} ${disabled}>
-                        <span class="text-[9px] md:text-[11px] text-grey-dark leading-none pt-0.5 truncate">${label}</span>
+                        <span class="text-[9px] md:text-[11px] text-grey-dark leading-none pt-0.5 truncate">${displayLabel}</span>
                     </label>
                 `;
             });

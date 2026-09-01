@@ -794,7 +794,7 @@ export class ConfigWizard {
 
         if (machine) {
             const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
-            const defaultLines = ['$22=3'];
+            const defaultLines = ['$22=3', '$753=4'];
             const totalSettings = configLines.length + wifiLines.length + defaultLines.length;
             html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${totalSettings} settings)</p>`;
             html += `<div class="bg-white border border-grey-light rounded-lg p-2 max-h-32 overflow-y-auto text-[10px] font-mono text-grey-dark leading-relaxed">`;
@@ -1068,6 +1068,8 @@ export class ConfigWizard {
 
             // Apply Ooznest controller defaults
             await this.ws.sendCommand('$22=3');
+            await this._sleep(15);
+            await this.ws.sendCommand('$753=4');
             await this._sleep(15);
 
             // Apply modbus protocol $396 setting

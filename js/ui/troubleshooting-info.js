@@ -709,48 +709,83 @@ export class TroubleshootingInfoView {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    async exportPdf() {
+    _crc32(bytes) {
+        let crc = 0xffffffff;
+        for (const byte of bytes) {
+            crc ^= byte;
+            for (let bit = 0; bit < 8; bit += 1) {
+                crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+            }
+        }
+        return (crc ^ 0xffffffff) >>> 0;
+    }
+
+    _createZipBlob(filename, text) {
+        const encoder = new TextEncoder();
+        const filenameBytes = encoder.encode(filename);
+        const contentBytes = encoder.encode(text);
+        const crc = this._crc32(contentBytes);
+        const localHeader = new Uint8Array(30);
+        const localView = new DataView(localHeader.buffer);
+        localView.setUint32(0, 0x04034b50, true);
+        localView.setUint16(4, 20, true);
+        localView.setUint32(14, crc, true);
+        localView.setUint32(18, contentBytes.length, true);
+        localView.setUint32(22, contentBytes.length, true);
+        localView.setUint16(26, filenameBytes.length, true);
+
+        const centralHeader = new Uint8Array(46);
+        const centralView = new DataView(centralHeader.buffer);
+        centralView.setUint32(0, 0x02014b50, true);
+        centralView.setUint16(4, 20, true);
+        centralView.setUint16(6, 20, true);
+        centralView.setUint32(16, crc, true);
+        centralView.setUint32(20, contentBytes.length, true);
+        centralView.setUint32(24, contentBytes.length, true);
+        centralView.setUint16(28, filenameBytes.length, true);
+
+        const endOfCentralDirectory = new Uint8Array(22);
+        const endView = new DataView(endOfCentralDirectory.buffer);
+        const centralDirectorySize = centralHeader.length + filenameBytes.length;
+        const localFileSize = localHeader.length + filenameBytes.length + contentBytes.length;
+        endView.setUint32(0, 0x06054b50, true);
+        endView.setUint16(8, 1, true);
+        endView.setUint16(10, 1, true);
+        endView.setUint32(12, centralDirectorySize, true);
+        endView.setUint32(16, localFileSize, true);
+
+        return new Blob([
+            localHeader,
+            filenameBytes,
+            contentBytes,
+            centralHeader,
+            filenameBytes,
+            endOfCentralDirectory
+        ], { type: 'application/zip' });
+    }
+
+    async exportJson() {
         if (!window.ws || !window.ws.isConnected) {
             window.showToast?.('Exporting without a machine connection. PC info will be included, but connect to capture full machine details.', 'plug-zap', 'warning');
         }
 
         try {
-            const jsPDF = await this._ensureJsPdfLoaded();
             const snapshot = await this._buildSnapshot();
-            const reportText = this._buildPlainTextReport(snapshot);
             const exportDate = new Date(snapshot.exportedAt);
             const stamp = exportDate.toISOString().replace(/[:.]/g, '-');
-            const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'pt',
-                format: 'a4',
-                compress: true
-            });
-
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 36;
-            const maxWidth = pageWidth - (margin * 2);
-            const lineHeight = 12;
-            let y = margin;
-
-            doc.setFont('courier', 'normal');
-            doc.setFontSize(10);
-
-            const lines = doc.splitTextToSize(reportText, maxWidth);
-            lines.forEach(line => {
-                if (y > pageHeight - margin) {
-                    doc.addPage();
-                    y = margin;
-                }
-                doc.text(line, margin, y);
-                y += lineHeight;
-            });
-
-            doc.save(`ooznest-troubleshooting-${stamp}.pdf`);
+            const jsonFilename = `ooznest-troubleshooting-${stamp}.json`;
+            const blob = this._createZipBlob(jsonFilename, JSON.stringify(snapshot, null, 2));
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ooznest-troubleshooting-${stamp}.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         } catch (error) {
-            console.error('Failed to export troubleshooting PDF:', error);
-            window.showToast?.('Failed to export PDF. Please try again while online.', 'file-warning', 'error');
+            console.error('Failed to export troubleshooting JSON:', error);
+            window.showToast?.('Failed to export troubleshooting information. Please try again.', 'file-warning', 'error');
         }
     }
 }

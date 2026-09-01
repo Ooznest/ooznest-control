@@ -538,7 +538,7 @@ export class TroubleshootingHandler {
                             class="accent-primary w-3.5 h-3.5 cursor-pointer">
                         <span class="text-[10px] font-bold text-grey-dark">Set Active</span>
                     </label>
-                    ${!isEnabled ? '<span class="text-[10px] text-grey italic">Not enabled in settings</span>' : ''}
+                    ${!isEnabled ? '<span class="text-[10px] text-grey italic">Not enabled in settings — see $395, $511 and $512 in Settings &gt; Spindles</span>' : ''}
                 </div>
                 ${s.isActive && s.rpmRange ? (() => {
                     const maxRpm = parseFloat(s.rpmRange.split(',')[1]) || 1000;
