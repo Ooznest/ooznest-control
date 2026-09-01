@@ -794,7 +794,7 @@ export class ConfigWizard {
 
         if (machine) {
             const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
-            const defaultLines = ['$22=3', '$753=4'];
+            const defaultLines = ['$1=255', '$4=0', '$9=5', '$10=511', '$22=3', '$32=1', '$40=1', '$300=Workbee', '$650=1', '$709=17', '$753=4'];
             const totalSettings = configLines.length + wifiLines.length + defaultLines.length;
             html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${totalSettings} settings)</p>`;
             html += `<div class="bg-white border border-grey-light rounded-lg p-2 max-h-32 overflow-y-auto text-[10px] font-mono text-grey-dark leading-relaxed">`;
@@ -1067,7 +1067,25 @@ export class ConfigWizard {
             await this._sleep(15);
 
             // Apply Ooznest controller defaults
+            await this.ws.sendCommand('$1=255');
+            await this._sleep(15);
+            await this.ws.sendCommand('$4=0');
+            await this._sleep(15);
+            await this.ws.sendCommand('$9=5');
+            await this._sleep(15);
+            await this.ws.sendCommand('$10=511');
+            await this._sleep(15);
             await this.ws.sendCommand('$22=3');
+            await this._sleep(15);
+            await this.ws.sendCommand('$32=1');
+            await this._sleep(15);
+            await this.ws.sendCommand('$40=1');
+            await this._sleep(15);
+            await this.ws.sendCommand('$300=Workbee');
+            await this._sleep(15);
+            await this.ws.sendCommand('$650=1');
+            await this._sleep(15);
+            await this.ws.sendCommand('$709=17');
             await this._sleep(15);
             await this.ws.sendCommand('$753=4');
             await this._sleep(15);
@@ -1153,10 +1171,15 @@ export class ConfigWizard {
     }
 
     _getWifiConfigLines() {
-        const lines = [`$73=${this.wizardData.wifiMode || '0'}`];
-        if ((this.wizardData.wifiMode || '0') === '1') {
+        const wifiEnabled = (this.wizardData.wifiMode || '0') === '1';
+        const lines = [`$73=${this.wizardData.wifiMode || '0'}`, `$301=${wifiEnabled ? 1 : 0}`];
+        if (wifiEnabled) {
             lines.push(`$74=${(this.wizardData.wifiSsid || '').trim()}`);
             lines.push(`$75=${this.wizardData.wifiPsk || ''}`);
+        } else {
+            lines.push('$322=192.168.5.1');
+            lines.push('$323=192.168.5.1');
+            lines.push('$324=255.255.255.0');
         }
         return lines;
     }
