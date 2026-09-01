@@ -613,7 +613,7 @@ export class GrblSettings {
 
     _getOptionDisplayLabel(setting, index, label) {
         if (index === 0 && (String(setting.id) === '9' || setting.label === 'PWM spindle options')) {
-            return 'Variable Speed PWM 0-10v Spindle';
+            return 'Variable Speed PWM/0-10v Spindle';
         }
         return label;
     }
