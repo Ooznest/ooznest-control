@@ -49,6 +49,7 @@ export class AppStore {
                 toolDiameter: 6.35,
                 stepover: 40,
                 feed: 2000,
+                plunge: 500,
                 rpm: 16000,
                 width: 100,
                 height: 100,

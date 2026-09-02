@@ -38,7 +38,7 @@ export class SurfacingHandler {
             const s = this.store.data.surfacing;
 
             // Convert dimensional fields
-            const fields = ['toolDiameter', 'feed', 'width', 'height', 'depthPerPass', 'finalDepth', 'clearance'];
+            const fields = ['toolDiameter', 'feed', 'plunge', 'width', 'height', 'depthPerPass', 'finalDepth', 'clearance'];
 
             fields.forEach(key => {
                 if (typeof s[key] === 'number') {
@@ -83,6 +83,7 @@ export class SurfacingHandler {
         const fields = [
             'surf-tool',
             'surf-feed',
+            'surf-plunge',
             'surf-x',
             'surf-y',
             'surf-z-step',
@@ -129,6 +130,7 @@ export class SurfacingHandler {
         this.store.set('surfacing.toolDiameter', val('surf-tool'));
         this.store.set('surfacing.stepover', val('surf-stepover'));
         this.store.set('surfacing.feed', val('surf-feed'));
+        this.store.set('surfacing.plunge', val('surf-plunge'));
         this.store.set('surfacing.rpm', val('surf-rpm'));
 
         this.store.set('surfacing.width', val('surf-x'));
@@ -167,9 +169,9 @@ export class SurfacingHandler {
             }
         });
 
-        [['surf-dim-spoilboard-x', 'Width (X)'], ['surf-dim-spoilboard-y', 'Length (Y)']].forEach(([id, name]) => {
+        [['surf-dim-spoilboard-x', 'Width (X'], ['surf-dim-spoilboard-y', 'Length (Y']].forEach(([id, name]) => {
             const label = document.getElementById(id)?.previousElementSibling;
-            if (label) label.textContent = `${name} (${isMM ? 'mm' : 'in'})`;
+            if (label) label.textContent = `${name}, ${isMM ? 'mm' : 'in'})`;
         });
 
         const setVal = (id, v) => {
@@ -182,6 +184,7 @@ export class SurfacingHandler {
         setVal('surf-tool', s.toolDiameter);
         setVal('surf-stepover', s.stepover);
         setVal('surf-feed', s.feed);
+        setVal('surf-plunge', s.plunge ?? 500);
         setVal('surf-rpm', s.rpm);
 
         setVal('surf-x', s.width);
@@ -368,7 +371,7 @@ export class SurfacingHandler {
             if (isXDir) cmd(`G0 X${fmt(minMain)} Y${fmt(minCross)}`);
             else cmd(`G0 X${fmt(minCross)} Y${fmt(minMain)}`);
 
-            cmd(`G1 Z${fmt(currentZ)} F${s.feed / 2}`);
+            cmd(`G1 Z${fmt(currentZ)} F${s.plunge}`);
 
             // 2. Zig Zag Routine
             let posCross = minCross;
@@ -416,7 +419,7 @@ export class SurfacingHandler {
                 const frameMaxY = isXDir ? maxCross : maxMain;
 
                 cmd(`G0 X${fmt(frameMinX)} Y${fmt(frameMinY)}`);
-                cmd(`G1 Z${fmt(currentZ)} F${s.feed / 2}`);
+                cmd(`G1 Z${fmt(currentZ)} F${s.plunge}`);
 
                 cmd(`G1 X${fmt(frameMaxX)} Y${fmt(frameMinY)} F${s.feed}`);
                 cmd(`G1 X${fmt(frameMaxX)} Y${fmt(frameMaxY)}`);

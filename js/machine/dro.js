@@ -433,8 +433,15 @@ export class DROHandler {
     }
 
     homeAxis(axis) {
-        if (!this.ws || !this.ws.isConnected) return;
-        this.ws.sendCommand(`$H${axis}`);
+        if (!this._requireConnectedForAction()) return;
+        const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
+        if (!reporter) {
+            console.error('Reporter not available for modal');
+            return;
+        }
+        reporter.showConfirm(`Home ${axis} Axis`, `Home ${axis} axis ($H${axis})? Ensure the path is clear.`, () => {
+            this.ws.sendCommand(`$H${axis}`);
+        });
     }
 
     // ... existing methods ...
