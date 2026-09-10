@@ -125,6 +125,7 @@ class JoggingController {
 
         btns.forEach(btn => {
             const dir = btn.dataset.jog;
+            let suppressIncrementalClick = false;
 
             const startJog = (e) => {
                 if (!toggle.checked) return;
@@ -223,6 +224,14 @@ class JoggingController {
                     if (e.cancelable) e.preventDefault();
                     btn.setPointerCapture(e.pointerId);
                     startJog(e);
+                } else if (e.isPrimary && (e.pointerType !== 'mouse' || e.button === 0)) {
+                    // Incremental jogs should react as soon as the button is pressed.
+                    // The browser will also emit a click on release, so suppress it below
+                    // to avoid issuing the same jog twice.
+                    if (e.cancelable) e.preventDefault();
+                    suppressIncrementalClick = true;
+                    btn.setPointerCapture(e.pointerId);
+                    clickJog();
                 }
             });
             btn.addEventListener('pointerup', (e) => {
@@ -230,15 +239,29 @@ class JoggingController {
                     if (e.cancelable) e.preventDefault();
                     if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
                     stopJog(e);
+                } else if (btn.hasPointerCapture(e.pointerId)) {
+                    btn.releasePointerCapture(e.pointerId);
+                    // A click follows pointerup in the same interaction. If it does not,
+                    // clear the guard before the next physical press.
+                    setTimeout(() => { suppressIncrementalClick = false; }, 0);
                 }
             });
             btn.addEventListener('pointercancel', (e) => {
                 if (toggle.checked) {
                     if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
                     stopJog(e);
+                } else {
+                    if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+                    suppressIncrementalClick = false;
                 }
             });
-            btn.addEventListener('click', clickJog);
+            btn.addEventListener('click', () => {
+                if (suppressIncrementalClick) {
+                    suppressIncrementalClick = false;
+                    return;
+                }
+                clickJog();
+            });
         });
 
         this.initLayoutSync();
