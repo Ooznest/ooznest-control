@@ -90,17 +90,17 @@
     "win": {
       "target": "nsis",
       "icon": "cordova/resources/icon.png",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "Ooznest.Control-Setup-${version}.${ext}"
     },
     "mac": {
       "target": "dmg",
       "icon": "cordova/resources/icon.png",
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "Ooznest.Control-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage",
       "icon": "cordova/resources/icon.png",
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "Ooznest.Control-${version}-${arch}.${ext}"
     }
   }
 }
