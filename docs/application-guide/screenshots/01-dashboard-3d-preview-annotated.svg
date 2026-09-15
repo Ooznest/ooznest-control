@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <image x="0" y="0" width="1920" height="1080" xlink:href="01-dashboard-3d-preview.png"/>
+  <g font-family="Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">
+    <g fill="#f36d21" stroke="#fff" stroke-width="5"><circle cx="298" cy="39" r="24"/><circle cx="78" cy="160" r="24"/><circle cx="176" cy="385" r="24"/><circle cx="180" cy="829" r="24"/><circle cx="1144" cy="530" r="24"/><circle cx="1830" cy="98" r="24"/></g>
+    <g fill="#fff"><text x="298" y="48">1</text><text x="78" y="169">2</text><text x="176" y="394">3</text><text x="180" y="838">4</text><text x="1144" y="539">5</text><text x="1830" y="107">6</text></g>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="22" font-weight="700">
+    <g fill="#163b42" stroke="#fff" stroke-width="5" paint-order="stroke"><text x="320" y="105">1 Connect / Unlock</text><text x="95" y="202">2 Units and job origin</text><text x="195" y="430">3 Home and set work zero</text><text x="205" y="885">4 Manual jog controls</text><text x="1168" y="580">5 3D safety preview</text><text x="1640" y="155">6 Run Job — real motion</text></g>
+  </g>
+</svg>

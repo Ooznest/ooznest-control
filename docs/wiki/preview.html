@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ooznest Control Wiki preview</title>
+  <style>
+    :root { color-scheme: light; --ink:#213b49; --muted:#637783; --line:#dce4e7; --orange:#ff6600; --teal:#479fa2; --bg:#f4f7f8; }
+    * { box-sizing:border-box } body { margin:0; color:var(--ink); background:var(--bg); font:16px/1.55 Arial,sans-serif; }
+    header { position:sticky; top:0; z-index:2; display:flex; gap:14px; align-items:center; padding:13px max(22px,calc((100vw - 1400px)/2)); color:white; background:#123746; box-shadow:0 2px 8px #0003; }
+    header strong { white-space:nowrap } select { min-width:220px; border:0; border-radius:5px; padding:8px; color:var(--ink); font:inherit; }
+    main { width:min(1050px,calc(100% - 36px)); min-height:calc(100vh - 64px); margin:30px auto; padding:44px clamp(22px,5vw,70px); background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:0 4px 18px #12374612; }
+    h1,h2,h3 { color:#163e4c; line-height:1.2 } h1 { margin-top:0; font-size:2.25rem } h2 { margin-top:2.6rem; padding-bottom:.45rem; border-bottom:1px solid var(--line); } h3 { margin-top:2rem; }
+    a { color:#057b80; font-weight:600 } p,li { max-width:75ch } img { display:block; width:auto; max-width:100%; height:auto; margin:1.25rem auto; border:1px solid var(--line); border-radius:7px; box-shadow:0 2px 12px #12374614; }
+    table { display:block; overflow:auto; width:100%; margin:1.2rem 0; border-collapse:collapse; } th { background:#e7f4f4; color:#164b51; } th,td { padding:.65rem .75rem; border:1px solid var(--line); vertical-align:top; text-align:left; } code { padding:.1rem .3rem; border-radius:3px; background:#eff3f4; } blockquote { margin:1.2rem 0; padding:.75rem 1rem; border-left:4px solid var(--teal); background:#edf8f8; color:#315d61; } .notice { margin:1.4rem 0; padding:1rem 1.15rem; border-radius:6px; } .notice.warning { border-left:4px solid var(--orange); background:#fff4e9; } .notice.info { border-left:4px solid var(--teal); background:#edf8f8; } .error { color:#b42318; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <header><strong>Ooznest Control — Wiki preview</strong><label>Page <select id="page"></select></label></header>
+  <main id="content">Loading preview…</main>
+  <script>
+    const pages = [
+      ['README.md','Guide index'], ['01-first-connection.md','First connection'], ['02-connect.md','Connect'], ['03-main-screen.md','Main screen'], ['04-gcode-editor.md','G-code Editor'], ['05-probing.md','Probing'], ['06-macros.md','Macros'], ['07-sd-card.md','SD Card'], ['08-surfacing.md','Surfacing'], ['09-spoilboard-grid.md','Spoilboard Grid'], ['10-bowl-cutter.md','Bowl Cutter'], ['11-console.md','Console'], ['12-settings.md','Settings'], ['15-calibration.md','Axis Calibration'], ['13-troubleshooting.md','Troubleshooting'], ['14-first-job.md','First Job']
+    ];
+    const selector = document.querySelector('#page');
+    const content = document.querySelector('#content');
+    const escape = value => value.replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+    function inline(value) {
+      return escape(value)
+        .replace(/!\[([^\]]*)\]\(\/images\/ooznest-control\/([^\s\)]+)(?:\s+=[^\)]*)?\)/g, '<img alt="$1" src="images/$2">')
+        .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2">$1</a>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    }
+    function render(markdown) {
+      const lines = markdown.replace(/\r/g, '').split('\n'); let html = '', list = null, table = false, notice = null;
+      const closeList = () => { if (list) html += `</${list}>`; list = null; };
+      const closeTable = () => { if (table) html += '</tbody></table>'; table = false; };
+      for (let index = 0; index < lines.length; index++) {
+        const line = lines[index];
+        if (/^\{\.is-(warning|info)\}$/.test(line)) { notice = RegExp.$1; continue; }
+        if (notice && line.startsWith('> ')) { closeList(); closeTable(); html += `<div class="notice ${notice}">${inline(line.slice(2))}</div>`; notice = null; continue; }
+        if (/^\|.*\|$/.test(line)) { closeList(); const cells = line.slice(1,-1).split('|').map(c => c.trim()); if (/^-{3,}/.test(cells[0])) continue; if (!table) { html += '<table><thead><tr>' + cells.map(c => `<th>${inline(c)}</th>`).join('') + '</tr></thead><tbody>'; table = true; } else html += '<tr>' + cells.map(c => `<td>${inline(c)}</td>`).join('') + '</tr>'; continue; }
+        closeTable();
+        if (!line.trim()) { closeList(); continue; }
+        const heading = line.match(/^(#{1,3})\s+(.+)$/); if (heading) { closeList(); html += `<h${heading[1].length}>${inline(heading[2])}</h${heading[1].length}>`; continue; }
+        const bullet = line.match(/^[-*]\s+(.+)$/), ordered = line.match(/^\d+\.\s+(.+)$/); if (bullet || ordered) { const type = bullet ? 'ul' : 'ol'; if (list !== type) { closeList(); list = type; html += `<${type}>`; } html += `<li>${inline((bullet || ordered)[1])}</li>`; continue; }
+        closeList(); if (line.startsWith('> ')) { html += `<blockquote>${inline(line.slice(2))}</blockquote>`; continue; }
+        html += /^!\[/.test(line) ? inline(line) : `<p>${inline(line)}</p>`;
+      }
+      closeList(); closeTable(); return html;
+    }
+    async function load(page) { location.hash = page; content.textContent = 'Loading preview…'; try { const response = await fetch(page); if (!response.ok) throw new Error(response.status); content.innerHTML = render(await response.text()); } catch (error) { content.innerHTML = `<p class="error">Could not load ${page}: ${error.message}</p>`; } }
+    pages.forEach(([file,label]) => selector.add(new Option(label,file))); const initial = pages.some(([file]) => file === location.hash.slice(1)) ? location.hash.slice(1) : pages[0][0]; selector.value = initial; selector.addEventListener('change', () => load(selector.value)); load(initial);
+  </script>
+</body>
+</html>

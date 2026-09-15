@@ -1139,8 +1139,10 @@ export class ConfigWizard {
             this.ws.sendRealtime('\x18');
 
             // The reset applies the configuration in the controller. Refresh the
-            // settings model afterwards so Settings does not retain stale values.
+            // settings model and extended identity afterwards so Settings and
+            // Troubleshooting do not retain the pre-configuration $I+ response.
             setTimeout(() => window.grblSettings?.fetchSettings?.(), 2000);
+            setTimeout(() => this.ws?.sendCommand('$I+'), 3000);
 
             // Update viewer with new machine limits
             if (window.viewer) {

@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "preview:wiki": "node docs/wiki/preview-server.js",
     "build": "electron-builder",
     "build-windows": "electron-builder --win",
     "build-windows-local": "electron-builder --win --config.npmRebuild=false --config.win.signAndEditExecutable=false",
@@ -89,15 +90,17 @@
     "win": {
       "target": "nsis",
       "icon": "cordova/resources/icon.png",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "${productName}-Setup.${ext}"
     },
     "mac": {
       "target": "dmg",
-      "icon": "cordova/resources/icon.png"
+      "icon": "cordova/resources/icon.png",
+      "artifactName": "${productName}-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "cordova/resources/icon.png"
+      "icon": "cordova/resources/icon.png",
+      "artifactName": "${productName}-${arch}.${ext}"
     }
   }
 }
