@@ -809,6 +809,24 @@ export class ConnectionManager {
 
         return new Promise((resolve, reject) => {
             const socket = new this.CordovaSocket();
+            let settled = false;
+            const connectionTimeout = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                try { socket.close(); } catch (e) {}
+                const error = new Error(`Telnet connection to ${host}:${port} timed out.`);
+                console.error(error.message);
+                this._setConnectingState(false);
+                this.emit('error', error);
+                reject(error);
+            }, 10000);
+
+            const fail = (error) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(connectionTimeout);
+                reject(error);
+            };
 
             socket.onData = (data) => {
                 const decoded = new TextDecoder().decode(data);
@@ -830,7 +848,9 @@ export class ConnectionManager {
                 console.error("Cordova Telnet Error payload:", JSON.stringify(err));
                 console.error("Cordova Telnet Error msg:", msg);
                 if (!this.isConnected) {
-                    reject(new Error(msg));
+                    const error = new Error(msg);
+                    this._setConnectingState(false);
+                    fail(error);
                 } else {
                     this.emit('error', new Error("Telnet error: " + msg));
                 }
@@ -846,7 +866,18 @@ export class ConnectionManager {
                 this._cordovaTelnetSocket = socket;
                 console.log("Cordova Telnet Connected, waiting 2s for board to stabilize...");
                 this.flowControl.reset();
+                try {
+                    const probe = new TextEncoder().encode('\r\n?\r\n');
+                    socket.write(probe, () => {}, (err) => {
+                        console.warn("Cordova Telnet probe write failed:", err);
+                    });
+                } catch (err) {
+                    console.warn("Cordova Telnet probe failed:", err);
+                }
                 setTimeout(() => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(connectionTimeout);
                     console.log("Cordova Telnet delay complete, activating connection");
                     this.handleConnect();
                     resolve();
@@ -855,7 +886,8 @@ export class ConnectionManager {
                 const msg = (typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err);
                 console.error("Cordova Telnet Open failed:", msg);
                 this.emit('error', new Error("Telnet connection failed: " + msg));
-                reject(new Error(msg));
+                this._setConnectingState(false);
+                fail(new Error(msg));
             });
         });
     }
