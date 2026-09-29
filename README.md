@@ -5,6 +5,8 @@
 
 A modern, cross-platform control interface for **grblHAL CNC controllers** — primarily designed for the **Ooznest WorkBee Z2** running the **Ooznest Motion Control Core**.
 
+![Ooznest Control 3D preview](docs/application-guide/screenshots/3d-preview-overview.png)
+
 ## Downloads
 
 - [Download Latest Release binaries (Windows, macOS, Linux, Android, iOS)](https://github.com/ooznest/ooznest-control/releases/latest)
