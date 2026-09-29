@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ooznest Support - Troubleshooting Checker</title>
+    <link rel="stylesheet" href="../themes/ooznest.css">
+    <link rel="stylesheet" href="../themes/ooznest-forms.css">
+    <link rel="stylesheet" href="../vendor/tailwind.css">
+</head>
+<body class="bg-grey-bg text-grey-dark">
+    <main class="mx-auto w-full max-w-6xl p-4 sm:p-8">
+        <header class="mb-6">
+            <p class="mb-2 text-xs font-bold uppercase tracking-wider text-primary-dark">Ooznest Support</p>
+            <h1 class="font-nunito text-3xl font-extrabold text-secondary-dark sm:text-4xl">Troubleshooting Checker</h1>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-grey">Drop a troubleshooting export here to review controller evidence and likely issues.</p>
+        </header>
+
+        <section id="drop-zone" class="flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed border-grey-light bg-white p-8 text-center shadow-soft" aria-label="Upload troubleshooting export">
+            <input id="file-input" type="file" accept="application/json,application/zip,.json,.zip" hidden>
+            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-grey-bg font-mono text-lg font-bold text-secondary-dark" aria-hidden="true">{ }</div>
+            <h2 class="mt-4 font-nunito text-xl font-bold text-secondary-dark">Drop export ZIP or JSON here</h2>
+            <p class="my-2 text-sm text-grey">or</p>
+            <button id="choose-file" class="btn btn-primary" type="button">Choose export file</button>
+            <p class="mt-4 text-xs text-grey">Exports are analysed in this browser only.</p>
+        </section>
+
+        <p id="error-message" class="mt-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700" hidden></p>
+
+        <section id="results" hidden>
+            <div class="mb-4 flex flex-col justify-between gap-4 rounded-xl border border-grey-light bg-white p-5 shadow-soft sm:flex-row sm:items-center">
+                <div>
+                    <p class="mb-1 text-xs font-bold uppercase tracking-wider text-primary-dark">Loaded export</p>
+                    <h2 id="report-title" class="font-nunito text-xl font-bold text-secondary-dark">Troubleshooting export</h2>
+                    <p id="report-meta" class="mt-2 text-sm text-grey"></p>
+                </div>
+                <button id="clear-report" class="btn btn-secondary" type="button">Check another file</button>
+            </div>
+
+            <div id="summary" class="mb-4 grid gap-px overflow-hidden rounded-xl border border-grey-light bg-grey-light sm:grid-cols-3"></div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <section class="rounded-xl border border-grey-light bg-white p-5 shadow-soft">
+                    <h2 class="font-nunito text-xs font-bold uppercase tracking-wider text-secondary-dark">Checks</h2>
+                    <div id="checks" class="mt-4 space-y-2"></div>
+                </section>
+                <section class="rounded-xl border border-grey-light bg-white p-5 shadow-soft">
+                    <h2 class="font-nunito text-xs font-bold uppercase tracking-wider text-secondary-dark">Controller</h2>
+                    <dl id="controller-details" class="mt-3 divide-y divide-grey-light"></dl>
+                </section>
+            </div>
+
+            <section class="mt-4 rounded-xl border border-grey-light bg-white p-5 shadow-soft">
+                <h2 class="font-nunito text-xs font-bold uppercase tracking-wider text-secondary-dark">Exported evidence</h2>
+                <div id="evidence" class="mt-4 space-y-3"></div>
+            </section>
+        </section>
+    </main>
+    <script src="./support.js"></script>
+</body>
+</html>

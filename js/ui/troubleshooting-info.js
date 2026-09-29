@@ -1,0 +1,791 @@
+export class TroubleshootingInfoView {
+    _escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    _infoRow(label, value, valueClass = 'text-xs font-bold text-secondary-dark text-right break-all') {
+        if (value === null || value === undefined || value === '') return '';
+        return `<div class="flex justify-between gap-4">
+            <span class="text-xs text-grey">${this._escapeHtml(label)}</span>
+            <span class="${valueClass}">${this._escapeHtml(value)}</span>
+        </div>`;
+    }
+
+    _detailBlock(title, lines, emptyMessage = 'Not available yet.') {
+        const content = lines?.length ? lines.join('\n') : emptyMessage;
+        return `<details class="pt-2 border-t border-grey-light/60">
+            <summary class="text-[10px] font-bold text-grey uppercase cursor-pointer">${this._escapeHtml(title)}</summary>
+            <pre class="mt-2 rounded-lg border border-grey-light bg-grey-bg px-3 py-2 text-[11px] leading-relaxed text-secondary-dark font-mono whitespace-pre-wrap break-words">${this._escapeHtml(content)}</pre>
+        </details>`;
+    }
+
+    _getAppVersion() {
+        return document.title.replace('Ooznest Control ', '') || 'Unknown';
+    }
+
+    _getFirmwareInfo() {
+        const wizard = window.configWizard;
+        const verInfo = wizard?.verInfo || null;
+        const update = window.firmwareVersionChecker?.getStatus?.() || null;
+        return {
+            version: verInfo?.version || 'Unknown',
+            machineConfig: verInfo?.configName || 'None',
+            decodedConfig: wizard?._decodeMachineConfig?.(verInfo?.configName) || null,
+            board: wizard?.boardInfo || null,
+            options: wizard?.optInfo ? wizard.optInfo.slice(1, -1) : null,
+            update
+        };
+    }
+
+    _getPowerSupplyLines() {
+        const latest = window.troubleshooting?.getLatestPowerSupplyValues?.();
+        if (!latest) return [];
+        return [
+            `Voltage: ${Number(latest.voltage).toFixed(2)} V`,
+            `Current: ${Number(latest.current).toFixed(2)} A`,
+            `Sampled: ${new Date(latest.t).toLocaleString()}`
+        ];
+    }
+
+    _getSpindleLines() {
+        const spindles = window.troubleshooting?.spindles || [];
+        return spindles.map((spindle, index) => {
+            const fields = [
+                `${index + 1}. ${spindle.name || 'Unknown spindle'}`,
+                spindle.typeLabel ? `Type: ${spindle.typeLabel}` : null,
+                spindle.spindleNum ? `Spindle: ${spindle.spindleNum}` : null,
+                spindle.rpmRange ? `RPM: ${spindle.rpmRange}` : null,
+                spindle.caps ? `Capabilities: ${spindle.caps.replace('*', '') || 'None'}` : null,
+                spindle.isActive ? 'Active' : null
+            ].filter(Boolean);
+            return fields.join(' | ');
+        });
+    }
+
+    _getPinStateLines() {
+        const trouble = window.troubleshooting;
+        if (!trouble) return [];
+
+        const lines = [];
+        const append = (heading, pins, lookupA, lookupB) => {
+            if (!pins.length) return;
+            if (lines.length) lines.push('');
+            lines.push(`[${heading}]`);
+            pins.forEach(pin => {
+                const pinDef = lookupA?.[pin.pin] || lookupB?.[pin.pin];
+                const label = pinDef?.label || pin.name;
+                const func = pinDef?.func ? ` | ${pinDef.func}` : '';
+                lines.push(`P${pin.pin}: ${label} = ${pin.state}${func}`);
+            });
+        };
+
+        append('Digital Inputs', trouble.pinStateDIN || [], trouble.inputDefsByPin, trouble.pinDefsByPin);
+        append('Digital Outputs', trouble.pinStateDOUT || [], trouble.outputDefsByPin, trouble.pinDefsByPin);
+        return lines;
+    }
+
+    _getHomingLines() {
+        const trouble = window.troubleshooting;
+        const hasA = trouble?.hasAAxis?.() || false;
+        const axes = hasA ? ['X', 'Y', 'Z', 'A'] : ['X', 'Y', 'Z'];
+        const mask = trouble?.lastHomingMask;
+        return axes.map((axis, index) => {
+            if (mask === null || mask === undefined) return `${axis} Axis: Unknown`;
+            return `${axis} Axis: ${((mask >> index) & 1) ? 'HOMED' : 'Not homed'}`;
+        });
+    }
+
+    _getRawBuildInfoLines() {
+        const lines = window.configWizard?._verLines || [];
+        return lines.length ? [...lines] : [];
+    }
+
+    _getPnLines() {
+        const pins = window.droHandler?.inputPins ?? window.troubleshooting?.lastPins;
+        return [`Pn:${pins || '(no active input signals)'}`];
+    }
+
+    _formatRelativeTime(timestamp) {
+        const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} min ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hr ago`;
+        return `${Math.floor(hours / 24)} days ago`;
+    }
+
+    _getSessionEventLines() {
+        const history = window.reporter?.getSessionHistory?.() || [];
+        return history.map(event => `${this._formatRelativeTime(event.timestamp)} — ${event.type} ${event.code}: ${event.description}`);
+    }
+
+    _getSettingChangeHistoryLines() {
+        const history = window.grblSettings?.getSettingChangeHistory?.() || [];
+        return history.map(change => {
+            const label = change.label && change.label !== 'Unknown setting' ? ` (${change.label})` : '';
+            return `${this._formatRelativeTime(change.timestamp)} — $${change.id}${label}: ${change.from} → ${change.to}`;
+        });
+    }
+
+    _getLimitSwitchLines() {
+        const trouble = window.troubleshooting;
+        if (!trouble) return [];
+
+        const axes = ['X', 'Y', 'Z'];
+        if (trouble.hasAAxis?.()) axes.push('A');
+        const realtimePins = trouble.lastPins;
+        const lines = axes.map(axis => {
+            if (typeof realtimePins !== 'string') return `${axis} Limit: Unknown`;
+            return `${axis} Limit: ${realtimePins.includes(axis) ? 'TRIGGERED' : 'Not triggered'}`;
+        });
+
+        const physicalLimits = (trouble.pinStateDIN || []).map(pin => {
+            const definition = trouble.inputDefsByPin?.[pin.pin] || trouble.pinDefsByPin?.[pin.pin];
+            const label = definition?.label || pin.name || `P${pin.pin}`;
+            const functionName = definition?.func || '';
+            return { pin, label, functionName };
+        }).filter(({ label, functionName, pin }) => /(?:limit|home)/i.test(`${label} ${functionName} ${pin.name || ''}`));
+
+        if (physicalLimits.length) {
+            lines.push('');
+            lines.push('Physical limit inputs:');
+            physicalLimits.forEach(({ pin, label }) => {
+                const state = pin.state === '1' ? 'TRIGGERED' : pin.state === '0' ? 'Not triggered' : pin.state || 'Unknown';
+                lines.push(`${label} (P${pin.pin}): ${state}`);
+            });
+        }
+
+        return lines;
+    }
+
+    _getBitmaskLabels(setting) {
+        const intVal = parseInt(setting?.val, 10) || 0;
+        if (!intVal) return [];
+
+        let labels = [];
+        if (setting.type === 4) {
+            if (setting.format) {
+                if (/^\d+$/.test(setting.format)) {
+                    labels = ['X', 'Y', 'Z', 'A', 'B', 'C'].slice(0, parseInt(setting.format, 10));
+                } else {
+                    labels = setting.format.split(',').map(label => label.trim());
+                }
+            } else {
+                labels = ['X', 'Y', 'Z', 'A', 'B', 'C'];
+            }
+        } else if ((setting.type === 1 || setting.type === 2 || setting.type === 'mask') && setting.format) {
+            labels = setting.format.split(',').map(label => label.trim());
+        }
+
+        return labels.filter((label, index) => label && label.toUpperCase() !== 'N/A' && ((intVal & (1 << index)) !== 0));
+    }
+
+    _getGrblSettingsLines() {
+        const settings = Object.values(window.grblSettings?.settings || {})
+            .sort((a, b) => Number(a.id) - Number(b.id))
+            .map(setting => {
+                const note = (setting.desc || setting.label || '').trim().replace(/\s+/g, ' ');
+                const bitmaskLabels = this._getBitmaskLabels(setting);
+                const suffix = bitmaskLabels.length ? ` (${bitmaskLabels.join(' and ')})` : '';
+                return note
+                    ? `$${setting.id}=${setting.val ?? ''} ; ${note}${suffix}`
+                    : `$${setting.id}=${setting.val ?? ''}`;
+            });
+        return settings;
+    }
+
+    _getSdCardStatusLabel() {
+        const isMounted = window._sdPrevMounted;
+        if (isMounted === true) return 'Mounted';
+        if (isMounted === false) return 'Not detected';
+        return 'Unknown';
+    }
+
+    _getSdCardLines() {
+        const sd = window.sdHandler;
+        if (!sd) return [];
+
+        const lines = [
+            `Presence: ${this._getSdCardStatusLabel()}`,
+            `Current Path: ${sd.path || '/'}`,
+            `Listed Entries: ${Array.isArray(sd.listedEntries) ? sd.listedEntries.length : 0}`
+        ];
+
+        const entries = Array.isArray(sd.listedEntries) ? sd.listedEntries : [];
+        if (entries.length) {
+            lines.push('');
+            entries.forEach(entry => {
+                if (entry.type === 'dir') {
+                    lines.push(`[DIR] ${entry.name}`);
+                } else {
+                    const size = entry.sizeDisplay || (Number.isFinite(entry.bytes) ? `${entry.bytes} bytes` : '-');
+                    lines.push(`[FILE] ${entry.name} (${size})`);
+                }
+            });
+        }
+
+        return lines;
+    }
+
+    _getProbeConfigLines() {
+        const probe = window.store?.data?.probe || {};
+        const is3DProbe = !!window.probeHandler?.enable3DProbe;
+        const mode = window.probeHandler?._getProbeMode ? window.probeHandler._getProbeMode(probe) : (probe.mode || 'plate');
+
+        return [
+            `Probe Mode: ${mode}`,
+            `3D Probe Enabled: ${is3DProbe ? 'Yes' : 'No'}`,
+            `Probe Safety Passed: ${window.probeHandler?.probeSafe ? 'Yes' : 'No'}`,
+            `Tool Diameter: ${probe.toolDiameter ?? 'Unknown'}`,
+            `Plate Thickness: ${probe.plateThickness ?? 'Unknown'}`,
+            `XY Plate Offset: ${probe.xyPlateOffset ?? 'Unknown'}`,
+            `Feed: ${probe.feed ?? 'Unknown'}`,
+            `Feed Latch: ${probe.feedLatch ?? 'Unknown'}`,
+            `Travel: ${probe.travel ?? 'Unknown'}`,
+            `Retract: ${probe.retract ?? 'Unknown'}`,
+            `Z Depth: ${probe.zDepth ?? 'Unknown'}`,
+            `Plate Clearance: ${probe.plateClearance ?? 'Unknown'}`,
+            `Probe Clearance: ${probe.probeClearance ?? 'Unknown'}`,
+            `Feature Width: ${probe.featureW ?? 'Unknown'}`,
+            `Feature Height: ${probe.featureH ?? 'Unknown'}`,
+            `TLO X: ${probe.tloX ?? 'Unknown'}`,
+            `TLO Y: ${probe.tloY ?? 'Unknown'}`,
+            `TLO Z: ${probe.tloZ ?? 'Unknown'}`
+        ];
+    }
+
+    _summarizeMacroGcode(gcode) {
+        const commands = String(gcode || '')
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(line => line && !line.startsWith(';'));
+
+        if (!commands.length) return 'No G-code';
+
+        const preview = commands.slice(0, 3).join(' | ');
+        return commands.length > 3 ? `${preview} | ... (${commands.length} lines)` : preview;
+    }
+
+    _getMacroLines() {
+        const macros = window.macroHandler?.macros || [];
+        return macros.map(macro => `${macro.name || 'Unnamed Macro'} > ${this._summarizeMacroGcode(macro.gcode)}`);
+    }
+
+    async _buildSnapshot() {
+        const computer = window.troubleshooting?.getComputerInfo
+            ? await window.troubleshooting.getComputerInfo()
+            : null;
+
+        return {
+            exportedAt: new Date().toISOString(),
+            firmware: this._getFirmwareInfo(),
+            application: {
+                version: this._getAppVersion(),
+                platform: window.electron ? 'Desktop' : window.cordova ? 'Mobile' : 'Web'
+            },
+            computer,
+            homing: this._getHomingLines(),
+            limitSwitches: this._getLimitSwitchLines(),
+            inputPins: this._getPnLines(),
+            rawBuildInfo: this._getRawBuildInfoLines(),
+            sessionEvents: this._getSessionEventLines(),
+            settingChangeHistory: this._getSettingChangeHistoryLines(),
+            powerSupply: this._getPowerSupplyLines(),
+            sdCard: this._getSdCardLines(),
+            probeConfig: this._getProbeConfigLines(),
+            spindles: this._getSpindleLines(),
+            pinState: this._getPinStateLines(),
+            macros: this._getMacroLines(),
+            grblSettings: this._getGrblSettingsLines()
+        };
+    }
+
+    _snapshotSectionLines(title, lines, emptyMessage = 'Not available yet.') {
+        const body = lines?.length ? lines : [emptyMessage];
+        return [`=== ${title} ===`, ...body, ''];
+    }
+
+    _snapshotKeyValueLines(title, entries) {
+        const lines = entries
+            .filter(([, value]) => value !== null && value !== undefined && value !== '')
+            .map(([label, value]) => `${label}: ${value}`);
+        return this._snapshotSectionLines(title, lines);
+    }
+
+    _buildPlainTextReport(snapshot) {
+        const adapterLines = snapshot.computer?.adapters?.length
+            ? snapshot.computer.adapters.flatMap(adapter => [
+                `${adapter.name || 'Adapter'}`,
+                `  Address: ${adapter.address || 'Unknown'}`,
+                `  Netmask: ${adapter.netmask || 'Unknown'}${adapter.cidr ? ` | ${adapter.cidr}` : ''}`,
+                ''
+            ])
+            : ['No adapter details available.', ''];
+        const scanRangeLines = snapshot.computer?.scanRanges?.length
+            ? snapshot.computer.scanRanges.map(range => range.label || `${range.subnet}.x`)
+            : [];
+
+        const lines = [
+            'OOZNEST TROUBLESHOOTING EXPORT',
+            `Generated: ${new Date(snapshot.exportedAt).toLocaleString()}`,
+            'Email this file to help@ooznest.co.uk and include a detailed fault description or a description of what you need help with.',
+            '',
+            ...this._snapshotKeyValueLines('Firmware', [
+                ['Version', snapshot.firmware.version],
+                ['Machine Config', snapshot.firmware.machineConfig],
+                ['Decoded Config', snapshot.firmware.decodedConfig],
+                ['Board', snapshot.firmware.board],
+                ['Options', snapshot.firmware.options]
+            ]),
+            ...this._snapshotKeyValueLines('Application', [
+                ['Version', snapshot.application.version],
+                ['Platform', snapshot.application.platform],
+                ['Exported At', snapshot.exportedAt]
+            ]),
+            ...this._snapshotKeyValueLines('Computer', [
+                ['Runtime', snapshot.computer?.runtime],
+                ['OS', snapshot.computer?.os],
+                ['Browser', snapshot.computer?.browser],
+                ['Language', snapshot.computer?.language],
+                ['Online', snapshot.computer?.online],
+                ['Screen', snapshot.computer?.screen],
+                ['CPU Cores', snapshot.computer?.cores],
+                ['Memory', snapshot.computer?.memory],
+                ['Host', snapshot.computer?.host],
+                ['Origin', snapshot.computer?.origin]
+            ]),
+            ...this._snapshotSectionLines('Network Adapters', adapterLines),
+            ...this._snapshotSectionLines('Scanner Ranges', scanRangeLines),
+            ...this._snapshotSectionLines('WebUI Environment', snapshot.computer?.userAgent ? [snapshot.computer.userAgent] : []),
+            ...this._snapshotSectionLines('Homing', snapshot.homing),
+            ...this._snapshotSectionLines('Limit Switches', snapshot.limitSwitches),
+            ...this._snapshotSectionLines('Live Input Signals (Pn)', snapshot.inputPins),
+            ...this._snapshotSectionLines('Full Controller Build Info ($I+)', snapshot.rawBuildInfo),
+            ...this._snapshotSectionLines('Session Alarm & Error History', snapshot.sessionEvents, 'No alarms or errors in this session.'),
+            ...this._snapshotSectionLines('GRBL Setting Change History', snapshot.settingChangeHistory, 'No locally recorded setting changes.'),
+            ...this._snapshotSectionLines('Power Supply', snapshot.powerSupply),
+            ...this._snapshotSectionLines('SD Card', snapshot.sdCard),
+            ...this._snapshotSectionLines('Probe Config', snapshot.probeConfig),
+            ...this._snapshotSectionLines('Spindles', snapshot.spindles),
+            ...this._snapshotSectionLines('Pin State', snapshot.pinState),
+            ...this._snapshotSectionLines('Macros', snapshot.macros),
+            ...this._snapshotSectionLines('Grbl Settings ($$)', snapshot.grblSettings)
+        ];
+
+        return lines.join('\n');
+    }
+
+    async _ensureJsPdfLoaded() {
+        if (window.jspdf?.jsPDF) return window.jspdf.jsPDF;
+
+        if (!this._jspdfLoadPromise) {
+            this._jspdfLoadPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+                script.onload = () => {
+                    if (window.jspdf?.jsPDF) resolve(window.jspdf.jsPDF);
+                    else reject(new Error('jsPDF loaded without global export'));
+                };
+                script.onerror = () => reject(new Error('Failed to load jsPDF'));
+                document.head.appendChild(script);
+            }).finally(() => {
+                if (!window.jspdf?.jsPDF) this._jspdfLoadPromise = null;
+            });
+        }
+
+        return this._jspdfLoadPromise;
+    }
+
+    async render() {
+        const container = document.getElementById('trouble-tab-info-content');
+        if (!container) return;
+
+        const firmware = this._getFirmwareInfo();
+        const computerCardHtml = window.troubleshooting?.getComputerInfo
+            ? window.troubleshooting.renderComputerInfoCard(await window.troubleshooting.getComputerInfo())
+            : '';
+        const powerLines = this._getPowerSupplyLines();
+        const sdCardLines = this._getSdCardLines();
+        const probeConfigLines = this._getProbeConfigLines();
+        const spindleLines = this._getSpindleLines();
+        const pinStateLines = this._getPinStateLines();
+        const macroLines = this._getMacroLines();
+        const grblSettingsLines = this._getGrblSettingsLines();
+
+        let html = '<div class="space-y-4">';
+
+        html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
+        html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
+        html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Firmware</h3>';
+        if (firmware.update?.updateAvailable) {
+            html += '<span class="ml-auto rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">Newer available</span>';
+        }
+        html += '</div><div class="p-4 space-y-2">';
+        html += this._infoRow('Version', firmware.version);
+        if (firmware.update?.availableBuild) {
+            html += this._infoRow('Available firmware version', firmware.update.availableBuild);
+        }
+        if (firmware.update?.updateAvailable) {
+            const releaseNotes = firmware.update.releaseNotes || [];
+            if (releaseNotes.length) {
+                html += '<div class="mt-3 max-h-52 overflow-y-auto pr-1">';
+                html += '<div class="ooznest-instruction-card__info" style="margin-top:0">';
+                html += '<p class="ooznest-instruction-card__title mb-0">Newer firmware available</p>';
+                releaseNotes.forEach((release) => {
+                    const releaseLabel = [release.date, `Firmware version ${release.grblBuild}`].filter(Boolean).join(' · ');
+                    if (releaseLabel) html += `<p class="mt-2 text-xs font-bold" style="color:#718087">${this._escapeHtml(releaseLabel)}</p>`;
+                    if (release.changes?.length) {
+                        html += '<ul class="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed" style="color:#718087">';
+                        release.changes.forEach((change) => {
+                            html += `<li>${this._escapeHtml(change)}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                });
+                html += '</div></div>';
+            }
+            html += '<button class="btn btn-primary w-full mt-2" onclick="window.firmwareFlasher?.showModal()"><i data-lucide="cpu"></i> Update now</button>';
+        }
+        html += this._infoRow('Machine Config', firmware.machineConfig, `text-xs font-bold ${window.configWizard?._isUnconfigured?.(firmware.machineConfig) ? 'text-red-500' : 'text-secondary-dark'} text-right break-all`);
+        html += firmware.decodedConfig ? `<div class="text-[10px] text-grey leading-relaxed">${this._escapeHtml(firmware.decodedConfig)}</div>` : '';
+        html += this._infoRow('Board', firmware.board);
+        html += this._infoRow('SD Card', this._getSdCardStatusLabel());
+        if (powerLines.length >= 2) {
+            html += this._infoRow('Power Supply Voltage', powerLines[0].replace('Voltage: ', ''));
+            html += this._infoRow('Power Supply Current', powerLines[1].replace('Current: ', ''));
+        }
+        html += this._detailBlock('Spindles', spindleLines);
+        html += this._detailBlock('Pin State', pinStateLines);
+        html += this._detailBlock('Grbl Settings ($$)', grblSettingsLines);
+        html += this._detailBlock('Power Supply Values', powerLines);
+        html += this._detailBlock('SD Card', sdCardLines);
+        html += this._detailBlock('Probe Config', probeConfigLines);
+        html += this._detailBlock('Macros', macroLines);
+        html += this._detailBlock('Live Input Signals (Pn)', this._getPnLines());
+        html += this._detailBlock('Full Controller Build Info ($I+)', this._getRawBuildInfoLines());
+        html += this._detailBlock('Session Alarm & Error History', this._getSessionEventLines(), 'No alarms or errors in this session.');
+        html += this._detailBlock('GRBL Setting Change History', this._getSettingChangeHistoryLines(), 'No locally recorded setting changes.');
+        html += '</div></div>';
+
+        html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
+        html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
+        html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Application</h3>';
+        html += '</div><div class="p-4 space-y-2">';
+        html += this._infoRow('Version', this._getAppVersion());
+        html += this._infoRow('Platform', window.electron ? 'Desktop' : window.cordova ? 'Mobile' : 'Web');
+        html += '</div></div>';
+
+        html += computerCardHtml;
+
+        if (firmware.options) {
+            html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
+            html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';
+            html += '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Options</h3>';
+            html += `</div><div class="p-4"><span class="text-xs text-grey">${this._escapeHtml(firmware.options)}</span></div></div>`;
+        }
+
+        if (window.configWizard?.verInfo && window.configWizard._isUnconfigured(window.configWizard.verInfo.configName)) {
+            html += '<button onclick="window.configWizard.showWizard()" class="btn btn-primary w-full">Run Configuration Wizard</button>';
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    async exportHtml() {
+        if (!window.ws || !window.ws.isConnected) {
+            window.showToast?.('Exporting without a machine connection. PC info will be included, but connect to capture full machine details.', 'plug-zap', 'warning');
+        }
+
+        const snapshot = await this._buildSnapshot();
+        const exportDate = new Date(snapshot.exportedAt);
+        const section = (title, body) => `<section class="card"><h2>${this._escapeHtml(title)}</h2>${body}</section>`;
+        const row = (label, value) => value === null || value === undefined || value === ''
+            ? ''
+            : `<div class="row"><div class="label">${this._escapeHtml(label)}</div><div class="value">${this._escapeHtml(value)}</div></div>`;
+        const rows = items => `<div class="kv">${items.filter(Boolean).join('')}</div>`;
+        const pre = (lines, emptyMessage = 'Not available yet.') => `<pre>${this._escapeHtml(lines?.length ? lines.join('\n') : emptyMessage)}</pre>`;
+        const adapters = snapshot.computer?.adapters?.length
+            ? snapshot.computer.adapters.map(adapter => `<div class="subcard">
+                <div><strong>${this._escapeHtml(adapter.name || 'Adapter')}</strong></div>
+                <div>${this._escapeHtml(adapter.address || '')}</div>
+                <div>${this._escapeHtml(adapter.netmask || 'Unknown')}${adapter.cidr ? ` | ${this._escapeHtml(adapter.cidr)}` : ''}</div>
+            </div>`).join('')
+            : '<p class="muted">No adapter details available.</p>';
+        const scanRanges = snapshot.computer?.scanRanges?.length
+            ? snapshot.computer.scanRanges.map(range => range.label || `${range.subnet}.x`)
+            : [];
+
+        const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ooznest Troubleshooting Export</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        color-scheme: light;
+        --oz-primary: #FF6600;
+        --oz-primary-light: #FF8533;
+        --oz-primary-dark: #D55700;
+        --oz-teal-brand: #004C5B;
+        --oz-teal-mid: #449D9F;
+        --oz-teal-light: #B0CACF;
+        --oz-teal-xlight: #EBEFEF;
+        --oz-secondary-dark: var(--oz-teal-brand);
+        --oz-grey-dark: #2F373C;
+        --oz-grey-mid: #6B7280;
+        --oz-grey-light: #EBEFEF;
+        --oz-white: #FFFFFF;
+        --oz-bg-panel: #F7F9F9;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: "Roboto", "Inter", sans-serif;
+        background: var(--oz-grey-light);
+        color: var(--oz-grey-dark);
+        -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 18px 48px; }
+    .hero {
+        background: var(--oz-white);
+        color: var(--oz-grey-dark);
+        border-radius: 12px;
+        padding: 26px 30px;
+        border: 1px solid rgba(68, 157, 159, 0.16);
+    }
+    .hero h1 {
+        margin: 0 0 8px;
+        font-family: "Nunito", "Inter", sans-serif;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--oz-secondary-dark);
+    }
+    .hero p {
+        margin: 0;
+        color: var(--oz-grey-mid);
+        font-size: 14px;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 22px; }
+    .full-width { margin-top: 18px; }
+    .card {
+        background: var(--oz-white);
+        border: 1px solid rgba(68, 157, 159, 0.16);
+        border-radius: 12px;
+        padding: 20px;
+    }
+    .card h2 {
+        margin: 0 0 14px;
+        font-family: "Nunito", "Inter", sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--oz-secondary-dark);
+    }
+    .kv { display: grid; gap: 10px; }
+    .row { display: grid; grid-template-columns: 155px 1fr; gap: 12px; align-items: start; padding-bottom: 10px; border-bottom: 1px solid rgba(68, 157, 159, 0.12); }
+    .row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .label {
+        font-size: 11px;
+        color: var(--oz-grey-mid);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-family: "Nunito", "Inter", sans-serif;
+        font-weight: 700;
+    }
+    .value {
+        font-weight: 700;
+        color: var(--oz-secondary-dark);
+        word-break: break-word;
+    }
+    .subcard {
+        background: var(--oz-bg-panel);
+        border: 1px solid rgba(68, 157, 159, 0.14);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+    }
+    .subcard:last-child { margin-bottom: 0; }
+    .subcard strong {
+        font-family: "Nunito", "Inter", sans-serif;
+        color: var(--oz-secondary-dark);
+    }
+    .muted { margin: 0; color: var(--oz-grey-mid); }
+    pre {
+        margin: 0;
+        background: var(--oz-bg-panel);
+        border: 1px solid rgba(68, 157, 159, 0.14);
+        border-radius: 8px;
+        padding: 14px;
+        font: 12px/1.65 "Roboto Mono", "Consolas", monospace;
+        color: var(--oz-grey-dark);
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    @media (max-width: 640px) {
+        .hero h1 { font-size: 22px; }
+        .row { grid-template-columns: 1fr; gap: 4px; }
+    }
+</style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="hero">
+            <h1>Ooznest Troubleshooting Export</h1>
+            <p>Generated ${this._escapeHtml(exportDate.toLocaleString())} for support review.</p>
+            <p>Email this file to help@ooznest.co.uk and include a detailed fault description or a description of what you need help with.</p>
+        </div>
+        <div class="grid">
+            ${section('Firmware', rows([
+                row('Version', snapshot.firmware.version),
+                row('Machine Config', snapshot.firmware.machineConfig),
+                row('Decoded Config', snapshot.firmware.decodedConfig),
+                row('Board', snapshot.firmware.board),
+                row('SD Card', this._getSdCardStatusLabel()),
+                row('Options', snapshot.firmware.options)
+            ]))}
+            ${section('Application', rows([
+                row('Version', snapshot.application.version),
+                row('Platform', snapshot.application.platform),
+                row('Exported At', snapshot.exportedAt)
+            ]))}
+            ${section('Computer', rows([
+                row('Runtime', snapshot.computer?.runtime),
+                row('OS', snapshot.computer?.os),
+                row('Browser', snapshot.computer?.browser),
+                row('Language', snapshot.computer?.language),
+                row('Online', snapshot.computer?.online),
+                row('Screen', snapshot.computer?.screen),
+                row('CPU Cores', snapshot.computer?.cores),
+                row('Memory', snapshot.computer?.memory),
+                row('Host', snapshot.computer?.host),
+                row('Origin', snapshot.computer?.origin)
+            ]))}
+            ${section('Network Adapters', adapters)}
+            ${section('Scanner Ranges', pre(scanRanges))}
+            ${section('WebUI Environment', pre(snapshot.computer?.userAgent ? [snapshot.computer.userAgent] : []))}
+            ${section('Homing', pre(snapshot.homing))}
+            ${section('Limit Switches', pre(snapshot.limitSwitches))}
+            ${section('Live Input Signals (Pn)', pre(snapshot.inputPins))}
+            ${section('Full Controller Build Info ($I+)', pre(snapshot.rawBuildInfo))}
+            ${section('Session Alarm & Error History', pre(snapshot.sessionEvents, 'No alarms or errors in this session.'))}
+            ${section('GRBL Setting Change History', pre(snapshot.settingChangeHistory, 'No locally recorded setting changes.'))}
+            ${section('Power Supply', pre(snapshot.powerSupply))}
+            ${section('SD Card', pre(snapshot.sdCard))}
+            ${section('Probe Config', pre(snapshot.probeConfig))}
+            ${section('Spindles', pre(snapshot.spindles))}
+            ${section('Pin State', pre(snapshot.pinState))}
+            ${section('Macros', pre(snapshot.macros))}
+        </div>
+        <div class="full-width">
+            ${section('Grbl Settings ($$)', pre(snapshot.grblSettings))}
+        </div>
+    </div>
+</body>
+</html>`;
+
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const stamp = exportDate.toISOString().replace(/[:.]/g, '-');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ooznest-troubleshooting-${stamp}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    _crc32(bytes) {
+        let crc = 0xffffffff;
+        for (const byte of bytes) {
+            crc ^= byte;
+            for (let bit = 0; bit < 8; bit += 1) {
+                crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+            }
+        }
+        return (crc ^ 0xffffffff) >>> 0;
+    }
+
+    _createZipBlob(filename, text) {
+        const encoder = new TextEncoder();
+        const filenameBytes = encoder.encode(filename);
+        const contentBytes = encoder.encode(text);
+        const crc = this._crc32(contentBytes);
+        const localHeader = new Uint8Array(30);
+        const localView = new DataView(localHeader.buffer);
+        localView.setUint32(0, 0x04034b50, true);
+        localView.setUint16(4, 20, true);
+        localView.setUint32(14, crc, true);
+        localView.setUint32(18, contentBytes.length, true);
+        localView.setUint32(22, contentBytes.length, true);
+        localView.setUint16(26, filenameBytes.length, true);
+
+        const centralHeader = new Uint8Array(46);
+        const centralView = new DataView(centralHeader.buffer);
+        centralView.setUint32(0, 0x02014b50, true);
+        centralView.setUint16(4, 20, true);
+        centralView.setUint16(6, 20, true);
+        centralView.setUint32(16, crc, true);
+        centralView.setUint32(20, contentBytes.length, true);
+        centralView.setUint32(24, contentBytes.length, true);
+        centralView.setUint16(28, filenameBytes.length, true);
+
+        const endOfCentralDirectory = new Uint8Array(22);
+        const endView = new DataView(endOfCentralDirectory.buffer);
+        const centralDirectorySize = centralHeader.length + filenameBytes.length;
+        const localFileSize = localHeader.length + filenameBytes.length + contentBytes.length;
+        endView.setUint32(0, 0x06054b50, true);
+        endView.setUint16(8, 1, true);
+        endView.setUint16(10, 1, true);
+        endView.setUint32(12, centralDirectorySize, true);
+        endView.setUint32(16, localFileSize, true);
+
+        return new Blob([
+            localHeader,
+            filenameBytes,
+            contentBytes,
+            centralHeader,
+            filenameBytes,
+            endOfCentralDirectory
+        ], { type: 'application/zip' });
+    }
+
+    async exportJson() {
+        if (!window.ws || !window.ws.isConnected) {
+            window.showToast?.('Exporting without a machine connection. PC info will be included, but connect to capture full machine details.', 'plug-zap', 'warning');
+        }
+
+        try {
+            const snapshot = await this._buildSnapshot();
+            const exportDate = new Date(snapshot.exportedAt);
+            const stamp = exportDate.toISOString().replace(/[:.]/g, '-');
+            const jsonFilename = `ooznest-troubleshooting-${stamp}.json`;
+            const blob = this._createZipBlob(jsonFilename, JSON.stringify(snapshot, null, 2));
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ooznest-troubleshooting-${stamp}.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+            console.error('Failed to export troubleshooting JSON:', error);
+            window.showToast?.('Failed to export troubleshooting information. Please try again.', 'file-warning', 'error');
+        }
+    }
+}

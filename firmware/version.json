@@ -1,0 +1,29 @@
+{
+  "grbl_build": 20260902,
+  "changelog": [
+    {
+      "grbl_build": 20260902,
+      "date": "2026-09-03",
+      "changes": [
+        "Rebuilt Z1+, Z2+, and Actuator firmware images."
+      ]
+    },
+    {
+      "grbl_build": 20260831,
+      "date": "2026-08-31",
+      "changes": [
+        "Fixed Z1+ asymmetric Y homing: the single Y switch now keeps both Y motors stepping and ignores the unassigned A limit input.",
+        "Restored the multi-spindle selector settings ($511/$512) and M104 slot selection.",
+        "Removed the homing initial-lock override from the Z1+, Z2+, and Actuator firmware configurations.",
+        "Rebuilt Z1+, Z2+, and Actuator firmware images."
+      ]
+    },
+    {
+      "grbl_build": 20260824,
+      "date": "2026-08-28",
+      "changes": [
+        "Initial tracked firmware release."
+      ]
+    }
+  ]
+}

@@ -1352,6 +1352,23 @@ select {
     font-size: 12px;
 }
 
+.wizard-stepper--config {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wizard-stepper--config .wizard-stepper__row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+}
+
+.wizard-stepper--config .wizard-stepper__item.is-row-end::after {
+    content: none;
+}
+
 @media screen and (max-width: 1159px) {
     .wizard-stepper__circle {
         width: 28px;
@@ -1963,6 +1980,7 @@ body {
     border: 1px solid rgba(68, 157, 159, 0.10);
     border-radius: 10px;
     box-shadow: none;
+    cursor: pointer;
 }
 
 #settings-sidebar .settings-nav-item:hover {
@@ -2030,7 +2048,7 @@ body {
 
 #sd-table th:nth-child(2),
 #sd-table td:nth-child(2) {
-    width: 64px;
+    width: 88px;
 }
 
 #sd-table th:nth-child(3),

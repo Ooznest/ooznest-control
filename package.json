@@ -1,10 +1,11 @@
 {
   "name": "ooznest-control",
-  "version": "1.0.156",
+  "version": "1.0.180",
   "description": "grblHAL Web interface with WebSerial and Electron support",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "preview:wiki": "node docs/wiki/preview-server.js",
     "build": "electron-builder",
     "build-windows": "electron-builder --win",
     "build-windows-local": "electron-builder --win --config.npmRebuild=false --config.win.signAndEditExecutable=false",
@@ -83,20 +84,23 @@
       "**/*",
       "!node_modules/*",
       "!cordova/*",
+      "!support/*",
       "cordova/resources/icon.png"
     ],
     "win": {
       "target": "nsis",
       "icon": "cordova/resources/icon.png",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "Ooznest.Control-Setup-${version}.${ext}"
     },
     "mac": {
       "target": "dmg",
-      "icon": "cordova/resources/icon.png"
+      "icon": "cordova/resources/icon.png",
+      "artifactName": "Ooznest.Control-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "cordova/resources/icon.png"
+      "icon": "cordova/resources/icon.png",
+      "artifactName": "Ooznest.Control-${version}-${arch}.${ext}"
     }
   }
 }

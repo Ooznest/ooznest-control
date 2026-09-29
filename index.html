@@ -20,7 +20,8 @@
     <link rel="stylesheet" href="themes/ooznest-calibration.css">
     <link rel="stylesheet" href="themes/ooznest-probe.css?v=20260710">
     <link rel="stylesheet" href="themes/ooznest-configwizard.css">
-    <link rel="stylesheet" href="themes/ooznest-modals.css">
+    <link rel="stylesheet" href="themes/ooznest-modals.css?v=20260901a">
+    <link rel="stylesheet" href="themes/ooznest-gamepad.css?v=20260827t">
     <link rel="stylesheet" href="themes/ooznest-toasts.css">
     <!-- Vendor fonts & icons (deferred — not critical for first paint) -->
     <link rel="stylesheet" href="vendor/google-fonts.css" media="print" onload="this.media='all'; this.onload=null">
@@ -282,6 +283,12 @@
             color: var(--oz-error) !important;
         }
 
+        .tool-setup-kbd {
+            display: inline;
+            line-height: inherit;
+            vertical-align: 1px;
+        }
+
         .tool-setup-step.is-done {
             background: rgba(22, 101, 52, 0.08) !important;
             border-color: rgba(22, 101, 52, 0.22) !important;
@@ -308,8 +315,8 @@
 
             .tool-setup-z-actions {
                 margin-left: auto !important;
-                width: 22.5rem !important;
-                flex: 0 0 22.5rem !important;
+                width: auto !important;
+                flex: 0 0 auto !important;
             }
         }
 
@@ -1132,14 +1139,14 @@
                                 <table class="w-full table-fixed text-left text-sm" id="sd-table">
                                     <colgroup>
                                         <col>
-                                        <col style="width: 64px">
+                                        <col style="width: 88px">
                                         <col style="width: 120px">
                                     </colgroup>
                                     <thead
                                         class="border-b border-grey-light text-grey uppercase text-[10px] tracking-wider">
                                         <tr>
                                             <th class="px-4 py-3 font-bold">Filename</th>
-                                            <th class="w-[64px] px-2 py-3 font-bold whitespace-nowrap">Size</th>
+                                            <th class="w-[88px] px-2 py-3 font-bold whitespace-nowrap">Size</th>
                                             <th class="w-[120px] px-1 py-3 font-bold text-right whitespace-nowrap">Actions</th>
                                         </tr>
                                     </thead>
@@ -1354,40 +1361,17 @@
                             <!-- Sub-Tab Content: Surfacing -->
                             <div id="tab-tool-surfacing" class="tools-tab-content">
                                 <div class="w-full">
-                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
-                                        Flatten a spoilboard or stock material. For best results use a surfacing router bit and ensure your router head is trammed perpendicular to the bed.
-                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
-                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
-                                                    Tool & Speeds</h3>
-                                                <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="surf-tool">Tool Diameter (mm)</label><input type="number" id="surf-tool"
-                                                            class="ooznest-field input-field font-mono text-sm">
-                                                    </div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="surf-stepover">Stepover (%)</label><input type="number" id="surf-stepover"
-                                                            class="ooznest-field input-field font-mono text-sm">
-                                                        <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
-                                                    </div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="surf-feed">Feed Rate (mm/min)</label><input type="number" id="surf-feed"
-                                                            class="ooznest-field input-field font-mono text-sm">
-                                                    </div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="surf-rpm">Spindle RPM</label><input type="number" id="surf-rpm"
-                                                            class="ooznest-field input-field font-mono text-sm">
-                                                        <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
-                                                    </div>
-                                                </div>
+                                            <div class="bg-white p-4 rounded-xl border border-grey-light shadow-soft">
+                                                <p class="text-xs text-grey leading-relaxed">
+                                                    Flatten a spoilboard or stock material. For best results use a surfacing router bit and ensure your router head is trammed perpendicular to the bed.
+                                                </p>
                                             </div>
-
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <div class="mb-4 border-b border-grey-light pb-2">
                                                     <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-0 flex items-center">
-                                                        Dimensions</h3>
+                                                        Surfacing Dimensions</h3>
                                                     <div class="sidebar-control-stack mt-3 max-w-[14rem]">
                                                         <label class="oz-segmented-toggle oz-segmented-toggle--dark h-8 w-full" for="surf-dim-toggle">
                                                             <input type="checkbox" id="surf-dim-toggle" class="sr-only"
@@ -1404,10 +1388,10 @@
                                                     <div id="surf-dim-fields"
                                                         class="grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                                for="surf-x">Width (X)</label><input type="number" id="surf-x"
+                                                                for="surf-x">Width (X, mm)</label><input type="number" id="surf-x"
                                                                 class="ooznest-field input-field font-mono text-sm"></div>
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                                for="surf-y">Height (Y)</label><input type="number" id="surf-y"
+                                                                for="surf-y">Length (Y, mm)</label><input type="number" id="surf-y"
                                                                 class="ooznest-field input-field font-mono text-sm"></div>
                                                     </div>
                                                     <p id="surf-dim-custom-info" class="ooznest-form-info">
@@ -1416,11 +1400,11 @@
                                                     <div id="surf-dim-spoilboard"
                                                         class="hidden grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
                                                         <div>
-                                                            <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Width (X)</span>
+                                                            <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Width (X, mm)</span>
                                                             <div id="surf-dim-spoilboard-x" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
                                                         <div>
-                                                            <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Height (Y)</span>
+                                                            <span class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1">Length (Y, mm)</span>
                                                             <div id="surf-dim-spoilboard-y" class="text-sm font-bold text-grey-dark">--</div>
                                                         </div>
                                                     <p id="surf-dim-spoilboard-info" class="ooznest-form-info col-span-2">
@@ -1432,22 +1416,52 @@
 
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
-                                                    Depth Control</h3>
+                                                    Surfacing Depth Control</h3>
                                                 <div class="space-y-3">
                                                     <div class="grid grid-cols-2 gap-4">
-                                                        <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                                for="surf-z-step">Depth per Pass (mm)</label><input type="number" id="surf-z-step"
-                                                                class="ooznest-field input-field font-mono text-sm">
-                                                        </div>
                                                         <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                                 for="surf-z-final">Final Depth (mm)</label><input type="number" id="surf-z-final"
                                                                 class="ooznest-field input-field font-mono text-sm">
                                                             <p class="ooznest-form-info mt-1">Total amount removed below the current Z zero.</p>
                                                         </div>
+                                                        <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                                for="surf-z-step">Stepdown (mm)</label><input type="number" id="surf-z-step"
+                                                                class="ooznest-field input-field font-mono text-sm">
+                                                            <p class="ooznest-form-info mt-1">Maximum Z depth removed on each pass.</p>
+                                                        </div>
                                                     </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="surf-z-safe">Safe Z Clearance (mm)</label><input type="number" id="surf-z-safe"
                                                             class="ooznest-field input-field font-mono text-sm">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
+                                                    Tools &amp; Feeds</h3>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-tool">Tool Diameter (mm)</label><input type="number" id="surf-tool"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-stepover">Stepover (%)</label><input type="number" id="surf-stepover"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-feed">Feed Rate (mm/min)</label><input type="number" id="surf-feed"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-plunge">Plunge Rate (mm/min)</label><input type="number" id="surf-plunge"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
+                                                            for="surf-rpm">Spindle RPM</label><input type="number" id="surf-rpm"
+                                                            class="ooznest-field input-field font-mono text-sm">
+                                                        <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1495,7 +1509,7 @@
                                                     <button id="surf-setup-home-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.markSpoilboardSetupStep('home')">
                                                         Confirm Homed
                                                     </button>
-                                                    <div id="surf-setup-z-actions" class="tool-setup-z-actions hidden">
+                                                    <div id="surf-setup-z-actions" class="tool-setup-z-actions hidden self-end md:self-auto md:ml-auto">
                                                         <button id="surf-setup-z-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.surfacing.setSpoilboardZZero()">
                                                             Confirm Z Zero
                                                         </button>
@@ -1542,21 +1556,23 @@
                             <!-- Sub-Tab Content: Spoilboard Grid -->
                             <div id="tab-tool-spoilboard" class="tools-tab-content hidden">
                                 <div class="w-full">
-                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
-                                        Engrave a grid pattern that starts at the front-left work zero, with ruler ticks and numbers placed above and to the right. Use a V-bit or engraving tool for best results.
-                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
+                                            <div class="bg-white p-4 rounded-xl border border-grey-light shadow-soft">
+                                                <p class="text-xs text-grey leading-relaxed">
+                                                    Engrave a grid pattern of lines starting at front-left of machine with optional ruler marks and numbers. For best results, use a V-bit.
+                                                </p>
+                                            </div>
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
                                                     Grid Dimensions</h3>
                                                 <div class="flex items-start gap-4">
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="sg-width">Width (X mm)</label><input type="number" id="sg-width"
+                                                            for="sg-width">Width (X, mm)</label><input type="number" id="sg-width"
                                                             class="ooznest-field input-field font-mono text-sm" value="300">
                                                     </div>
                                                     <div class="flex-1 min-w-0"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="sg-height">Height (Y mm)</label><input type="number" id="sg-height"
+                                                            for="sg-height">Length (Y, mm)</label><input type="number" id="sg-height"
                                                             class="ooznest-field input-field font-mono text-sm" value="300">
                                                     </div>
                                                 </div>
@@ -1566,14 +1582,20 @@
                                             </div>
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
-                                                    Depth & Feeds</h3>
+                                                    Grid Depth Control</h3>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-depth">Engrave Depth (mm)</label><input type="number" id="sg-depth"
                                                             class="ooznest-field input-field font-mono text-sm" value="-0.3" step="0.1"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
-                                                            for="sg-up">Safe Z (mm)</label><input type="number" id="sg-up"
+                                                            for="sg-up">Safe Z Clearance (mm)</label><input type="number" id="sg-up"
                                                             class="ooznest-field input-field font-mono text-sm" value="1" step="0.1"></div>
+                                                </div>
+                                            </div>
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">
+                                                    Tools &amp; Feeds</h3>
+                                                <div class="grid grid-cols-2 gap-4">
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1"
                                                             for="sg-feed">Feed Rate (mm/min)</label><input type="number" id="sg-feed"
                                                             class="ooznest-field input-field font-mono text-sm" value="500"></div>
@@ -1584,7 +1606,7 @@
                                                             for="sg-rpm">Spindle RPM</label><input type="number" id="sg-rpm"
                                                             class="ooznest-field input-field font-mono text-sm" value="12000"></div>
                                                 </div>
-                                                <p class="ooznest-form-info mt-1">Adds an `M3 S...` spindle start command to the generated job.</p>
+                                                <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
                                             </div>
 
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
@@ -1599,7 +1621,7 @@
                                                                 <div class="w-9 h-5 bg-grey-light rounded-full peer-checked:bg-primary peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
                                                             </label>
                                                         </div>
-                                                        <p class="ooznest-form-info mt-1">Include markings, and numeric markers.</p>
+                                                        <p class="ooznest-form-info mt-1">Include markings and numbers.</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1613,7 +1635,7 @@
                                                     <button id="sg-setup-home-btn" type="button" class="tool-setup-step tool-setup-action btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.markSetupStep('home')">
                                                         Confirm Homed
                                                     </button>
-                                                    <div id="sg-setup-z-actions" class="tool-setup-z-actions hidden">
+                                                    <div id="sg-setup-z-actions" class="tool-setup-z-actions hidden self-end md:self-auto md:ml-auto">
                                                         <button id="sg-setup-z-btn" type="button" class="tool-setup-step btn btn-secondary h-9 !text-[10px]" onclick="window.spoilboardGrid.setZZero()">
                                                             Confirm Z Zero
                                                         </button>
@@ -1651,19 +1673,18 @@
                             <!-- Sub-Tab Content: Bowl Cutter -->
                             <div id="tab-tool-bowl" class="tools-tab-content hidden">
                                 <div class="w-full">
-                                    <p class="text-xs text-grey leading-relaxed mb-5 pb-2">
-                                        Cut a recessed bowl or tray with rounded inside corners. Set its overall size, depth, and corner radius, then use an endmill to machine the pocket.
-                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div class="space-y-6">
+                                            <div class="bg-white p-4 rounded-xl border border-grey-light shadow-soft">
+                                                <p class="text-xs text-grey leading-relaxed">
+                                                    Cut a recessed bowl or tray with rounded inside corners. For best results use a ball nose bit.
+                                                </p>
+                                            </div>
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
                                                 <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Dimensions</h3>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20">
-                                                        <p class="ooznest-form-info mt-1">Maximum depth cut below the current Z zero.</p>
-                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-width">Width (X, mm)</label><input type="number" id="bc-width" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-length">Length (Y, mm)</label><input type="number" id="bc-length" class="ooznest-field input-field font-mono text-sm" value="100"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-corner-radius">Corner Radius (mm)</label><input type="number" id="bc-corner-radius" class="ooznest-field input-field font-mono text-sm" value="5">
                                                         <p class="ooznest-form-info mt-1">Radius used to round the inside corners of the bowl.</p>
                                                     </div>
@@ -1671,19 +1692,30 @@
                                             </div>
 
                                             <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
-                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tool & Feeds</h3>
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Bowl Depth Control</h3>
                                                 <div class="grid grid-cols-2 gap-4">
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Endmill Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6">
-                                                        <p class="ooznest-form-info mt-1">Diameter of the cutter used to generate the bowl toolpath.</p>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-depth">Final Depth (mm)</label><input type="number" id="bc-depth" class="ooznest-field input-field font-mono text-sm" value="20">
+                                                        <p class="ooznest-form-info mt-1">Total amount removed below the current Z zero.</p>
                                                     </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1">
+                                                        <p class="ooznest-form-info mt-1">Maximum Z depth removed on each pass.</p>
+                                                    </div>
+                                                    <div class="col-span-2"><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-safe-z">Safe Z Clearance (mm)</label><input type="number" id="bc-safe-z" class="ooznest-field input-field font-mono text-sm" value="5" step="0.5"></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <h3 class="text-xs font-black text-grey uppercase tracking-wider mb-4 border-b border-grey-light pb-2">Tools &amp; Feeds</h3>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-tool-dia">Tool Diameter (mm)</label><input type="number" id="bc-tool-dia" class="ooznest-field input-field font-mono text-sm" step="0.5" value="6"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepover">Stepover (%)</label><input type="number" id="bc-stepover" class="ooznest-field input-field font-mono text-sm" value="35">
                                                         <p class="ooznest-form-info mt-1">Percentage of the tool diameter overlapped on each pass.</p>
                                                     </div>
-                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stepdown">Stepdown (mm)</label><input type="number" id="bc-stepdown" class="ooznest-field input-field font-mono text-sm" step="0.5" value="1">
-                                                        <p class="ooznest-form-info mt-1">Maximum Z depth removed on each cutting level.</p>
-                                                    </div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-feed">Feed Rate (mm/min)</label><input type="number" id="bc-feed" class="ooznest-field input-field font-mono text-sm" value="500"></div>
                                                     <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-plunge">Plunge Rate (mm/min)</label><input type="number" id="bc-plunge" class="ooznest-field input-field font-mono text-sm" value="100"></div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-rpm">Spindle RPM</label><input type="number" id="bc-rpm" class="ooznest-field input-field font-mono text-sm" value="12000">
+                                                        <p class="ooznest-form-info mt-1">Spindle speed command added to the generated job (For Variable Speed spindles).</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -1698,10 +1730,10 @@
                                                 <div class="ooznest-instruction-card__info">
                                                     <div class="ooznest-instruction-card__title">Bowl Cut Setup</div>
                                                     <ol class="ooznest-form-steps">
-                                                        <li>Install a ball end bit.</li>
-                                                        <li>Zero X and Y at the center of where the bowl should be.</li>
-                                                        <li>Zero Z at the top surface of the stock.</li>
-                                                        <li>Run the job. It cuts the bowl using the configured dimensions, depth, and feeds.</li>
+                                                        <li>Install a ball nose bit.</li>
+                                                        <li>Zero X and Y at the centre of the intended bowl position.</li>
+                                                        <li>Zero Z to the highest point of the stock material.</li>
+                                                        <li>Press Run Job.</li>
                                                     </ol>
                                                 </div>
                                             </div>
@@ -1724,15 +1756,15 @@
                                     <button class="btn btn-secondary flex-1" onclick="window.configWizard.showWizard()">
                                         <i data-lucide="wand" ></i> Wizard
                                     </button>
-                                    <button class="btn btn-secondary flex-1" onclick="window.firmwareFlasher.showModal()">
+                                    <button id="settings-firmware-button" class="btn btn-secondary flex-1" onclick="window.firmwareFlasher.showModal()">
                                         <i data-lucide="cpu" ></i> Firmware
+                                        <span id="settings-firmware-update-badge" class="hidden rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">New</span>
                                     </button>
                                     <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.calibration.showModal()">
                                         <i data-lucide="ruler" ></i> Calibration
                                     </button>
-                                    <button class="btn btn-secondary flex-1"
-                                        onclick="window.grblSettings.fetchSettings()">
-                                        <i data-lucide="refresh-cw" ></i> Refresh
+                                    <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.gamepadController?.showSettings()">
+                                        <i data-lucide="gamepad-2" ></i> Gamepad
                                     </button>
                                     <button class="btn btn-secondary flex-1" onclick="window.grblSettings.backup()">
                                         <i data-lucide="download" ></i> Backup
@@ -1743,6 +1775,11 @@
                                     </button>
                                     <input type="file" id="settings-restore-input" hidden
                                         onchange="window.grblSettings.restore(this.files[0])">
+
+                                    <button class="btn btn-secondary flex-1"
+                                        onclick="window.grblSettings.fetchSettings()">
+                                        <i data-lucide="refresh-cw" ></i> Refresh
+                                    </button>
 
                                     <button class="btn btn-primary flex-1 whitespace-nowrap" onclick="window.grblSettings.saveChanges()">
                                         <i data-lucide="save" ></i> Save
@@ -1879,12 +1916,12 @@
 
                                                         <div class="grid grid-cols-2 gap-4 prb-plate-only">
                                                             <div>
-                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-x-offset">Plate Offset X (mm)</label>
+                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-x-offset">Plate Offset (X, mm)</label>
                                                                 <input type="number" id="prb-x-offset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
                                                                 <p class="ooznest-form-info">The X distance from the plate contact surface to the workpiece surface.</p>
                                                             </div>
                                                             <div>
-                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-y-offset">Plate Offset Y (mm)</label>
+                                                                <label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="prb-y-offset">Plate Offset (Y, mm)</label>
                                                                 <input type="number" id="prb-y-offset" class="ooznest-field input-field font-mono text-sm h-8" step="0.01">
                                                                 <p class="ooznest-form-info">The Y distance from the plate contact surface to the workpiece surface.</p>
                                                             </div>
@@ -2015,17 +2052,18 @@
                                     <!-- TAB CONTENT: Outside Corner -->
                                     <div id="tab-outside-corner" class="probe-tab-content block">
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex flex-col min-h-[420px]">
-                                                <p class="text-xs text-grey leading-relaxed mb-4">
-                                                    Probe an outside corner to set X, Y, and Z zero.
-                                                </p>
-                                                <div class="mb-4">
-                                                    <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-outside">Endmill / Dowel Pin Diameter (mm)</label>
-                                                    <input type="number" id="prb-tool-outside" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
-                                                    <p class="ooznest-form-info">Enter the diameter of the endmill or dowel pin currently in the collet. This is used to calculate the tool radius when setting the correct X/Y zero from the probe contact point.</p>
+                                            <div class="space-y-4">
+                                                <div class="bg-white p-4 rounded-xl border border-grey-light shadow-soft">
+                                                    <p class="text-xs text-grey leading-relaxed">Probe an outside corner to set X, Y, and Z zero.</p>
                                                 </div>
-                                                <div class="probe-selector-card p-3 flex-1 flex items-center justify-center">
-                                                    <div id="outside-corner-grid" class="probe-corner-grid grid grid-cols-2 gap-2 w-full aspect-square">
+                                                <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex flex-col min-h-[420px]">
+                                                    <div class="mb-4">
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-outside">Endmill / Dowel Pin Diameter (mm)</label>
+                                                        <input type="number" id="prb-tool-outside" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
+                                                        <p class="ooznest-form-info">Enter the diameter of the endmill or dowel pin currently in the collet. This is used to calculate the tool radius when setting the correct X/Y zero from the probe contact point.</p>
+                                                    </div>
+                                                    <div class="probe-selector-card p-3 flex-1 flex items-center justify-center">
+                                                        <div id="outside-corner-grid" class="probe-corner-grid grid grid-cols-2 gap-2 w-full aspect-square">
                                                         <button class="corner-sel-btn rounded-xl bg-grey-bg border border-grey-light hover:bg-primary h-full text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
                                                             data-corner="RL"
                                                             onclick="window.probeHandler.selectCorner(this, 'Outside', 'RL')"
@@ -2042,14 +2080,15 @@
                                                             data-corner="FR"
                                                             onclick="window.probeHandler.selectCorner(this, 'Outside', 'FR')"
                                                             aria-label="Front-right outside corner">Front<br>Right</button>
+                                                        </div>
                                                     </div>
+                                                    <div id="probe-safety-host-outside" class="mt-4">
+                                                        <div id="probe-safety-bar-anchor-outside"></div>
+                                                    </div>
+                                                    <button class="btn btn-primary probe-compact-action py-3 mt-4 probe-btn" onclick="window.probeHandler.runAutoCorner()">
+                                                        <i data-lucide="zap" ></i> Probe Outside Corner
+                                                    </button>
                                                 </div>
-                                                <div id="probe-safety-host-outside" class="mt-4">
-                                                    <div id="probe-safety-bar-anchor-outside"></div>
-                                                </div>
-                                                <button class="btn btn-primary probe-compact-action py-3 mt-4 probe-btn" onclick="window.probeHandler.runAutoCorner()">
-                                                    <i data-lucide="zap" ></i> Probe Outside Corner
-                                                </button>
                                             </div>
 
                                             <div class="min-h-[420px]">
@@ -2069,17 +2108,18 @@
                                     <!-- TAB CONTENT: Surfaces -->
                                     <div id="tab-surfaces" class="probe-tab-content hidden">
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex flex-col min-h-[420px]">
-                                                <p class="text-xs text-grey leading-relaxed mb-4">
-                                                    Probe a single surface to set its X/Y/Z zero.
-                                                </p>
-                                                <div class="mb-4">
-                                                    <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-surface">Endmill / Dowel Pin Diameter (mm)</label>
-                                                    <input type="number" id="prb-tool-surface" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
-                                                    <p class="ooznest-form-info">Enter the diameter of the endmill or dowel pin currently in the collet. This is used to calculate the tool radius when setting the correct X/Y zero from the probe contact point.</p>
+                                            <div class="space-y-4">
+                                                <div class="bg-white p-4 rounded-xl border border-grey-light shadow-soft">
+                                                    <p class="text-xs text-grey leading-relaxed">Probe a single surface to set its X/Y/Z zero.</p>
                                                 </div>
-                                                <div id="single-surface-grid" class="probe-selector-card p-3 flex-1 flex items-center justify-center">
-                                                    <div class="single-surface-pad">
+                                                <div class="bg-white p-4 rounded-xl shadow-soft border border-grey-light flex flex-col min-h-[420px]">
+                                                    <div class="mb-4">
+                                                        <label class="ooznest-label text-[10px] font-bold text-grey block mb-1" for="prb-tool-surface">Endmill / Dowel Pin Diameter (mm)</label>
+                                                        <input type="number" id="prb-tool-surface" class="ooznest-field input-field font-mono text-xs h-8 max-w-[14rem]" step="0.01">
+                                                        <p class="ooznest-form-info">Enter the diameter of the endmill or dowel pin currently in the collet. This is used to calculate the tool radius when setting the correct X/Y zero from the probe contact point.</p>
+                                                    </div>
+                                                    <div id="single-surface-grid" class="probe-selector-card p-3 flex-1 flex items-center justify-center">
+                                                        <div class="single-surface-pad">
                                                         <div class="single-surface-spacer" aria-hidden="true"></div>
                                                         <button class="single-sel-btn single-sel-btn--top bg-grey-bg border border-grey-light hover:bg-primary text-[12px] font-bold leading-tight flex flex-col items-center justify-center"
                                                             data-axis="Y" data-dir="-1"
@@ -2101,12 +2141,13 @@
                                                             data-axis="Y" data-dir="1"
                                                             onclick="window.probeHandler.selectSingleSurface(this, 'Y', 1)">Front</button>
                                                         <div class="single-surface-spacer" aria-hidden="true"></div>
+                                                        </div>
                                                     </div>
+                                                    <div id="probe-safety-host-surfaces" class="mt-4"></div>
+                                                    <button class="btn btn-primary probe-compact-action py-3 mt-4 probe-btn" onclick="window.probeHandler.runSingleSurface()">
+                                                        <i data-lucide="zap" ></i> Probe Single Surface
+                                                    </button>
                                                 </div>
-                                                <div id="probe-safety-host-surfaces" class="mt-4"></div>
-                                                <button class="btn btn-primary probe-compact-action py-3 mt-4 probe-btn" onclick="window.probeHandler.runSingleSurface()">
-                                                    <i data-lucide="zap" ></i> Probe Single Surface
-                                                </button>
                                             </div>
 
                                             <div class="min-h-[420px]">
@@ -2267,8 +2308,8 @@
                             <div
                                 class="min-h-[3rem] h-auto flex items-center justify-end mb-4 gap-3 py-2">
                                 <div class="flex flex-wrap gap-2 w-full md:w-auto" id="troubleshooting-toolbar">
-                                    <button class="btn btn-primary flex-1 whitespace-nowrap" onclick="window.troubleshootingInfo.exportPdf()">
-                                        <i data-lucide="file-text" ></i> Export Troubleshooting Information
+                                    <button class="btn btn-primary flex-1 whitespace-nowrap" onclick="window.troubleshootingInfo.exportJson()">
+                                        Export Troubleshooting Information
                                     </button>
                                 </div>
                             </div>
@@ -2307,8 +2348,7 @@
                                 <div class="flex flex-col lg:flex-row gap-4 mb-4">
                                     <!-- LEFT: Limits -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
-                                        <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
-                                            <i data-lucide="maximize" class="text-primary text-xs"></i>
+                                        <div class="px-4 py-2.5 border-b border-grey-light">
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Limits</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
@@ -2352,8 +2392,7 @@
                                     </div>
                                     <!-- MIDDLE: Control + Probe -->
                                     <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
-                                        <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
-                                            <i data-lucide="git-branch" class="text-primary text-xs"></i>
+                                        <div class="px-4 py-2.5 border-b border-grey-light">
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Control &amp; Probe</h3>
                                         </div>
                                         <div class="divide-y divide-grey-light/60">
@@ -2437,7 +2476,6 @@
                                 <!-- PIN CONFIG & STATE CARD -->
                                 <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
                                     <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
-                                        <i data-lucide="cpu" class="text-primary text-xs"></i>
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Pin Configuration &amp; State</h3>
                                         <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
                                             onclick="window.troubleshooting.refreshPinInfo()">
@@ -3139,37 +3177,39 @@
 
     <script src="vendor/clipper.js"></script>
     <script type="module">
-        import { WebSerial } from './webserial.js';
-        import { GCodeViewer } from './3dview.js';
-        import { ProbeHandler } from './probe.js?v=20260710';
-        import { SDCardHandler } from './sdcard.js?v=20260721a';
-        import { AlarmsAndErrors } from './alarms_and_errors.js';
-        import { DROHandler } from './dro.js';
-        import { GrblSettings } from './grbl_settings.js';
-        import { AppStore } from './store.js';
-        import { SurfacingHandler } from './surfacing.js';
-        import { MacroHandler } from './macros.js';
-        import { ToolsHandler } from './tools.js';
-        import { TroubleshootingHandler } from './troubleshooting.js';
-        import { TroubleshootingInfoView } from './troubleshooting-info.js';
-        import { CalibrationHandler } from './calibration.js';
-        import { ConfigWizard } from './config-wizard.js';
-        import { FirmwareFlasher } from './firmware-flasher.js';
-        import { GCodeEditor } from './editor.js';
-        import { initializeApp } from './init.js';
-        import { SpoilboardGridHandler } from './spoilboard-grid.js';
-        import { BowlCutter } from './tools/bowl-cutter.js';
-        import './modal.js';
+        import { WebSerial } from './js/machine/webserial.js';
+        import { GCodeViewer } from './js/viewer/3dview.js?v=20260828a';
+        import { ProbeHandler } from './js/machine/probe.js?v=20260710';
+        import { SDCardHandler } from './js/features/sdcard.js?v=20260831a';
+        import { AlarmsAndErrors } from './js/ui/alarms_and_errors.js';
+        import { DROHandler } from './js/machine/dro.js?v=20260901a';
+        import { GrblSettings } from './js/machine/grbl_settings.js?v=20260901c';
+        import { AppStore } from './js/core/store.js';
+        import { SurfacingHandler } from './js/features/tools/surfacing.js?v=20260901b';
+        import { MacroHandler } from './js/features/macros.js';
+        import { ToolsHandler } from './js/features/tools/tools.js';
+        import { TroubleshootingHandler } from './js/ui/troubleshooting.js?v=20260901a';
+        import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20260901b';
+        import { CalibrationHandler } from './js/features/calibration.js';
+        import { ConfigWizard } from './js/features/config-wizard.js?v=20260901b';
+        import { FirmwareFlasher } from './js/features/firmware-flasher.js?v=20260831a';
+        import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=20260831e';
+        import { GCodeEditor } from './js/editor/editor.js';
+        import { initializeApp } from './js/core/init.js';
+        import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
+        import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20260901b';
+        import { GamepadController } from './js/features/gamepad.js?v=20260827o';
+        import './js/ui/modal.js';
 
         // Import new modules
-        import './ui.js';
-        import './job-control.js';
-        import './jogging.js';
-        import './console.js?v=2';
-        import './editor-integration.js';
-        import './camera-controls.js';
-        import './line-processor.js';
-        import { ConnectionManager } from './connection-manager.js';
+        import './js/ui/ui.js';
+        import './js/features/job-control.js';
+        import './js/machine/jogging.js';
+        import './js/ui/console.js?v=2';
+        import './js/editor/editor-integration.js';
+        import './js/ui/camera-controls.js';
+        import './js/machine/line-processor.js';
+        import { ConnectionManager } from './js/machine/connection-manager.js';
 
         // Globals
         const webSerial = new WebSerial();
@@ -3262,6 +3302,9 @@
             window.droHandler = droHandler;
             window.dro = droHandler;
 
+            const gamepadController = new GamepadController(ws, store);
+            window.gamepadController = gamepadController;
+
             const grblSettings = new GrblSettings(ws, window.term);
             window.grblSettings = grblSettings;
             grblSettings.init('grbl-settings-container');
@@ -3347,6 +3390,7 @@
             window.configWizard = configWizard;
             const firmwareFlasher = new FirmwareFlasher(ws);
             window.firmwareFlasher = firmwareFlasher;
+            window.firmwareVersionChecker = new FirmwareVersionChecker();
             ws.on('firmware', (msg) => firmwareFlasher.handleBackendMessage(msg));
             const spoilboardGrid = new SpoilboardGridHandler(ws, window.term, store);
             window.spoilboardGrid = spoilboardGrid;
@@ -3467,6 +3511,7 @@
             if (window.toolsHandler) window.toolsHandler.handleLine(line);
         });
         window.ws.on('sent', (line) => {
+            window.grblSettings?.recordSentCommand(line);
             if (window.sdHandler?.isDownloading) return;
             if (window.jobController.gcodeStreamer.active) return;
             if (line === '?') return;
@@ -4068,6 +4113,13 @@
             modal.show();
         };
 
+        // This overlay is declared in the viewer markup, which is within the main-content
+        // stacking context. Move it to the document root so its backdrop also covers the sidebar.
+        const endmillOverlay = document.getElementById('endmill-modal-overlay');
+        if (endmillOverlay && endmillOverlay.parentElement !== document.body) {
+            document.body.appendChild(endmillOverlay);
+        }
+
         window.closeEndmillSetup = function() {
             const modal = window.getAppModal && window.getAppModal('endmill-modal-overlay');
             if (modal) modal.hide();
@@ -4168,6 +4220,33 @@
             <div id="firmware-flasher-footer" class="oz-modal__footer oz-modal__footer--actions hidden"></div>
         </div>
     </div>
+
+    <div id="firmware-update-available-overlay" class="oz-modal isolate hidden z-[110] modal-radial-overlay">
+        <div class="oz-modal__dialog w-full max-w-lg" data-modal-panel>
+            <div class="oz-modal__header">
+                <h3><i data-lucide="cpu"></i><span>Firmware Update Available</span></h3>
+                <button type="button" data-modal-close><i data-lucide="x"></i></button>
+            </div>
+            <div id="firmware-update-available-body" class="oz-modal__body"></div>
+            <div class="oz-modal__footer oz-modal__footer--actions">
+                <button type="button" class="btn btn-secondary" data-modal-close>Not now</button>
+                <button id="firmware-update-available-start" type="button" class="btn btn-primary" data-modal-primary>Update firmware</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gamepad-settings-overlay" class="oz-modal isolate hidden z-[100] modal-radial-overlay">
+        <div class="oz-modal__dialog w-full max-w-2xl" data-modal-panel>
+            <div class="oz-modal__header">
+                <h3><i data-lucide="gamepad-2"></i><span>Gamepad Settings</span></h3>
+                <button type="button" data-modal-close><i data-lucide="x" ></i></button>
+            </div>
+            <div id="gamepad-settings-body" class="oz-modal__body"></div>
+            <div id="gamepad-settings-footer" class="oz-modal__footer oz-modal__footer--actions hidden"></div>
+        </div>
+    </div>
+
+    <div id="gamepad-increment-overlay" aria-live="polite"></div>
 
     <!-- Toast Container -->
     <div id="toast-container"></div>
