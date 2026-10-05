@@ -941,6 +941,7 @@ export class ConnectionManager {
     handleConnect() {
         this._setConnectingState(false);
         this.clearPendingState();
+        this.isGrblHAL = false;
         this.isConnected = true;
         this._syncHttpBaseUrl();
         this.emit('connect');
@@ -956,6 +957,7 @@ export class ConnectionManager {
     handleDisconnect() {
         this._setConnectingState(false);
         this.clearPendingState();
+        this.isGrblHAL = false;
         this.isConnected = false;
         this._syncHttpBaseUrl();
         this.emit('disconnect');
@@ -965,6 +967,9 @@ export class ConnectionManager {
     // --- Data Transmission ---
 
     async sendCommand(line) {
+        // Extended commands require positive identification from $I.
+        if (!this.isGrblHAL && /^\$(?:F|E[AEGS]|I\+|PINS|PINSTATE|SPINDLE|TLR|TPW|H[XYZABC])/i.test(String(line).trim())) return;
+
         if (typeof line === 'string' && line.trim().toUpperCase() === '$X') {
             this.clearPendingState();
         }
@@ -987,6 +992,8 @@ export class ConnectionManager {
     }
 
     async sendRealtime(char) {
+        if (char === '\x87' && !this.isGrblHAL) char = '?';
+
         if (char === '\x18') {
             this.clearPendingState();
         }

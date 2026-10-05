@@ -190,3 +190,9 @@
     border-color: transparent;
     box-shadow: none;
 }
+
+/* Hide controller extensions until $I confirms grblHAL. */
+html[data-controller-firmware="grbl"] [data-grblhal-only],
+html[data-controller-firmware="unknown"] [data-grblhal-only] {
+    display: none !important;
+}

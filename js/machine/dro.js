@@ -433,6 +433,7 @@ export class DROHandler {
     }
 
     homeAxis(axis) {
+        if (!this.ws.isGrblHAL) return;
         if (!this._requireConnectedForAction()) return;
         const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
         if (!reporter) {

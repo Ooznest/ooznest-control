@@ -231,6 +231,7 @@ export class SDCardHandler {
     // --- Actions ---
 
     async refresh() {
+        if (!this.ws.isGrblHAL) return;
         // Prevent SD refresh if machine is in an Alarm state (Error 79)
         const stateEl = document.getElementById('machine-state');
         if (stateEl && stateEl.textContent.toLowerCase().includes('alarm')) {
@@ -251,6 +252,7 @@ export class SDCardHandler {
     }
 
     probeAvailabilityOnBoot() {
+        if (!this.ws.isGrblHAL) return;
         this._prepareListing();
         window.sdMounted = false;
         if (window.syncSdUploadBtn) window.syncSdUploadBtn();
@@ -259,6 +261,7 @@ export class SDCardHandler {
     }
 
     mountAndList(options = {}) {
+        if (!this.ws.isGrblHAL) return;
         this._mountProbe = {
             silent: !!options.silent,
             listAfterMount: true

@@ -35,6 +35,7 @@ export class TroubleshootingHandler {
     }
 
     sendLEDCommand(hex) {
+        if (!this.ws.isGrblHAL) return;
         const r = parseInt(hex.slice(1, 3), 16);
         const g = parseInt(hex.slice(3, 5), 16);
         const b = parseInt(hex.slice(5, 7), 16);
@@ -106,6 +107,7 @@ export class TroubleshootingHandler {
     }
 
     selectProbeMode(mode) {
+        if (!this.ws.isGrblHAL) return;
         if (!this.ws || !this.ws.isConnected) return;
         switch (mode) {
             case 'probe':
@@ -235,6 +237,7 @@ export class TroubleshootingHandler {
     }
 
     primeStartupDiscovery() {
+        if (!this.ws?.isGrblHAL) return;
         if (!this.ws || !this.ws.isConnected) return;
         this._startupPinRefresh = true;
         this._startupSpindleRefresh = true;
@@ -243,6 +246,7 @@ export class TroubleshootingHandler {
     }
 
     refreshPinInfo(options = {}) {
+        if (!this.ws?.isGrblHAL) return;
         if (!this.ws || !this.ws.isConnected) {
             if (!options.suppressNotConnectedToast && window.showToast) window.showToast('Not connected', 'plug-zap', 'error');
             return;
@@ -413,6 +417,7 @@ export class TroubleshootingHandler {
     }
 
     refreshSpindles(options = {}) {
+        if (!this.ws?.isGrblHAL) return;
         if (!this.ws || !this.ws.isConnected) {
             if (!options.suppressNotConnectedToast && window.showToast) window.showToast('Not connected', 'plug-zap', 'error');
             return;
@@ -460,6 +465,7 @@ export class TroubleshootingHandler {
     }
 
     selectActiveSpindle(num) {
+        if (!this.ws.isGrblHAL) return;
         if (!this.ws || !this.ws.isConnected) return;
         this.ws.sendCommand(`M104Q${num}`);
         this.spindles.forEach(s => s.isActive = s.spindleNum === String(num));
@@ -627,6 +633,10 @@ export class TroubleshootingHandler {
 
     updateSignalVisibility() {
         this._resetSignalVisibility();
+        if (this.ws.isConnected && !this.ws.isGrblHAL) {
+            ['e', 'l', 't', 'q', 'm', 'f'].forEach(key => this._setSignalRowVisible(key, false));
+            return;
+        }
 
         const availability = this._getAvailableControlSignals();
         if (!availability) return;

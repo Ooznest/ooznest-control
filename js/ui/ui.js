@@ -5,6 +5,7 @@ class UIManager {
     constructor() {
         this.statusInterval = null;
         this.unlockInProgress = false;
+        this._startupTimers = [];
     }
 
     getUnlockButton() {
@@ -65,6 +66,12 @@ class UIManager {
      * @param {Object} sdHandler - SD card handler
      */
     updateConnectionState(state, ws, sdHandler) {
+        this._startupTimers.forEach(clearTimeout);
+        this._startupTimers = [];
+        this._identifyingFirmware = false;
+        const later = (fn, delay) => this._startupTimers.push(setTimeout(() => {
+            if (ws.isConnected) fn();
+        }, delay));
         const btn = document.getElementById('btn-connect');
         const resetBtn = document.getElementById('btn-reset');
 
@@ -87,42 +94,70 @@ class UIManager {
             const pollingRate = ws.type === 'websocket' ? 500 : 250;
             this.statusInterval = setInterval(() => ws.sendRealtime('?'), pollingRate);
 
-            // Init progress tracking — advances on each 'ok' response
-            var initSteps = [
-                { label: 'Alarm Code Definitions Loaded', icon: 'alert-triangle' },
-                { label: 'Error Code Definitions Loaded', icon: 'x-circle' },
-                { label: 'Setting Groups Loaded', icon: 'folder-tree' },
-                { label: 'Settings Info Loaded', icon: 'list' },
-                { label: 'Grbl Settings Loaded', icon: 'settings' },
-                { label: 'Parameters Loaded', icon: 'sliders' },
-                { label: 'Firmware Build Info Loaded', icon: 'info' },
-                { label: 'CNC Connected', icon: 'plug' }
-            ];
-            window.lineProcessor.startInitTracking(initSteps, function(idx, step) {
-                if (window.showToast) window.showToast(step.label, step.icon, 'success');
-            }, function(idx, step) {
-                if (window.showToast) window.showToast('Failed: ' + step.label, 'plug-zap', 'error');
-                if (window.ws && window.ws.disconnect) window.ws.disconnect();
-            }, 5000);
-
-            setTimeout(() => ws.sendCommand('$EA'), 500);
-            setTimeout(() => ws.sendCommand('$EE'), 1000);
-            setTimeout(() => sdHandler.probeAvailabilityOnBoot(), 1500);
-            setTimeout(() => ws.sendCommand('$EG'), 2000);
-            setTimeout(() => ws.sendCommand('$ES'), 2500);
-            setTimeout(() => ws.sendCommand('$$'), 3000);
-            setTimeout(() => ws.sendCommand('$#'), 3500);
-            setTimeout(() => ws.sendCommand('$I+'), 4000);
-            setTimeout(() => {
-                if (window.troubleshooting?.primeStartupDiscovery) {
-                    window.troubleshooting.primeStartupDiscovery();
+            ws.isGrblHAL = false;
+            window.grblSettings?.resetControllerData?.();
+            this.syncFirmwareUI('unknown');
+            this._identifyingFirmware = true;
+            this._firmwareSeen = false;
+            this._startFirmwareInit = () => {
+                if (!ws.isGrblHAL) {
+                    window.lineProcessor.startInitTracking([
+                        { label: 'Grbl Settings Loaded', icon: 'settings' },
+                        { label: 'Parameters Loaded', icon: 'sliders' },
+                        { label: 'CNC Connected', icon: 'plug' }
+                    ], (idx, step) => window.showToast?.(step.label, step.icon, 'success'),
+                    () => ws.disconnect(), 5000);
+                    later(() => ws.sendCommand('$$'), 0);
+                    later(() => ws.sendCommand('$#'), 500);
+                    later(() => ws.sendCommand('$G'), 1000);
+                    return;
                 }
-            }, 4250);
-            setTimeout(() => {
-                window.userRequestedStatus = true;
-                ws.sendRealtime('\x87');
-            }, 4500);
+                // Init progress tracking — advances on each 'ok' response
+                var initSteps = [
+                    { label: 'Alarm Code Definitions Loaded', icon: 'alert-triangle' },
+                    { label: 'Error Code Definitions Loaded', icon: 'x-circle' },
+                    { label: 'Setting Groups Loaded', icon: 'folder-tree' },
+                    { label: 'Settings Info Loaded', icon: 'list' },
+                    { label: 'Grbl Settings Loaded', icon: 'settings' },
+                    { label: 'Parameters Loaded', icon: 'sliders' },
+                    { label: 'Firmware Build Info Loaded', icon: 'info' },
+                    { label: 'CNC Connected', icon: 'plug' }
+                ];
+                window.lineProcessor.startInitTracking(initSteps, function(idx, step) {
+                    if (window.showToast) window.showToast(step.label, step.icon, 'success');
+                }, function(idx, step) {
+                    if (window.showToast) window.showToast('Failed: ' + step.label, 'plug-zap', 'error');
+                    if (window.ws && window.ws.disconnect) window.ws.disconnect();
+                }, 5000);
+
+                later(() => ws.sendCommand('$EA'), 500);
+                later(() => ws.sendCommand('$EE'), 1000);
+                later(() => sdHandler.probeAvailabilityOnBoot(), 1500);
+                later(() => ws.sendCommand('$EG'), 2000);
+                later(() => ws.sendCommand('$ES'), 2500);
+                later(() => ws.sendCommand('$$'), 3000);
+                later(() => ws.sendCommand('$#'), 3500);
+                later(() => ws.sendCommand('$I+'), 4000);
+                later(() => {
+                    if (window.troubleshooting?.primeStartupDiscovery) {
+                        window.troubleshooting.primeStartupDiscovery();
+                    }
+                }, 4250);
+                later(() => {
+                    window.userRequestedStatus = true;
+                    ws.sendRealtime('\x87');
+                }, 4500);
+            };
+            later(() => ws.sendCommand('$I'), 2000);
+            later(() => {
+                if (this._identifyingFirmware) {
+                    this._identifyingFirmware = false;
+                    window.showToast?.('Controller identification timed out', 'plug-zap', 'error');
+                    ws.disconnect();
+                }
+            }, 7000);
         } else {
+            this.syncFirmwareUI('offline');
             if (this.statusInterval) clearInterval(this.statusInterval);
             if (window.lineProcessor) window.lineProcessor.cancelInitTracking();
             btn.innerHTML = 'Connect';
@@ -140,6 +175,34 @@ class UIManager {
         }
     }
 
+
+    syncFirmwareUI(firmware) {
+        document.documentElement.dataset.controllerFirmware = firmware;
+        if (firmware === 'grbl' || firmware === 'unknown') {
+            // Move away from panels that are unavailable on this controller.
+            const activePane = document.querySelector('.tab-pane:not(.hidden)[data-grblhal-only]');
+            if (activePane) window.switchTab?.('viewer-view');
+            const activeTrouble = document.querySelector('.trouble-tab-content:not(.hidden)[data-grblhal-only]');
+            if (activeTrouble) window.switchTroubleTab?.('trouble-tab-signals', document.querySelector('.trouble-tab-btn'));
+        }
+        window.troubleshooting?.updateSignalVisibility();
+    }
+
+    handleFirmwareIdentification(line) {
+        if (!this._identifyingFirmware) return;
+        if (line.startsWith('[VER:')) this._firmwareSeen = true;
+        if (/^\[FIRMWARE:grblHAL\]$/i.test(line)) window.ws.isGrblHAL = true;
+        if (line === 'ok' && this._firmwareSeen) {
+            this._identifyingFirmware = false;
+            this.syncFirmwareUI(window.ws.isGrblHAL ? 'grblhal' : 'grbl');
+            if (!window.ws.isGrblHAL) {
+                window.showToast?.('Grbl 1.1 compatibility mode - hiding incompatible features', 'info', 'compatibility');
+            }
+            this._startupTimers.push(setTimeout(() => {
+                if (window.ws.isConnected) this._startFirmwareInit();
+            }, 0));
+        }
+    }
 
     /**
      * Apply button state locks based on Grbl machine state

@@ -81,6 +81,8 @@ class LineProcessor {
         if (!line) return;
         line = line.trim();
 
+        window.uiManager?.handleFirmwareIdentification(line);
+
         // Advance init tracking on each 'ok' response
         if (this._initSteps && line === 'ok') {
             this._advanceInit();

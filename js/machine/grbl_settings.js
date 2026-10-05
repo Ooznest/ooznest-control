@@ -1,3 +1,25 @@
+// Standard Grbl 1.1 settings do not include enumeration metadata.
+// Reference: https://github.com/gnea/grbl/wiki/Grbl-v1.1-Configuration
+const GRBL_SETTING_INFO = {
+    0: ['Step pulse', 'us'], 1: ['Step idle delay', 'ms'],
+    2: ['Step port invert', 'mask'], 3: ['Direction port invert', 'mask'],
+    4: ['Step enable invert', 'boolean'], 5: ['Limit pins invert', 'boolean'],
+    6: ['Probe pin invert', 'boolean'], 10: ['Status report', 'mask'],
+    11: ['Junction deviation', 'mm'], 12: ['Arc tolerance', 'mm'],
+    13: ['Report inches', 'boolean'], 20: ['Soft limits', 'boolean'],
+    21: ['Hard limits', 'boolean'], 22: ['Homing cycle', 'boolean'],
+    23: ['Homing direction invert', 'mask'], 24: ['Homing feed', 'mm/min'],
+    25: ['Homing seek', 'mm/min'], 26: ['Homing debounce', 'ms'],
+    27: ['Homing pull-off', 'mm'], 30: ['Maximum spindle speed', 'RPM'],
+    31: ['Minimum spindle speed', 'RPM'], 32: ['Laser mode', 'boolean']
+};
+for (const [axisIndex, axis] of ['X', 'Y', 'Z'].entries()) {
+    GRBL_SETTING_INFO[100 + axisIndex] = [`${axis} travel resolution`, 'steps/mm'];
+    GRBL_SETTING_INFO[110 + axisIndex] = [`${axis} maximum rate`, 'mm/min'];
+    GRBL_SETTING_INFO[120 + axisIndex] = [`${axis} acceleration`, 'mm/s^2'];
+    GRBL_SETTING_INFO[130 + axisIndex] = [`${axis} maximum travel`, 'mm'];
+}
+
 export class GrblSettings {
     constructor(ws, term) {
         this.ws = ws;
@@ -20,6 +42,15 @@ export class GrblSettings {
         this.tableContainer = document.getElementById(containerId);
         if (!this.tableContainer) return;
         this.renderEmpty();
+    }
+
+    resetControllerData() {
+        if (this.renderTimeout) clearTimeout(this.renderTimeout);
+        this.groups = {};
+        this.settings = {};
+        this.pendingChanges = {};
+        this.activeGroupId = null;
+        this.searchQuery = '';
     }
 
     hasLoadedData() {
@@ -75,7 +106,7 @@ export class GrblSettings {
     // --- Commands ---
 
     fetchSettings() {
-        this.term.writeln('\x1b[34m> Discovering GrblHAL Settings...\x1b[0m');
+        this.term.writeln(`\x1b[34m> Discovering ${this.ws.isGrblHAL ? 'grblHAL' : 'Grbl'} Settings...\x1b[0m`);
 
         // Reset Logic
         this.groups = {};
@@ -83,6 +114,11 @@ export class GrblSettings {
         this.pendingChanges = {};
         this.activeGroupId = null;
         this.searchQuery = "";
+
+        if (!this.ws.isGrblHAL) {
+            this.ws.sendCommand('$$');
+            return;
+        }
 
         // 1. Get Groups ($EG)
         this.ws.sendCommand('$EG');
@@ -263,7 +299,14 @@ export class GrblSettings {
                 if (this.settings[id]) {
                     this.settings[id].val = val;
                 } else {
-                    this.settings[id] = { id: id, val: val, groupId: '0', label: 'Unknown' };
+                    if (!this.ws.isGrblHAL) {
+                        const [label, unit] = GRBL_SETTING_INFO[id] || [`Setting ${id}`, ''];
+                        this.groups['0'] = { id: '0', parentId: null, label: 'Grbl Settings' };
+                        if (this.activeGroupId === null) this.activeGroupId = '0';
+                        this.settings[id] = { id, val, groupId: '0', label, unit, type: 'float' };
+                    } else {
+                        this.settings[id] = { id, val, groupId: '0', label: 'Unknown' };
+                    }
                 }
 
                 this.debounceRender();

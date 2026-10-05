@@ -149,6 +149,10 @@ export class ConfigWizard {
     _onVerComplete() {
         console.log('[ConfigWizard] _onVerComplete', this.verInfo);
         if (!this.verInfo) return;
+        if (!this.ws.isGrblHAL) {
+            this.renderInfoTab();
+            return;
+        }
         window.firmwareVersionChecker?.setControllerVersion(this.verInfo.version, this.boardInfo);
         this.renderInfoTab();
         const isUnconfigured = this._isUnconfigured(this.verInfo.configName);
@@ -190,6 +194,7 @@ export class ConfigWizard {
     // --- Wizard Modal ---
 
     showWizard() {
+        if (this.ws.isConnected && !this.ws.isGrblHAL) return;
         console.log('[ConfigWizard] showWizard');
         this.wizardStep = 0;
         this.wizardData.machine = null;

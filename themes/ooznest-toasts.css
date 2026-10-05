@@ -98,6 +98,12 @@
     color: #935d00;
 }
 
+.toast-msg.compatibility {
+    background: #fff3e6;
+    border-color: #ff6600;
+    color: #994000;
+}
+
 .toast-msg.out {
     animation: toast-out 0.3s ease-in forwards;
 }

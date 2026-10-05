@@ -31,7 +31,7 @@ export class TroubleshootingInfoView {
     _getFirmwareInfo() {
         const wizard = window.configWizard;
         const verInfo = wizard?.verInfo || null;
-        const update = window.firmwareVersionChecker?.getStatus?.() || null;
+        const update = window.ws?.isGrblHAL ? (window.firmwareVersionChecker?.getStatus?.() || null) : null;
         return {
             version: verInfo?.version || 'Unknown',
             machineConfig: verInfo?.configName || 'None',
@@ -455,16 +455,18 @@ export class TroubleshootingInfoView {
         html += this._infoRow('Machine Config', firmware.machineConfig, `text-xs font-bold ${window.configWizard?._isUnconfigured?.(firmware.machineConfig) ? 'text-red-500' : 'text-secondary-dark'} text-right break-all`);
         html += firmware.decodedConfig ? `<div class="text-[10px] text-grey leading-relaxed">${this._escapeHtml(firmware.decodedConfig)}</div>` : '';
         html += this._infoRow('Board', firmware.board);
-        html += this._infoRow('SD Card', this._getSdCardStatusLabel());
-        if (powerLines.length >= 2) {
-            html += this._infoRow('Power Supply Voltage', powerLines[0].replace('Voltage: ', ''));
-            html += this._infoRow('Power Supply Current', powerLines[1].replace('Current: ', ''));
+        if (window.ws?.isGrblHAL) {
+            html += this._infoRow('SD Card', this._getSdCardStatusLabel());
+            if (powerLines.length >= 2) {
+                html += this._infoRow('Power Supply Voltage', powerLines[0].replace('Voltage: ', ''));
+                html += this._infoRow('Power Supply Current', powerLines[1].replace('Current: ', ''));
+            }
+            html += this._detailBlock('Spindles', spindleLines);
+            html += this._detailBlock('Pin State', pinStateLines);
+            html += this._detailBlock('Power Supply Values', powerLines);
+            html += this._detailBlock('SD Card', sdCardLines);
         }
-        html += this._detailBlock('Spindles', spindleLines);
-        html += this._detailBlock('Pin State', pinStateLines);
         html += this._detailBlock('Grbl Settings ($$)', grblSettingsLines);
-        html += this._detailBlock('Power Supply Values', powerLines);
-        html += this._detailBlock('SD Card', sdCardLines);
         html += this._detailBlock('Probe Config', probeConfigLines);
         html += this._detailBlock('Macros', macroLines);
         html += this._detailBlock('Live Input Signals (Pn)', this._getPnLines());
@@ -490,7 +492,7 @@ export class TroubleshootingInfoView {
             html += `</div><div class="p-4"><span class="text-xs text-grey">${this._escapeHtml(firmware.options)}</span></div></div>`;
         }
 
-        if (window.configWizard?.verInfo && window.configWizard._isUnconfigured(window.configWizard.verInfo.configName)) {
+        if (window.ws?.isGrblHAL && window.configWizard?.verInfo && window.configWizard._isUnconfigured(window.configWizard.verInfo.configName)) {
             html += '<button onclick="window.configWizard.showWizard()" class="btn btn-primary w-full">Run Configuration Wizard</button>';
         }
 

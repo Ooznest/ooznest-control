@@ -459,7 +459,7 @@
 
                     <!-- X Axis -->
                     <div class="dro-card border-l-4 border-l-axis-x">
-                        <button id="homing-btn-x" class="dro-home-btn shadow-sm"
+                        <button id="homing-btn-x" data-grblhal-only class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('X')" title="Home X">
                             Home X
                         </button>
@@ -480,7 +480,7 @@
 
                     <!-- Y Axis -->
                     <div class="dro-card border-l-4 border-l-axis-y">
-                        <button id="homing-btn-y" class="dro-home-btn shadow-sm"
+                        <button id="homing-btn-y" data-grblhal-only class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('Y')" title="Home Y">
                             Home Y
                         </button>
@@ -501,7 +501,7 @@
 
                     <!-- Z Axis -->
                     <div class="dro-card border-l-4 border-l-axis-z">
-                        <button id="homing-btn-z" class="dro-home-btn shadow-sm"
+                        <button id="homing-btn-z" data-grblhal-only class="dro-home-btn shadow-sm"
                             onclick="window.dro.homeAxis('Z')" title="Home Z">
                             Home Z
                         </button>
@@ -742,7 +742,7 @@
                         <button class="tab-btn" data-tab="editor-view" onclick="switchTab('editor-view', this)"><i data-lucide="square-code"></i>Editor</button>
                         <button class="tab-btn" data-tab="probe-view" onclick="switchTab('probe-view', this)"><i data-lucide="crosshair"></i>Probe</button>
                         <button class="tab-btn" data-tab="macros-view" onclick="switchTab('macros-view', this)"><i data-lucide="zap"></i>Macros</button>
-                        <button id="sd-tab-btn" class="tab-btn" data-tab="sd-view" onclick="switchTab('sd-view', this)">
+                        <button id="sd-tab-btn" data-grblhal-only class="tab-btn" data-tab="sd-view" onclick="switchTab('sd-view', this)">
                             <i data-lucide="hard-drive"></i>SD Card
                             <span id="sd-badge"
                                 class="hidden ml-2 tab-badge text-[10px] font-bold px-1.5 py-0 rounded-full text-white">0</span>
@@ -817,7 +817,7 @@
                                     <span><span class="font-medium">Open File from Computer</span><br><span class="text-[11px] text-grey">Browse files on this device</span></span>
                                 </button>
                                 <div class="border-t border-grey-light"></div>
-                                <button id="open-file-sd-option" class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors opacity-50 pointer-events-none"
+                                <button id="open-file-sd-option" data-grblhal-only class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors opacity-50 pointer-events-none"
                                     onclick="switchTab('sd-view'); closeOpenFileDropdown();" disabled>
                                     <i data-lucide="hard-drive" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Open File from SD Card</span><br><span class="text-[11px] text-grey">Browse files on the controller</span></span>
@@ -840,7 +840,7 @@
                                     <span><span class="font-medium">Run (Streaming)</span><br><span id="run-job-streaming-description" class="text-[11px] text-grey">Stream lines directly from your browser</span></span>
                                 </button>
                                 <div class="border-t border-grey-light"></div>
-                                <button id="run-job-sd-option" class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
+                                <button id="run-job-sd-option" data-grblhal-only class="w-full text-left px-4 py-3 text-sm text-grey-dark hover:bg-grey-bg flex items-center gap-3 transition-colors"
                                     onclick="closeRunJobDropdown(); runJobFromSD();">
                                     <i data-lucide="hard-drive" class="text-lg" style="color:#FF6600"></i>
                                     <span><span class="font-medium">Run (From SD Card)</span><br><span class="text-[11px] text-grey">Upload then run from controller SD</span></span>
@@ -1052,7 +1052,7 @@
                                         <i data-lucide="download" ></i>
                                         <span>Save to PC</span>
                                     </button>
-                                    <button id="editor-upload-sd-btn" class="btn btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                                    <button id="editor-upload-sd-btn" data-grblhal-only class="btn btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
                                         onclick="uploadEditorToSD()" title="Upload to SD" disabled>
                                         <i data-lucide="upload" class="!text-white"></i>
                                         <span>Upload to SD</span>
@@ -1091,7 +1091,7 @@
                 </div>
 
                 <!-- SD Card -->
-                <div id="sd-view" class="tab-pane hidden w-full h-full bg-grey-bg">
+                <div id="sd-view" data-grblhal-only class="tab-pane hidden w-full h-full bg-grey-bg">
                     <div class="w-full h-full tab-shell-padding overflow-y-auto">
                         <div class="w-full pb-20">
                             <div
@@ -1204,7 +1204,7 @@
                             </div>
 
                             <!-- Sub-Tab Content: Tool Table -->
-                            <div id="tab-tool-table" class="tools-tab-content hidden">
+                            <div id="tab-tool-table" data-grblhal-only class="tools-tab-content hidden">
                                 <div class="flex justify-end gap-2 mb-4">
                                     <button class="btn btn-secondary shadow-soft text-xs"
                                         onclick="window.toolsHandler.refresh()">
@@ -1753,10 +1753,10 @@
                             <div
                                 class="min-h-[3rem] h-auto flex items-center justify-end mb-6 gap-3 py-2 shrink-0">
                                 <div class="flex flex-wrap gap-2 w-full md:w-auto" id="settings-toolbar">
-                                    <button class="btn btn-secondary flex-1" onclick="window.configWizard.showWizard()">
+                                    <button class="btn btn-secondary flex-1" data-grblhal-only onclick="window.configWizard.showWizard()">
                                         <i data-lucide="wand" ></i> Wizard
                                     </button>
-                                    <button id="settings-firmware-button" class="btn btn-secondary flex-1" onclick="window.firmwareFlasher.showModal()">
+                                    <button id="settings-firmware-button" data-grblhal-only class="btn btn-secondary flex-1" onclick="window.firmwareFlasher.showModal()">
                                         <i data-lucide="cpu" ></i> Firmware
                                         <span id="settings-firmware-update-badge" class="hidden rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">New</span>
                                     </button>
@@ -1824,7 +1824,7 @@
                                     <div id="probe-config-banner" class="mb-3 rounded-lg border text-xs font-bold bg-amber-50 border-amber-200 text-amber-700 p-3 items-center gap-3 flex hidden">
                                         <i data-lucide="triangle-alert" class="text-base"></i>
                                         <span class="flex-1">Config Wizard has not been run — probe settings may be incomplete.</span>
-                                        <button class="btn btn-warning !py-1 !px-3 !text-[10px] whitespace-nowrap" onclick="window.configWizard.showWizard()">
+                                        <button class="btn btn-warning !py-1 !px-3 !text-[10px] whitespace-nowrap" data-grblhal-only onclick="window.configWizard.showWizard()">
                                             <i data-lucide="wand" ></i> Run Config Wizard
                                         </button>
                                     </div>
@@ -2323,17 +2323,17 @@
                                 </button>
                                 <button
                                     class="subtab-btn text-grey border-b-2 border-transparent trouble-tab-btn"
-                                    onclick="switchTroubleTab('trouble-tab-power', this)">
+                                    data-grblhal-only onclick="switchTroubleTab('trouble-tab-power', this)">
                                     Power Supply
                                 </button>
                                 <button
                                     class="subtab-btn text-grey border-b-2 border-transparent trouble-tab-btn"
-                                    onclick="switchTroubleTab('trouble-tab-spindles', this)">
+                                    data-grblhal-only onclick="switchTroubleTab('trouble-tab-spindles', this)">
                                     Spindles
                                 </button>
                                 <button
                                     class="subtab-btn text-grey border-b-2 border-transparent trouble-tab-btn"
-                                    onclick="switchTroubleTab('trouble-tab-led', this)">
+                                    data-grblhal-only onclick="switchTroubleTab('trouble-tab-led', this)">
                                     RGB LED
                                 </button>
                                 <button
@@ -2431,7 +2431,7 @@
                                             <!-- Probe row -->
                                             <div id="trouble-signal-row-p" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
                                                 <span class="text-xs font-bold text-grey-dark flex-1">Probe</span>
-                                                <div class="flex items-center gap-1.5 text-[10px] mr-1">
+                                                <div data-grblhal-only class="flex items-center gap-1.5 text-[10px] mr-1">
                                                     <label class="flex items-center gap-0.5 cursor-pointer">
                                                         <input type="radio" name="probe-mode" value="probe" checked
                                                             onchange="window.troubleshooting.selectProbeMode('probe')"
@@ -2456,7 +2456,7 @@
                                         </div>
                                     </div>
                                     <!-- RIGHT: Motor Status -->
-                                    <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
+                                    <div data-grblhal-only class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden flex-1">
                                         <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                             <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Motor Status</h3>
                                         </div>
@@ -2474,7 +2474,7 @@
                                 </div>
 
                                 <!-- PIN CONFIG & STATE CARD -->
-                                <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
+                                <div data-grblhal-only class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
                                     <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Pin Configuration &amp; State</h3>
                                         <button class="btn btn-secondary ml-auto h-7 text-[10px] px-3"
@@ -2489,7 +2489,7 @@
                             </div>
 
                             <!-- POWER SUPPLY SUB-TAB -->
-                            <div id="trouble-tab-power" class="trouble-tab-content hidden">
+                            <div id="trouble-tab-power" data-grblhal-only class="trouble-tab-content hidden">
                                 <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
                                     <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Power Supply</h3>
@@ -2519,7 +2519,7 @@
                             </div>
 
                             <!-- SPINDLES SUB-TAB -->
-                            <div id="trouble-tab-spindles" class="trouble-tab-content hidden">
+                            <div id="trouble-tab-spindles" data-grblhal-only class="trouble-tab-content hidden">
                                 <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
                                     <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Spindles</h3>
@@ -2538,7 +2538,7 @@
                             </div>
 
                             <!-- LED STRIP SUB-TAB -->
-                            <div id="trouble-tab-led" class="trouble-tab-content hidden">
+                            <div id="trouble-tab-led" data-grblhal-only class="trouble-tab-content hidden">
                                 <div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">
                                     <div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">
                                         <h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">RGB LED</h3>
@@ -2596,7 +2596,7 @@
 
                             <!-- INFO SUB-TAB -->
                             <div id="trouble-tab-info" class="trouble-tab-content hidden">
-                                <div id="homing-status-content" class="mb-4"></div>
+                                <div id="homing-status-content" data-grblhal-only class="mb-4"></div>
                                 <div id="trouble-tab-info-content" class="space-y-4">
                                     <div class="text-grey text-center py-8">
                                         <i data-lucide="refresh-cw" class="animate-spin text-2xl"></i>
@@ -2833,7 +2833,7 @@
     </div>
 
     <!-- Tool Change Modal -->
-    <div id="tool-change-modal"
+    <div id="tool-change-modal" data-grblhal-only
         class="oz-modal hidden z-[1100] modal-radial-overlay modal-radial-overlay-strong">
         <div
             class="oz-modal__dialog oz-modal__dialog--warning w-full max-w-lg animate-in fade-in zoom-in duration-200" data-modal-panel>
