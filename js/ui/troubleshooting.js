@@ -59,7 +59,9 @@ export class TroubleshootingHandler {
      * Update the visual state of pin indicators
      * @param {string} pins - The Pn: string from grblHAL status report (e.g. "PXYZ")
      */
-    updatePins(pins) {
+    updatePins(pins, { full = false } = {}) {
+        this.syncProbeControls();
+        if (this.ws.supportsProbeStatus && full) this.updateProbeStatus(pins);
         this.updateSignalVisibility();
         if (pins === this.lastPins) return;
         this.lastPins = pins;
@@ -104,6 +106,45 @@ export class TroubleshootingHandler {
                 el.style.cssText = '';
             }
         });
+    }
+
+    resetProbeStatus() {
+        this.probeStatus = null;
+        this.lastPins = null;
+        this.syncProbeControls();
+        this.renderProbeStatus();
+    }
+
+    syncProbeControls() {
+        const extended = !!this.ws.supportsProbeStatus;
+        const row = document.getElementById('trouble-signal-row-p');
+        const label = document.getElementById('probe-input-label');
+        if (row) row.classList.toggle('flex-wrap', extended);
+        if (label) label.textContent = extended ? 'Current Probe' : 'Probe';
+        const radios = document.getElementById('probe-mode-radios');
+        const buttons = document.getElementById('probe-status-buttons');
+        if (radios) radios.classList.toggle('hidden', extended);
+        if (buttons) {
+            buttons.classList.toggle('hidden', !extended);
+            buttons.classList.toggle('flex', extended);
+        }
+    }
+
+    updateProbeStatus(pins) {
+        // I/J/K are a full-report snapshot; a normal ? report must not clear it.
+        this.probeStatus = { primary: pins.includes('I'), tls: pins.includes('J'), secondary: pins.includes('K') };
+        this.renderProbeStatus();
+    }
+
+    renderProbeStatus() {
+        for (const [key, label] of [['primary', 'P'], ['tls', 'TLS'], ['secondary', 'P2']]) {
+            const button = document.getElementById(`probe-status-${key}`);
+            if (!button) continue;
+            const on = this.probeStatus?.[key];
+            button.classList.toggle('signal-on', on === true);
+            button.classList.toggle('signal-off', on !== true);
+            button.textContent = `${label}: ${on === undefined ? '--' : on ? 'ON' : 'OFF'}`;
+        }
     }
 
     selectProbeMode(mode) {

@@ -932,6 +932,8 @@ export class ConnectionManager {
 
     clearPendingState() {
         this._backendBuffer = '';
+        this._statusRequests = [];
+        this.lastStatusWasFull = false;
         this.flowControl.reset();
         if (this.webSerial?.clearPendingState) {
             this.webSerial.clearPendingState();
@@ -942,6 +944,7 @@ export class ConnectionManager {
         this._setConnectingState(false);
         this.clearPendingState();
         this.isGrblHAL = false;
+        this.supportsProbeStatus = false;
         this.isConnected = true;
         this._syncHttpBaseUrl();
         this.emit('connect');
@@ -958,6 +961,7 @@ export class ConnectionManager {
         this._setConnectingState(false);
         this.clearPendingState();
         this.isGrblHAL = false;
+        this.supportsProbeStatus = false;
         this.isConnected = false;
         this._syncHttpBaseUrl();
         this.emit('disconnect');
@@ -993,6 +997,11 @@ export class ConnectionManager {
 
     async sendRealtime(char) {
         if (char === '\x87' && !this.isGrblHAL) char = '?';
+
+        if (char === '?' || char === '\x87') {
+            this._statusRequests ||= [];
+            this._statusRequests.push({ full: char === '\x87', at: Date.now() });
+        }
 
         if (char === '\x18') {
             this.clearPendingState();
@@ -1100,6 +1109,11 @@ export class ConnectionManager {
     }
 
     emit(event, data) {
+        if (event === 'line' && typeof data === 'string' && data.startsWith('<')) {
+            const now = Date.now();
+            this._statusRequests = (this._statusRequests || []).filter(request => now - request.at < 5000);
+            this.lastStatusWasFull = this._statusRequests.shift()?.full || false;
+        }
         if (this.listeners[event]) this.listeners[event].forEach(cb => cb(data));
     }
 

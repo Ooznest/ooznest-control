@@ -2430,8 +2430,8 @@
                                             </div>
                                             <!-- Probe row -->
                                             <div id="trouble-signal-row-p" class="flex items-center gap-2 px-3 py-2 bg-white hover:bg-grey-bg/50">
-                                                <span class="text-xs font-bold text-grey-dark flex-1">Probe</span>
-                                                <div data-grblhal-only class="flex items-center gap-1.5 text-[10px] mr-1">
+                                                <span id="probe-input-label" class="text-xs font-bold text-grey-dark flex-1">Probe</span>
+                                                <div id="probe-mode-radios" data-grblhal-only class="flex items-center gap-1.5 text-[10px] mr-1">
                                                     <label class="flex items-center gap-0.5 cursor-pointer">
                                                         <input type="radio" name="probe-mode" value="probe" checked
                                                             onchange="window.troubleshooting.selectProbeMode('probe')"
@@ -2450,6 +2450,11 @@
                                                             class="accent-primary w-2.5 h-2.5 cursor-pointer">
                                                         <span class="font-bold text-grey-dark">P2</span>
                                                     </label>
+                                                </div>
+                                                <div id="probe-status-buttons" data-grblhal-only style="order:1" class="hidden w-full justify-end items-center gap-1.5 text-[10px] mr-1">
+                                                    <button id="probe-status-primary" type="button" class="signal-badge signal-off whitespace-nowrap" onclick="window.troubleshooting.selectProbeMode('probe')" title="Select primary probe">P: --</button>
+                                                    <button id="probe-status-tls" type="button" class="signal-badge signal-off whitespace-nowrap" onclick="window.troubleshooting.selectProbeMode('tls')" title="Select toolsetter">TLS: --</button>
+                                                    <button id="probe-status-secondary" type="button" class="signal-badge signal-off whitespace-nowrap" onclick="window.troubleshooting.selectProbeMode('probe2')" title="Select secondary probe">P2: --</button>
                                                 </div>
                                                 <div id="pin-indicator-P" class="signal-badge signal-off">OFF</div>
                                             </div>
@@ -3361,8 +3366,7 @@
                     if (window.uiManager.statusInterval) clearInterval(window.uiManager.statusInterval);
                 },
                 resumePolling: () => {
-                    const pollingRate = ws.type === 'websocket' ? 500 : 250;
-                    window.uiManager.statusInterval = setInterval(() => ws.sendRealtime('?'), pollingRate);
+                    window.uiManager.startStatusPolling(ws);
                 }
             });
             window.sdHandler = sdHandler;

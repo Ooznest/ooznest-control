@@ -91,10 +91,10 @@ class UIManager {
             document.getElementById('connection-text').textContent = 'Online';
 
             // Start status polling
-            const pollingRate = ws.type === 'websocket' ? 500 : 250;
-            this.statusInterval = setInterval(() => ws.sendRealtime('?'), pollingRate);
+            this.startStatusPolling(ws);
 
             ws.isGrblHAL = false;
+            ws.supportsProbeStatus = false;
             window.grblSettings?.resetControllerData?.();
             this.syncFirmwareUI('unknown');
             this._identifyingFirmware = true;
@@ -176,6 +176,21 @@ class UIManager {
     }
 
 
+    startStatusPolling(ws) {
+        if (this.statusInterval) clearInterval(this.statusInterval);
+        this._lastFullStatusPoll = null;
+        const pollingRate = ws.type === 'websocket' ? 500 : 250;
+        this.statusInterval = setInterval(() => this.pollStatus(ws), pollingRate);
+    }
+
+    pollStatus(ws, now = Date.now()) {
+        if (!ws.isConnected) return;
+        const full = ws.supportsProbeStatus &&
+            (this._lastFullStatusPoll === null || now - this._lastFullStatusPoll >= 500);
+        if (full) this._lastFullStatusPoll = now;
+        ws.sendRealtime(full ? '\x87' : '?');
+    }
+
     syncFirmwareUI(firmware) {
         document.documentElement.dataset.controllerFirmware = firmware;
         if (firmware === 'grbl' || firmware === 'unknown') {
@@ -186,14 +201,21 @@ class UIManager {
             if (activeTrouble) window.switchTroubleTab?.('trouble-tab-signals', document.querySelector('.trouble-tab-btn'));
         }
         window.troubleshooting?.updateSignalVisibility();
+        window.troubleshooting?.syncProbeControls?.();
     }
 
     handleFirmwareIdentification(line) {
         if (!this._identifyingFirmware) return;
-        if (line.startsWith('[VER:')) this._firmwareSeen = true;
+        if (line.startsWith('[VER:')) {
+            this._firmwareSeen = true;
+            const match = line.match(/^\[VER:[^:]*\.(\d{8})(?=:|\])/);
+            this._firmwareBuild = match ? Number(match[1]) : 0;
+        }
         if (/^\[FIRMWARE:grblHAL\]$/i.test(line)) window.ws.isGrblHAL = true;
         if (line === 'ok' && this._firmwareSeen) {
             this._identifyingFirmware = false;
+            window.ws.supportsProbeStatus = window.ws.isGrblHAL && this._firmwareBuild > 20261007;
+            window.troubleshooting?.resetProbeStatus?.();
             this.syncFirmwareUI(window.ws.isGrblHAL ? 'grblhal' : 'grbl');
             if (!window.ws.isGrblHAL) {
                 window.showToast?.('Grbl 1.1 compatibility mode - hiding incompatible features', 'info', 'compatibility');

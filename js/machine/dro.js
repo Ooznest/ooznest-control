@@ -338,7 +338,7 @@ export class DROHandler {
 
     _updatePins() {
         if (window.troubleshooting) {
-            window.troubleshooting.updatePins(this.inputPins);
+            window.troubleshooting.updatePins(this.inputPins, { full: this.ws.lastStatusWasFull });
         }
     }
 
