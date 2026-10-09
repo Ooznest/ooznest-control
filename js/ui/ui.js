@@ -185,7 +185,12 @@ class UIManager {
 
     pollStatus(ws, now = Date.now()) {
         if (!ws.isConnected) return;
-        const full = ws.supportsProbeStatus &&
+        const troubleshooting = document.getElementById('troubleshooting-view');
+        const signals = document.getElementById('trouble-tab-signals');
+        const signalsVisible = troubleshooting && signals &&
+            !troubleshooting.classList.contains('hidden') && !signals.classList.contains('hidden');
+        if (!signalsVisible) this._lastFullStatusPoll = null;
+        const full = ws.supportsProbeStatus && signalsVisible &&
             (this._lastFullStatusPoll === null || now - this._lastFullStatusPoll >= 500);
         if (full) this._lastFullStatusPoll = now;
         ws.sendRealtime(full ? '\x87' : '?');

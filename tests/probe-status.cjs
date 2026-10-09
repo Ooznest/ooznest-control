@@ -60,6 +60,16 @@ ws.supportsProbeStatus = true;
 ui._lastFullStatusPoll = null;
 for (const now of [0,250,500,750,1000]) ui.pollStatus(ws, now);
 assert.deepEqual(sent, ['\x87','?','\x87','?','\x87']);
+for (const id of ['troubleshooting-view', 'trouble-tab-signals']) {
+    sent.length = 0;
+    element(id).classList.add('hidden');
+    for (const now of [1250,1500]) ui.pollStatus(ws, now);
+    assert.deepEqual(sent, ['?','?']);
+    element(id).classList.remove('hidden');
+    sent.length = 0;
+    ui.pollStatus(ws, 1750);
+    assert.deepEqual(sent, ['\x87']);
+}
 sent.length = 0; ws.supportsProbeStatus = false;
 for (const now of [1250,1500]) ui.pollStatus(ws, now);
 assert.deepEqual(sent, ['?','?']);
