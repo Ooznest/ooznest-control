@@ -42,6 +42,16 @@ assert.equal(element('pin-indicator-H').textContent, 'ON');
 assert.equal(element('probe-status-tls').textContent, 'TLS: OFF');
 trouble.resetProbeStatus();
 assert.equal(element('probe-status-primary').textContent, 'P: --');
+trouble.updatePins('IJK', { full: true });
+trouble.updatePins('i');
+assert.equal(element('probe-status-primary').textContent, 'P: OFF');
+assert.equal(element('probe-status-tls').textContent, 'TLS: ON');
+trouble.updatePins('jk');
+assert.equal(element('probe-status-tls').textContent, 'TLS: OFF');
+assert.equal(element('probe-status-secondary').textContent, 'P2: OFF');
+trouble.updatePins('J');
+trouble.updatePins('');
+assert.equal(element('probe-status-tls').textContent, 'TLS: ON');
 ws.supportsProbeStatus = false; trouble.syncProbeControls();
 assert.equal(element('probe-mode-radios').classList.contains('hidden'), false);
 assert.equal(element('probe-status-buttons').classList.contains('hidden'), true);
@@ -49,28 +59,31 @@ ws.isGrblHAL = false; trouble.selectProbeMode('tls'); assert.deepEqual(sent, [])
 vm.runInContext(fs.readFileSync('js/ui/ui.js', 'utf8'), context);
 const ui = context.window.uiManager;
 context.window.lineProcessor = {};
-for (const [build, hal, expected] of [[20261007,true,false],[20261008,true,true],[20261008,false,false]]) {
+for (const [build, hal, expected] of [[20261013,true,false],[20261014,true,true],[20261014,false,false]]) {
+    sent.length = 0;
     ui._identifyingFirmware = true;
     ws.isGrblHAL = hal;
     ui.handleFirmwareIdentification(`[VER:1.1f.${build}:]`);
     ui.handleFirmwareIdentification('ok');
     assert.equal(ws.supportsProbeStatus, expected);
+    assert.deepEqual(sent, expected ? ['\x87'] : []);
 }
+sent.length = 0;
 ws.supportsProbeStatus = true;
 ui._lastFullStatusPoll = null;
 for (const now of [0,250,500,750,1000]) ui.pollStatus(ws, now);
-assert.deepEqual(sent, ['\x87','?','\x87','?','\x87']);
+assert.deepEqual(sent, ['\x80','\x80','\x80','\x80','\x80']);
 for (const id of ['troubleshooting-view', 'trouble-tab-signals']) {
     sent.length = 0;
     element(id).classList.add('hidden');
     for (const now of [1250,1500]) ui.pollStatus(ws, now);
-    assert.deepEqual(sent, ['?','?']);
+    assert.deepEqual(sent, ['\x80','\x80']);
     element(id).classList.remove('hidden');
     sent.length = 0;
     ui.pollStatus(ws, 1750);
-    assert.deepEqual(sent, ['\x87']);
+    assert.deepEqual(sent, ['\x80']);
 }
 sent.length = 0; ws.supportsProbeStatus = false;
 for (const now of [1250,1500]) ui.pollStatus(ws, now);
 assert.deepEqual(sent, ['?','?']);
-console.log('Probe build gate, full/normal snapshots, fallback, and 2 Hz polling passed.');
+console.log('Probe build gate, startup snapshot, case-sensitive changes, and 0x80 polling passed.');

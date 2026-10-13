@@ -61,7 +61,7 @@ export class TroubleshootingHandler {
      */
     updatePins(pins, { full = false } = {}) {
         this.syncProbeControls();
-        if (this.ws.supportsProbeStatus && full) this.updateProbeStatus(pins);
+        if (this.ws.supportsProbeStatus) this.updateProbeStatus(pins, { full });
         this.updateSignalVisibility();
         if (pins === this.lastPins) return;
         this.lastPins = pins;
@@ -130,9 +130,14 @@ export class TroubleshootingHandler {
         }
     }
 
-    updateProbeStatus(pins) {
-        // I/J/K are a full-report snapshot; a normal ? report must not clear it.
-        this.probeStatus = { primary: pins.includes('I'), tls: pins.includes('J'), secondary: pins.includes('K') };
+    updateProbeStatus(pins, { full = false } = {}) {
+        // Full reports seed all inputs; extended reports contain only changes.
+        this.probeStatus ||= {};
+        for (const [key, char] of [['primary', 'I'], ['tls', 'J'], ['secondary', 'K']]) {
+            if (full || pins.includes(char) || pins.includes(char.toLowerCase())) {
+                this.probeStatus[key] = pins.includes(char);
+            }
+        }
         this.renderProbeStatus();
     }
 

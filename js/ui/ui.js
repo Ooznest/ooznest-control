@@ -178,22 +178,13 @@ class UIManager {
 
     startStatusPolling(ws) {
         if (this.statusInterval) clearInterval(this.statusInterval);
-        this._lastFullStatusPoll = null;
         const pollingRate = ws.type === 'websocket' ? 500 : 250;
         this.statusInterval = setInterval(() => this.pollStatus(ws), pollingRate);
     }
 
     pollStatus(ws, now = Date.now()) {
         if (!ws.isConnected) return;
-        const troubleshooting = document.getElementById('troubleshooting-view');
-        const signals = document.getElementById('trouble-tab-signals');
-        const signalsVisible = troubleshooting && signals &&
-            !troubleshooting.classList.contains('hidden') && !signals.classList.contains('hidden');
-        if (!signalsVisible) this._lastFullStatusPoll = null;
-        const full = ws.supportsProbeStatus && signalsVisible &&
-            (this._lastFullStatusPoll === null || now - this._lastFullStatusPoll >= 500);
-        if (full) this._lastFullStatusPoll = now;
-        ws.sendRealtime(full ? '\x87' : '?');
+        ws.sendRealtime(ws.supportsProbeStatus ? '\x80' : '?');
     }
 
     syncFirmwareUI(firmware) {
@@ -219,8 +210,9 @@ class UIManager {
         if (/^\[FIRMWARE:grblHAL\]$/i.test(line)) window.ws.isGrblHAL = true;
         if (line === 'ok' && this._firmwareSeen) {
             this._identifyingFirmware = false;
-            window.ws.supportsProbeStatus = window.ws.isGrblHAL && this._firmwareBuild > 20261007;
+            window.ws.supportsProbeStatus = window.ws.isGrblHAL && this._firmwareBuild > 20261013;
             window.troubleshooting?.resetProbeStatus?.();
+            if (window.ws.supportsProbeStatus) window.ws.sendRealtime('\x87');
             this.syncFirmwareUI(window.ws.isGrblHAL ? 'grblhal' : 'grbl');
             if (!window.ws.isGrblHAL) {
                 window.showToast?.('Grbl 1.1 compatibility mode - hiding incompatible features', 'info', 'compatibility');

@@ -996,9 +996,9 @@ export class ConnectionManager {
     }
 
     async sendRealtime(char) {
-        if (char === '\x87' && !this.isGrblHAL) char = '?';
+        if ((char === '\x87' || char === '\x80') && !this.isGrblHAL) char = '?';
 
-        if (char === '?' || char === '\x87') {
+        if (char === '?' || char === '\x87' || char === '\x80') {
             this._statusRequests ||= [];
             this._statusRequests.push({ full: char === '\x87', at: Date.now() });
         }
