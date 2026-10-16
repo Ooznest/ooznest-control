@@ -8,7 +8,13 @@ export class ConnectionManager {
         this.type = 'webserial'; // 'webserial', 'usb', 'telnet'
         this.backendWs = null;
         this.isElectron = window.electron !== undefined;
-        // isCordova is checked dynamically since cordova.js loads async
+        // cordova.js loads async, so window.cordova may not exist yet at
+        // construction time. Default to false and upgrade on deviceready;
+        // also detect a Cordova file:// context synchronously when possible.
+        this.isCordova = typeof window !== 'undefined' && !!window.cordova;
+        if (!this.isCordova && typeof location !== 'undefined' && location.protocol === 'file:') {
+            this.isCordova = true;
+        }
         this.hasBackend = this.isElectron;
         this.httpBaseUrl = null;
         this._scanning = false;
@@ -121,11 +127,17 @@ export class ConnectionManager {
             if (wsTab) wsTab.classList.add('hidden');
             if (wsSerialTab) wsSerialTab.classList.add('hidden');
 
-            this.setConnectionType(savedConnectionType || 'telnet');
+            this.setConnectionType(savedConnectionType || 'usb');
 
             // Auto-discover grblHAL Telnet devices on local network
             setTimeout(() => {
                 this._discoverTelnetDevices().then(devices => {
+                    // Never steal an active (e.g. USB) session: only auto-connect
+                    // when the user hasn't already connected.
+                    if (this.isConnected || this.isConnecting) {
+                        console.log("Skipping Telnet auto-connect: already connected/connecting");
+                        return;
+                    }
                     if (devices.length === 1) {
                         console.log("Auto-discovered 1 Telnet device:", devices[0]);
                         this._autoConnectTelnet(devices[0]);
@@ -151,6 +163,17 @@ export class ConnectionManager {
             const wsTab = document.getElementById('tab-websocket');
             if (wsSerialTab) wsSerialTab.classList.add('hidden');
             if (wsTab) wsTab.classList.add('hidden');
+        }
+
+        if (this.isCordova) {
+            // Cordova context detected synchronously (file:// before deviceready):
+            // show native tabs immediately and default to USB so the modal never
+            // opens with zero -- or two -- highlighted tabs.
+            const usbTab = document.getElementById('tab-usb');
+            const telnetTab = document.getElementById('tab-telnet');
+            if (usbTab) usbTab.classList.remove('hidden');
+            if (telnetTab) telnetTab.classList.remove('hidden');
+            this.setConnectionType(savedConnectionType || 'usb');
         }
 
         if (this.isBrowserRuntime) {
@@ -220,6 +243,11 @@ export class ConnectionManager {
         this.modalController.toggle();
 
         if (this.modalController.isOpen()) {
+            // On native shells the WebSerial/WebSocket tabs are hidden — never
+            // leave the modal highlighting a hidden tab. Coerce to USB.
+            if ((this.isElectron || this.isCordova) && (this.type === 'webserial' || this.type === 'websocket')) {
+                this.type = 'usb';
+            }
             this.setConnectionType(this.type);
         }
 
@@ -253,6 +281,12 @@ export class ConnectionManager {
     setConnectionType(type) {
         this.type = type;
         this.updateStreamingDescription();
+
+        // Enforce exactly one highlighted tab: clear stale .active classes
+        // first (e.g. left over on a now-hidden tab), then highlight only the
+        // selected visible tab. Without this the modal can show two green tabs.
+        const allTabBtns = document.querySelectorAll('#connection-modal .connection-modal__tabs .tab-btn');
+        allTabBtns.forEach(btn => btn.classList.remove('active'));
 
         // Update Tabs
         ['webserial', 'usb', 'telnet', 'websocket'].forEach(t => {
@@ -391,7 +425,7 @@ export class ConnectionManager {
         console.log("Cordova Serial Plugin Ready");
 
         // Cordova Serial registration
-        serial.registerReadCallback(
+        window.serial.registerReadCallback(
             (data) => {
                 const view = new Uint8Array(data);
                 if (this.rawModeCallback) {
@@ -605,15 +639,25 @@ export class ConnectionManager {
             await this.webSerial.connect(baud);
         } else if (this.type === 'usb') {
             if (!this.backendWs && !this.isCordova) await this.connectToBackend();
-            const port = document.getElementById('port-node').value;
-            const baud = parseInt(document.getElementById('baud-node').value);
+            const portEl = document.getElementById('port-node');
+            const baudEl = document.getElementById('baud-node');
+            const port = portEl?.value || '';
+            const baud = parseInt(baudEl?.value) || 115200;
             this._setConnectingState(true, `Opening ${port || 'USB port'}...`);
 
             if (this.isCordova) {
-                // Supported devices: STM32 (1155:22336) and ESP32-S3 (12346:16385)
+                const serialApi = (typeof serial !== 'undefined') ? serial : window.serial;
+                if (!serialApi) {
+                    this._setConnectingState(false);
+                    this.emit('error', new Error("USB serial plugin not available. Reinstall the app or use WiFi/Ethernet instead."));
+                    return;
+                }
+                // Supported devices: STM32 + ESP32-S3 (native CDC-ACM) and FTDI bridges.
+                // vid/pid are decimal; driver must match the chip (native default is CdcAcm).
                 const supportedDevices = [
                     { vid: 1155, pid: 22336, name: 'STM32' },
-                    { vid: 12346, pid: 16385, name: 'ESP32-S3' }
+                    { vid: 12346, pid: 16385, name: 'ESP32-S3' },
+                    { vid: 1027, pid: 24577, name: 'FTDI', driver: 'FtdiSerialDriver' }
                 ];
 
                 const tryConnect = (index) => {
@@ -626,10 +670,24 @@ export class ConnectionManager {
                     const device = supportedDevices[index];
                     console.log(`Trying Cordova USB Permission for: ${device.name} (VID: ${device.vid}, PID: ${device.pid})`);
 
-                    serial.requestPermission(
-                        { vid: device.vid, pid: device.pid },
+                    // Safety net: the native permission callback must always fire.
+                    // If it doesn't (e.g. broadcast lost), advance instead of
+                    // hanging the UI in "Connecting..." forever.
+                    let attemptSettled = false;
+                    const watchdog = setTimeout(() => {
+                        if (attemptSettled) return;
+                        attemptSettled = true;
+                        console.warn(`Cordova USB attempt [${device.name}] timed out after 15s, trying next...`);
+                        tryConnect(index + 1);
+                    }, 15000);
+
+                    serialApi.requestPermission(
+                        { vid: device.vid, pid: device.pid, ...(device.driver ? { driver: device.driver } : {}) },
                         () => {
-                            serial.open(
+                            if (attemptSettled) return;
+                            attemptSettled = true;
+                            clearTimeout(watchdog);
+                            serialApi.open(
                                 { baudRate: baud, sleepOnPause: false },
                                 () => {
                                     console.log(`Cordova Serial Open Success [${device.name}]`);
@@ -638,8 +696,9 @@ export class ConnectionManager {
                                 },
                                 (err) => {
                                     console.error(`Cordova Serial Open Error [${device.name}]:`, err);
+                                    const errStr = String((typeof err === 'string') ? err : (err && err.message) ? err.message : JSON.stringify(err)).toLowerCase();
                                     // If "No device found", try the next one in the list
-                                    if (err.toString().toLowerCase().includes("no device") || err.toString().toLowerCase().includes("not found")) {
+                                    if (errStr.includes("no device") || errStr.includes("not found")) {
                                         tryConnect(index + 1);
                                     } else {
                                         this._setConnectingState(false);
@@ -652,6 +711,9 @@ export class ConnectionManager {
                         (err) => {
                             console.warn(`Cordova USB Permission Denied/Next [${device.name}]:`, err);
                             // Device might not be plugged in, or it might be the wrong one. Try next.
+                            if (attemptSettled) return;
+                            attemptSettled = true;
+                            clearTimeout(watchdog);
                             tryConnect(index + 1);
                         });
                 };
@@ -904,6 +966,13 @@ export class ConnectionManager {
             this._cordovaTelnetSocket.close();
             this._cordovaTelnetSocket = null;
             this.handleDisconnect();
+        } else if (this.isCordova && window.serial) {
+            try {
+                window.serial.close(() => {}, () => {});
+            } catch (e) {
+                console.warn("Cordova Serial close failed:", e);
+            }
+            this.handleDisconnect();
         } else if (this.backendWs) {
             this.backendWs.send(JSON.stringify({ type: 'disconnect' }));
         }
@@ -1026,7 +1095,7 @@ export class ConnectionManager {
 
             const hexChar = char.charCodeAt(0).toString(16).padStart(2, '0');
             await new Promise((resolve) => {
-                serial.writeHex(hexChar, resolve, (err) => {
+                window.serial.writeHex(hexChar, resolve, (err) => {
                     console.error("Cordova Serial TX Error:", err);
                     resolve();
                 });
@@ -1070,7 +1139,7 @@ export class ConnectionManager {
                 hexCmd += bytes[i].toString(16).padStart(2, '0');
             }
             await new Promise((resolve) => {
-                serial.writeHex(hexCmd, resolve, (err) => {
+                window.serial.writeHex(hexCmd, resolve, (err) => {
                     console.error("Cordova Serial TX Error:", err);
                     resolve();
                 });
@@ -1692,6 +1761,10 @@ export class ConnectionManager {
     }
 
     _autoConnectTelnet(ip) {
+        if (this.isConnected || this.isConnecting) {
+            console.log("Skipping Telnet auto-connect to", ip, ": already connected/connecting");
+            return;
+        }
         console.log("Auto-connecting Telnet to", ip);
         const ipInput = document.getElementById('ip-telnet');
         const portInput = document.getElementById('port-telnet');

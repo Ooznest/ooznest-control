@@ -207,20 +207,33 @@ class UIManager {
             const match = line.match(/^\[VER:[^:]*\.(\d{8})(?=:|\])/);
             this._firmwareBuild = match ? Number(match[1]) : 0;
         }
-        if (/^\[FIRMWARE:grblHAL\]$/i.test(line)) window.ws.isGrblHAL = true;
-        if (line === 'ok' && this._firmwareSeen) {
-            this._identifyingFirmware = false;
-            window.ws.supportsProbeStatus = window.ws.isGrblHAL && this._firmwareBuild > 20261013;
-            window.troubleshooting?.resetProbeStatus?.();
-            if (window.ws.supportsProbeStatus) window.ws.sendRealtime('\x87');
-            this.syncFirmwareUI(window.ws.isGrblHAL ? 'grblhal' : 'grbl');
-            if (!window.ws.isGrblHAL) {
-                window.showToast?.('Grbl 1.1 compatibility mode - hiding incompatible features', 'info', 'compatibility');
-            }
-            this._startupTimers.push(setTimeout(() => {
-                if (window.ws.isConnected) this._startFirmwareInit();
-            }, 0));
+        // Newer grblHAL $I responses end after the info blocks (e.g. [STA IP:...])
+        // with no trailing ok, so complete as soon as the firmware id arrives.
+        // (Legacy Grbl 1.1 has no [FIRMWARE:] line and still completes on ok.)
+        const firmwareMatch = line.match(/^\[FIRMWARE:(.*)\]$/i);
+        if (firmwareMatch) {
+            window.ws.isGrblHAL = /^grblHAL$/i.test(firmwareMatch[1]);
+            this._finishFirmwareIdentification();
+            return;
         }
+        if (line === 'ok' && this._firmwareSeen) {
+            this._finishFirmwareIdentification();
+        }
+    }
+
+    _finishFirmwareIdentification() {
+        if (!this._identifyingFirmware) return;
+        this._identifyingFirmware = false;
+        window.ws.supportsProbeStatus = window.ws.isGrblHAL && this._firmwareBuild > 20261013;
+        window.troubleshooting?.resetProbeStatus?.();
+        if (window.ws.supportsProbeStatus) window.ws.sendRealtime('\x87');
+        this.syncFirmwareUI(window.ws.isGrblHAL ? 'grblhal' : 'grbl');
+        if (!window.ws.isGrblHAL) {
+            window.showToast?.('Grbl 1.1 compatibility mode - hiding incompatible features', 'info', 'compatibility');
+        }
+        this._startupTimers.push(setTimeout(() => {
+            if (window.ws.isConnected) this._startFirmwareInit();
+        }, 0));
     }
 
     /**

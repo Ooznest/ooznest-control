@@ -8,6 +8,7 @@ class LineProcessor {
         this._initFailCallback = null;
         this._initTimeout = null;
         this._initIdx = 0;
+        this.lastRxAt = 0;
     }
 
     /**
@@ -34,12 +35,22 @@ class LineProcessor {
         var idx = this._initIdx + 1;
         if (idx >= this._initSteps.length) return;
         var step = this._initSteps[idx];
+        var self = this;
         this._initTimeout = setTimeout(() => {
-            if (!this._initSteps) return;
-            this._initSteps = null;
-            this._initCallback = null;
-            if (this._initFailCallback) this._initFailCallback(idx, step);
-            this._initFailCallback = null;
+            if (!self._initSteps) return;
+            // Lenient advance: steps only gate progress toasts, while the real
+            // data handlers process lines as they arrive. If traffic is flowing
+            // (e.g. info queries with no trailing ok), advance instead of
+            // failing. Only fail a truly dead link (no lines at all recently).
+            var silentFor = Date.now() - (self.lastRxAt || 0);
+            if (silentFor < (self._stepTimeout || 3000)) {
+                self._advanceInit();
+                return;
+            }
+            self._initSteps = null;
+            self._initCallback = null;
+            if (self._initFailCallback) self._initFailCallback(idx, step);
+            self._initFailCallback = null;
         }, this._stepTimeout);
     }
 
@@ -80,6 +91,7 @@ class LineProcessor {
     processLine(line) {
         if (!line) return;
         line = line.trim();
+        this.lastRxAt = Date.now();
 
         window.uiManager?.handleFirmwareIdentification(line);
 

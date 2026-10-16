@@ -61,6 +61,33 @@ for (const version of ['1.1f', '1.1h']) {
     assert.deepEqual(sent, ['$I', '$EA', '$EE', '$FM', '$EG', '$ES', '$$', '$#', '$I+', '$pins']);
 }
 {
+    // Newer grblHAL $I responses end after the info blocks (e.g. [STA IP:...])
+    // with no trailing ok — identification must still complete on [FIRMWARE:].
+    const { window: w, context, sent, tick } = setup();
+    w.uiManager.updateConnectionState(true, w.ws, w.sdHandler); tick(2000);
+    for (const line of [
+        'GrblHAL 1.1f [\'$\' or \'$HELP\' for help]',
+        '[VER:1.1f.20260902:WBAABABAB]',
+        '[OPT:VNHDSL2,100,1024,3,0]',
+        '[AXS:3:XYZ]',
+        '[NEWOPT:ENUMS,RT+,HOME,PROBES=7,ES,REBOOT,TC,SED,RTC,WIFI,FTP,YM,SD]',
+        '[FIRMWARE:grblHAL]',
+        '[SIGNALS:EFP]',
+        '[DRIVER:ESP32-S3@240MHz]',
+        '[BOARD:Ooznest-Motion-Control-Core]',
+        '[STA IP:192.168.0.55]'
+    ]) w.lineProcessor.processLine(line);
+    // Answer each init command with ok, then prove the old 7s identification
+    // timeout no longer fires and the session stays up.
+    tick(0);
+    assert.equal(w.ws.isGrblHAL, true);
+    assert.equal(context.document.documentElement.dataset.controllerFirmware, 'grblhal');
+    for (let i = 0; i < 10; i++) { tick(500); w.lineProcessor.processLine('ok'); }
+    assert.deepEqual(sent, ['$I', '$EA', '$EE', '$FM', '$EG', '$ES', '$$', '$#', '$I+', '$pins']);
+    tick(6000);
+    assert.equal(w.ws.isConnected, true);
+}
+{
     const { window: w, sent, tick } = setup();
     w.uiManager.updateConnectionState(true, w.ws, w.sdHandler); tick(2000);
     w.ws.isConnected = false;

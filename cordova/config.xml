@@ -24,12 +24,12 @@
         <preference name="FadeSplashScreenDuration" value="500" />
         <resource-file src="res/xml/device_filter.xml" target="app/src/main/res/xml/device_filter.xml" />
         <resource-file src="res/xml/network_security_config.xml" target="app/src/main/res/xml/network_security_config.xml" />
-        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest">
-            <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-                <uses-feature android:name="android.hardware.usb.host" />
-                <application android:networkSecurityConfig="@xml/network_security_config" android:usesCleartextTraffic="true" />
-            </manifest>
-        </edit-config>
+        <!-- Manifest USB/cleartext patch (edit-config does not survive prepare
+             with cordova-android 14; see scripts/after-prepare-manifest.js) -->
+        <hook type="after_prepare" src="scripts/after-prepare-manifest.js" />
+        <!-- Re-apply cordovarduino crash/permission fixes (plugins/ is not
+             git-tracked and prepare does not re-copy plugin Java) -->
+        <hook type="after_prepare" src="scripts/ensure-usb-serial-fix.js" />
         <icon density="ldpi" src="resources/android/icon/drawable-ldpi-icon.png" />
         <icon density="mdpi" src="resources/android/icon/drawable-mdpi-icon.png" />
         <icon density="hdpi" src="resources/android/icon/drawable-hdpi-icon.png" />
