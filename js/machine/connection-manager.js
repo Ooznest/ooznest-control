@@ -1,4 +1,4 @@
-import { GrblFlowControl } from './grbl-flow-control.js';
+import { GrblFlowControl } from './grbl-flow-control.js?v=20261016';
 import { registerModal } from '../ui/modal.js';
 
 export class ConnectionManager {
@@ -28,6 +28,7 @@ export class ConnectionManager {
             disconnect: [],
             line: [],
             sent: [],
+            'command-result': [],
             error: [],
             firmware: [],
             ports: []
@@ -108,6 +109,7 @@ export class ConnectionManager {
         this.webSerial.on('line', (line) => this.emit('line', line));
         this.webSerial.on('error', (err) => this.emit('error', err));
         this.webSerial.on('sent', (line) => this.emit('sent', line));
+        this.webSerial.on('command-result', (result) => this.emit('command-result', result));
 
         // Always listen for deviceready - cordova.js loads asynchronously
         // so window.cordova is not defined at constructor time.
@@ -1038,6 +1040,47 @@ export class ConnectionManager {
     }
 
     // --- Data Transmission ---
+
+    // A write completing is not a controller acknowledgement. Correlate replies
+    // with the transport's FIFO, including commands sent by other app features.
+    sendCommandWithAck(command, { timeoutMs = 10000 } = {}) {
+        const notSent = message => Promise.reject(Object.assign(new Error(message), { notSent: true }));
+        if (!this.isConnected) return notSent('Controller disconnected');
+        if (this._ackRequest) return notSent('Another acknowledged command is pending');
+        const buffer = this.type === 'webserial' ? this.webSerial : this.flowControl;
+        if (!buffer.isDrained()) return notSent('Controller is busy; wait for pending commands to finish');
+        return new Promise((resolve, reject) => {
+            let settled = false;
+            const finish = (error, result) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                this.off('command-result', onResult);
+                this.off('disconnect', onDisconnect);
+                this.off('error', onError);
+                this.off('line', onReset);
+                this._ackRequest = null;
+                if (error) reject(error); else resolve(result);
+            };
+            const onResult = (result) => {
+                if (result.command === command) finish(null, result);
+            };
+            const onDisconnect = () => finish(new Error('Controller disconnected; write outcome unknown'));
+            const onError = () => finish(new Error('Connection error; write outcome unknown'));
+            const onReset = (line) => {
+                if (/^(Grbl|grblHAL|ALARM:)/i.test(line)) finish(new Error('Controller reset or alarm; write outcome unknown'));
+            };
+            const timer = setTimeout(() => finish(new Error('Controller acknowledgement timed out; write outcome unknown')), timeoutMs);
+            this._ackRequest = { command };
+            this.on('command-result', onResult);
+            this.on('disconnect', onDisconnect);
+            this.on('error', onError);
+            this.on('line', onReset);
+            Promise.resolve().then(() => {
+                if (!settled && this.isConnected) return this.sendCommand(command);
+            }).catch(error => finish(error));
+        });
+    }
 
     async sendCommand(line) {
         // Extended commands require positive identification from $I.

@@ -1,3 +1,5 @@
+import { registerModal } from '../ui/modal.js';
+
 // Standard Grbl 1.1 settings do not include enumeration metadata.
 // Reference: https://github.com/gnea/grbl/wiki/Grbl-v1.1-Configuration
 const GRBL_SETTING_INFO = {
@@ -36,6 +38,16 @@ export class GrblSettings {
         this.searchQuery = "";
         this.tableContainer = null;
         this.renderTimeout = null;
+        this.writing = false;
+        this.controllerIdentity = {};
+        this.connectionGeneration = 0;
+        const resetIdentity = () => { this.controllerIdentity = {}; this.connectionGeneration++; };
+        this.ws.on('disconnect', resetIdentity);
+        this.ws.on('connect', resetIdentity);
+        this.ws.on('line', line => {
+            const info = line.match(/^\[(VER|BOARD):(.+)\]$/);
+            if (info) this.controllerIdentity[info[1] === 'VER' ? 'firmware' : 'board'] = info[2];
+        });
     }
 
     init(containerId) {
@@ -91,8 +103,8 @@ export class GrblSettings {
         this.settingChangeHistory.unshift({
             id,
             label: setting?.label || 'Unknown setting',
-            from: String(from),
-            to,
+            from: String(this._reviewValue(id, from)),
+            to: String(this._reviewValue(id, to)),
             timestamp: Date.now()
         });
         this.settingChangeHistory.splice(100);
@@ -106,6 +118,18 @@ export class GrblSettings {
     // --- Commands ---
 
     fetchSettings() {
+        if (this.writing) return;
+        if (Object.keys(this.pendingChanges).length) {
+            this._reporter()?.showConfirm('Discard unsaved settings?',
+                'Refresh reloads controller values and discards your unsaved edits.',
+                () => this._fetchSettings(), undefined, 'Discard and Refresh');
+            return;
+        }
+        this._fetchSettings();
+    }
+
+    _fetchSettings() {
+        if (!this.ws.isConnected || this.writing) return;
         this.term.writeln(`\x1b[34m> Discovering ${this.ws.isGrblHAL ? 'grblHAL' : 'Grbl'} Settings...\x1b[0m`);
 
         // Reset Logic
@@ -134,6 +158,7 @@ export class GrblSettings {
     }
 
     saveChanges() {
+        if (this.writing) return;
         const ids = Object.keys(this.pendingChanges);
         if (ids.length === 0) {
             const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
@@ -148,22 +173,26 @@ export class GrblSettings {
             console.error('Reporter not available for modal');
             return;
         }
-        reporter.showConfirm('Save Settings', `Save ${ids.length} changed setting(s) to EEPROM?`, () => {
-
-            ids.forEach(id => {
-                const val = this.pendingChanges[id];
-                this.ws.sendCommand(`$${id}=${val}`);
-            });
-
-            this.pendingChanges = {};
-            this.render();
-
-            // Refresh values after a moment
-            setTimeout(() => this.ws.sendCommand('$$'), 1500);
-        });
+        const entries = ids.map(id => ({ id, value: String(this.pendingChanges[id]) }));
+        const invalid = entries.filter(entry => this._validateSetting(entry.id, entry.value));
+        if (invalid.length) {
+            reporter.showAlert('Invalid settings', invalid.map(e => this._escape(`$${e.id}: ${this._validateSetting(e.id, e.value)}`)).join('<br>'));
+            return;
+        }
+        this._showWriteReview('Save Settings', entries, [], {});
     }
 
     backup(options = {}) {
+        if (Object.keys(this.pendingChanges).length && !options.confirmedLoadedValues) {
+            if (options.prefix) {
+                this.term.writeln('> Automatic settings backup skipped: unsaved edits exist. Save or discard them and take a manual backup first.');
+                return null;
+            }
+            this._reporter()?.showConfirm('Back up loaded values?',
+                'Unsaved edits are not included. Back up the last loaded controller values, or cancel and save/refresh first.',
+                () => this.backup({ ...options, confirmedLoadedValues: true }), undefined, 'Back Up Loaded Values');
+            return null;
+        }
         const timestamp = new Date();
         const settings = {};
         for (const [id, s] of Object.entries(this.settings)) {
@@ -172,6 +201,9 @@ export class GrblSettings {
         if (Object.keys(settings).length === 0) return null;
 
         const payload = {
+            formatVersion: 2,
+            scope: 'controller-settings-only',
+            controller: { ...this.controllerIdentity, hostname: this.settings['300']?.val || null },
             timestamp: timestamp.toISOString(),
             settings
         };
@@ -191,21 +223,21 @@ export class GrblSettings {
     }
 
     restore(file) {
-        if (!file) return;
+        if (!file || this.writing) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                const data = json.settings || json;
-                let count = 0;
+                if (!json || typeof json !== 'object' || Array.isArray(json)) throw new Error('Invalid backup');
+                const data = json.settings ?? json;
+                if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid settings');
+                const entries = [], skipped = [];
                 for (const [id, val] of Object.entries(data)) {
-                    if (val !== undefined && this.settings[id]) {
-                        this.ws.sendCommand(`$${id}=${val}`);
-                        count++;
-                    }
+                    const reason = this._validateSetting(id, val);
+                    if (reason) skipped.push({ id, reason });
+                    else entries.push({ id, value: String(val) });
                 }
-                this.term.writeln(`\x1b[32m> Restored ${count} settings.\x1b[0m`);
-                setTimeout(() => this.ws.sendCommand('$$'), 2000);
+                this._showWriteReview('Restore Settings', entries, skipped, json.controller || {});
             } catch (err) {
                 const reporter = window.reporter || (window.AlarmsAndErrors ? new window.AlarmsAndErrors(this.ws) : null);
                 if (reporter) {
@@ -216,9 +248,127 @@ export class GrblSettings {
         reader.readAsText(file);
     }
 
+    _reporter() { return window.reporter; }
+
+    _escape(value) {
+        return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    _validateSetting(id, value) {
+        if (!/^\d+$/.test(id) || !Object.hasOwn(this.settings, id)) return 'Unknown setting';
+        if (!['string', 'number'].includes(typeof value) || /[\r\n\x00-\x1f\x7f]/.test(String(value))) return 'Invalid value or command separator';
+        const s = this.settings[id], type = s.type;
+        if ([0, 1, 2, 3, 4, 5, 6].includes(type) || type === 'float' || type === 'mask') {
+            const n = Number(value);
+            if (!String(value).trim() || !Number.isFinite(n)) return 'Expected a finite number';
+            if ([0, 1, 2, 3, 4, 6].includes(type) && !Number.isInteger(n)) return 'Expected an integer';
+            if ([1, 2, 4].includes(type) && n < 0) return 'Mask cannot be negative';
+            if (type === 0 && n !== 0 && n !== 1) return 'Expected 0 or 1';
+            if (type === 3 && s.format && (n < 0 || n >= s.format.split(',').length)) return 'Invalid dropdown option';
+            if (s.min !== undefined && s.min !== '' && n < Number(s.min)) return `Minimum is ${s.min}`;
+            if (s.max !== undefined && s.max !== '' && n > Number(s.max)) return `Maximum is ${s.max}`;
+        }
+        return null;
+    }
+
+    _showWriteReview(title, entries, skipped, identity) {
+        if (this.writing) return;
+        if (!this.writeReviewRoot) {
+            const root = document.createElement('div');
+            root.id = 'settings-write-review';
+            root.className = 'oz-modal hidden z-[1100] modal-radial-overlay';
+            root.innerHTML = '<div class="oz-modal__dialog w-full max-w-2xl" data-modal-panel><div class="oz-modal__header"><h3></h3><button type="button" data-modal-close aria-label="Close settings review">×</button></div><div class="oz-modal__body"></div><div class="oz-modal__footer oz-modal__footer--actions"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="button" class="btn btn-primary" id="settings-write-confirm">Confirm</button></div></div>';
+            document.body.appendChild(root);
+            this.writeReviewRoot = root;
+            this.writeReviewModal = registerModal(root);
+        }
+        const root = this.writeReviewRoot, escape = v => this._escape(v);
+        const mismatch = Object.entries(identity).filter(([key, val]) => val && this.controllerIdentity[key] && val !== this.controllerIdentity[key]);
+        const metadata = Object.entries(identity).map(([k, v]) => `${k}: ${v ?? 'unknown'}`).join(', ');
+        const cell = value => `<td style="padding:8px;border-top:1px solid #dbe4e5;overflow-wrap:anywhere">${value}</td>`;
+        const rows = entries.map(e => `<tr>${cell(`$${escape(e.id)} ${escape(this.settings[e.id].label || '')}`)}${cell(escape(this._reviewValue(e.id, this.settings[e.id].val)))}${cell(escape(this._reviewValue(e.id, e.value)))}</tr>`).join('');
+        root.querySelector('h3').textContent = title;
+        root.querySelector('.oz-modal__body').innerHTML = `<p>${entries.length} recognised values; ${skipped.length} skipped. Nothing has been written.</p><p style="margin:12px 0">${escape(metadata || 'Backup identity unavailable. Check that this is the correct machine and firmware.')}</p>${mismatch.length ? '<p><strong>Warning: backup identity differs from the connected controller.</strong></p>' : ''}<p style="margin:12px 0">Confirm only for the correct, safely stopped machine. Existing unsaved edits are preserved unless the matching value is accepted.</p><div style="max-height:45vh;overflow:auto"><table class="w-full text-left" style="table-layout:fixed"><thead><tr><th style="width:50%;padding:8px">Setting</th><th style="padding:8px">Current</th><th style="padding:8px">Proposed</th></tr></thead><tbody>${rows}</tbody></table>${skipped.map(e => `<p>$${escape(e.id)}: ${escape(e.reason)}</p>`).join('')}</div>`;
+        root.querySelectorAll('[data-modal-close]').forEach(b => { b.disabled = false; b.textContent = b.hasAttribute('aria-label') ? '×' : 'Cancel'; });
+        const button = root.querySelector('#settings-write-confirm');
+        button.textContent = title === 'Restore Settings' ? 'Restore Settings' : 'Save Settings';
+        button.disabled = !entries.length;
+        const generation = this.connectionGeneration;
+        button.onclick = () => {
+            if (generation !== this.connectionGeneration) {
+                root.querySelector('.oz-modal__body').textContent = 'Connection changed. Close this review, Refresh and review the settings again.';
+                button.disabled = true;
+                return;
+            }
+            this._writeBatch(entries, root);
+        };
+        this.writeReviewModal.options.closeOnEscape = true;
+        this.writeReviewModal.options.closeOnBackdrop = true;
+        this.writeReviewModal.show();
+    }
+
+    _reviewValue(id, value) {
+        return /password|passphrase|psk|secret/i.test(this.settings[id]?.label || '') || id === '75' ? '[hidden]' : value;
+    }
+
+    async _writeBatch(entries, root) {
+        if (this.writing) return;
+        const body = root.querySelector('.oz-modal__body');
+        if (!this.ws.isConnected || (window.dro?.status && !['Idle', 'Alarm'].includes(window.dro.status))) {
+            body.textContent = 'No values written. Connect to a safely stopped controller first.';
+            return;
+        }
+        this.writing = true;
+        root.querySelectorAll('button').forEach(b => { b.disabled = true; });
+        this.writeReviewModal.options.closeOnEscape = false;
+        this.writeReviewModal.options.closeOnBackdrop = false;
+        const accepted = [], rejected = [], unknown = [];
+        const generation = this.connectionGeneration;
+        let attempted = 0;
+        let stoppedReason = '';
+        try {
+            for (const entry of entries) {
+                if (generation !== this.connectionGeneration || !this.ws.isConnected ||
+                    (window.dro?.status && !['Idle', 'Alarm'].includes(window.dro.status))) break;
+                const invalid = this._validateSetting(entry.id, entry.value);
+                if (invalid) { rejected.push({ ...entry, response: invalid }); continue; }
+                body.textContent = `Writing $${entry.id} (${++attempted} of ${entries.length}); waiting for controller acknowledgement…`;
+                try {
+                    const result = await this.ws.sendCommandWithAck(`$${entry.id}=${entry.value}`);
+                    if (result.response === 'ok') {
+                        accepted.push(entry);
+                        this.settings[entry.id].val = entry.value;
+                        if (String(this.pendingChanges[entry.id]) === entry.value) delete this.pendingChanges[entry.id];
+                    } else {
+                        rejected.push({ ...entry, response: result.response });
+                        if (/^alarm:/i.test(result.response)) break;
+                    }
+                } catch (error) {
+                    if (error.notSent) stoppedReason = `$${entry.id}: ${error.message}`;
+                    else unknown.push({ ...entry, response: error.message });
+                    break; // Never continue after losing acknowledgement alignment.
+                }
+            }
+        } finally {
+            this.writing = false;
+            const notSent = entries.length - accepted.length - rejected.length - unknown.length;
+            const summary = `${accepted.length} accepted; ${rejected.length} rejected; ${unknown.length} unconfirmed; ${notSent} not sent.`;
+            body.innerHTML = `<p>${summary}</p>${stoppedReason ? `<p>${this._escape(stoppedReason)}</p>` : ''}${[...rejected, ...unknown].map(e => `<p>$${this._escape(e.id)}: ${this._escape(e.response)}</p>`).join('')}<p>Unconfirmed writes may have reached the controller. Reconnect or Refresh and verify before retrying. Rejected and unsent edits remain unsaved.</p>`;
+            this.term.writeln(`> Settings: ${summary}`);
+            root.querySelectorAll('[data-modal-close]').forEach(b => { b.disabled = false; if (!b.hasAttribute('aria-label')) b.textContent = 'Close'; });
+            root.querySelector('#settings-write-confirm').disabled = true;
+            this.writeReviewModal.options.closeOnEscape = true;
+            this.writeReviewModal.options.closeOnBackdrop = true;
+            this.render();
+            if (this.ws.isConnected && !unknown.length && !stoppedReason) this.ws.sendCommand('$$');
+        }
+    }
+
     // --- Parser ---
 
     handleLine(line) {
+        const info = line.match(/^\[(VER|BOARD):(.+)\]$/);
+        if (info) this.controllerIdentity[info[1] === 'VER' ? 'firmware' : 'board'] = info[2];
         // 1. Groups
         if (line.startsWith('[SETTINGGROUP:')) {
             const content = line.slice(14, -1);

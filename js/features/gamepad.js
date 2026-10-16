@@ -39,7 +39,13 @@ export class GamepadController {
     constructor(ws, store) {
         this.ws = ws;
         this.store = store;
-        this.modal = registerModal('gamepad-settings-overlay', { closeOnBackdrop: true, closeOnEscape: true });
+        this.modal = registerModal('gamepad-settings-overlay', {
+            closeOnBackdrop: true, closeOnEscape: true,
+            onHide: () => { this.pendingMappings = null; this.confirmingMappings = false; this.awaitingNeutral = true; }
+        });
+        this.enabled = false; // Explicit opt-in for this connection; never persisted.
+        this.pendingMappings = null;
+        this.awaitingNeutral = true;
         this.gamepadIndex = null;
         this.initialising = true;
         this.wasJogging = false;
@@ -63,7 +69,12 @@ export class GamepadController {
             if (document.hidden) this.stopJog();
         });
         this.ws?.on('line', this._onLine);
-        this.ws?.on('disconnect', () => this.stopJog());
+        this.ws?.on('disconnect', () => {
+            this.enabled = false;
+            this.pendingEnabled = false;
+            this.stopJog();
+            this._renderControlStatus();
+        });
 
         this._detectInitialGamepad();
         window.setTimeout(() => { this.initialising = false; }, 1500);
@@ -101,6 +112,8 @@ export class GamepadController {
         if (!gamepad || gamepad.index !== this.gamepadIndex) return;
         this.stopJog();
         this.gamepadIndex = null;
+        this.enabled = false;
+        this.pendingEnabled = false;
         this.previousButtons = [];
         this._renderStatus();
     }
@@ -119,7 +132,21 @@ export class GamepadController {
     _loop() {
         this.raf = window.requestAnimationFrame(() => this._loop());
         const gamepad = this._getActiveGamepad();
+        this._renderControlStatus();
         if (!gamepad) return;
+
+        if (!this.enabled || this.modal?.isOpen() || document.hidden || !document.hasFocus()) {
+            this.stopJog();
+            this.previousButtons = gamepad.buttons.map(button => button.pressed || button.value > 0.5);
+            this.awaitingNeutral = true;
+            return;
+        }
+        if (this.awaitingNeutral) {
+            if (gamepad.axes.some(value => Math.abs(value) > DEAD_ZONE) || gamepad.buttons.some(b => b.pressed || b.value > 0.5)) return;
+            this.previousButtons = gamepad.buttons.map(() => false);
+            this.awaitingNeutral = false;
+            return;
+        }
 
         this._handleButtonActions(gamepad);
         this._handleDpad(gamepad);
@@ -268,12 +295,16 @@ export class GamepadController {
     }
 
     _showIncrementOverlay(step) {
+        this._renderControlStatus();
+    }
+
+    _renderControlStatus() {
         const overlay = document.getElementById('gamepad-increment-overlay');
         if (!overlay) return;
-        overlay.textContent = `Gamepad increment: ${step} mm`;
-        overlay.classList.add('is-visible');
-        window.clearTimeout(this.incrementTimeout);
-        this.incrementTimeout = window.setTimeout(() => overlay.classList.remove('is-visible'), 1800);
+        const step = INCREMENTS_MM[this.incrementIndex];
+        const status = `Gamepad ${this.enabled ? (this.modal?.isOpen() ? 'paused in settings' : 'enabled') : 'disabled'} · ${step} mm · stick scale ${step * 10}%`;
+        if (overlay.textContent !== status) overlay.textContent = status;
+        overlay.classList.toggle('is-visible', this.gamepadIndex !== null);
     }
 
     _mapping(button) {
@@ -302,6 +333,9 @@ export class GamepadController {
     }
 
     showSettings() {
+        this.stopJog();
+        this.pendingMappings = Object.fromEntries(BUTTONS.map(b => [b.id, this._mapping(b.id)]));
+        this.pendingEnabled = this.enabled;
         this._renderSettings();
         this.modal?.show();
     }
@@ -315,7 +349,7 @@ export class GamepadController {
             ? `<i data-lucide="circle-check"></i><span>Connected: ${this._escape(gamepad.id)}</span>`
             : '<i data-lucide="gamepad-2"></i><span>No controller detected. Connect one and press any button.</span>';
         const mappingRows = BUTTONS.map((button) => {
-            const selected = this._mapping(button.id);
+            const selected = this.pendingMappings?.[button.id] ?? this._mapping(button.id);
             const options = ACTIONS.map((action) => `<option value="${action.value}" ${action.value === selected ? 'selected' : ''}>${action.label}</option>`).join('');
             const primaryRow = ['x', 'y', 'a', 'b'].indexOf(button.id);
             const column = primaryRow === -1 ? 'secondary' : 'primary';
@@ -329,6 +363,8 @@ export class GamepadController {
         body.innerHTML = `
             <div class="space-y-3">
                 <div class="gamepad-status">${status}</div>
+                <label class="flex items-center gap-2"><input type="checkbox" id="gamepad-enable" ${this.pendingEnabled ? 'checked' : ''}>Enable gamepad control for this connection</label>
+                <p class="text-xs">Gamepad motion is paused while this window is open. Apply saves mappings; Cancel or Close discards edits. Release all controls before resuming.</p>
                 <div class="gamepad-guide" aria-label="Gamepad control guide">
                     <img class="gamepad-guide__image" src="themes/GAMEPAD.svg" alt="Xbox controller showing gamepad control locations">
                     <svg class="gamepad-guide__leaders" aria-hidden="true"></svg>
@@ -375,13 +411,46 @@ export class GamepadController {
                     <div class="gamepad-mappings">${mappingRows}</div>
                 </div>
             </div>`;
-        footer.innerHTML = '<button type="button" class="btn btn-primary" data-modal-close>Apply</button>';
+        footer.innerHTML = '<button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="button" class="btn btn-primary" id="gamepad-apply">Apply</button>';
         footer.classList.remove('hidden');
         body.querySelectorAll('[data-gamepad-mapping]').forEach((select) => {
-            select.addEventListener('change', () => this.store.set(`gamepad.mappings.${select.dataset.gamepadMapping}`, select.value));
+            select.addEventListener('change', () => { this.pendingMappings[select.dataset.gamepadMapping] = select.value; });
         });
+        body.querySelector('#gamepad-enable').addEventListener('change', e => { this.pendingEnabled = e.target.checked; });
+        footer.querySelector('#gamepad-apply').addEventListener('click', () => this._applySettings());
         if (window.lucide) window.lucide.createIcons();
         window.requestAnimationFrame(() => this._positionGuideOverlay());
+    }
+
+    _applySettings() {
+        // Escape/backdrop dismisses the shared confirmation without invoking its
+        // Cancel callback. Do not leave Apply permanently locked afterwards.
+        if (this.confirmingMappings && window.reporter?.modalController && !window.reporter.modalController.isOpen()) {
+            this.confirmingMappings = false;
+        }
+        if (!this.pendingMappings || this.confirmingMappings) return;
+        const mappings = { ...this.pendingMappings }, enabled = this.pendingEnabled;
+        const draft = this.pendingMappings;
+        const allowed = new Set(ACTIONS.map(a => a.value));
+        if (Object.values(mappings).some(value => !allowed.has(value))) return;
+        const changedActions = BUTTONS.filter(b => mappings[b.id] !== this._mapping(b.id) && mappings[b.id] !== 'none');
+        const commit = () => {
+            this.confirmingMappings = false;
+            if (this.pendingMappings !== draft || !this.modal?.isOpen()) return;
+            BUTTONS.forEach(b => this.store.set(`gamepad.mappings.${b.id}`, mappings[b.id]));
+            this.enabled = !!enabled && !!this.ws?.isConnected && this.gamepadIndex !== null;
+            this.awaitingNeutral = true;
+            this.modal?.hide();
+            this._renderControlStatus();
+        };
+        if ((enabled && !this.enabled) || changedActions.length) {
+            if (!window.reporter) return;
+            this.confirmingMappings = true;
+            const assignments = changedActions.map(b => `${b.label}: ${ACTIONS.find(a => a.value === mappings[b.id]).label}`).join(', ');
+            window.reporter.showConfirm('Apply Gamepad Controls',
+                `These controls can move the machine or change work coordinates. Keep the machine clear and release all controls. ${assignments}`,
+                commit, () => { this.confirmingMappings = false; }, 'Apply');
+        } else commit();
     }
 
     _positionGuideOverlay() {

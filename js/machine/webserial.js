@@ -24,6 +24,7 @@ export class WebSerial {
             line: [],
             raw: [],
             sent: [],
+            'command-result': [],
             error: []
         };
 
@@ -37,7 +38,8 @@ export class WebSerial {
         // Pop sentBuffer on ok/error (must be registered before UI listeners)
         this._onLine = (line) => {
             if (line === 'ok' || line.startsWith('error:')) {
-                this.sentBuffer.shift();
+                const command = this.sentBuffer.shift();
+                if (command !== undefined) this.emit('command-result', { command, response: line });
             }
         };
         this.on('line', this._onLine);

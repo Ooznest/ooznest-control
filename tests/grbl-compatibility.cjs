@@ -19,7 +19,7 @@ function setup() {
             grblSettings: { handleLine: () => false }, reporter: { handleLine: () => false },
             jobController: { processLine: () => false },
             troubleshooting: { updateSignalVisibility() {}, primeStartupDiscovery() { sent.push('$pins'); } },
-            ws: { isConnected: true, sendCommand: command => sent.push(command), sendRealtime: char => realtime.push(char), disconnect() { this.isConnected = false; } }
+            ws: { isConnected: true, on() {}, sendCommand: command => sent.push(command), sendRealtime: char => realtime.push(char), disconnect() { this.isConnected = false; } }
         }
     });
     for (const file of ['js/ui/ui.js', 'js/machine/line-processor.js']) vm.runInContext(fs.readFileSync(file, 'utf8'), context);
@@ -121,7 +121,7 @@ for (const version of ['1.1f', '1.1h']) {
 {
     const { context } = setup();
     context.localStorage = { getItem() { return null; } };
-    vm.runInContext(fs.readFileSync('js/machine/grbl_settings.js', 'utf8').replace('export class GrblSettings', 'class GrblSettings') + '\nwindow.settingsTest = new GrblSettings(window.ws, window.term);', context);
+    vm.runInContext(fs.readFileSync('js/machine/grbl_settings.js', 'utf8').replace(/^import .*;\r?\n/gm, '').replace('export class GrblSettings', 'class GrblSettings') + '\nwindow.settingsTest = new GrblSettings(window.ws, window.term);', context);
     const settings = context.window.settingsTest, commands = [];
     context.window.ws.sendCommand = cmd => commands.push(cmd);
     settings.fetchSettings();

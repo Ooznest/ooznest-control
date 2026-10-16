@@ -37,12 +37,13 @@ export class GrblFlowControl {
     }
 
     processLine(line) {
-        if (line === 'ok' || line.startsWith('error:') || line.startsWith('alarm:')) {
+        if (line === 'ok' || /^(error:|alarm:)/i.test(line)) {
             if (this.sentBuffer.length === 0) {
                 console.warn(`fc underflow: line="${line}" bufLen=0`);
                 return;
             }
-            this.sentBuffer.shift();
+            const command = this.sentBuffer.shift();
+            this.transport.emit('command-result', { command, response: line });
         }
     }
 }

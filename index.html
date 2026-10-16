@@ -1773,8 +1773,8 @@
                                         onclick="document.getElementById('settings-restore-input').click()">
                                         <i data-lucide="upload" ></i> Restore
                                     </button>
-                                    <input type="file" id="settings-restore-input" hidden
-                                        onchange="window.grblSettings.restore(this.files[0])">
+                                    <input type="file" id="settings-restore-input" hidden accept=".json,application/json"
+                                        onchange="const file = this.files[0]; this.value = ''; window.grblSettings.restore(file)">
 
                                     <button class="btn btn-secondary flex-1"
                                         onclick="window.grblSettings.fetchSettings()">
@@ -3182,13 +3182,13 @@
 
     <script src="vendor/clipper.js"></script>
     <script type="module">
-        import { WebSerial } from './js/machine/webserial.js';
+        import { WebSerial } from './js/machine/webserial.js?v=20261016';
         import { GCodeViewer } from './js/viewer/3dview.js?v=20260828a';
         import { ProbeHandler } from './js/machine/probe.js?v=20260710';
         import { SDCardHandler } from './js/features/sdcard.js?v=20260831a';
         import { AlarmsAndErrors } from './js/ui/alarms_and_errors.js';
         import { DROHandler } from './js/machine/dro.js?v=20260901a';
-        import { GrblSettings } from './js/machine/grbl_settings.js?v=20260901c';
+        import { GrblSettings } from './js/machine/grbl_settings.js?v=20261016';
         import { AppStore } from './js/core/store.js';
         import { SurfacingHandler } from './js/features/tools/surfacing.js?v=20260901b';
         import { MacroHandler } from './js/features/macros.js';
@@ -3203,7 +3203,7 @@
         import { initializeApp } from './js/core/init.js';
         import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
         import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20260901b';
-        import { GamepadController } from './js/features/gamepad.js?v=20260827o';
+        import { GamepadController } from './js/features/gamepad.js?v=20261016';
         import './js/ui/modal.js';
 
         // Import new modules
@@ -3214,7 +3214,7 @@
         import './js/editor/editor-integration.js';
         import './js/ui/camera-controls.js';
         import './js/machine/line-processor.js';
-        import { ConnectionManager } from './js/machine/connection-manager.js';
+        import { ConnectionManager } from './js/machine/connection-manager.js?v=20261016';
 
         // Globals
         const webSerial = new WebSerial();
