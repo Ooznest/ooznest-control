@@ -702,6 +702,7 @@ export class ProbeHandler {
             xDir, yDir
         };
         this.term.writeln('\x1b[34m> Auto: zeroing and moving to plate center...\x1b[0m');
+        this.ws.sendCommand('G21');
         this.ws.sendCommand('G10 P0 L20 X0 Y0 Z0');
         const cornerStartInset = Number.isFinite(s.cornerStartInset) ? s.cornerStartInset : 22.5;
         this.ws.sendCommand('G90 G0 X' + (-xDir * cornerStartInset) + ' Y' + (-yDir * cornerStartInset));
@@ -773,7 +774,7 @@ export class ProbeHandler {
         const totalOffset = axis === 'Z' ? (isPlate ? s.plateThickness : 0) : rad + plateOffset;
         const setVal = -(dir * totalOffset);
         this.term.writeln(`\x1b[34m> Probing ${axis}... (${isPlate ? 'Plate' : 'Probe'})\x1b[0m`);
-        this.sendBatch(['G91', `G38.2 ${axis}${dir * s.travel} F${s.feed}`, `G10 L20 P0 ${axis}${setVal.toFixed(3)}`, `G0 ${axis}${-(dir * s.retract)}`, 'G90']);
+        this.sendBatch(['G21', 'G91', `G38.2 ${axis}${dir * s.travel} F${s.feed}`, `G10 L20 P0 ${axis}${setVal.toFixed(3)}`, `G0 ${axis}${-(dir * s.retract)}`, 'G90']);
         this._resetProbeTest();
     }
 

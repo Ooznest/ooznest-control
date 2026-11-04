@@ -19,3 +19,9 @@ test('A 3D probe Top touch sets Z zero without adding tool radius',()=>{
 test('A failed probe safety gate sends no probing or zero-setting commands',()=>{
  const {handler,commands}=setup();handler._requireProbeSafe=()=>false;handler.runSingleSurface();assert.deepEqual(commands,[]);
 });
+test('Single Surface selects millimetres before using millimetre input values',()=>{
+ const {handler,commands}=setup();handler.runSingleSurface();assert.equal(commands[0],'G21');assert.ok(commands.indexOf('G21')<commands.findIndex(c=>c.includes('G38.2')));
+});
+test('Outside Corner selects millimetres before zeroing or making any moves',()=>{
+ const {handler,commands}=setup();handler.ws={sendCommand:c=>commands.push(c)};handler.selections.outsideCorner='FL';handler.runAutoCorner();assert.equal(commands[0],'G21');assert.equal(commands[1],'G10 P0 L20 X0 Y0 Z0');
+});
