@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="themes/ooznest-modals.css?v=20260901a">
     <link rel="stylesheet" href="themes/ooznest-gamepad.css?v=20260827t">
     <link rel="stylesheet" href="themes/ooznest-toasts.css">
-    <!-- Vendor fonts & icons (deferred â€” not critical for first paint) -->
+    <!-- Vendor fonts & icons (deferred — not critical for first paint) -->
     <link rel="stylesheet" href="vendor/google-fonts.css" media="print" onload="this.media='all'; this.onload=null">
     <script src="vendor/lucide.js"></script>
     <noscript><link rel="stylesheet" href="vendor/google-fonts.css"></noscript>
@@ -900,15 +900,15 @@
                             <div class="grid grid-cols-2 gap-2 text-[11px]">
                                 <div>
                                     <span class="text-grey">Run Time</span>
-                                    <span id="stat-runtime" class="font-bold text-secondary-dark block">â€”</span>
+                                    <span id="stat-runtime" class="font-bold text-secondary-dark block">—</span>
                                 </div>
                                 <div>
                                     <span class="text-grey">Distance</span>
-                                    <span id="stat-distance" class="font-bold text-secondary-dark block">â€”</span>
+                                    <span id="stat-distance" class="font-bold text-secondary-dark block">—</span>
                                 </div>
                                 <div class="col-span-2">
                                     <span class="text-grey">Dimensions</span>
-                                    <span id="stat-dimensions" class="font-bold text-secondary-dark block">â€”</span>
+                                    <span id="stat-dimensions" class="font-bold text-secondary-dark block">—</span>
                                 </div>
                             </div>
                             <div id="segment-chart-container" class="mt-2" style="height:40px">
@@ -962,7 +962,7 @@
                             <div id="em-row-helix">
                                 <div class="flex justify-between items-center mb-1">
                                     <label class="ooznest-label text-secondary-dark text-xs">Helix Angle</label>
-                                    <span id="em-val-helixAngle" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">30Â°</span>
+                                    <span id="em-val-helixAngle" class="text-xs font-mono bg-grey-bg px-2 py-0.5 rounded text-secondary-dark">30°</span>
                                 </div>
                                 <input type="range" id="em-helixAngle" min="0" max="55" step="1" value="30" class="w-full accent-primary">
                             </div>
@@ -986,7 +986,7 @@
                             <div id="em-row-vAngle" class="hidden">
                                 <label class="ooznest-label text-secondary-dark text-xs block mb-1.5">V-Angle (Included)</label>
                                 <select id="em-vAngle" class="ooznest-select oz-select w-full text-sm">
-                                    <option value="15">15Â°</option><option value="30">30Â°</option><option value="45">45Â°</option><option value="60" selected>60Â°</option><option value="90">90Â°</option>
+                                    <option value="15">15°</option><option value="30">30°</option><option value="45">45°</option><option value="60" selected>60°</option><option value="90">90°</option>
                                 </select>
                             </div>
                             <!-- Exposed Shank -->
@@ -1179,7 +1179,7 @@
                                     <h2 class="text-2xl font-bold text-secondary-dark flex items-center gap-2">
                                         <i data-lucide="wrench" ></i> Tools
                                     </h2>
-                                    <p class="text-sm text-grey">Various tools and widgets â€” new tools added over time.
+                                    <p class="text-sm text-grey">Various tools and widgets — new tools added over time.
                                     </p>
                                 </div>
                             </div>
@@ -1835,7 +1835,7 @@
                                     <!-- Config Wizard Banner -->
                                     <div id="probe-config-banner" class="mb-3 rounded-lg border text-xs font-bold bg-amber-50 border-amber-200 text-amber-700 p-3 items-center gap-3 flex hidden">
                                         <i data-lucide="triangle-alert" class="text-base"></i>
-                                        <span class="flex-1">Config Wizard has not been run â€” probe settings may be incomplete.</span>
+                                        <span class="flex-1">Config Wizard has not been run — probe settings may be incomplete.</span>
                                         <button class="btn btn-warning !py-1 !px-3 !text-[10px] whitespace-nowrap" data-grblhal-only onclick="window.configWizard.showWizard()">
                                             <i data-lucide="wand" ></i> Run Config Wizard
                                         </button>
@@ -1888,7 +1888,7 @@
                                     <div id="probe-safety-bar" class="rounded-lg border text-xs font-bold bg-red-50 border-red-200 text-red-700">
                                         <div id="probe-safety-actions" class="grid grid-cols-4 gap-2 items-center p-2">
                                             <div class="col-span-2 min-h-9 flex items-center">
-                                                <span id="probe-safety-msg">Probe not tested â€” test required for safety</span>
+                                                <span id="probe-safety-msg">Probe not tested — test required for safety</span>
                                                 <span id="probe-safety-status" class="hidden text-green-600 ml-2">Probe OK</span>
                                             </div>
                                             <button id="probe-test-btn" class="btn btn-primary h-8 !py-1 !px-1.5 !text-[10px] leading-tight" onclick="window.probeHandler.runProbeTest()">
@@ -2298,7 +2298,7 @@
                                                     <h4 class="text-xs font-bold text-blue-800 uppercase mb-2">Measured
                                                         Angle</h4>
                                                     <span class="text-4xl font-mono font-black text-secondary-dark"
-                                                        id="rot-result">0.00Â°</span>
+                                                        id="rot-result">0.00°</span>
                                                     <p class="text-[10px] text-blue-600 mt-2 text-center" id="rot-msg">
                                                         Ready
                                                         to probe.</p>
@@ -2874,11 +2874,11 @@
                 <div id="mtc-tool-info" class="hidden grid grid-cols-2 gap-3 text-sm">
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
                         <div class="text-[10px] font-bold text-grey uppercase">Current</div>
-                        <div id="mtc-current-tool" class="text-lg font-black text-blue-700">â€”</div>
+                        <div id="mtc-current-tool" class="text-lg font-black text-blue-700">—</div>
                     </div>
                     <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
                         <div class="text-[10px] font-bold text-grey uppercase">Next</div>
-                        <div id="mtc-next-tool" class="text-lg font-black text-amber-700">â€”</div>
+                        <div id="mtc-next-tool" class="text-lg font-black text-amber-700">—</div>
                     </div>
                 </div>
 
@@ -2909,9 +2909,9 @@
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-grey uppercase">Tool Length Offset</span>
                         <div id="tlo-ref-info" class="hidden text-[10px] text-grey flex items-center gap-2">
-                            <span>Ref: <strong id="tlo-ref-tool">?</strong> @ Z=<strong id="tlo-ref-z">â€”</strong></span>
+                            <span>Ref: <strong id="tlo-ref-tool">?</strong> @ Z=<strong id="tlo-ref-z">—</strong></span>
                             <span class="text-grey-light">|</span>
-                            <span>Prev: <strong id="tlo-prev-tool">?</strong> @ Z=<strong id="tlo-prev-z">â€”</strong></span>
+                            <span>Prev: <strong id="tlo-prev-tool">?</strong> @ Z=<strong id="tlo-prev-z">—</strong></span>
                         </div>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
@@ -2991,7 +2991,7 @@
         function toggleRunJobDropdown() {
             const menu = document.querySelector('#run-job-btn > div');
             menu.classList.toggle('hidden');
-            // Show/hide SD option â€” available when connected and SD is mounted
+            // Show/hide SD option — available when connected and SD is mounted
             const sdOpt = document.getElementById('run-job-sd-option');
             if (sdOpt) {
                 sdOpt.classList.toggle('hidden', !(window.sdMounted && window.ws?.isConnected));
@@ -3005,7 +3005,7 @@
 
         function runJobFromSD() {
             closeRunJobDropdown();
-            // Already on SD â€” run directly
+            // Already on SD — run directly
             if (window.currentSDFile) {
                 window.reporter.showConfirm('Run from SD',
                     `Run ${window.currentSDFile} directly from SD Card?`,
@@ -3421,7 +3421,7 @@
                 });
                 window.electron.on('update-available', (info) => {
                     lastUpdateProgress = -5;
-                    window.term.writeln(`\x1b[33m[Update] v${info.version} available â€” downloading...\x1b[0m`);
+                    window.term.writeln(`\x1b[33m[Update] v${info.version} available — downloading...\x1b[0m`);
                 });
                 window.electron.on('update-not-available', () => {
                     window.term.writeln('\x1b[32m[Update] You are running the latest version.\x1b[0m');
@@ -3576,7 +3576,7 @@
                 setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
             }, timeout);
         };
-        // Console tab: refresh terminal when shown â€” handled via tab-shown event
+        // Console tab: refresh terminal when shown — handled via tab-shown event
 
         window.requestFullStatus = function () {
             window.userRequestedStatus = true;
@@ -3584,7 +3584,7 @@
         };
         window.clearTerminal = function () { window.term.clear(); }
 
-        // â”€â”€ Laser Auto-Detect â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Laser Auto-Detect ──────────────────────────────────────────
         window.updateLaserMode = function () {
             var viewer = window.viewer;
             if (!viewer) return;
@@ -3856,12 +3856,12 @@
             window.reporter.showToast(`Set Work Zero (G${53 + activeP}) to X${mX} Y${mY}`);
         };
 
-        // â”€â”€ GCode Stats Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── GCode Stats Panel ──────────────────────────────────────────────────
         let _segmentChart = null;
         let _lastStats = null;
 
         function formatRuntime(minutes) {
-            if (!minutes || minutes <= 0) return 'â€”';
+            if (!minutes || minutes <= 0) return '—';
             const h = Math.floor(minutes / 60);
             const m = Math.floor(minutes % 60);
             const s = Math.round((minutes * 60) % 60);
@@ -3871,7 +3871,7 @@
         }
 
         function formatDistance(mm, isInch) {
-            if (!mm || mm <= 0) return 'â€”';
+            if (!mm || mm <= 0) return '—';
             if (isInch) return `${(mm / 25.4).toFixed(2)} in`;
             if (mm >= 1000) return `${(mm / 1000).toFixed(2)} m`;
             return `${mm.toFixed(1)} mm`;
@@ -3893,7 +3893,7 @@
                 const w = (sz_x * scale).toFixed(2);
                 const d = (sz_y * scale).toFixed(2);
                 const h = (sz_z * scale).toFixed(2);
-                return `${w} Ã— ${d} Ã— ${h} ${unit}`;
+                return `${w} × ${d} × ${h} ${unit}`;
             } catch (e) { return null; }
         }
 
@@ -3995,7 +3995,7 @@
             // Dimensions come from the 3D viewer bounding box (available after renderLines)
             setTimeout(() => {
                 const dimsEl = document.getElementById('stat-dimensions');
-                if (dimsEl) dimsEl.textContent = getJobDimensions(inch) || 'â€”';
+                if (dimsEl) dimsEl.textContent = getJobDimensions(inch) || '—';
             }, 200);
 
             renderSegmentChart(segmentLengthStats);
@@ -4033,8 +4033,8 @@
             if (reopenBtn) reopenBtn.classList.add('hidden');
         });
 
-        // â”€â”€ Tool Visibility Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        // â”€â”€ Endmill Setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Tool Visibility Panel ──────────────────────────────────────────────
+        // ── Endmill Setup ───────────────────────────────────────────────
         function populateEndmillForm() {
             const p = window.viewer ? window.viewer.getEndmillParams() : {};
             const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
@@ -4056,7 +4056,7 @@
         function updateAllReadouts() {
             const readouts = [
                 { id: 'em-val-diameter', elId: 'em-diameter', suffix: ' mm' },
-                { id: 'em-val-helixAngle', elId: 'em-helixAngle', suffix: 'Â°' },
+                { id: 'em-val-helixAngle', elId: 'em-helixAngle', suffix: '°' },
                 { id: 'em-val-fluteDepth', elId: 'em-fluteDepth', suffix: '', pct: true },
                 { id: 'em-val-cutLength', elId: 'em-cutLength', suffix: ' mm' },
                 { id: 'em-val-exposedShank', elId: 'em-exposedShank', suffix: ' mm' }
