@@ -15,6 +15,10 @@ export class CalibrationHandler {
         this.errorFactor = 1;
         this.commandedDistance = 100;
         this.isCutting = false;
+        this.spindleControl = this.store?.get('calibration.spindleControl') || this._defaultSpindleControl();
+        this.spindleRpm = Number(this.store?.get('calibration.spindleRpm')) || 16000;
+        this.spindleDelay = Number(this.store?.get('calibration.spindleDelay') ?? 3);
+        this.startedSpindle = false;
         this.modal = null;
         this.posInterval = null;
         this.alarmWatch = null;
@@ -210,12 +214,18 @@ export class CalibrationHandler {
 
         if (isVernier) {
             html += '<h4 class="text-base font-bold text-secondary-dark mb-3">Ready to cut?</h4>';
-            html += '<p class="text-sm text-grey mb-6">The machine will now cut 100 lines spaced 0.9mm apart. This will take approximately 2 minutes.</p>';
+            html += '<p class="text-sm text-grey mb-6">The machine will cut reference marks numbered 0 to 100 at 0.9mm spacing, followed by labels and dimension graphics. Wait for the complete program to finish.</p>';
 
-            html += '<div id="cal-cut-spindle-warning" class="bg-red-50 border border-red-100 p-4 rounded-lg mb-6 flex items-center gap-3 text-left">';
-            html += '<i data-lucide="fan" class="text-red-500 shrink-0" style="width:20px;height:20px"></i>';
-            html += '<div><p class="text-xs font-black text-red-800 uppercase">Warning</p><p class="text-xs text-red-700">Please ensure your <strong>spindle is turned ON</strong> before clicking Start Cut.</p></div>';
+            const locked = this.isCutting ? 'disabled' : '';
+            html += `<div class="bg-grey-bg border border-grey-light p-4 rounded-xl mb-4"><label class="ooznest-label block mb-2" for="cal-spindle-control">Spindle control</label><select id="cal-spindle-control" class="ooznest-field input-field w-full" ${locked}><option value="manual" ${this.spindleControl === 'manual' ? 'selected' : ''}>Manual spindle / router</option><option value="controller" ${this.spindleControl === 'controller' ? 'selected' : ''}>Controller-driven spindle (M3 / M5)</option></select>`;
+            if (this.spindleControl === 'controller') {
+                html += `<div class="grid grid-cols-2 gap-4 mt-3"><div><label class="ooznest-label block mb-1" for="cal-spindle-rpm">Spindle speed (RPM)</label><input id="cal-spindle-rpm" class="ooznest-field input-field w-full" type="number" min="1" step="1" value="${this.spindleRpm}" ${locked}></div><div><label class="ooznest-label block mb-1" for="cal-spindle-delay">Spin-up delay (s)</label><input id="cal-spindle-delay" class="ooznest-field input-field w-full" type="number" min="0" max="60" step="0.5" value="${this.spindleDelay}" ${locked}></div></div>`;
+            }
             html += '</div>';
+            const reminder = this.spindleControl === 'controller'
+                ? 'Start Cut will start the configured spindle at the chosen RPM, wait for the spin-up delay, then run the scale. The program stops it after the final retract. Check the toolhead configuration and allow enough time to reach speed.'
+                : 'Start your manual spindle before clicking Start Cut. Set its speed on the spindle itself, then stop it manually after the program finishes.';
+            html += `<div id="cal-cut-spindle-warning" class="bg-red-50 border border-red-100 p-4 rounded-lg mb-6 text-left"><p class="text-xs font-bold">${reminder}</p></div>`;
 
             // Progress
             html += '<div id="cal-cut-progress" class="mb-6">';
@@ -371,6 +381,15 @@ export class CalibrationHandler {
     }
 
     _wireCalibrationEvents() {
+        const control = document.getElementById('cal-spindle-control');
+        if (control) control.addEventListener('change', () => {
+            this.spindleControl = control.value;
+            this.renderWizard();
+        });
+        const rpm = document.getElementById('cal-spindle-rpm');
+        if (rpm) rpm.addEventListener('input', () => { this.spindleRpm = Number(rpm.value); });
+        const delay = document.getElementById('cal-spindle-delay');
+        if (delay) delay.addEventListener('input', () => { this.spindleDelay = Number(delay.value); });
         // Axis selection
         document.querySelectorAll('.axis-option').forEach(el => {
             el.onclick = () => {
@@ -499,6 +518,7 @@ export class CalibrationHandler {
         this.isCutting = false;
         if (this.okListener) this.ws.removeListener('line', this.okListener);
         this.okListener = null;
+        this._stopStartedSpindle();
         if (returnToOperation) {
             this.axis = 'X';
             this.method = 'distance';
@@ -515,6 +535,19 @@ export class CalibrationHandler {
             this.runDistanceMove();
             return;
         }
+
+        const issue = this._validateSpindleSettings();
+        if (issue) {
+            window.reporter?.showAlert('Check spindle settings', issue);
+            return;
+        }
+        if (!this.ws?.isConnected) {
+            window.reporter?.showAlert('Not connected', 'Connect to the controller before starting calibration.');
+            return;
+        }
+        this.store?.set('calibration.spindleControl', this.spindleControl);
+        this.store?.set('calibration.spindleRpm', this.spindleRpm);
+        this.store?.set('calibration.spindleDelay', this.spindleDelay);
 
         const gcode = this.generateGCode();
 
@@ -549,7 +582,11 @@ export class CalibrationHandler {
         // Listener for 'ok' responses
         this.okListener = (line) => {
             if (!this.isCutting) return;
-            if (line === 'ok' || line.startsWith('error:')) {
+            if (/^(error:|alarm:)/i.test(line)) {
+                this.cancel('Calibration stopped after a controller error. Check the machine before retrying.');
+                return;
+            }
+            if (line === 'ok') {
                 this.sendNextLine();
             }
         };
@@ -597,6 +634,7 @@ export class CalibrationHandler {
         }
 
         const line = this.lines[this.currentLineIndex];
+        if (/^M3\b/.test(line)) this.startedSpindle = true;
         this.ws.sendCommand(line);
         this.currentLineIndex++;
 
@@ -629,6 +667,7 @@ export class CalibrationHandler {
                 clearInterval(checkIdle);
                 this.term.writeln(`\x1b[32m[Calibration] Job complete.\x1b[0m`);
                 this.isCutting = false;
+                this.startedSpindle = false;
                 this.nextStep();
             }
             if (attempts > 60) {
@@ -657,7 +696,12 @@ export class CalibrationHandler {
 
         let gcode = '';
         gcode += `G21 G90 G17 F${feedrate}\n`;
-        gcode += `G0 X0 Y0 Z${up}\n`;
+        gcode += `G0 Z${up}\n`;
+        if (this.spindleControl === 'controller') {
+            gcode += `M3 S${this.spindleRpm}\n`;
+            if (this.spindleDelay > 0) gcode += `G4 P${this.spindleDelay}\n`;
+        }
+        gcode += 'G0 X0 Y0\n';
 
         for (let i = 0; i <= 100; i++) {
             const u = i * 0.9;
@@ -730,8 +774,37 @@ export class CalibrationHandler {
         gcode += makeLine(rapide, orientation, 90, lineV, { z: up });
 
         gcode += makeLine(rapide, orientation, 0, 0, { z: up });
+        if (this.spindleControl === 'controller') gcode += 'M5\n';
 
         return gcode;
+    }
+
+    _defaultSpindleControl() {
+        let toolheads = this.store?.get('machine.toolheads');
+        try { if (typeof toolheads === 'string') toolheads = JSON.parse(toolheads); } catch { return 'manual'; }
+        return ['mafell-digital', 'vfd-0-10v', 'vfd-modbus'].includes(toolheads?.spindle) ? 'controller' : 'manual';
+    }
+
+    _validateSpindleSettings() {
+        let toolheads = this.store?.get('machine.toolheads');
+        try { if (typeof toolheads === 'string') toolheads = JSON.parse(toolheads); } catch { toolheads = null; }
+        if (toolheads?.spindle === 'laser-pwm' || (!toolheads?.spindle && toolheads?.laser) ||
+            Number(window.grblSettings?.settings?.['395']?.val) === 1) return 'Configure a cutting spindle or router, not a laser, before using Vernier calibration.';
+        if (!['manual', 'controller'].includes(this.spindleControl)) return 'Choose how the spindle is controlled.';
+        if (this.spindleControl === 'manual') return null;
+        if (!Number.isFinite(this.spindleRpm) || !Number.isInteger(this.spindleRpm) || this.spindleRpm <= 0) return 'Enter a positive whole-number spindle RPM.';
+        const max = Number(window.grblSettings?.settings?.['30']?.val);
+        const min = Number(window.grblSettings?.settings?.['31']?.val);
+        if ((Number.isFinite(max) && max > 0 && this.spindleRpm > max) ||
+            (Number.isFinite(min) && min > 0 && this.spindleRpm < min)) return 'Choose an RPM within the controller spindle range ($31 to $30).';
+        if (!Number.isFinite(this.spindleDelay) || this.spindleDelay < 0 || this.spindleDelay > 60) return 'Enter a spin-up delay between 0 and 60 seconds.';
+        return null;
+    }
+
+    _stopStartedSpindle() {
+        if (!this.startedSpindle) return;
+        this.startedSpindle = false;
+        if (this.ws?.isConnected) this.ws.sendCommand('M5');
     }
 
     calculate() {

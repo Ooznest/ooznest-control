@@ -1719,6 +1719,18 @@
                                                 </div>
                                             </div>
 
+                                            <div class="bg-white p-5 rounded-xl border border-grey-light shadow-soft">
+                                                <label class="ooznest-label text-xs font-bold text-secondary-dark flex items-center gap-2 mb-4" for="bc-cutout"><input type="checkbox" id="bc-cutout" onchange="document.getElementById('bc-cutout-fields').disabled = !this.checked"> Cutout</label>
+                                                <fieldset id="bc-cutout-fields" disabled class="grid grid-cols-2 gap-4">
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-cutout-offset">Outside Offset (mm)</label><input type="number" id="bc-cutout-offset" class="ooznest-field input-field font-mono text-sm" min="0.1" step="0.5" value="5">
+                                                        <p class="ooznest-form-info mt-1">Wall thickness outside the pocket.</p>
+                                                    </div>
+                                                    <div><label class="ooznest-label text-[11px] font-bold text-secondary-dark block mb-1" for="bc-stock-depth">Stock Depth (mm)</label><input type="number" id="bc-stock-depth" class="ooznest-field input-field font-mono text-sm" min="0.1" step="0.5" value="25">
+                                                        <p class="ooznest-form-info mt-1">Cutout depth below Z zero; uses the same stepdown.</p>
+                                                    </div>
+                                                </fieldset>
+                                            </div>
+
                                             <button class="btn btn-primary shadow-soft w-full h-12" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
                                         </div>
 
@@ -3184,7 +3196,7 @@
     <script type="module">
         import { WebSerial } from './js/machine/webserial.js?v=20261016';
         import { GCodeViewer } from './js/viewer/3dview.js?v=20260828a';
-        import { ProbeHandler } from './js/machine/probe.js?v=20260710';
+        import { ProbeHandler } from './js/machine/probe.js?v=20261104a';
         import { SDCardHandler } from './js/features/sdcard.js?v=20260831a';
         import { AlarmsAndErrors } from './js/ui/alarms_and_errors.js';
         import { DROHandler } from './js/machine/dro.js?v=20260901a';
@@ -3195,14 +3207,14 @@
         import { ToolsHandler } from './js/features/tools/tools.js';
         import { TroubleshootingHandler } from './js/ui/troubleshooting.js?v=20260901a';
         import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20260901b';
-        import { CalibrationHandler } from './js/features/calibration.js';
+        import { CalibrationHandler } from './js/features/calibration.js?v=20261104a';
         import { ConfigWizard } from './js/features/config-wizard.js?v=20260901b';
         import { FirmwareFlasher } from './js/features/firmware-flasher.js?v=20260831a';
         import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=20260831e';
         import { GCodeEditor } from './js/editor/editor.js';
         import { initializeApp } from './js/core/init.js';
         import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
-        import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20260901b';
+        import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20261104a';
         import { GamepadController } from './js/features/gamepad.js?v=20261016';
         import './js/ui/modal.js';
 

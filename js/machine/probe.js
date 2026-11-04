@@ -770,7 +770,7 @@ export class ProbeHandler {
         const plateOffset = axis === 'X'
             ? (isPlate ? this._getPlateOffsetX(s) : 0)
             : (isPlate ? this._getPlateOffsetY(s) : 0);
-        const totalOffset = rad + plateOffset;
+        const totalOffset = axis === 'Z' ? (isPlate ? s.plateThickness : 0) : rad + plateOffset;
         const setVal = -(dir * totalOffset);
         this.term.writeln(`\x1b[34m> Probing ${axis}... (${isPlate ? 'Plate' : 'Probe'})\x1b[0m`);
         this.sendBatch(['G91', `G38.2 ${axis}${dir * s.travel} F${s.feed}`, `G10 L20 P0 ${axis}${setVal.toFixed(3)}`, `G0 ${axis}${-(dir * s.retract)}`, 'G90']);

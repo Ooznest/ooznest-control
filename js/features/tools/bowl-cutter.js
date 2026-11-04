@@ -11,7 +11,9 @@ export class BowlCutter {
             safeZ: 5,
             feed: 500,
             plunge: 100,
-            rpm: 12000
+            rpm: 12000,
+            cutoutOffset: 5,
+            stockDepth: 25
         };
     }
 
@@ -22,6 +24,24 @@ export class BowlCutter {
     generate() {
         const s = this._getSettings();
         const limits = this.machineLimits;
+
+        const positive = ['width', 'length', 'depth', 'toolDia', 'stepover', 'stepdown', 'safeZ', 'feed', 'plunge'];
+        if (positive.some(key => !Number.isFinite(s[key]) || s[key] <= 0) ||
+            !Number.isFinite(s.cornerRadius) || s.cornerRadius < 0 ||
+            !Number.isFinite(s.rpm) || s.rpm < 0 || s.stepover > 100) {
+            window.reporter.showAlert('Invalid Settings', 'Enter positive dimensions, feeds and cutting increments, a stepover up to 100%, and a non-negative radius and RPM.');
+            return;
+        }
+        if (s.cutout && (!Number.isFinite(s.cutoutOffset) || s.cutoutOffset <= 0 ||
+            !Number.isFinite(s.stockDepth) || s.stockDepth <= s.depth)) {
+            window.reporter.showAlert('Invalid Cutout', 'Cutout offset must be greater than 0 and stock depth must exceed bowl depth.');
+            return;
+        }
+        if (s.cutout && (s.width + 2 * s.cutoutOffset + s.toolDia > limits.x ||
+            s.length + 2 * s.cutoutOffset + s.toolDia > limits.y || s.stockDepth > limits.z)) {
+            window.reporter.showAlert('Cutout Too Large', 'Cutout toolpath or stock depth exceeds machine travel.');
+            return;
+        }
 
         if (s.width > limits.x || s.length > limits.y) {
             window.reporter.showAlert('Too Large',
@@ -92,6 +112,20 @@ export class BowlCutter {
             gcode += `G0 Z${s.safeZ.toFixed(3)}\n`;
         }
 
+        if (s.cutout) {
+            const offset = s.cutoutOffset + toolR;
+            const w = s.width + 2 * offset;
+            const l = s.length + 2 * offset;
+            const cr = Math.min(CR, s.width / 2, s.length / 2) + offset;
+            gcode += '; Cutout\n';
+            gcode += `G0 Z${s.safeZ.toFixed(3)}\nG0 X${(-w / 2 + cr).toFixed(3)} Y${(l / 2).toFixed(3)}\n`;
+            for (let pass = 1; pass <= Math.ceil(s.stockDepth / stepdown); pass++) {
+                const depth = Math.min(pass * stepdown, s.stockDepth);
+                gcode += `G1 Z${(-depth).toFixed(3)} F${s.plunge}\n`;
+                gcode += this._roundedRect(w, l, cr, s.feed);
+            }
+        }
+
         gcode += this._footer(s);
         this._loadToViewer(gcode);
     }
@@ -145,7 +179,10 @@ export class BowlCutter {
             safeZ: g('bc-safe-z', this.defaults.safeZ),
             feed: g('bc-feed', this.defaults.feed),
             plunge: g('bc-plunge', this.defaults.plunge),
-            rpm: g('bc-rpm', this.defaults.rpm)
+            rpm: g('bc-rpm', this.defaults.rpm),
+            cutout: document.getElementById('bc-cutout')?.checked || false,
+            cutoutOffset: g('bc-cutout-offset', this.defaults.cutoutOffset),
+            stockDepth: g('bc-stock-depth', this.defaults.stockDepth)
         };
     }
 
@@ -154,7 +191,7 @@ export class BowlCutter {
     }
 
     _footer(s) {
-        return `G0 Z${s.safeZ.toFixed(3)}\nG90\n`;
+        return `G0 Z${s.safeZ.toFixed(3)}\nG90\nM5\n`;
     }
 
     _loadToViewer(gcode) {
