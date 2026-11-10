@@ -115,6 +115,32 @@ for (const version of ['1.1f', '1.1h']) {
     manager.isGrblHAL = true;
     await manager.sendCommand('$pins'); assert.equal(sent.at(-1), '$pins');
     await manager.sendRealtime('\x87'); assert.equal(realtime.at(-1), '\x87');
+
+    context.TextEncoder = TextEncoder;
+    context.TextDecoder = TextDecoder;
+    context.WebSocket = { OPEN: 1 };
+    context.btoa = btoa;
+    const serialSource = fs.readFileSync('js/machine/webserial.js', 'utf8').replace('export class', 'class');
+    const webSerial = vm.runInContext(serialSource + '\nnew WebSerial()', context);
+    const writes = [];
+    webSerial.isConnected = true;
+    webSerial.port = { writable: { getWriter: () => ({
+        async write(bytes) { writes.push([...bytes]); },
+        releaseLock() {}
+    }) } };
+    manager.webSerial = webSerial;
+    await Promise.all([manager.sendRealtime('\x80'), manager.sendCommand('$ESH'), manager.sendRealtime('\x87')]);
+    assert.deepEqual(writes, [[0x80], [...Buffer.from('$ESH\n')], [0x87]]);
+
+    manager.type = 'websocket';
+    manager.directWs = { readyState: 1, send: bytes => writes.push([...bytes]) };
+    await manager.sendRealtime('\x80');
+    assert.deepEqual(writes.at(-1), [0x80]);
+
+    manager.type = 'usb';
+    manager.backendWs = { send: message => writes.push([...Buffer.from(JSON.parse(message).data, 'base64')]) };
+    await manager.sendRealtime('\x87');
+    assert.deepEqual(writes.at(-1), [0x87]);
     console.log('Grbl startup, HAL discovery, command guards, timeout and disconnect checks passed.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
 

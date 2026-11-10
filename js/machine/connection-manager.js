@@ -1119,12 +1119,13 @@ export class ConnectionManager {
             this.clearPendingState();
         }
 
+        // Extended realtime commands are single bytes, even above 0x7F.
+        const bytes = Uint8Array.of(char.charCodeAt(0));
         if (this.type === 'webserial') {
             await this.webSerial.sendRealtime(char);
         } else if (this.type === 'websocket' && this.directWs && this.directWs.readyState === WebSocket.OPEN) {
-            this.directWs.send(char);
+            this.directWs.send(bytes);
         } else if (this.type === 'telnet' && this.isCordova && this._cordovaTelnetSocket) {
-            const bytes = new TextEncoder().encode(char);
             console.log("Telnet TX realtime:", JSON.stringify(char));
             this._cordovaTelnetSocket.write(bytes, () => {
                 console.log("Telnet TX realtime success");
@@ -1136,7 +1137,7 @@ export class ConnectionManager {
             if (this._cordovaWriting) return;
             this._cordovaWriting = true;
 
-            const hexChar = char.charCodeAt(0).toString(16).padStart(2, '0');
+            const hexChar = bytes[0].toString(16).padStart(2, '0');
             await new Promise((resolve) => {
                 window.serial.writeHex(hexChar, resolve, (err) => {
                     console.error("Cordova Serial TX Error:", err);
@@ -1145,9 +1146,7 @@ export class ConnectionManager {
             });
             this._cordovaWriting = false;
         } else if (this.backendWs) {
-            const bytes = new TextEncoder().encode(char);
-            const binary = String.fromCharCode.apply(null, bytes);
-            const base64 = btoa(binary);
+            const base64 = btoa(char);
             this.backendWs.send(JSON.stringify({ type: 'write', data: base64, encoding: 'base64' }));
         }
     }

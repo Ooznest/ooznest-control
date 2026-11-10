@@ -187,6 +187,10 @@ export class FirmwareFlasher {
         footer.innerHTML = `<button class="btn btn-secondary" data-modal-close ${this.busy ? 'disabled' : ''}>Close</button>`;
         if (this._reconnectSucceeded) {
             // Close is the only remaining action after a successful reconnect.
+        } else if (this.browserReconnectPending) {
+            if (!window.electron) {
+                footer.innerHTML += `<button id="firmware-flasher-reconnect" class="btn btn-primary whitespace-nowrap" ${this.busy ? 'disabled' : ''}>Connect Controller</button>`;
+            }
         } else if (!this.ws?.isConnected && window.electron) {
             if (this.programmingPortSelectionOpen && this.selectedProgrammingPort) {
                 footer.innerHTML += `<button id="firmware-flasher-start" class="btn btn-primary whitespace-nowrap" ${this.busy ? 'disabled' : ''}>Flash Firmware</button>`;
@@ -195,8 +199,6 @@ export class FirmwareFlasher {
             }
         } else if (!this.ws?.isConnected) {
             footer.innerHTML += '<button id="firmware-flasher-choose-device" class="btn btn-primary whitespace-nowrap">Choose Device</button>';
-        } else if (this.browserReconnectPending && !window.electron) {
-            footer.innerHTML += '<button id="firmware-flasher-reconnect" class="btn btn-primary whitespace-nowrap">Connect Controller</button>';
         } else {
             footer.innerHTML += `<button id="firmware-flasher-start" class="btn btn-primary whitespace-nowrap" ${canFlash ? '' : 'disabled'}>${this.busy ? 'Flashing...' : 'Flash Firmware'}</button>`;
         }
@@ -383,8 +385,6 @@ export class FirmwareFlasher {
             this._notifyFlashComplete();
             this.browserReconnectPending = true;
             this._appendLog('[SYSTEM] Reconnecting to controller...');
-            this._render();
-            await this._reconnectBrowserController(false);
         } finally {
             try {
                 await transport.disconnect();
@@ -394,6 +394,7 @@ export class FirmwareFlasher {
             this.busy = false;
             this._render();
         }
+        await this._reconnectBrowserController();
     }
 
     async chooseProgrammingDevice() {
@@ -475,8 +476,6 @@ export class FirmwareFlasher {
             this._notifyFlashComplete();
             this.browserReconnectPending = true;
             this._appendLog('[SYSTEM] Reconnecting to controller...');
-            this._render();
-            await this._reconnectBrowserController(false);
         } finally {
             try {
                 await transport.disconnect();
@@ -486,6 +485,7 @@ export class FirmwareFlasher {
             this.busy = false;
             this._render();
         }
+        await this._reconnectBrowserController();
     }
 
     _backupSettingsForManualFlash() {
@@ -619,13 +619,15 @@ export class FirmwareFlasher {
             this._setProgress(100);
             this._appendLog('[COMPLETE] Firmware flashed successfully.');
             this._notifyFlashComplete();
-            this.busy = false;
+            this.busy = !!msg.reconnect;
             this.browserReconnectPending = !!msg.reconnect;
             this._render();
             if (msg.reconnect) {
                 this._appendLog('[SYSTEM] Reconnecting to controller...');
                 this._reconnectAfterElectronFlash(msg.reconnect).catch((error) => {
                     this._appendLog(`[WARN] Automatic reconnect failed: ${error?.message || error}`);
+                }).finally(() => {
+                    this.busy = false;
                     this._render();
                 });
             }
@@ -667,20 +669,36 @@ export class FirmwareFlasher {
             portInput.value = reconnect.port;
         }
 
-        await this._sleep(500);
+        await this._sleep(1500);
         await this.ws.connect();
-        this._appendLog('[SYSTEM] Controller Reconnected Successfully. You are now running the new firmware, you can close this dialog and continue.');
-        this.browserReconnectPending = false;
-        this._reconnectSucceeded = true;
-        this._render();
+        await this._confirmControllerReconnect();
+    }
+
+    async _confirmControllerReconnect() {
+        // The normal connection startup sends $I and sets isGrblHAL from its response.
+        for (let attempt = 0; attempt < 100; attempt++) {
+            if (this.ws.isConnected && this.ws.isGrblHAL) {
+                this.browserReconnectPending = false;
+                this._reconnectSucceeded = true;
+                this._appendLog('[SYSTEM] Controller Reconnected Successfully. You are now running the new firmware, you can close this dialog and continue.');
+                return;
+            }
+            await this._sleep(100);
+        }
+
+        this._appendLog('[WARN] Could not identify the controller. Turn it off, unplug USB, plug USB back in, turn the controller on, then reconnect.');
+        if (this.ws.isConnected) this.ws.disconnect();
     }
 
     async _reconnectBrowserController(forcePrompt = false) {
-        if (this.busy && !this.browserReconnectPending) return;
+        if (this.busy) return;
+        this.busy = true;
+        this._render();
 
         const baudRate = this.previousConnection?.baud || FIRMWARE_SERIAL_BAUDRATE;
 
         try {
+            if (!forcePrompt) await this._sleep(1500);
             if (!forcePrompt && navigator.serial?.getPorts) {
                 const ports = await navigator.serial.getPorts();
                 const reconnectPort = ports.find((port) => {
@@ -692,10 +710,7 @@ export class FirmwareFlasher {
                 if (reconnectPort) {
                     this._appendLog('[SYSTEM] Found authorized controller port, reconnecting...');
                     await this.ws.webSerial.connectToPort(reconnectPort, baudRate);
-                    this.browserReconnectPending = false;
-                    this._appendLog('[SYSTEM] Controller Reconnected Successfully. You are now running the new firmware, you can close this dialog and continue.');
-                    this._reconnectSucceeded = true;
-                    this._render();
+                    await this._confirmControllerReconnect();
                     return;
                 }
             }
@@ -703,18 +718,16 @@ export class FirmwareFlasher {
             this._browserReconnectAttempted = true;
             if (!forcePrompt) {
                 this._appendLog('[SYSTEM] Select your controller port to reconnect.');
-                this._render();
                 return;
             }
 
             this._appendLog('[SYSTEM] Opening port selector...');
             await this.ws.connect();
-            this.browserReconnectPending = false;
-            this._appendLog('[SYSTEM] Controller Reconnected Successfully. You are now running the new firmware, you can close this dialog and continue.');
-            this._reconnectSucceeded = true;
-            this._render();
+            await this._confirmControllerReconnect();
         } catch (error) {
             this._appendLog(`[WARN] Reconnect failed: ${error?.message || error}`);
+        } finally {
+            this.busy = false;
             this._render();
         }
     }

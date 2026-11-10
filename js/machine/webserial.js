@@ -157,7 +157,7 @@ export class WebSerial {
      * so they do NOT count toward the RX buffer usage.
      */
     async sendRealtime(char) {
-        const data = this.encoder.encode(char);
+        const data = Uint8Array.of(char.charCodeAt(0));
         await this.writeRaw(data);
     }
 
