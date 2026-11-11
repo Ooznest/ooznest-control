@@ -34,6 +34,7 @@ export class ConnectionManager {
             ports: []
         };
         this._backendBuffer = '';
+        this._connectionGeneration = 0;
 
         // UI element references
         this.modal = document.getElementById('connection-modal');
@@ -1030,10 +1031,12 @@ export class ConnectionManager {
 
     handleDisconnect() {
         this._setConnectingState(false);
+        this._connectionGeneration++;
         this.clearPendingState();
         this.isGrblHAL = false;
         this.supportsProbeStatus = false;
         this.isConnected = false;
+        window.jobController?.handleDisconnect();
         this._syncHttpBaseUrl();
         this.emit('disconnect');
         this._keepAwake(false);
@@ -1170,9 +1173,12 @@ export class ConnectionManager {
                 });
             });
         } else if (this.isCordova && window.serial) {
+            const generation = this._connectionGeneration;
             while (this._cordovaWriting) {
                 await new Promise(r => setTimeout(r, 2));
+                if (generation !== this._connectionGeneration) return;
             }
+            if (!this.isConnected) return;
             this._cordovaWriting = true;
 
             const bytes = new Uint8Array(data);
@@ -1220,6 +1226,26 @@ export class ConnectionManager {
     }
 
     emit(event, data) {
+        if (event === 'connect' || (event === 'error' && !this.isConnected)) {
+            const transport = ['usb', 'webserial', 'websocket', 'telnet'].includes(this.type) ? this.type : 'other';
+            const medium = transport === 'usb' || transport === 'webserial' ? 'USB' : 'unknown';
+            if (event === 'connect') this.analyticsNetworkMedium = undefined;
+            window.appAnalytics?.('connection outcome', {
+                transport,
+                medium,
+                outcome: event === 'connect' ? 'connected' : 'error while disconnected'
+            });
+        }
+        if (event === 'line' && this.isConnected && this.isGrblHAL && !this.analyticsNetworkMedium &&
+            ['telnet', 'websocket'].includes(this.type) && typeof data === 'string') {
+            const wifiMode = /^\$73\s*=\s*(\d+)$/.exec(data.trim());
+            if (wifiMode) {
+                this.analyticsNetworkMedium = Number(wifiMode[1]) === 0 ? 'Ethernet' : 'Wi-Fi';
+                window.appAnalytics?.('network medium detected', {
+                    transport: this.type, medium: this.analyticsNetworkMedium
+                });
+            }
+        }
         if (event === 'line' && typeof data === 'string' && data.startsWith('<')) {
             const now = Date.now();
             this._statusRequests = (this._statusRequests || []).filter(request => now - request.at < 5000);

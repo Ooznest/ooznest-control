@@ -57,12 +57,21 @@ export class MacroHandler {
 
         // Split by new line and send
         const lines = macro.gcode.split('\n');
+        const commandPattern = [];
         lines.forEach(line => {
             const cmd = line.trim();
             if (cmd && !cmd.startsWith(';')) { // Skip comments and empty lines
                 this.ws.sendCommand(cmd);
+                if (commandPattern.length < 20) {
+                    const code = /^(?:N\d+\s*)?([GM]\d{1,3}(?:\.\d{1,2})?)(?![\d.])/i.exec(cmd)?.[1];
+                    const system = /^\$(?:H[XYZABC]?|X|C|\$|G|I)$/i.exec(cmd)?.[0];
+                    commandPattern.push((code || system || 'other').toUpperCase());
+                }
             }
         });
+        if (commandPattern.length) {
+            window.appAnalytics?.('macro invoked', { command_pattern: commandPattern.join(' ') });
+        }
     }
 
     delete(index) {

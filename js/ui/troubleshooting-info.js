@@ -105,6 +105,48 @@ export class TroubleshootingInfoView {
         return lines.length ? [...lines] : [];
     }
 
+    _networkStatusCard() {
+        const connection = window.ws;
+        if (!connection?.isConnected) {
+            return this._networkCard(this._infoRow('App connection', 'Disconnected'));
+        }
+
+        const lines = this._getRawBuildInfoLines();
+        const field = name => lines.find(line => line.startsWith('[' + name + ':'))
+            ?.slice(name.length + 2, -1).trim();
+        const wifi = field('STA IP');
+        const ethernet = field('IP');
+        const accessPoint = field('AP IP');
+        const usable = address => address && address !== '0.0.0.0';
+        const usb = ['webserial', 'usb'].includes(connection.type);
+        const transport = usb ? 'USB' : { telnet: 'Telnet', websocket: 'WebSocket' }[connection.type] || 'Network';
+        let rows = this._infoRow('App connection', transport);
+
+        for (const [label, address, mac] of [
+            ['Wi-Fi', wifi, field('WIFI STA MAC')],
+            ['Ethernet', ethernet, field('MAC')],
+            ['Wi-Fi access point', accessPoint, field('WIFI AP MAC')]
+        ]) {
+            if (address === undefined && !mac) continue;
+            rows += this._infoRow(label + ' IP address', usable(address) ? address : 'No IP address reported');
+            if (label === 'Wi-Fi') {
+                rows += this._infoRow('Configured Wi-Fi network (SSID)', window.grblSettings?.settings?.['74']?.val);
+            }
+        }
+
+        if (wifi === undefined && ethernet === undefined && accessPoint === undefined &&
+            !field('WIFI STA MAC') && !field('MAC') && !field('WIFI AP MAC')) {
+            rows += this._infoRow('Controller network', 'No network address reported');
+        }
+        return this._networkCard(rows);
+    }
+
+    _networkCard(rows) {
+        return '<section class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">' +
+            '<h3 class="px-4 py-2.5 border-b border-grey-light font-bold text-secondary-dark text-xs uppercase tracking-wider">Network Status</h3>' +
+            '<div class="p-4 space-y-2">' + rows + '</div></section>';
+    }
+
     _getPnLines() {
         const pins = window.droHandler?.inputPins ?? window.troubleshooting?.lastPins;
         return [`Pn:${pins || '(no active input signals)'}`];
@@ -419,6 +461,7 @@ export class TroubleshootingInfoView {
         const grblSettingsLines = this._getGrblSettingsLines();
 
         let html = '<div class="space-y-4">';
+        html += this._networkStatusCard();
 
         html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">';
         html += '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">';

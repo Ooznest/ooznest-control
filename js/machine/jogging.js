@@ -127,6 +127,14 @@ class JoggingController {
             const dir = btn.dataset.jog;
             let suppressIncrementalClick = false;
 
+            const trackJog = (mode, event) => {
+                const input = event.pointerType;
+                window.appAnalytics?.('jog requested', {
+                    mode,
+                    input: ['mouse', 'touch', 'pen'].includes(input) ? input : 'on-screen'
+                });
+            };
+
             const startJog = (e) => {
                 if (!toggle.checked) return;
                 if (!window.ws || !window.ws.isConnected) { if (window.showToast) window.showToast('Cannot jog - not connected', 'plug-zap', 'error'); return; }
@@ -188,6 +196,7 @@ class JoggingController {
                 btn.classList.add('bg-black/20', 'shadow-inner');
 
                 window.ws.sendCommand(`$J=G91 ${unit} ${move}F${f}`);
+                trackJog('continuous', e);
             };
 
             const stopJog = (e) => {
@@ -198,7 +207,7 @@ class JoggingController {
                 window.ws.sendRealtime('\x85');
             };
 
-            const clickJog = () => {
+            const clickJog = (e) => {
                 if (toggle.checked) return;
                 if (!window.ws || !window.ws.isConnected) { if (window.showToast) window.showToast('Cannot jog - not connected', 'plug-zap', 'error'); return; }
                 const s = document.getElementById('stepSize').value;
@@ -217,6 +226,7 @@ class JoggingController {
                 setTimeout(() => btn.classList.remove('bg-black/20', 'shadow-inner'), 150);
 
                 window.ws.sendCommand(`$J=G91 ${unit} ${move}F${f}`);
+                trackJog('incremental', e);
             };
 
             btn.addEventListener('pointerdown', (e) => {
@@ -231,7 +241,7 @@ class JoggingController {
                     if (e.cancelable) e.preventDefault();
                     suppressIncrementalClick = true;
                     btn.setPointerCapture(e.pointerId);
-                    clickJog();
+                    clickJog(e);
                 }
             });
             btn.addEventListener('pointerup', (e) => {
@@ -255,12 +265,12 @@ class JoggingController {
                     suppressIncrementalClick = false;
                 }
             });
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
                 if (suppressIncrementalClick) {
                     suppressIncrementalClick = false;
                     return;
                 }
-                clickJog();
+                clickJog(e);
             });
         });
 

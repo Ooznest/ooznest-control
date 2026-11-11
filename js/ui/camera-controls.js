@@ -15,6 +15,7 @@ class CameraControls {
         if (currentText === 'Orthographic') nextMode = 'Spindle View';
         if (currentText === 'Spindle View') nextMode = 'Perspective';
 
+        window.appAnalytics?.('viewer camera selected', { camera: nextMode });
         let label = nextMode;
         let icon = 'eye';
 
@@ -46,6 +47,7 @@ class CameraControls {
     toggleGridMode() {
         if (!window.viewer) return;
         const label = window.viewer.toggleGridMode();
+        window.appAnalytics?.('viewer grid selected', { grid: window.viewer.gridMode });
         document.getElementById('grid-toggle-btn').innerHTML = `<i data-lucide="grid-3x3" class="text-secondary"></i> ${label}`;
         if (window.lucide) lucide.createIcons();
     }

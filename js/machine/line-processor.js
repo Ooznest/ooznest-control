@@ -175,6 +175,13 @@ class LineProcessor {
         }
 
         // Reporter (errors/alarms)
+        const diagnostic = /^(alarm|error):\s*(\d{1,3})\s*$/i.exec(line);
+        if (diagnostic) {
+            window.appAnalytics?.('controller diagnostic', {
+                kind: diagnostic[1].toLowerCase(),
+                code: Number(diagnostic[2])
+            });
+        }
         const report = window.reporter.handleLine(line);
         if (report) {
             if (typeof report === 'string') window.term.writeln(report);

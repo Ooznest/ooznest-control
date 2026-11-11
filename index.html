@@ -1731,7 +1731,7 @@
                                                 </fieldset>
                                             </div>
 
-                                            <button class="btn btn-primary shadow-soft w-full h-12" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
+                                            <button class="btn btn-primary shadow-soft w-full h-12" data-analytics-tool="bowl cutter" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
                                         </div>
 
                                         <div class="space-y-6">
@@ -1765,6 +1765,9 @@
                             <div
                                 class="min-h-[3rem] h-auto flex items-center justify-end mb-6 gap-3 py-2 shrink-0">
                                 <div class="flex flex-wrap gap-2 w-full md:w-auto" id="settings-toolbar">
+                                    <button id="analytics-settings-button" type="button" class="btn btn-secondary flex-1 whitespace-nowrap">
+                                        Privacy
+                                    </button>
                                     <button class="btn btn-secondary flex-1" data-grblhal-only onclick="window.configWizard.showWizard()">
                                         <i data-lucide="wand" ></i> Wizard
                                     </button>
@@ -1772,13 +1775,13 @@
                                         <i data-lucide="cpu" ></i> Firmware
                                         <span id="settings-firmware-update-badge" class="hidden rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">New</span>
                                     </button>
-                                    <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.calibration.showModal()">
+                                    <button class="btn btn-secondary flex-1 whitespace-nowrap" data-analytics-tool="calibration" onclick="window.calibration.showModal()">
                                         <i data-lucide="ruler" ></i> Calibration
                                     </button>
                                     <button class="btn btn-secondary flex-1 whitespace-nowrap" onclick="window.gamepadController?.showSettings()">
                                         <i data-lucide="gamepad-2" ></i> Gamepad
                                     </button>
-                                    <button class="btn btn-secondary flex-1" onclick="window.grblSettings.backup()">
+                                    <button class="btn btn-secondary flex-1" data-analytics-tool="settings backup" onclick="window.grblSettings.backup()">
                                         <i data-lucide="download" ></i> Backup
                                     </button>
                                     <button class="btn btn-secondary flex-1"
@@ -2652,6 +2655,33 @@
     </div>
 
     <!-- Connection Modal -->
+    <div id="analytics-consent" class="oz-modal hidden z-[1200] modal-radial-overlay"
+        aria-labelledby="analytics-title" aria-describedby="analytics-description analytics-status">
+        <div class="oz-modal__dialog w-full max-w-md" data-modal-panel>
+            <div class="oz-modal__header">
+                <h3 id="analytics-title">Usage analytics</h3>
+            </div>
+            <div class="oz-modal__body space-y-4 text-sm">
+                <p id="analytics-description">Help us improve Ooznest Control by sharing app and machine usage, including alarms and errors.
+                    Analytics is optional. You can turn it off anytime in Settings → Privacy.</p>
+                <details>
+                    <summary id="analytics-details-toggle" class="cursor-pointer font-semibold">Analytics details</summary>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        <li>App platform, tools, viewer settings, and jog mode and input type.</li>
+                        <li>Job source, outcome, and size range, plus connection type and outcome.</li>
+                        <li>Controller alarm and error codes, and macro command codes. Macro names, comments, parameters, and full G-code stay on your device.</li>
+                        <li>A random installation ID links events. PostHog in the EU receives your IP address when analytics connects.</li>
+                    </ul>
+                </details>
+                <p id="analytics-status"></p>
+            </div>
+            <div class="oz-modal__footer oz-modal__footer--actions">
+                <button id="analytics-decline" type="button" class="btn btn-secondary flex-1" data-modal-primary>Decline analytics</button>
+                <button id="analytics-allow" type="button" class="btn btn-secondary flex-1">Allow analytics</button>
+            </div>
+        </div>
+    </div>
+
     <div id="connection-modal"
         class="oz-modal hidden z-[1100] modal-radial-overlay">
         <div class="oz-modal__dialog overflow-hidden w-full max-w-md" data-modal-panel>
@@ -3206,7 +3236,7 @@
         import { MacroHandler } from './js/features/macros.js';
         import { ToolsHandler } from './js/features/tools/tools.js';
         import { TroubleshootingHandler } from './js/ui/troubleshooting.js?v=20260901a';
-        import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20260901b';
+        import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20261111a';
         import { CalibrationHandler } from './js/features/calibration.js?v=20261104a';
         import { ConfigWizard } from './js/features/config-wizard.js?v=20260901b';
         import { FirmwareFlasher } from './js/features/firmware-flasher.js?v=20260831a';
@@ -3214,9 +3244,10 @@
         import { GCodeEditor } from './js/editor/editor.js';
         import { initializeApp } from './js/core/init.js';
         import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
-        import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20261104a';
-        import { GamepadController } from './js/features/gamepad.js?v=20261016';
+        import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20261111a';
+        import { GamepadController } from './js/features/gamepad.js?v=20261111a';
         import './js/ui/modal.js';
+        import './js/features/analytics.js';
 
         // Import new modules
         import './js/ui/ui.js';

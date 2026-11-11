@@ -207,6 +207,7 @@ export class GamepadController {
 
         this.waitingForOk = true;
         this.plannerUntil = Math.max(this.plannerUntil, now) + SEGMENT_MS;
+        if (!this.wasJogging) window.appAnalytics?.('jog requested', { mode: 'continuous', input: 'gamepad' });
         this.wasJogging = true;
         this.ws.sendCommand(`$J=G91 G21 ${words} F${feed.toFixed(0)}`).catch(() => {
             this.waitingForOk = false;
@@ -271,6 +272,7 @@ export class GamepadController {
         const axis = direction[0];
         const sign = direction.includes('-') ? '-' : '';
         this.ws.sendCommand(`$J=G91 G21 ${axis}${sign}${step.toFixed(3)} F${feed.toFixed(0)}`);
+        window.appAnalytics?.('jog requested', { mode: 'incremental', input: 'gamepad' });
     }
 
     _currentIncrementIndex() {

@@ -308,8 +308,13 @@ export class AlarmsAndErrors {
                 if (override?.message) this.domBody.textContent = override.message;
                 this.renderFooterButtons(override?.buttons || []);
             } else {
-                // Regular error - just OK button
-                const btnOk = this.createBtn('OK', 'btn btn-primary', () => this.closeModal());
+                const btnOk = this.createBtn('OK', 'btn btn-primary', () => {
+                    // grblHAL rejects further G-code until it receives a blank line or system command.
+                    if (this.ws?.isConnected && this.ws.isGrblHAL && !window.jobController?._hasActiveJob()) {
+                        this.ws.sendCommand('');
+                    }
+                    this.closeModal();
+                });
                 this.domFooter.appendChild(btnOk);
             }
         } else {

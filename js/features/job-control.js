@@ -14,6 +14,7 @@ class JobController {
         this.jobStartTime = 0;
         this.sdJobActive = false;
         this._elapsedTimer = null;
+        this._alarmUnlockTimer = null;
 
         this.setupEventListeners();
     }
@@ -68,6 +69,7 @@ class JobController {
                 this.sdJobActive = true;
                 this.gcodeStreamer.paused = false;
                 this.startJobUI();
+                window.appAnalytics?.('job started', { source: 'sd' });
                 window.term.writeln('\x1b[35m[SD Job] Detected active SD print.\x1b[0m');
             }
 
@@ -78,6 +80,8 @@ class JobController {
 
         window.addEventListener('sd-job-complete', () => {
             if (this.sdJobActive) {
+                // The controller's idle status cannot establish successful completion.
+                window.appAnalytics?.('SD job returned idle', { source: 'sd' });
                 window.term.writeln('\x1b[32m[SD Job] Complete/Idle.\x1b[0m');
                 this.resetJobUI();
                 const pauseBtn = document.getElementById('pause-job-btn');
@@ -100,6 +104,7 @@ class JobController {
         }
 
         window.reporter.showConfirm('Run Job', 'Are you sure you want to run the job currently loaded in the 3D viewer?', () => {
+            if (!window.ws.isConnected || this.gcodeStreamer.active) return;
             this._resetStreamState();
             this.gcodeStreamer.lines = window.currentGCodeContent
                 .split('\n')
@@ -122,6 +127,11 @@ class JobController {
 
             document.getElementById('job-progress-overlay').classList.remove('hidden');
             this.jobStartTime = Date.now();
+            const lineCount = this.gcodeStreamer.lines.length;
+            window.appAnalytics?.('job started', {
+                source: 'stream',
+                line_count_band: lineCount < 1000 ? 'under 1k' : lineCount < 10000 ? '1k–10k' : '10k+'
+            });
 
             window.term.writeln('\x1b[35m[Job Stream] Starting...\x1b[0m');
 
@@ -173,6 +183,7 @@ class JobController {
             if (this.gcodeStreamer.active) {
                 this.abortGCodeStream('User Stopped');
             } else {
+                if (this.sdJobActive) window.appAnalytics?.('job aborted', { source: 'sd' });
                 this.sdJobActive = false;
                 this.gcodeStreamer.paused = false;
                 this.resetJobUI();
@@ -230,6 +241,7 @@ class JobController {
     }
 
     finishGCodeStream() {
+        if (this.gcodeStreamer.active) window.appAnalytics?.('job completed', { source: 'stream' });
         this._resetStreamState();
         window.term.writeln('\x1b[32m[Job Stream] Complete.\x1b[0m');
         this.resetJobUI();
@@ -240,12 +252,26 @@ class JobController {
     }
 
     abortGCodeStream(error) {
+        if (this.gcodeStreamer.active) window.appAnalytics?.('job aborted', { source: 'stream' });
         this._resetStreamState();
         window.term.writeln(`\x1b[31m[Job Stream] Aborted: ${error}\x1b[0m`);
         this.resetJobUI();
 
-        if (window.ws.backendWs) {
-            window.ws.backendWs.send(JSON.stringify({ type: 'updateJob', active: false }));
+        const backend = window.ws.backendWs;
+        if (backend && backend.readyState === WebSocket.OPEN) {
+            backend.send(JSON.stringify({ type: 'updateJob', active: false }));
+        }
+    }
+
+    handleDisconnect() {
+        clearTimeout(this._alarmUnlockTimer);
+        this._alarmUnlockTimer = null;
+        if (this.gcodeStreamer.active) {
+            this.abortGCodeStream('Connection lost');
+        }
+        if (this.sdJobActive) {
+            window.appAnalytics?.('job observation lost', { source: 'sd' });
+            this.resetJobUI();
         }
     }
 
@@ -318,7 +344,9 @@ class JobController {
             this.abortGCodeStream(line);
             if (window.ws) {
                 window.ws.sendRealtime('\x18');
-                setTimeout(() => {
+                clearTimeout(this._alarmUnlockTimer);
+                this._alarmUnlockTimer = setTimeout(() => {
+                    this._alarmUnlockTimer = null;
                     window.ws.sendCommand('$X');
                 }, 3000);
             }
@@ -347,7 +375,10 @@ class JobController {
                 }
                 window.term.writeln('\x1b[33m[MTC] Tool change pending - streaming paused, waiting for MTC to complete.\x1b[0m');
             } else {
-                this.abortGCodeStream(line);
+                const error = relatedEntry
+                    ? `${line} — G-code line ${relatedEntry.sourceLine}: ${relatedEntry.command}`
+                    : line;
+                this.abortGCodeStream(error);
                 if (window.ws) {
                     window.ws.sendRealtime('\x18');
                 }

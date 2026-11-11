@@ -30,6 +30,7 @@ export class WebSerial {
 
         this.rawModeCallback = null;
         this._writeLock = Promise.resolve();
+        this._writeGeneration = 0;
         this._readBuffer = '';
 
         // --- Grbl v1.1 Character-Counting Flow Control (OpenBuilds pattern) ---
@@ -117,6 +118,7 @@ export class WebSerial {
         if (!this.isConnected && !this.port) return;
         const wasConnected = this.isConnected;
         this.isConnected = false;
+        this._writeGeneration++;
         this.clearPendingState();
 
         try {
@@ -142,13 +144,13 @@ export class WebSerial {
      * Uses synchronous buffer tracking (OpenBuilds sentBuffer pattern).
      */
     async sendCommand(line) {
+        if (!this.isConnected) return;
         const bytes = this.encoder.encode(line + '\n');
         this.sentBuffer.push(line);
 
-        if (!this.isConnected) return;
-
-        await this.writeRaw(bytes);
-        this.listeners.sent.forEach(cb => cb(line));
+        if (await this.writeRaw(bytes)) {
+            this.listeners.sent.forEach(cb => cb(line));
+        }
     }
 
     /**
@@ -166,14 +168,17 @@ export class WebSerial {
      * Prevents lock assertion failures and prevents data dropout under load.
      */
     async writeRaw(data) {
-        if (!this.port || !this.port.writable) return;
+        const writable = this.port?.writable;
+        if (!this.isConnected || !writable) return;
+        const generation = this._writeGeneration;
 
         // Chain the new write onto the existing promise chain
         const writePromise = this._writeLock.then(async () => {
-            if (!this.port || !this.port.writable) return;
-            const writer = this.port.writable.getWriter();
+            if (!this.isConnected || generation !== this._writeGeneration) return;
+            const writer = writable.getWriter();
             try {
                 await writer.write(data);
+                return generation === this._writeGeneration;
             } catch (e) {
                 console.error('Serial Write Error:', e);
                 this.emit('error', e);
@@ -186,7 +191,7 @@ export class WebSerial {
         this._writeLock = writePromise.catch(() => { });
 
         // Wait for this specific write to finish
-        await writePromise;
+        return writePromise;
     }
 
     setRawHandler(callback) {
@@ -228,7 +233,6 @@ export class WebSerial {
             console.error('WebSerial Read Error:', err);
             if (this.isConnected) {
                 this.emit('error', new Error('Connection lost: ' + err.message));
-                this.disconnect();
             }
         } finally {
             this._readBuffer = '';
@@ -237,6 +241,7 @@ export class WebSerial {
                 this.reader = null;
             }
             navigator.serial.removeEventListener('disconnect', onDisconnect);
+            if (this.isConnected) this.disconnect();
         }
     }
 }
