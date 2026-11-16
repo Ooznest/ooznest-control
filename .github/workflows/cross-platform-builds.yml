@@ -147,10 +147,26 @@ jobs:
       - name: Install Dependencies
         run: npm install
         
-      - name: Build Windows Executable
+      - name: Install Azure signing module
+        run: Install-Module -Name TrustedSigning -Repository PSGallery -Scope CurrentUser -Force
+
+      - name: Build and sign Windows app and installer
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run build-windows
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          WINDOWS_SIGNING_PUBLISHER: ${{ vars.WINDOWS_SIGNING_PUBLISHER }}
+        run: |
+          foreach ($name in 'AZURE_CLIENT_ID', 'AZURE_TENANT_ID', 'AZURE_CLIENT_SECRET', 'WINDOWS_SIGNING_PUBLISHER') {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+              throw "Missing GitHub Actions configuration: $name"
+            }
+          }
+          node node_modules/electron-builder/cli.js --win --publish never `
+            --config.forceCodeSigning=true `
+            --config.win.sign=./.github/scripts/sign-windows.cjs `
+            --config.win.signingHashAlgorithms=sha256 `
+            "--config.win.publisherName=$env:WINDOWS_SIGNING_PUBLISHER"
         
       - name: Upload Windows Exe
         uses: actions/upload-artifact@v7.0.1
