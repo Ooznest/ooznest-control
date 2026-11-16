@@ -1,0 +1,46 @@
+name: Windows Signing Test
+
+on:
+  push:
+    branches: [windows-signing-test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sign:
+    runs-on: windows-latest
+    steps:
+      - name: Install Azure signing module
+        run: Install-Module -Name TrustedSigning -Repository PSGallery -Scope CurrentUser -Force
+
+      - name: Sign a disposable executable and read the publisher
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          foreach ($name in 'AZURE_CLIENT_ID', 'AZURE_TENANT_ID', 'AZURE_CLIENT_SECRET') {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+              throw "Missing GitHub Actions secret: $name"
+            }
+          }
+          $file = Join-Path $env:RUNNER_TEMP 'SigningTest.exe'
+          Copy-Item (Get-Command node.exe).Source $file
+          $options = @{
+            Endpoint = 'https://weu.codesigning.azure.net'
+            CodeSigningAccountName = 'Ooznest-CodeSigning'
+            CertificateProfileName = 'Ooznest-PublicTrustCertificate'
+            Files = $file
+            FileDigest = 'SHA256'
+            TimestampRfc3161 = 'http://timestamp.acs.microsoft.com'
+            TimestampDigest = 'SHA256'
+          }
+          Invoke-TrustedSigning @options
+          $signature = Get-AuthenticodeSignature -LiteralPath $file
+          if ($signature.Status -ne 'Valid' -or !$signature.TimeStamperCertificate) {
+            throw "Signature verification failed: $($signature.StatusMessage)"
+          }
+          $publisher = $signature.SignerCertificate.GetNameInfo('SimpleName', $false)
+          "WINDOWS_SIGNING_PUBLISHER=$publisher" | Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY
