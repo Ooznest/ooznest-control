@@ -2667,10 +2667,9 @@
                 <details>
                     <summary id="analytics-details-toggle" class="cursor-pointer font-semibold">Analytics details</summary>
                     <ul class="list-disc pl-5 mt-2 space-y-1">
-                        <li>App platform, tools, viewer settings, and jog mode and input type.</li>
-                        <li>Job source, outcome, and size range, plus connection type and outcome.</li>
-                        <li>Controller alarm and error codes, and macro command codes. Macro names, comments, parameters, and full G-code stay on your device.</li>
-                        <li>A random installation ID links events. PostHog in the EU receives your IP address when analytics connects.</li>
+                        <li>App use, sessions, jobs, connections and software updates.</li>
+                        <li>Controller type, firmware and updates, alarms, errors and macro command codes.</li>
+                        <li>PostHog EU groups activity by a random installation ID and estimates location from your IP address.</li>
                     </ul>
                 </details>
                 <p id="analytics-status"></p>
@@ -3239,7 +3238,7 @@
         import { TroubleshootingInfoView } from './js/ui/troubleshooting-info.js?v=20261111a';
         import { CalibrationHandler } from './js/features/calibration.js?v=20261104a';
         import { ConfigWizard } from './js/features/config-wizard.js?v=20260901b';
-        import { FirmwareFlasher } from './js/features/firmware-flasher.js?v=20260831a';
+        import { FirmwareFlasher } from './js/features/firmware-flasher.js?v=release-telemetry-1';
         import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=20260831e';
         import { GCodeEditor } from './js/editor/editor.js';
         import { initializeApp } from './js/core/init.js';
@@ -3247,11 +3246,11 @@
         import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20261111a';
         import { GamepadController } from './js/features/gamepad.js?v=20261111a';
         import './js/ui/modal.js';
-        import './js/features/analytics.js';
+        import './js/features/analytics.js?v=release-telemetry-1';
 
         // Import new modules
         import './js/ui/ui.js';
-        import './js/features/job-control.js';
+        import './js/features/job-control.js?v=release-telemetry-1';
         import './js/machine/jogging.js';
         import './js/ui/console.js?v=2';
         import './js/editor/editor-integration.js';
@@ -3448,6 +3447,7 @@
             if (window.electron && window.electron.on) {
                 let lastUpdateProgress = -5;
                 window.electron.on('update-checking', (detail) => {
+                    window.appAnalytics?.('app update status', { outcome: 'checking' });
                     window.term.writeln(`\x1b[33m[Update] ${detail.message}\x1b[0m`);
                 });
                 window.electron.on('update-available', (info) => {
@@ -3469,10 +3469,13 @@
                     if (window.showToast) window.showToast('Update download stalled', 'triangle-alert', 'warning');
                 });
                 window.electron.on('update-error', (detail) => {
+                    window.appAnalytics?.('app update status', { outcome: 'failed' });
                     window.term.writeln(`\x1b[31m[Update] Download failed: ${detail.message}\x1b[0m`);
                     if (window.showToast) window.showToast('Update download failed', 'triangle-alert', 'error');
                 });
-                window.electron.on('update-downloaded', () => {
+                window.electron.on('update-downloaded', (info) => {
+                    const targetVersion = /^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(info?.version) ? info.version : undefined;
+                    window.appAnalytics?.('app update status', { outcome: 'downloaded', target_version: targetVersion });
                     reporter.showConfirm(
                         'Update Ready',
                         'A new version of Ooznest Control has been downloaded. Would you like to install it now, or later?',

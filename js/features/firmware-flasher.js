@@ -282,6 +282,7 @@ export class FirmwareFlasher {
         this._reconnectSucceeded = false;
         this.previousConnection = this.ws.getConnectionSnapshot ? this.ws.getConnectionSnapshot() : null;
         this._appendLog(`[SYSTEM] Selected ${this._getSelectedFirmwareLabel()}`);
+        window.appAnalytics?.('firmware update status', { outcome: 'started' });
         this._appendLog('[SYSTEM] Starting firmware update...');
         this._render();
 
@@ -294,6 +295,7 @@ export class FirmwareFlasher {
                 await this._flashWithWebSerial();
             }
         } catch (error) {
+            window.appAnalytics?.('firmware update status', { outcome: 'failed' });
             this._appendLog(`[CRITICAL] ${error?.message || error}`);
             this.busy = false;
             this._render();
@@ -381,6 +383,7 @@ export class FirmwareFlasher {
 
             this._appendLog('[RESET] Booting application...');
             await this._resetIntoApplication(esploader, transport, device);
+            window.appAnalytics?.('firmware update status', { outcome: 'flashed' });
             this._appendLog('[COMPLETE] Firmware flashed successfully.');
             this._notifyFlashComplete();
             this.browserReconnectPending = true;
@@ -436,6 +439,7 @@ export class FirmwareFlasher {
         this._browserReconnectAttempted = false;
         this._reconnectSucceeded = false;
         this._appendLog(`[SYSTEM] Selected ${this._getSelectedFirmwareLabel()}`);
+        window.appAnalytics?.('firmware update status', { outcome: 'started' });
         this._appendLog('[SYSTEM] Starting firmware update...');
         this._appendLog('[SYSTEM] Using selected programming port...');
         this._render();
@@ -472,10 +476,14 @@ export class FirmwareFlasher {
 
             this._appendLog('[RESET] Booting application...');
             await this._resetIntoApplication(esploader, transport, device);
+            window.appAnalytics?.('firmware update status', { outcome: 'flashed' });
             this._appendLog('[COMPLETE] Firmware flashed successfully.');
             this._notifyFlashComplete();
             this.browserReconnectPending = true;
             this._appendLog('[SYSTEM] Reconnecting to controller...');
+        } catch (error) {
+            window.appAnalytics?.('firmware update status', { outcome: 'failed' });
+            throw error;
         } finally {
             try {
                 await transport.disconnect();
@@ -617,6 +625,7 @@ export class FirmwareFlasher {
 
         if (msg.type === 'firmwareFlashComplete') {
             this._setProgress(100);
+            window.appAnalytics?.('firmware update status', { outcome: 'flashed' });
             this._appendLog('[COMPLETE] Firmware flashed successfully.');
             this._notifyFlashComplete();
             this.busy = !!msg.reconnect;
@@ -635,6 +644,7 @@ export class FirmwareFlasher {
         }
 
         if (msg.type === 'firmwareFlashError') {
+            window.appAnalytics?.('firmware update status', { outcome: 'failed' });
             this._appendLog(`[CRITICAL] ${msg.message}`);
             this.busy = false;
             this.browserReconnectPending = false;

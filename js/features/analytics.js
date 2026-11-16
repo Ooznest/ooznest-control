@@ -3,7 +3,7 @@ import { registerModal } from '../ui/modal.js';
 // Set this to the public project token from the Ooznest PostHog EU project.
 const projectToken = 'phc_CrMGPrEUx5fGfBEGsYUGUAMhqeK53peawNxrwYSTByHd';
 const configured = projectToken.startsWith('phc_');
-const noticeVersion = 5;
+const noticeVersion = 8;
 const consentKey = 'ooznest.analytics-consent';
 const modal = registerModal('analytics-consent');
 const allow = document.getElementById('analytics-allow');
@@ -11,6 +11,8 @@ const decline = document.getElementById('analytics-decline');
 const status = document.getElementById('analytics-status');
 const pendingRequests = new Set();
 let reportedOpen = false;
+let sessionId;
+const runtime = window.electron?.isElectron ? 'electron' : window.cordova ? 'cordova' : 'web';
 
 function readConsent() {
     try {
@@ -24,13 +26,17 @@ function readConsent() {
 }
 
 function reportOpen() {
-    if (!reportedOpen) reportedOpen = capture('app opened');
+    if (reportedOpen || !capture('app opened')) return;
+    reportedOpen = true;
+    if (runtime === 'web' && ['https:', 'http:'].includes(location.protocol)) {
+        capture('$pageview', { $current_url: location.origin + location.pathname, $pathname: location.pathname });
+    }
 }
 
 function capture(event, properties = {}) {
     const choice = readConsent();
     if (!configured || choice?.allowed !== true) return false;
-    const runtime = window.electron?.isElectron ? 'electron' : window.cordova ? 'cordova' : 'web';
+    sessionId ??= crypto.randomUUID();
     const agent = navigator.userAgent;
     const os = /Android/i.test(agent) ? 'Android' : /iPhone|iPad|iPod/i.test(agent) ? 'iOS'
         : /Windows/i.test(agent) ? 'Windows' : /Macintosh/i.test(agent) ? 'macOS'
@@ -48,11 +54,15 @@ function capture(event, properties = {}) {
             event,
             properties: {
                 ...properties,
+                app_edition: 'grblhal',
+                app_version: document.title.match(/\bv?(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)$/)?.[1],
                 runtime,
                 os,
                 distinct_id: choice.installationId,
-                $process_person_profile: false,
-                $geoip_disable: true
+                $session_id: sessionId,
+                $os: os,
+                $process_person_profile: event === 'app opened' || event === '$pageview',
+                $geoip_disable: event !== 'app opened' && event !== '$pageview'
             }
         })
     }).catch(() => {}).finally(() => {
@@ -62,6 +72,15 @@ function capture(event, properties = {}) {
 }
 
 window.appAnalytics = capture;
+let lastFirmwareReport;
+window.reportAnalyticsFirmware = (family, version, buildSource) => {
+    const firmwareVersion = typeof version === 'string' &&
+        /^(?:\d{8}|\d+(?:\.\d+){1,3}[a-z]?(?:[-+]\d{8}|-?(?:beta|rc)\d+)?)$/i.test(version)
+        ? version : 'unknown';
+    const properties = { controller_family: family, firmware_version: firmwareVersion, build_source: buildSource };
+    const key = JSON.stringify(properties);
+    if (lastFirmwareReport !== key && capture('controller firmware detected', properties)) lastFirmwareReport = key;
+};
 
 document.addEventListener('click', (event) => {
     const button = event.target.closest('#surf-generate-btn, #sg-generate-btn, .probe-btn, [data-analytics-tool]');
@@ -84,6 +103,8 @@ function showConsent() {
 function saveConsent(allowed) {
     if (allowed && allow.disabled) return;
     if (!allowed) {
+        sessionId = undefined;
+        reportedOpen = false;
         for (const request of pendingRequests) request.abort();
     }
     try {

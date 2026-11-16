@@ -56,7 +56,7 @@ class JobController {
         // Listen for alarm being cleared (state transition Alarm -> Idle)
         window.addEventListener('machine-alarm-cleared', () => {
             if (this.gcodeStreamer.active) {
-                this.abortGCodeStream('Alarm cleared');
+                this.abortGCodeStream('Alarm cleared', 'alarm');
             } else {
                 this.resetJobUI();
             }
@@ -154,6 +154,10 @@ class JobController {
         const btn = document.getElementById('pause-job-btn');
         if (!btn) return;
         this.gcodeStreamer.paused = !this.gcodeStreamer.paused;
+        window.appAnalytics?.('job control requested', {
+            source: this.sdJobActive ? 'sd' : 'stream',
+            action: this.gcodeStreamer.paused ? 'pause' : 'resume'
+        });
 
         if (this.gcodeStreamer.paused) {
             window.ws.sendRealtime('!');
@@ -181,9 +185,9 @@ class JobController {
         window.reporter.showConfirm('Stop Job', 'Stop Job? This will reset the machine.', () => {
             window.ws.sendRealtime('\x18');
             if (this.gcodeStreamer.active) {
-                this.abortGCodeStream('User Stopped');
+                this.abortGCodeStream('User Stopped', 'operator_stop');
             } else {
-                if (this.sdJobActive) window.appAnalytics?.('job aborted', { source: 'sd' });
+                if (this.sdJobActive) window.appAnalytics?.('job aborted', { source: 'sd', reason: 'operator_stop' });
                 this.sdJobActive = false;
                 this.gcodeStreamer.paused = false;
                 this.resetJobUI();
@@ -251,8 +255,8 @@ class JobController {
         }
     }
 
-    abortGCodeStream(error) {
-        if (this.gcodeStreamer.active) window.appAnalytics?.('job aborted', { source: 'stream' });
+    abortGCodeStream(error, reason = 'stream_error') {
+        if (this.gcodeStreamer.active) window.appAnalytics?.('job aborted', { source: 'stream', reason });
         this._resetStreamState();
         window.term.writeln(`\x1b[31m[Job Stream] Aborted: ${error}\x1b[0m`);
         this.resetJobUI();
@@ -267,7 +271,7 @@ class JobController {
         clearTimeout(this._alarmUnlockTimer);
         this._alarmUnlockTimer = null;
         if (this.gcodeStreamer.active) {
-            this.abortGCodeStream('Connection lost');
+            this.abortGCodeStream('Connection lost', 'connection_lost');
         }
         if (this.sdJobActive) {
             window.appAnalytics?.('job observation lost', { source: 'sd' });
@@ -341,7 +345,7 @@ class JobController {
         if (line.toLowerCase().startsWith('alarm:')) {
             this._updateBufferUI();
             this._dequeuePending();
-            this.abortGCodeStream(line);
+            this.abortGCodeStream(line, 'alarm');
             if (window.ws) {
                 window.ws.sendRealtime('\x18');
                 clearTimeout(this._alarmUnlockTimer);
