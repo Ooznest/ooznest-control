@@ -162,11 +162,24 @@ jobs:
               throw "Missing GitHub Actions configuration: $name"
             }
           }
-          node node_modules/electron-builder/cli.js --win --publish never `
-            --config.forceCodeSigning=true `
-            --config.win.sign=./.github/scripts/sign-windows.cjs `
-            --config.win.signingHashAlgorithms=sha256 `
-            "--config.win.publisherName=$env:WINDOWS_SIGNING_PUBLISHER"
+          @'
+          const { build, Platform } = require('electron-builder');
+          build({
+            targets: Platform.WINDOWS.createTarget(),
+            publish: 'never',
+            config: {
+              forceCodeSigning: true,
+              win: {
+                sign: './.github/scripts/sign-windows.cjs',
+                signingHashAlgorithms: ['sha256'],
+                publisherName: process.env.WINDOWS_SIGNING_PUBLISHER,
+              },
+            },
+          }).catch(error => {
+            console.error(error);
+            process.exitCode = 1;
+          });
+          '@ | node
         
       - name: Upload Windows Exe
         uses: actions/upload-artifact@v7.0.1
