@@ -582,6 +582,12 @@ export class TroubleshootingHandler {
                     ${this._capabilityTags(s.caps.replace('*', ''))}
                     ${s.rpmRange ? `<span class="text-grey text-[10px]">&#8226;</span> ${rpmHtml}` : ''}
                 </div>
+                ${s.name === 'PWM' ? `
+                    <div class="mb-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+                        <p class="font-bold">Mafell overload warning</p>
+                        <p class="mt-1">Without digital overload feedback during operation, watch the LED on your Mafell spindle for signs of overload. See the Mafell manual for what the LED indications mean.</p>
+                    </div>
+                ` : ''}
                 <div class="flex items-center gap-3 pt-1 border-t border-grey-light/60">
                     <label class="flex items-center gap-1 cursor-pointer ${!isEnabled ? 'opacity-40 pointer-events-none' : ''}">
                         <input type="radio" name="active-spindle" value="${s.spindleNum}"
