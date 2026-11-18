@@ -284,7 +284,7 @@ class UIManager {
             this.renderUnlockButton('default');
 
             // Completely disable specific outer blocks remaining from previous UI styles
-            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => {
+            document.querySelectorAll('#settings-toolbar > :not(#settings-firmware-button), #sd-breadcrumb').forEach(el => {
                 el.classList.add('opacity-50', 'pointer-events-none');
             });
         }
@@ -310,7 +310,7 @@ class UIManager {
             }
 
             // Clean up general offline locks if they were present
-            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar > :not(#settings-firmware-button), #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else if (state === 'run' || state === 'jog' || state === 'homing') {
             setDisabled(jogControls, true);
@@ -320,7 +320,7 @@ class UIManager {
 
             setDisabled(unlockBtn, true);
             this.renderUnlockButton('default');
-            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar > :not(#settings-firmware-button), #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else if (state === 'hold' || state === 'door' || state === 'sleep') {
             setDisabled(jogControls, true);
@@ -330,7 +330,7 @@ class UIManager {
 
             setDisabled(unlockBtn, true);
             this.renderUnlockButton('default');
-            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar > :not(#settings-firmware-button), #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
         }
         else {
             // Idle Space
@@ -341,7 +341,7 @@ class UIManager {
             setDisabled(unlockBtn, true);
             this.renderUnlockButton('default');
 
-            document.querySelectorAll('#settings-toolbar, #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
+            document.querySelectorAll('#settings-toolbar > :not(#settings-firmware-button), #sd-breadcrumb').forEach(el => el.classList.remove('opacity-50', 'pointer-events-none'));
 
             this.updateRunButtonsState();
         }
