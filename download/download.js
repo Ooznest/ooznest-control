@@ -55,7 +55,10 @@
           link.className = 'download-button';
           link.href = asset.browser_download_url;
           const arch = architecture(asset.name);
-          link.textContent = config.label + (arch ? ` (${arch})` : '');
+          const label = platform === 'mac' ? { ARM64: 'Apple Silicon', x64: 'Intel' }[arch] || arch : arch;
+          link.textContent = platform === 'mac' && ['Apple Silicon', 'Intel'].includes(label)
+            ? `Download for ${label}${label === 'Intel' ? ' Mac' : ''}`
+            : config.label + (label ? ` (${label})` : '');
           link.title = `${asset.name} · ${(asset.size / 1048576).toFixed(1)} MB`;
           container.append(link);
         }
@@ -79,5 +82,8 @@
     card.append(note);
   }
   retry.addEventListener('click', loadDownloads);
+  document.querySelectorAll('.mobile-menu a').forEach(link => {
+    link.addEventListener('click', () => { document.querySelector('.mobile-menu').open = false; });
+  });
   loadDownloads();
 })();

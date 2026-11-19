@@ -4,6 +4,7 @@
   const status = document.getElementById('status');
   const link = document.getElementById('installer');
   const retry = document.getElementById('retry');
+  retry.addEventListener('click', () => location.reload());
   const platform = document.body.dataset.platform;
   const extensions = { windows: /\.exe$/i, mac: /\.dmg$/i, linux: /\.AppImage$/i };
   const architecture = document.body.dataset.arch || new URLSearchParams(location.search).get('arch');
@@ -35,6 +36,7 @@
         (assets.length === 1 ? assets[0] : null);
     if (!installer) {
       status.textContent = 'A matching installer is not available in the latest release.';
+      retry.hidden = false;
       return;
     }
     link.href = installer.browser_download_url;
@@ -48,5 +50,4 @@
   } finally {
     clearTimeout(timeout);
   }
-  retry.addEventListener('click', () => location.reload());
 })();
