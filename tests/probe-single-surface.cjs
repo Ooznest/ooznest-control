@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 function setup(){
- const Handler=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../js/machine/probe.js'),'utf8').replace('export class ProbeHandler','class ProbeHandler')+'\nProbeHandler');
+ const Handler=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../js/machine/probe.js'),'utf8').replace('export class ProbeHandler','class ProbeHandler')+'\nProbeHandler', {window:{}});
  const handler=Object.create(Handler.prototype),commands=[];
  Object.assign(handler,{store:{data:{probe:{toolDiameter:6,xPlateOffset:8,yPlateOffset:10,plateThickness:15,travel:25,feed:100,retract:2}}},selections:{singleAxis:'Z',singleDir:-1},term:{writeln(){}},_requireProbeSafe:()=>true,saveSettings(){},_resetProbeTest(){},sendBatch:batch=>commands.push(...batch)});
  return {handler,commands};

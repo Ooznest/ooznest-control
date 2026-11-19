@@ -1731,7 +1731,7 @@
                                                 </fieldset>
                                             </div>
 
-                                            <button class="btn btn-primary shadow-soft w-full h-12" data-analytics-tool="bowl cutter" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
+                                            <button class="btn btn-primary shadow-soft w-full h-12" onclick="window.bowlCutter.generate()"><i data-lucide="check" ></i> Generate G-Code</button>
                                         </div>
 
                                         <div class="space-y-6">
@@ -3225,13 +3225,13 @@
     <script type="module">
         import { WebSerial } from './js/machine/webserial.js?v=20261016';
         import { GCodeViewer } from './js/viewer/3dview.js?v=20260828a';
-        import { ProbeHandler } from './js/machine/probe.js?v=20261105a';
+        import { ProbeHandler } from './js/machine/probe.js?v=tool-usage-1';
         import { SDCardHandler } from './js/features/sdcard.js?v=20260831a';
         import { AlarmsAndErrors } from './js/ui/alarms_and_errors.js';
         import { DROHandler } from './js/machine/dro.js?v=20260901a';
         import { GrblSettings } from './js/machine/grbl_settings.js?v=20261016';
         import { AppStore } from './js/core/store.js';
-        import { SurfacingHandler } from './js/features/tools/surfacing.js?v=20260901b';
+        import { SurfacingHandler } from './js/features/tools/surfacing.js?v=tool-usage-1';
         import { MacroHandler } from './js/features/macros.js';
         import { ToolsHandler } from './js/features/tools/tools.js';
         import { TroubleshootingHandler } from './js/ui/troubleshooting.js?v=20260901a';
@@ -3239,14 +3239,14 @@
         import { CalibrationHandler } from './js/features/calibration.js?v=20261104a';
         import { ConfigWizard } from './js/features/config-wizard.js?v=20260901b';
         import { FirmwareFlasher } from './js/features/firmware-flasher.js?v=release-telemetry-1';
-        import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=20260831e';
+        import { FirmwareVersionChecker } from './js/features/firmware-version.js?v=tool-usage-1';
         import { GCodeEditor } from './js/editor/editor.js';
         import { initializeApp } from './js/core/init.js';
-        import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js';
-        import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=20261111a';
+        import { SpoilboardGridHandler } from './js/features/tools/spoilboard-grid.js?v=tool-usage-1';
+        import { BowlCutter } from './js/features/tools/bowl-cutter.js?v=tool-usage-1';
         import { GamepadController } from './js/features/gamepad.js?v=20261111a';
         import './js/ui/modal.js';
-        import './js/features/analytics.js?v=release-telemetry-1';
+        import './js/features/analytics.js?v=tool-usage-1';
 
         // Import new modules
         import './js/ui/ui.js';

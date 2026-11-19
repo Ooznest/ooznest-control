@@ -773,6 +773,13 @@ export class ProbeHandler {
             : (isPlate ? this._getPlateOffsetY(s) : 0);
         const totalOffset = axis === 'Z' ? (isPlate ? s.plateThickness : 0) : rad + plateOffset;
         const setVal = -(dir * totalOffset);
+        const edge = axis === 'Z' ? 'top' : axis === 'X'
+            ? (dir > 0 ? 'left' : 'right') : (dir > 0 ? 'front' : 'rear');
+        window.appAnalytics?.('tool action selected', {
+            tool: 'probing', action: 'requested', probe_routine: 'single surface', edge,
+            endmill_diameter_mm: axis !== 'Z' && Number.isFinite(s.toolDiameter) && s.toolDiameter > 0
+                ? s.toolDiameter : undefined
+        });
         this.term.writeln(`\x1b[34m> Probing ${axis}... (${isPlate ? 'Plate' : 'Probe'})\x1b[0m`);
         this.sendBatch(['G21', 'G91', `G38.2 ${axis}${dir * s.travel} F${s.feed}`, `G10 L20 P0 ${axis}${setVal.toFixed(3)}`, `G0 ${axis}${-(dir * s.retract)}`, 'G90']);
         this._resetProbeTest();
@@ -794,6 +801,11 @@ export class ProbeHandler {
         let xDirMult = corner.charAt(1) === 'R' ? 1 : -1;
         let yDirMult = corner.charAt(0) === 'R' ? 1 : -1;
         this.tempData = { xDir: xDirMult, yDir: yDirMult };
+        window.appAnalytics?.('tool action selected', {
+            tool: 'probing', action: 'requested', probe_routine: 'outside corner',
+            corner: { FL: 'front left', FR: 'front right', RL: 'rear left', RR: 'rear right' }[corner],
+            endmill_diameter_mm: Number.isFinite(s.toolDiameter) && s.toolDiameter > 0 ? s.toolDiameter : undefined
+        });
         this.activeRoutine = 'OUTSIDE_CORNER';
         this.routineStep = 1;
         this.term.writeln(`\x1b[34m> Outside Corner (${corner})...\x1b[0m`);

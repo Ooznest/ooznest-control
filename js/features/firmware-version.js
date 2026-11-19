@@ -44,6 +44,15 @@ export class FirmwareVersionChecker {
     setControllerVersion(version, board) {
         this.controllerBuild = parseGrblBuild(version);
         this.controllerBoard = typeof board === 'string' ? board.trim() : null;
+        const build = this.controllerBuild;
+        const supportedBoard = this.controllerBoard === 'Ooznest-Motion-Control-Core';
+        const release = /^\d+\.\d+[a-z]?/i.exec(version)?.[0];
+        void this._manifestPromise.then(() => {
+            if (build === null || this.controllerBuild !== build || !window.ws?.isConnected) return;
+            const known = this.availableBuild === build || this.changelog.some(item => item.grblBuild === build);
+            const source = !supportedBoard ? 'other board' : known ? 'matches Ooznest release' : 'unrecognized build';
+            window.reportAnalyticsFirmware?.('grblhal', release ? `${release}+${build}` : String(build), source);
+        });
         this._notify();
     }
 

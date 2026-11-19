@@ -467,6 +467,7 @@ export class SurfacingHandler {
             window.dispatchEvent(event);
 
             window.viewer.processGCodeString(gcode, 'Generated_Job.gcode parsed');
+            window.appAnalytics?.('tool action selected', { tool: 'surfacing', action: 'generated', surface: this.store.data.surfacing.useMaxArea ? 'spoilboard' : 'stock' });
 
             document.querySelector("button[onclick*='viewer-view']").click();
             this.term.writeln("\x1b[32m> Surfacing Job Loaded to Viewer.\x1b[0m");

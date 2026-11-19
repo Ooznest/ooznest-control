@@ -83,11 +83,9 @@ window.reportAnalyticsFirmware = (family, version, buildSource) => {
 };
 
 document.addEventListener('click', (event) => {
-    const button = event.target.closest('#surf-generate-btn, #sg-generate-btn, .probe-btn, [data-analytics-tool]');
+    const button = event.target.closest('[data-analytics-tool]');
     if (!button || button.disabled) return;
-    const tool = button.dataset.analyticsTool || (button.id === 'surf-generate-btn' ? 'surfacing'
-        : button.id === 'sg-generate-btn' ? 'spoilboard grid' : 'probing');
-    capture('tool action selected', { tool });
+    capture('tool action selected', { tool: button.dataset.analyticsTool });
 });
 
 function showConsent() {

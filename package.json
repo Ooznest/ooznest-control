@@ -11,7 +11,7 @@
     "build-windows": "electron-builder --win",
     "build-windows-local": "electron-builder --win --config.npmRebuild=false --config.win.signAndEditExecutable=false",
     "build-linux": "electron-builder --linux",
-    "build-macos": "electron-builder --mac",
+    "build-macos": "electron-builder --mac --x64 --arm64",
     "cordova-sync": "node sync.js",
     "build-android": "node build-android.js",
     "local-android-build": "node run-android.js",

@@ -197,6 +197,7 @@ export class BowlCutter {
     _loadToViewer(gcode) {
         if (window.viewer) {
             window.viewer.processGCodeString(gcode, 'Bowl cutter job parsed');
+            window.appAnalytics?.('tool action selected', { tool: 'bowl cutter', action: 'generated' });
         }
         window.currentGCodeContent = gcode;
         window.currentSDFile = null;

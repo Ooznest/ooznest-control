@@ -191,7 +191,7 @@ jobs:
             dist/latest.yml
 
   build-macos:
-    name: Build macOS App
+    name: Build macOS App (Intel and Apple Silicon)
     needs: bump-version
     runs-on: macos-latest
     steps:

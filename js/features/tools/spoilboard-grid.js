@@ -221,6 +221,7 @@ export class SpoilboardGridHandler {
 
         // Load into 3D viewer
         window.viewer.processGCodeString(gcode, 'Spoilboard_Grid.gcode parsed');
+        window.appAnalytics?.('tool action selected', { tool: 'spoilboard grid', action: 'generated' });
 
         // Switch to 3D view tab
         const viewerTab = document.querySelector("button[onclick*='viewer-view']");
