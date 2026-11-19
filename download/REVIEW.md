@@ -13,10 +13,10 @@ Inspected the rendered styles and exported the live theme app.min.css. Source us
 
 ## Asset provenance
 
-- assets/ooznest.svg: https://ooznest.co.uk/wp-content/uploads/2026/06/logo-without-space.svg
-- assets/workbee.webp: https://ooznest.co.uk/wp-content/uploads/2026/10/workbee-hero-machine-768x577.webp
-- assets/extrusion-pattern.webp: https://ooznest.co.uk/wp-content/uploads/2025/12/Group-255.png (server supplies WebP).
-- Software screenshots reuse docs/application-guide/screenshots in this repository. They are documentation captures, not new captures of this checkout. WorkBee photography comes from the current Z1+ marketing page and is captioned as general WorkBee imagery rather than a Z2 product photograph.
+- ooznest.svg: https://ooznest.co.uk/wp-content/uploads/2026/06/logo-without-space.svg
+- workbee.webp: https://ooznest.co.uk/wp-content/uploads/2026/10/workbee-hero-machine-768x577.webp
+- extrusion-pattern.webp: https://ooznest.co.uk/wp-content/uploads/2025/12/Group-255.png (server supplies WebP).
+- Software screenshots are copied from docs/application-guide/screenshots into download/ for publishing. They are documentation captures, not new captures of this checkout. WorkBee photography comes from the current Z1+ marketing page and is captioned as general WorkBee imagery rather than a Z2 product photograph.
 
 ## Capability checks
 

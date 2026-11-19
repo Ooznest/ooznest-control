@@ -74,3 +74,11 @@ test('direct missing-package and network-error states offer a working retry', as
     assert.equal(reloaded, true);
   }
 });
+
+test('landing images are bundled within the download directory', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../download/index.html'), 'utf8');
+  for (const [, src] of html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)) {
+    assert.ok(!src.includes('/'), src);
+    assert.ok(fs.statSync(path.join(__dirname, '../download', src)).size > 0, src);
+  }
+});

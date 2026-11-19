@@ -149,7 +149,7 @@ p {
   flex:0 0 16px;
   width:16px;
   height:12px;
-  background:url('assets/submenu-arrow.svg') center/contain no-repeat;
+  background:url('submenu-arrow.svg') center/contain no-repeat;
 }
 .mobile-menu {
   display:none
@@ -180,7 +180,7 @@ p {
   content:'';
   position:absolute;
   inset:0;
-  background:url('assets/extrusion-pattern.webp') center/1100px;
+  background:url('extrusion-pattern.webp') center/1100px;
   opacity:.15;
   pointer-events:none
 }
@@ -618,7 +618,7 @@ p {
 }
 .support-panel {
   padding:36px;
-  background:var(--grey) url('assets/extrusion-pattern.webp') center/1000px;
+  background:var(--grey) url('extrusion-pattern.webp') center/1000px;
   border-radius:0 32px 0 32px
 }
 .support-panel h3 {
