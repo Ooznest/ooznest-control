@@ -28,6 +28,19 @@
     box-shadow: var(--oz-surface-shadow);
 }
 
+@media (max-width: 767px) {
+    #sidebar-connect #btn-reset {
+        flex: 0 0 36px;
+        min-width: 36px;
+        padding: 0;
+        gap: 0;
+    }
+
+    #btn-reset .reset-label {
+        display: none;
+    }
+}
+
 .machine-sidebar-panel .text-secondary-dark,
 .machine-sidebar-panel .text-grey-dark,
 .machine-sidebar-panel .text-grey,

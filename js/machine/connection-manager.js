@@ -870,7 +870,7 @@ export class ConnectionManager {
             return;
         }
 
-        this._showConnectingStatus(`Connecting to ${host}:${port} (Telnet)...`);
+        this._setConnectingState(true, `Connecting to ${host}:${port} (Telnet)...`);
 
         return new Promise((resolve, reject) => {
             const socket = new this.CordovaSocket();
@@ -1754,6 +1754,8 @@ export class ConnectionManager {
         const found = [];
         const ips = Array.from({ length: 254 }, (_, i) => `${subnet}.${i + 1}`);
         for (let i = 0; i < ips.length; i++) {
+            // The Android socket plugin replaces connections using the same port.
+            if (this.isConnected || this.isConnecting) break;
             const pct = Math.round(((i + 1) / ips.length) * 100);
             this._setTelnetScanProgress(pct, `Scanning ${subnet}.x  ${pct}%  (port ${port})`);
             const result = await this._checkTelnetPortSequential(ips[i], port, 700);

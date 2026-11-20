@@ -382,9 +382,9 @@
                       <i data-lucide="unlock" style="width:12px;height:12px"></i> Unlock
                     </button>
 
-                    <button id="btn-reset" class="btn flex-1 shadow-sm" onclick="sendRealtimeWithToast('\x18', 'Reset sent', 'refresh-cw')" title="Soft Reset"
+                    <button id="btn-reset" class="btn flex-1 shadow-sm" onclick="sendRealtimeWithToast('\x18', 'Reset sent', 'refresh-cw')" title="Soft Reset" aria-label="Soft Reset"
                         disabled>
-                        <i data-lucide="octagon-alert" ></i>Reset
+                        <i data-lucide="octagon-alert" aria-hidden="true"></i><span class="reset-label">Reset</span>
                     </button>
                     <button id="btn-connect" class="btn btn-primary flex-1 shadow-sm">Connect</button>
 
