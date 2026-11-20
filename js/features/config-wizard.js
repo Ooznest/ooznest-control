@@ -1,5 +1,7 @@
 import { registerModal } from '../ui/modal.js';
 
+const Z2_TRAVEL_OFFSET_MM = 230;
+
 export class ConfigWizard {
     constructor(ws, store) {
         console.log('[ConfigWizard] constructor');
@@ -18,6 +20,7 @@ export class ConfigWizard {
         this._collectingVer = false;
         this._verLines = [];
         this._expandedMachineCat = null;
+        this._expandedToolheadCategories = new Set(['spindle', 'vfd-modbus', 'laser']);
         this.wizardStep = 0;
         this.wizardData = {
             machine: null,
@@ -136,7 +139,7 @@ export class ConfigWizard {
         const spindle = spindleMap[configName[5]] || 'Unknown spindle';
         const laser = configName[6] === 'A' ? 'Laser fitted' : 'No laser';
         const probeMap = {
-            A: 'Ooznest XYZ Probe',
+            A: 'WorkBee XYZ Touch Probe',
             B: 'Custom probe',
             C: 'No probe'
         };
@@ -314,6 +317,7 @@ export class ConfigWizard {
         footer.innerHTML = footerHtml;
         footer.classList.remove('hidden');
         this._wireStepEvents();
+        this._updateContinueState();
         if (window.lucide) window.lucide.createIcons();
     }
 
@@ -354,7 +358,7 @@ export class ConfigWizard {
                         html += `<span class="config-filter-choice__label">${m.name}</span>`;
                         html += `</div>`;
                         if (sel) {
-                            html += '<div class="px-4 pb-3 space-y-2">';
+                            html += '<div class="pt-2 space-y-2">';
                             ['X', 'Y', 'Z'].forEach(axis => {
                                 const lc = axis.toLowerCase();
                                 const drive = (this.wizardData.customDrives || {})[lc] || 'belt';
@@ -362,16 +366,16 @@ export class ConfigWizard {
                                 const teeth = (this.wizardData.customPulleyTeeth || {})[lc] || 20;
                                 const lead = (this.wizardData.customLead || {})[lc] || 5;
                                 const endstop = (this.wizardData.customEndstops || {})[lc] || 'min';
-                                html += '<div class="bg-white rounded-xl shadow-soft border border-grey-light p-3">';
+                                html += '<div class="px-3 py-2 border-t border-grey-light">';
                                 html += `<div class="font-bold text-xs text-secondary-dark mb-2">${axis} Axis</div>`;
-                                html += '<div class="grid grid-cols-2 gap-x-3 gap-y-2">';
+                                html += '<div class="config-wizard-axis-fields grid grid-cols-2">';
                                 html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Drive</label>';
                                 html += `<select onchange="window.configWizard.wizardData.customDrives.${lc}=this.value;window.configWizard._renderWizardStep()" class="ooznest-select oz-select w-full text-xs">`;
                                 html += `<option value="belt" ${drive === 'belt' ? 'selected' : ''}>Belt</option>`;
                                 html += `<option value="leadscrew" ${drive === 'leadscrew' ? 'selected' : ''}>Leadscrew</option>`;
                                 html += '</select></div>';
                                 html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Travel (mm)</label>';
-                                html += `<input type="number" step="1" id="w-custom-travel-${lc}" value="${(this.wizardData.machine.travel || {})[lc] || 0}" placeholder="e.g. 270" class="ooznest-field input-field w-full">`;
+                                html += `<input type="number" step="1" id="w-custom-travel-${lc}" oninput="window.configWizard.wizardData.machine.travel.${lc} = Number(this.value); window.configWizard._updateContinueState()" value="${(this.wizardData.machine.travel || {})[lc] || 0}" placeholder="e.g. 270" class="ooznest-field input-field w-full">`;
                                 html += '</div>';
                                 if (drive === 'belt') {
                                     html += '<div><label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Belt pitch (mm)</label>';
@@ -398,7 +402,7 @@ export class ConfigWizard {
                         const sel = this.wizardData.machine && this.wizardData.machine.id === m.id;
                         html += `<div class="config-filter-choice machine-select-item ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-machine-id="${m.id}">`;
                         html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-                        html += `<span class="config-filter-choice__label">${m.name}</span>`;
+                        html += `<span class="config-filter-choice__label">${m.name}<span class="block text-xs text-grey">(Working Area: ${m.travel.x}×${m.travel.y}mm)</span></span>`;
                         html += `</div>`;
                     }
                 });
@@ -411,12 +415,15 @@ export class ConfigWizard {
                     html += `<span class="config-filter-choice__label">Custom Size</span>`;
                     html += `</div>`;
                     if (isCustomSize) {
-                        html += '<div class="px-4 pb-3 space-y-2">';
-                        html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5">Width (mm)</label>';
-                        html += `<input type="number" step="1" id="w-custom-width" value="${this.wizardData.customWidth || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=this.value&&document.getElementById('w-custom-length').value?'('+(Math.max(0,parseInt(this.value)-230))+'×'+(Math.max(0,parseInt(document.getElementById('w-custom-length').value)-230))+'×88mm)':''" class="ooznest-field input-field w-full">`;
-                        html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-0.5 mt-2">Length (mm)</label>';
-                        html += `<input type="number" step="1" id="w-custom-length" value="${this.wizardData.customLength || 500}" placeholder="e.g. 500" oninput="document.getElementById('w-custom-area').textContent=document.getElementById('w-custom-width').value&&this.value?'('+(Math.max(0,parseInt(document.getElementById('w-custom-width').value)-230))+'×'+(Math.max(0,parseInt(this.value)-230))+'×88mm)':''" class="ooznest-field input-field w-full">`;
-                        html += `<p id="w-custom-area" class="text-[10px] text-grey italic">${this.wizardData.customWidth && this.wizardData.customLength ? `(${Math.max(0, this.wizardData.customWidth - 230)}×${Math.max(0, this.wizardData.customLength - 230)}×88mm)` : ''}</p>`;
+                        html += '<div class="config-wizard-axis-fields grid grid-cols-2 px-4 py-3">';
+                        for (const [axis, dimension, key] of [['X', 'width', 'customWidth'], ['Y', 'length', 'customLength']]) {
+                            const size = this.wizardData[key];
+                            const travel = size === '' ? '' : size - Z2_TRAVEL_OFFSET_MM;
+                            html += `<div><label class="ooznest-label block" for="w-custom-${dimension}">Overall ${axis} size (mm)</label>`;
+                            html += `<input type="number" min="${Z2_TRAVEL_OFFSET_MM + 1}" step="1" id="w-custom-${dimension}" value="${size}" class="ooznest-field input-field w-full"></div>`;
+                            html += `<div><label class="ooznest-label block" for="w-z2-travel-${dimension}">${axis} travel (mm)</label>`;
+                            html += `<input type="number" min="1" step="1" id="w-z2-travel-${dimension}" value="${travel}" class="ooznest-field input-field w-full"></div>`;
+                        }
                         html += '</div>';
                     }
                 }
@@ -467,7 +474,7 @@ export class ConfigWizard {
             const cat = cats[catKey];
             if (!cat.items.length) return;
 
-            const isExpanded = this._expandedCat === catKey;
+            const isExpanded = this._expandedToolheadCategories.has(catKey);
             html += `<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden mb-2">`;
             html += `<div class="config-filter-group__header flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none transition-colors" onclick="window.configWizard._toggleCategory('${catKey}')">`;
             html += `<span class="config-filter-group__title">${cat.label}</span>`;
@@ -522,7 +529,11 @@ export class ConfigWizard {
     }
 
     _toggleCategory(catKey) {
-        this._expandedCat = this._expandedCat === catKey ? null : catKey;
+        if (this._expandedToolheadCategories.has(catKey)) {
+            this._expandedToolheadCategories.delete(catKey);
+        } else {
+            this._expandedToolheadCategories.add(catKey);
+        }
         this._renderWizardStep();
     }
 
@@ -595,10 +606,12 @@ export class ConfigWizard {
             result['$395'] = { name: spindleDef.name, value: spindleDef.value };
         }
         if (hasLaser && laserDef) {
-            result['$511'] = { name: laserDef.name, value: laserDef.value };
+            // Secondary spindle numbering reserves 0 for Disabled.
+            result['$511'] = { name: laserDef.name, value: laserDef.value + 1 };
         }
         if (hasModbus && modbusDef) {
-            result['$512'] = { name: modbusDef.name, value: modbusDef.value };
+            // Tertiary spindle numbering also reserves 0 for Disabled.
+            result['$512'] = { name: modbusDef.name, value: modbusDef.value + 1 };
         }
 
         return result;
@@ -607,13 +620,13 @@ export class ConfigWizard {
     _renderProbePlateStep() {
         const s = this.store.data.probe;
         const selected = this.wizardData.probeType;
-        let html = '<p class="text-sm text-grey mb-4">Select your probe plate:</p>';
+        let html = '<p class="text-sm text-grey mb-4">Do you have a probe plate?</p>';
         html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
         html += '<div>';
         [
-            { value: 'ooznest', label: 'Ooznest XYZ Probe' },
-            { value: 'custom', label: 'Custom Probe' },
-            { value: 'none', label: 'No Probe' }
+            { value: 'ooznest', label: 'WorkBee XYZ Touch Probe' },
+            { value: 'custom', label: 'Custom Probe Plate' },
+            { value: 'none', label: 'No Probe Plate' }
         ].forEach(opt => {
             const sel = selected === opt.value;
             html += `<div class="probe-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
@@ -621,7 +634,7 @@ export class ConfigWizard {
             html += `<span class="config-filter-choice__label">${opt.label}</span>`;
             html += '</div>';
             if (sel && opt.value === 'custom') {
-                html += '<div class="px-4 pb-3 bg-grey-bg/30">';
+                html += '<div class="px-4 pt-3 pb-3 bg-grey-bg/30">';
                 html += '<div class="grid grid-cols-2 gap-4">';
                 html += '<div>';
                 html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Plate Thickness (mm)</label>';
@@ -637,15 +650,6 @@ export class ConfigWizard {
         });
         html += '</div>';
         html += '</div>';
-
-        // Description
-        if (selected === 'ooznest') {
-            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Ooznest XYZ Probe: thickness 5mm, XY offset 10mm. These will be set automatically in your probe settings.</p>';
-        } else if (selected === 'custom') {
-            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> Enter your custom probe plate dimensions above.</p>';
-        } else {
-            html += '<p class="text-[10px] text-grey mt-3"><i data-lucide="info" style="width:14px;height:14px"></i> No probe plate will be configured.</p>';
-        }
 
         return html;
     }
@@ -672,11 +676,11 @@ export class ConfigWizard {
 
     _renderEnclosureStep() {
         const selected = this.wizardData.enclosure;
-        let html = '<p class="text-sm text-grey mb-4">Do you have a <a href="https://ooznest.co.uk/product/original-workbee-enclosure/" target="_blank" class="text-primary hover:underline">WorkBee Enclosure</a>? </p>';
+        let html = '<p class="text-sm text-grey mb-4">Do you have a WorkBee Enclosure?</p>';
         html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
         html += '<div>';
         [
-            { value: true, label: 'Yes, WorkBee Enclosure' },
+            { value: true, label: 'Yes, I have one' },
             { value: false, label: 'No Enclosure' }
         ].forEach(opt => {
             const sel = selected === opt.value;
@@ -708,11 +712,11 @@ export class ConfigWizard {
         if (isStation) {
             html += '<div class="px-4 py-3 bg-grey-bg/30 space-y-4">';
             html += '<div>';
-            html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Network Name ($74)</label>';
+            html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">WiFi Network Name</label>';
             html += `<input type="text" maxlength="64" value="${this._escapeHtml(this.wizardData.wifiSsid || '')}" oninput="window.configWizard.wizardData.wifiSsid=this.value;window.configWizard._updateContinueState()" class="ooznest-field input-field w-full" placeholder="WiFi network name">`;
             html += '</div>';
             html += '<div>';
-            html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">Wifi Password ($75)</label>';
+            html += '<label class="ooznest-label block text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1.5">WiFi Password</label>';
             html += `<input type="password" minlength="8" maxlength="32" value="${this._escapeHtml(this.wizardData.wifiPsk || '')}" oninput="window.configWizard.wizardData.wifiPsk=this.value;window.configWizard._updateContinueState()" class="ooznest-field input-field w-full" placeholder="8 to 32 characters">`;
             html += '</div>';
             html += '</div>';
@@ -720,12 +724,6 @@ export class ConfigWizard {
         html += '</div>';
         html += '</div>';
 
-        html += '<p class="text-[10px] text-grey">';
-        html += isStation
-            ? 'Station mode will save the SSID and password to the controller.'
-            : 'Use this when networking is handled over Ethernet, or when WiFi should remain disabled.';
-        html += '</p>';
-        html += '</div>';
         return html;
     }
 
@@ -770,7 +768,7 @@ export class ConfigWizard {
 
         // Toolhead assignments
         if (Object.keys(assignments).length) {
-            const labels = { '$395': 'Primary', '$511': 'Secondary', '$512': 'Tertiary' };
+            const labels = { '$395': 'Toolhead', '$511': 'Secondary', '$512': 'Tertiary' };
             html += '<div class="border-t border-grey-light pt-2"></div>';
             Object.entries(assignments).forEach(([setting, info]) => {
                 const label = labels[setting] || setting;
@@ -783,11 +781,11 @@ export class ConfigWizard {
 
         html += '<div class="border-t border-grey-light pt-2"></div>';
         const probeLabel = this.wizardData.probeType === 'ooznest'
-            ? 'Ooznest XYZ Probe'
+            ? 'WorkBee XYZ Touch Probe'
             : this.wizardData.probeType === 'custom'
                 ? 'Custom'
                 : 'None';
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe</span><span class="text-xs font-bold text-secondary-dark">${probeLabel}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe Plate</span><span class="text-xs font-bold text-secondary-dark">${probeLabel}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Dust Shoe</span><span class="text-xs font-bold ${this.wizardData.dustShoe ? 'text-green-600' : 'text-grey'}">${this.wizardData.dustShoe ? 'Yes' : 'No'}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold ${this.wizardData.enclosure ? 'text-green-600' : 'text-grey'}">${this.wizardData.enclosure ? 'WorkBee Enclosure' : 'No Enclosure'}</span></div>`;
         html += `<div class="flex justify-between"><span class="text-xs text-grey">WiFi Mode</span><span class="text-xs font-bold text-secondary-dark">${this.wizardData.wifiMode === '1' ? 'Wifi Enabled' : 'Wifi Off / Ethernet (Optional)'}</span></div>`;
@@ -817,13 +815,29 @@ export class ConfigWizard {
     }
 
     _wireStepEvents() {
+        if (this.wizardStep === 0 && this.wizardData.machine?.id === 'z2-custom') {
+            for (const [dimension, key] of [['width', 'customWidth'], ['length', 'customLength']]) {
+                const size = document.getElementById(`w-custom-${dimension}`);
+                const travel = document.getElementById(`w-z2-travel-${dimension}`);
+                if (!size || !travel) continue;
+                size.oninput = () => {
+                    this.wizardData[key] = size.value === '' ? '' : size.valueAsNumber;
+                    travel.value = size.value === '' ? '' : size.valueAsNumber - Z2_TRAVEL_OFFSET_MM;
+                    this._updateContinueState();
+                };
+                travel.oninput = () => {
+                    this.wizardData[key] = travel.value === '' ? '' : travel.valueAsNumber + Z2_TRAVEL_OFFSET_MM;
+                    size.value = this.wizardData[key];
+                    this._updateContinueState();
+                };
+            }
+        }
+
         // Machine selection
         document.querySelectorAll('.machine-select-item').forEach(el => {
             el.onclick = () => {
                 const id = el.dataset.machineId;
                 if (id === 'z2-custom') {
-                    this.wizardData.customWidth = this.wizardData.customWidth || 500;
-                    this.wizardData.customLength = this.wizardData.customLength || 500;
                     const z2Template = this.machines.find(m => m.category === 'z2');
                     this.wizardData.machine = {
                         id: 'z2-custom',
@@ -924,9 +938,8 @@ export class ConfigWizard {
                 const m = this.wizardData.machine;
                 if (!m) return false;
                 if (m.id === 'z2-custom') {
-                    const w = parseFloat(document.getElementById('w-custom-width')?.value) || 0;
-                    const l = parseFloat(document.getElementById('w-custom-length')?.value) || 0;
-                    return w >= 100 && l >= 100;
+                    const { customWidth, customLength } = this.wizardData;
+                    return [customWidth, customLength].every(size => Number.isInteger(size) && size > Z2_TRAVEL_OFFSET_MM);
                 }
                 if (m.category === 'custom') {
                     const x = parseFloat(document.getElementById('w-custom-travel-x')?.value) || 0;
@@ -954,7 +967,8 @@ export class ConfigWizard {
     }
 
     _updateContinueState() {
-        const continueButton = document.getElementById('config-wizard-continue');
+        const continueButton = document.getElementById('config-wizard-continue')
+            || document.getElementById('config-wizard-flash-firmware');
         if (continueButton) continueButton.disabled = !this._canProceed();
     }
 
@@ -968,6 +982,7 @@ export class ConfigWizard {
     }
 
     _nextStep() {
+        if (!this._canProceed()) return;
         // Capture form values before moving
         if (this.wizardStep === 0) {
             this._captureMachineStep();
@@ -990,11 +1005,8 @@ export class ConfigWizard {
     _captureMachineStep() {
         const m = this.wizardData.machine;
         if (m && m.id === 'z2-custom') {
-            const width = parseFloat(document.getElementById('w-custom-width')?.value) || 500;
-            const length = parseFloat(document.getElementById('w-custom-length')?.value) || 500;
-            this.wizardData.customWidth = width;
-            this.wizardData.customLength = length;
-            m.travel = { x: Math.max(0, width - 230), y: Math.max(0, length - 230), z: 88 };
+            const { customWidth: width, customLength: length } = this.wizardData;
+            m.travel = { x: width - Z2_TRAVEL_OFFSET_MM, y: length - Z2_TRAVEL_OFFSET_MM, z: 88 };
             m.name = `${width}×${length}mm`;
         } else if (m && m.category === 'custom') {
             const x = parseFloat(document.getElementById('w-custom-travel-x')?.value) || 0;
@@ -1119,7 +1131,7 @@ export class ConfigWizard {
             //   Pos 6 (spindle): A=WorkBee Router Head, B=Mafell FM 1000 (Digital), C=Mafell FM 1000 (Manual),
             //                    D=VFD (0-10v), E=VFD (Modbus), F=PWM Laser Module
             //   Pos 7 (laser): A=yes, B=no
-            //   Pos 8 (probe): A=Ooznest XYZ Probe, B=Custom Probe, C=None
+            //   Pos 8 (probe): A=WorkBee XYZ Touch Probe, B=Custom Probe, C=None
             //   Pos 9 (cat):   A=Z1+, B=Z2, C=Custom
             const th = this.wizardData.toolheads;
             const sizeCodes = { '500x500':'A', '750x750':'B', '750x1000':'C', '1000x1000':'D', '1000x1500':'E', '1500x1500':'F' };

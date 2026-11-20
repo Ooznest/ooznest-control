@@ -140,3 +140,6 @@
 #firmware-flasher-body button.bg-green-500:hover {
     background: var(--oz-primary-light) !important;
 }
+.config-wizard-axis-fields {
+    gap: 12px;
+}
