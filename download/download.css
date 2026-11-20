@@ -467,6 +467,12 @@ p {
   color:var(--teal);
   padding:28px 0 24px
 }
+.os img {
+  display:inline-block;
+  width:1em;
+  height:1em;
+  vertical-align:-.125em
+}
 .card-details {
   background:#fff;
   border-radius:8px;
