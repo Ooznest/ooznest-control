@@ -11,13 +11,23 @@
 
 Run `npm run build-android-play` to produce
 `cordova/platforms/android/app/build/outputs/bundle/release/app-release.aab`.
-The manual **Build Android Play bundle** workflow produces an unsigned bundle
-as an Actions artifact. It does not upload to Play or publish a release.
+The **Build Android Play bundle** workflow produces a signed bundle as an
+Actions artifact. The main release workflow calls it with the bumped release
+tag and attaches the `.aab` to the GitHub release. Automatic upload to Google
+Play is not configured.
 
-The local bundle built on 20 November 2026 is version 1.0.206, code 1000206.
-It is unsigned. Release lint passed. Its contents were checked for development
-files; it contains no native `.so` libraries. USB and network operation on
-Android 16 has not yet been tested on hardware.
+Required encrypted GitHub secrets: `ANDROID_UPLOAD_KEY_BASE64` and
+`ANDROID_UPLOAD_PASSWORD`. Alias: `ooznest-control-upload`. The original key
+and private credentials are in `%LOCALAPPDATA%/Ooznest/signing/`, outside this
+repository. Back up that folder to company credential storage.
+
+The signed local bundle built on 20 November 2026 is version 1.0.207, code
+1000207. Google Play accepted it. Release lint and signature verification
+passed. Network connection and portrait UI were tested on a Samsung Android
+16 phone with a grblHAL test controller. USB hardware testing is outstanding.
+
+GitHub Actions run 44710248573 passed. Its signed bundle uses the same upload
+certificate, includes the policy link and excludes signing files.
 
 ## Upload-key signing
 
@@ -38,8 +48,8 @@ permissions and an authorised person to accept the agreement.
 
 ## Store listing draft
 
-Default language: English (United Kingdom), proposed.
-Category: Tools, proposed. Pricing: Free, awaiting confirmation.
+Default language: English (United Kingdom). Category: Tools. Pricing: Free.
+Audience: ages 13 and above. Availability: all available countries.
 
 Short description:
 
@@ -96,7 +106,12 @@ the extensionless URL.
 
 ## Data safety and privacy review
 
-This is a source-based inventory, not a completed Play declaration:
+The Play declaration covers optional approximate location, app interactions,
+diagnostics and installation/session identifiers, for analytics. Processor
+transfers are not declared as third-party sharing. No blanket encryption
+claim is made because local machine traffic may be unencrypted.
+
+Source-based inventory:
 
 - Optional PostHog EU analytics sends app interactions, machine usage,
   connection outcomes, firmware information and controller diagnostics.
@@ -107,23 +122,16 @@ This is a source-based inventory, not a completed Play declaration:
   without reviewing how those local transfers fit the Play form.
 - Analytics is disabled before consent. No ads, app accounts, location
   permission or advertising ID were found in the reviewed app.
-- Confirm the PostHog processor agreement, project retention, deletion process,
-  access controls and actual stored properties before completing Data safety.
-- Publish an app-specific privacy policy covering the above and local machine
-  communications; confirm its public URL and contact details before submission.
-- Complete content rating, target audience, app access and distribution
-  countries with the owner. Suggested audience is adults operating CNC
-  equipment; do not submit that selection without owner confirmation.
+## Submission status
 
-## Remaining submission steps
+Production release 1.0.207 and the listing were submitted on 20 November 2026.
+Play Console shows Changes in review; automated quick checks were still
+running. Managed publishing is off, so approval will publish automatically.
+Listing text, icon, feature graphic, screenshots, support contacts, privacy
+policy and app declarations have been completed.
 
-1. Ryan grants the required Play Console access or accepts the signing terms.
-2. Confirm pricing, language, support contact and distribution countries.
-3. Create and back up the upload key; build and verify a signed bundle.
-4. Test USB/network operation on a physical Android device and capture screenshots.
-5. Approve the listing, feature graphic, privacy policy and Data safety answers.
-6. Upload to internal testing, install from Play and run the pre-launch checks.
-7. Submit the production release for review once the checks pass.
+Back up the upload key and credentials. USB hardware testing and testing a
+Play-installed build remain outstanding.
 
 References:
 - https://developer.android.com/google/play/requirements/target-sdk
