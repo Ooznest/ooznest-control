@@ -89,6 +89,14 @@ jobs:
           name: Ooznest-Android-APK
           path: cordova/platforms/android/app/build/outputs/apk/debug/*.apk
 
+  build-android-play:
+    name: Build Android Play bundle
+    needs: bump-version
+    uses: ./.github/workflows/android-play-bundle.yml
+    with:
+      ref: ${{ needs.bump-version.outputs.new_version }}
+    secrets: inherit
+
   build-ios:
     name: Build iOS App
     needs: bump-version
@@ -284,7 +292,7 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: [bump-version, build-android, build-ios, build-windows, build-macos, build-linux, build-sd]
+    needs: [bump-version, build-android, build-android-play, build-ios, build-windows, build-macos, build-linux, build-sd]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -299,6 +307,7 @@ jobs:
           body: ${{ needs.bump-version.outputs.changelog }}
           files: |
             output-artifacts/**/*.apk
+            output-artifacts/**/*.aab
             output-artifacts/**/*.ipa
             output-artifacts/**/*.exe
             output-artifacts/**/*.dmg

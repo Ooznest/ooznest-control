@@ -125,7 +125,7 @@ function saveConsent(allowed) {
 modal.root.addEventListener('keydown', (event) => {
     if (event.key !== 'Tab') return;
     event.preventDefault();
-    const controls = [document.getElementById('analytics-details-toggle'), decline, allow]
+    const controls = [document.getElementById('analytics-details-toggle'), document.getElementById('analytics-privacy-policy'), decline, allow]
         .filter(control => !control.disabled);
     const current = controls.indexOf(document.activeElement);
     const step = event.shiftKey ? -1 : 1;

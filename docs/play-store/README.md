@@ -68,8 +68,9 @@ Full description:
 > Usage analytics is optional and off until you opt in. You can change your
 > choice in Settings, Privacy. No app login is required.
 
-Support email proposal: `hello@ooznest.co.uk` (already in the app configuration).
+Support email: `help@ooznest.co.uk`.
 Website: https://control.ooznest.co.uk/
+Support contact page: https://ooznest.co.uk/contact-us/
 Guide: https://resources.ooznest.co.uk/
 Release notes: First Google Play release of Ooznest Control for compatible
 WorkBee / grblHAL CNC controllers, with USB OTG and local network connections.
@@ -84,6 +85,14 @@ Capture genuine Android phone screenshots and tablet screenshots from the
 release build. Existing desktop documentation screenshots should not be used
 as Android screenshots. Capture preview, editor, tools and connection setup;
 do not claim a physical machine is connected unless it really is.
+
+Phone screenshots are in `assets/phone/`: jog controls, sample 3D toolpath,
+G-code editor and surfacing tools, in that order. Captured on the real phone
+at 1080 × 1920 and uploaded to Play Console.
+
+App policy: https://control.ooznest.co.uk/download/privacy
+Source: `download/privacy.html`. Cloudflare redirects the `.html` address to
+the extensionless URL.
 
 ## Data safety and privacy review
 
