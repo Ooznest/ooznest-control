@@ -260,39 +260,9 @@ jobs:
             dist/*.AppImage.blockmap
             dist/latest-linux.yml
 
-  build-sd:
-    name: Build SD Card Payload
-    needs: bump-version
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.2
-        with:
-          ref: ${{ needs.bump-version.outputs.new_version }}
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v6.4.0
-        with:
-          node-version: '20'
-          
-      - name: Install Dependencies
-        run: npm install
-        
-      - name: Build SD Card Payload
-        run: |
-          npm run build-sd
-          VERSION=$(node -p "require('./package.json').version")
-          cd dist
-          zip -r ../ooznest-control-${VERSION}-SDCard.zip index.html.gz
-        
-      - name: Upload SD Card Payload
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: Ooznest-SD-WebUI
-          path: ooznest-control-*-SDCard.zip
-
   create-release:
     name: Create Release
-    needs: [bump-version, build-android, build-android-play, build-ios, build-windows, build-macos, build-linux, build-sd]
+    needs: [bump-version, build-android, build-android-play, build-ios, build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -312,6 +282,5 @@ jobs:
             output-artifacts/**/*.exe
             output-artifacts/**/*.dmg
             output-artifacts/**/*.AppImage
-            output-artifacts/**/*.zip
             output-artifacts/**/latest*.yml
             output-artifacts/**/*.blockmap
