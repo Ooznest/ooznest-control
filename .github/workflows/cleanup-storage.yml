@@ -1,6 +1,10 @@
 name: Clean up old releases and Actions runs
 
 on:
+  workflow_run:
+    workflows: ["Cross-Platform Builds"]
+    types: [completed]
+    branches: [main, master]
   schedule:
     - cron: '0 2 * * 0'
   workflow_dispatch:
@@ -15,10 +19,11 @@ concurrency:
 
 jobs:
   cleanup:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.2
-      - name: Keep latest release and seven days of completed runs
+      - name: Keep five releases and seven days of completed runs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node .github/scripts/cleanup-storage.cjs

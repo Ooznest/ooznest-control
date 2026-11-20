@@ -21,7 +21,9 @@ function list(path, key) {
 
 function oldReleases(releases, latestId) {
     if (!releases.some(release => release.id === latestId)) throw new Error('Latest release missing from inventory');
-    return releases.filter(release => release.id !== latestId && !release.draft);
+    const others = releases.filter(release => release.id !== latestId && !release.draft)
+        .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
+    return others.slice(4);
 }
 
 function oldRuns(runs, cutoff) {
@@ -35,7 +37,7 @@ function main() {
     const releases = oldReleases(list('releases'), latest.id);
     const cutoff = process.argv.includes('--all-completed-runs') ? Infinity : Date.now() - 7 * 86400000;
     const runs = oldRuns(list('actions/runs', 'workflow_runs'), cutoff);
-    console.log(`Keeping ${latest.tag_name} and all its downloads. Git tags are preserved.`);
+    console.log(`Keeping five releases, including latest ${latest.tag_name}, and their downloads. Git tags are preserved.`);
     console.log(`Removing ${releases.length} releases and ${runs.length} completed Actions runs.`);
     for (const release of releases) {
         if (api('releases/latest').id !== latest.id) throw new Error('Latest release changed; stopping cleanup');
