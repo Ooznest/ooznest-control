@@ -1,6 +1,7 @@
 const { execSync } = require('child_process');
 const os = require('os');
 const path = require('path');
+const playBuild = process.argv.includes('--play');
 
 const env = { ...process.env };
 
@@ -43,7 +44,8 @@ try {
     } catch (e) { }
 
     // Sync and Build
-    execSync('npm run cordova-sync && cd cordova && npx cordova build android --verbose', { env, stdio: 'inherit' });
+    const buildArgs = playBuild ? '--release -- --packageType=bundle' : '--verbose';
+    execSync(`npm run cordova-sync && cd cordova && npx cordova build android ${buildArgs}`, { env, stdio: 'inherit' });
 } catch (error) {
     console.error('Android build failed:', error.message);
     process.exit(1);

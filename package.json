@@ -14,6 +14,7 @@
     "build-macos": "electron-builder --mac --x64 --arm64",
     "cordova-sync": "node sync.js",
     "build-android": "node build-android.js",
+    "build-android-play": "node build-android.js --play",
     "local-android-build": "node run-android.js",
     "run-android": "node run-android.js",
     "build-ios": "npm run cordova-sync && cd cordova && npx cordova build ios",

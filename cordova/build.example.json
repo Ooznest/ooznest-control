@@ -1,0 +1,12 @@
+{
+  "android": {
+    "release": {
+      "keystore": "C:/REPLACE-WITH-PRIVATE-LOCATION/ooznest-control-upload.jks",
+      "storePassword": "REPLACE-LOCALLY",
+      "alias": "ooznest-control-upload",
+      "password": "REPLACE-LOCALLY",
+      "keystoreType": "jks",
+      "packageType": "bundle"
+    }
+  }
+}

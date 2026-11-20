@@ -5,6 +5,11 @@ package-lock.json
 # Build outputs
 build/
 dist/
+outputs/
+.codex-remote-attachments/
+*.jks
+*.keystore
+cordova/build.json
 cordova/platforms/
 cordova/plugins/
 cordova/www/
