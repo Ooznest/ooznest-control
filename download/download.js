@@ -70,20 +70,6 @@
     } finally { clearTimeout(timeout); }
   }
 
-  const ua = navigator.userAgent;
-  const platform = /Android|iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-    ? null : /Windows/i.test(ua) ? 'windows' : /Macintosh|Mac OS X/i.test(ua) ? 'mac' : /Linux/i.test(ua) ? 'linux' : null;
-  if (platform) {
-    const card = document.querySelector(`[data-platform="${platform}"]`);
-    card.classList.add('recommended');
-    const note = document.createElement('span');
-    note.className = 'recommendation';
-    note.textContent = 'Recommended for this device';
-    card.append(note);
-  }
   retry.addEventListener('click', loadDownloads);
-  document.querySelectorAll('.mobile-menu a').forEach(link => {
-    link.addEventListener('click', () => { document.querySelector('.mobile-menu').open = false; });
-  });
   loadDownloads();
 })();
