@@ -126,7 +126,14 @@ export class ConfigWizard {
             C: 'Mafell FM 1000 (Manual)',
             D: 'VFD (0-10V)',
             E: 'VFD (Modbus)',
-            F: 'PWM Laser Module'
+            F: 'PWM Laser Module',
+            G: 'Huanyang V1 (Modbus)',
+            H: 'Huanyang P2A (Modbus)',
+            I: 'Durapulse GS20 (Modbus)',
+            J: 'Yalang YL620A (Modbus)',
+            K: 'Generic VFD (Modbus)',
+            L: 'H-100 (Modbus)',
+            M: 'Nowforever (Modbus)'
         };
         const categoryMap = {
             A: 'Z1+',
@@ -1157,7 +1164,8 @@ export class ConfigWizard {
             //   Pos 4 (dust):  A=with dust shoe, B=without
             //   Pos 5 (encl):  A=with enclosure, B=without
             //   Pos 6 (spindle): A=WorkBee Router Head, B=Mafell FM 1000 (Digital), C=Mafell FM 1000 (Manual),
-            //                    D=VFD (0-10v), E=VFD (Modbus), F=PWM Laser Module
+            //                    D=VFD (0-10v), E=legacy/unknown Modbus VFD, F=PWM Laser Module,
+            //                    G-M=specific Modbus VFD models (see vfdCodes below)
             //   Pos 7 (laser): A=yes, B=no
             //   Pos 8 (probe): A=WorkBee XYZ Touch Probe, B=Custom Probe, C=None
             //   Pos 9 (cat):   A=Z1+, B=Z2, C=Custom
@@ -1168,7 +1176,14 @@ export class ConfigWizard {
             const sizePart = machine.id.split('-').slice(1).join('-') || 'custom';
             const szCode = sizeCodes[sizePart] || 'G';
             const catCode = catCodes[machine.category] || 'C';
-            const spCode = spindleCodes[th.spindle] || 'A';
+            const vfdCodes = {
+                'huanyang v1': 'G', 'huanyang p2a': 'H', 'durapulse gs20': 'I',
+                'yalang ys620': 'J', 'yalang yl620a': 'J', 'modvfd': 'K',
+                'h-100': 'L', 'nowforever': 'M'
+            };
+            const spCode = th.primary?.kind === 'vfd'
+                ? vfdCodes[th.primary.source] || 'E'
+                : spindleCodes[th.spindle] || 'A';
             const dustCode = this.wizardData.dustShoe ? 'A' : 'B';
             const encCode = this.wizardData.enclosure ? 'A' : 'B';
             const lasCode = th.laser ? 'A' : 'B';

@@ -223,3 +223,31 @@ test('Wizard hides tertiary and preserves an existing $512 assignment and its re
     assert.doesNotMatch(html, /Tertiary Toolhead|wizard-toolhead-512/);
     assert.equal(wizard._computeToolheadAssignments().$512, undefined);
 });
+
+test('Each VFD encodes its model without changing the WB format or old spindle codes', async () => {
+    for (const [source, code, label] of [
+        ['huanyang v1', 'G', 'Huanyang V1'],
+        ['huanyang p2a', 'H', 'Huanyang P2A'],
+        ['durapulse gs20', 'I', 'Durapulse GS20'],
+        ['yalang ys620', 'J', 'Yalang YL620A'],
+        ['modvfd', 'K', 'Generic VFD'],
+        ['h-100', 'L', 'H-100'],
+        ['nowforever', 'M', 'Nowforever']
+    ]) {
+        const { wizard, writes } = load();
+        await wizard._loadToolheadOptions();
+        select(wizard, '395', source);
+        await wizard._applyConfig();
+        const command = writes.find(command => command.startsWith('$I='));
+        assert.ok(command, wizard.lastStatus?.text);
+        const config = command.slice(3);
+        assert.match(config, /^WB[A-Z]{7}$/);
+        assert.equal(config[5], code);
+        assert.ok(wizard._decodeMachineConfig(config).includes(label));
+    }
+    const { wizard } = load();
+    for (const [code, label] of [['A', 'WorkBee Router Head'], ['B', 'Mafell FM 1000 (Digital)'],
+        ['C', 'Mafell FM 1000 (Manual)'], ['D', 'VFD (0-10V)'], ['E', 'VFD (Modbus)'], ['F', 'PWM Laser Module']]) {
+        assert.ok(wizard._decodeMachineConfig('WBABB' + code + 'BAB').includes(label));
+    }
+});
