@@ -1,6 +1,15 @@
 {
-  "grbl_build": 20260902,
+  "grbl_build": 20261117,
   "changelog": [
+    {
+      "grbl_build": 20261117,
+      "date": "2026-11-23",
+      "changes": [
+        "Fresh Z1+, Z2+, and Actuator builds with both PWM outputs and all seven Modbus VFD drivers enabled.",
+        "Fixed spindle registry and binding array bounds for nine registered spindle types.",
+        "Added Ethernet module presence and cable link status to the extended build report ($I+)."
+      ]
+    },
     {
       "grbl_build": 20260902,
       "date": "2026-09-03",

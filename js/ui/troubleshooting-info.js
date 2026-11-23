@@ -105,6 +105,19 @@ export class TroubleshootingInfoView {
         return lines.length ? [...lines] : [];
     }
 
+    _getEthernetStatus() {
+        const status = { module: 'Unknown', link: 'Unknown' };
+        if (!window.ws?.isConnected) return status;
+
+        const lines = this._getRawBuildInfoLines();
+        if (lines.includes('[ETHERNET MODULE NOT INSTALLED]')) {
+            return { module: 'Not installed', link: 'Not applicable' };
+        }
+        const link = lines.find(line => /^\[ETHERNET LINK:(UP|DOWN)\]$/.test(line));
+        if (link) return { module: 'Installed', link: link === '[ETHERNET LINK:UP]' ? 'Up' : 'Down' };
+        return status;
+    }
+
     _networkStatusCard() {
         const connection = window.ws;
         if (!connection?.isConnected) {
@@ -121,6 +134,9 @@ export class TroubleshootingInfoView {
         const usb = ['webserial', 'usb'].includes(connection.type);
         const transport = usb ? 'USB' : { telnet: 'Telnet', websocket: 'WebSocket' }[connection.type] || 'Network';
         let rows = this._infoRow('App connection', transport);
+        const ethernetStatus = this._getEthernetStatus();
+        rows += this._infoRow('Ethernet module', ethernetStatus.module);
+        rows += this._infoRow('Ethernet link', ethernetStatus.link);
 
         for (const [label, address, mac] of [
             ['Wi-Fi', wifi, field('WIFI STA MAC')],
@@ -332,6 +348,7 @@ export class TroubleshootingInfoView {
                 platform: window.electron ? 'Desktop' : window.cordova ? 'Mobile' : 'Web'
             },
             computer,
+            ethernet: this._getEthernetStatus(),
             homing: this._getHomingLines(),
             limitSwitches: this._getLimitSwitchLines(),
             inputPins: this._getPnLines(),
@@ -401,6 +418,10 @@ export class TroubleshootingInfoView {
                 ['Memory', snapshot.computer?.memory],
                 ['Host', snapshot.computer?.host],
                 ['Origin', snapshot.computer?.origin]
+            ]),
+            ...this._snapshotKeyValueLines('Ethernet', [
+                ['Module', snapshot.ethernet.module],
+                ['Link', snapshot.ethernet.link]
             ]),
             ...this._snapshotSectionLines('Network Adapters', adapterLines),
             ...this._snapshotSectionLines('Scanner Ranges', scanRangeLines),
@@ -718,6 +739,10 @@ export class TroubleshootingInfoView {
                 row('Memory', snapshot.computer?.memory),
                 row('Host', snapshot.computer?.host),
                 row('Origin', snapshot.computer?.origin)
+            ]))}
+            ${section('Ethernet', rows([
+                row('Module', snapshot.ethernet.module),
+                row('Link', snapshot.ethernet.link)
             ]))}
             ${section('Network Adapters', adapters)}
             ${section('Scanner Ranges', pre(scanRanges))}

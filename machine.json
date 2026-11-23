@@ -154,14 +154,5 @@
         "vfd-0-10v": { "name": "VFD Spindle (0-10V Control)", "category": "spindle", "type": "vfd-analog", "value": 32, "port": 0 },
         "vfd-modbus": { "name": "VFD Spindle (Modbus Control)", "category": "vfd-modbus", "type": "vfd-modbus", "value": 2, "port": 0 },
         "laser-pwm": { "name": "Laser Module (PWM Control)", "category": "laser", "type": "laser", "value": 1, "port": 1 }
-    },
-    "modbusProtocols": {
-        "huanyang-v1": { "name": "Huanyang v1", "$396": 0 },
-        "huanyang-p2a": { "name": "Huanyang P2A", "$396": 1 },
-        "durapulse-gs20": { "name": "Durapulse GS20", "$396": 2 },
-        "yalang-ys620": { "name": "Yalang YS620", "$396": 3 },
-        "modvfd": { "name": "MODVFD", "$396": 4 },
-        "h-100": { "name": "H-100", "$396": 5 },
-        "nowforever": { "name": "Nowforever", "$396": 6 }
     }
 }

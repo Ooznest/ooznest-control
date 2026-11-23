@@ -40,7 +40,7 @@ test('Invalid RPM and delay cannot start a program',()=>{
 });
 test('Laser-only profiles and a laser primary spindle block Vernier operation',()=>{
     const {h,context,values}=setup();values.set('machine.toolheads',JSON.stringify({spindle:'laser-pwm'}));assert.match(h._validateSpindleSettings(),/not a laser/);
-    values.set('machine.toolheads',JSON.stringify({spindle:'vfd-0-10v'}));context.window.grblSettings.settings['395'].val='1';assert.match(h._validateSpindleSettings(),/not a laser/);
+    values.set('machine.toolheads',JSON.stringify({spindle:'vfd-0-10v'}));context.window.grblSettings.settings['395']={val:'2',format:'PWM,Huanyang v1,PWM2'};assert.match(h._validateSpindleSettings(),/not a laser/);
 });
 test('Known digital heads default to controller mode; manual and unknown heads do not',()=>{
     const {h,values}=setup();for(const spindle of ['mafell-digital','vfd-0-10v','vfd-modbus']){values.set('machine.toolheads',JSON.stringify({spindle}));assert.equal(h._defaultSpindleControl(),'controller');}

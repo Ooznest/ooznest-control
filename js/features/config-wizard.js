@@ -1,7 +1,7 @@
 import { registerModal } from '../ui/modal.js';
+import { TOOLHEAD_SLOTS, getToolheadOptions } from '../machine/toolhead-options.js';
 
 const Z2_TRAVEL_OFFSET_MM = 230;
-
 export class ConfigWizard {
     constructor(ws, store) {
         console.log('[ConfigWizard] constructor');
@@ -9,7 +9,6 @@ export class ConfigWizard {
         this.store = store;
         this.machines = [];
         this.spindles = {};
-        this.modbusProtocols = {};
         this.verInfo = null;
         this.optInfo = null;
         this.numInfo = null;
@@ -20,16 +19,19 @@ export class ConfigWizard {
         this._collectingVer = false;
         this._verLines = [];
         this._expandedMachineCat = null;
-        this._expandedToolheadCategories = new Set(['spindle', 'vfd-modbus', 'laser']);
+        this._expandedToolheadSlot = '395';
+        this._toolheadSettings = {};
+        this._toolheadLoadError = '';
+        this.ws.on('disconnect', () => {
+            this._toolheadSettings = {};
+            this._toolheadRequest = null;
+            this._toolheadLoadError = '';
+            if (this.wizardStep === 1 && this.modal?.isOpen()) this._renderWizardStep();
+        });
         this.wizardStep = 0;
         this.wizardData = {
             machine: null,
-            toolheads: {
-                spindle: null,
-                vfdModbusEnabled: false,
-                vfdModbus: null,
-                laser: false
-            },
+            toolheads: { '395': null, '511': null, '512': null },
             probeType: 'ooznest',
             plateThickness: 5,
             xyPlateOffset: 10,
@@ -52,7 +54,6 @@ export class ConfigWizard {
                 const data = await resp.json();
                 this.machines = data.machines || [];
                 this.spindles = data.spindles || {};
-                this.modbusProtocols = data.modbusProtocols || {};
             }
         } catch (e) {
             console.warn('[ConfigWizard] Failed to load machine.json:', e);
@@ -158,6 +159,7 @@ export class ConfigWizard {
         }
         window.firmwareVersionChecker?.setControllerVersion(this.verInfo.version, this.boardInfo);
         this.renderInfoTab();
+        if (this.wizardStep === 1 && this.modal?.isOpen()) this._renderWizardStep();
         const isUnconfigured = this._isUnconfigured(this.verInfo.configName);
         if (isUnconfigured && !this.modal?.isOpen()) {
             setTimeout(() => {
@@ -199,9 +201,13 @@ export class ConfigWizard {
     showWizard() {
         if (this.ws.isConnected && !this.ws.isGrblHAL) return;
         console.log('[ConfigWizard] showWizard');
+        this._toolheadSettings = {};
+        this._toolheadRequest = null;
+        this._toolheadLoadError = '';
         this.wizardStep = 0;
+        this._expandedToolheadSlot = '395';
         this.wizardData.machine = null;
-        this.wizardData.toolheads = { spindle: null, vfdModbusEnabled: false, vfdModbus: null, laser: false };
+        this.wizardData.toolheads = { '395': null, '511': null, '512': null };
         this.wizardData.dustShoe = false;
         this.wizardData.enclosure = false;
         this.wizardData.wifiMode = '0';
@@ -419,9 +425,9 @@ export class ConfigWizard {
                         for (const [axis, dimension, key] of [['X', 'width', 'customWidth'], ['Y', 'length', 'customLength']]) {
                             const size = this.wizardData[key];
                             const travel = size === '' ? '' : size - Z2_TRAVEL_OFFSET_MM;
-                            html += `<div><label class="ooznest-label block" for="w-custom-${dimension}">Overall ${axis} size (mm)</label>`;
+                            html += `<div><label class="ooznest-label block" for="w-custom-${dimension}">Machine ${axis} Size (mm)</label>`;
                             html += `<input type="number" min="${Z2_TRAVEL_OFFSET_MM + 1}" step="1" id="w-custom-${dimension}" value="${size}" class="ooznest-field input-field w-full"></div>`;
-                            html += `<div><label class="ooznest-label block" for="w-z2-travel-${dimension}">${axis} travel (mm)</label>`;
+                            html += `<div><label class="ooznest-label block" for="w-z2-travel-${dimension}">${axis} Travel (mm)</label>`;
                             html += `<input type="number" min="1" step="1" id="w-z2-travel-${dimension}" value="${travel}" class="ooznest-field input-field w-full"></div>`;
                         }
                         html += '</div>';
@@ -445,95 +451,127 @@ export class ConfigWizard {
         return html;
     }
 
-    _renderRouterStep() {
-        const machine = this.wizardData.machine;
-        if (!machine || !machine.routers || !machine.routers.length) {
-            return '<p class="text-sm text-grey">No toolhead options for this machine.</p>';
-        }
-
-        const th = this.wizardData.toolheads;
-        const spindleDefs = {};
-        machine.routers.forEach(r => { spindleDefs[r.id] = this.spindles[r.id] || {}; });
-
-        const cats = {
-            spindle: { label: 'Spindle / Router', icon: 'bi-tools', items: [] },
-            'vfd-modbus': { label: 'VFD Modbus', icon: 'bi-speedometer2', items: [] },
-            laser: { label: 'Laser', icon: 'bi-brightness-high', items: [] }
-        };
-
-        machine.routers.forEach(r => {
-            const def = spindleDefs[r.id] || {};
-            let cat = def.category || 'spindle';
-            if (cat === 'router') cat = 'spindle';
-            if (cats[cat]) cats[cat].items.push(r);
-        });
-
-        let html = '<p class="text-sm text-grey mb-4">Select your toolheads:</p>';
-
-        ['spindle', 'vfd-modbus', 'laser'].forEach(catKey => {
-            const cat = cats[catKey];
-            if (!cat.items.length) return;
-
-            const isExpanded = this._expandedToolheadCategories.has(catKey);
-            html += `<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden mb-2">`;
-            html += `<div class="config-filter-group__header flex items-center justify-between px-4 py-2.5 border-b border-grey-light cursor-pointer select-none transition-colors" onclick="window.configWizard._toggleCategory('${catKey}')">`;
-            html += `<span class="config-filter-group__title">${cat.label}</span>`;
-            html += `<i class="config-filter-group__chevron bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'}"></i>`;
-            html += `</div>`;
-
-            if (isExpanded) {
-                html += `<div>`;
-                cat.items.forEach(r => {
-                    if (catKey === 'laser') {
-                        const checked = th.laser;
-                        html += `<label class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer">`;
-                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.laser = this.checked; window.configWizard._renderWizardStep()" class="accent-primary rounded shrink-0" style="width:16px;height:16px;min-height:16px;padding:0;border:0;box-shadow:none;background:transparent;flex:0 0 auto;">`;
-                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
-                        html += `</label>`;
-                    } else if (catKey === 'vfd-modbus') {
-                        const checked = th.vfdModbusEnabled;
-                        html += `<label class="config-filter-choice flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer">`;
-                        html += `<input type="checkbox" ${checked ? 'checked' : ''} onchange="window.configWizard.wizardData.toolheads.vfdModbusEnabled = this.checked; if(!this.checked)window.configWizard.wizardData.toolheads.vfdModbus=null; window.configWizard._renderWizardStep()" class="accent-primary rounded shrink-0" style="width:16px;height:16px;min-height:16px;padding:0;border:0;box-shadow:none;background:transparent;flex:0 0 auto;">`;
-                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
-                        html += `</label>`;
-                        // Modbus protocol sub-select
-                        if (checked) {
-                            html += '<div class="px-4 pb-3 bg-grey-bg/30">';
-                            html += '<label class="ooznest-label config-filter-subtitle block mb-1.5 mt-1">Modbus Protocol</label>';
-                            html += '<div class="grid gap-1">';
-                            Object.entries(this.modbusProtocols).forEach(([key, proto]) => {
-                                const sel = th.vfdModbus === key;
-                                html += `<div class="modbus-select-item config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-2 px-2.5 py-1.5 rounded border cursor-pointer transition-all" data-modbus-key="${key}">`;
-                                html += `<div class="config-filter-choice__control ${sel ? 'is-selected' : ''} w-3 h-3 rounded-full flex items-center justify-center"><div class="w-1 h-1 rounded-full ${sel ? 'bg-white' : ''}"></div></div>`;
-                                html += `<span class="config-filter-choice__label config-filter-choice__label--compact">${proto.name}</span>`;
-                                html += `<span class="text-[10px] text-grey ml-auto">$$396=${proto['$396']}</span>`;
-                                html += `</div>`;
-                            });
-                            html += '</div></div>';
-                        }
-                    } else {
-                        const selected = th.spindle === r.id;
-                        html += `<div class="config-filter-choice ${selected ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer toolhead-option" data-id="${r.id}">`;
-                        html += `<div class="config-filter-choice__control ${selected ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full ${selected ? 'bg-white' : ''}"></div></div>`;
-                        html += `<span class="config-filter-choice__label">${r.name}</span>`;
-                        html += `</div>`;
-                    }
-                });
-                html += `</div>`;
+    async _loadToolheadOptions() {
+        if (this._toolheadRequest || !this.ws.isConnected) return;
+        const request = {};
+        this._toolheadRequest = request;
+        this._toolheadLoadError = '';
+        const settings = {};
+        const values = {};
+        const collect = line => {
+            const value = line.match(/^\$(395|511|512)=(\d+)$/);
+            if (value) values[value[1]] = Number(value[2]);
+            if (!line.startsWith('[SETTING:')) return;
+            const parts = line.slice(9, -1).split('|');
+            if (TOOLHEAD_SLOTS.some(slot => slot.id === parts[0]) && parts[4] === '3') {
+                settings[parts[0]] = (parts[5] || '').split(',').map((name, value) => ({ name: name.trim(), value }));
             }
+        };
+        this.ws.on('line', collect);
+        try {
+            // $ES contains the same indexed choices as $$=395/511/512, without guessing offsets.
+            const result = await this.ws.sendCommandWithAck('$ES');
+            if (result.response !== 'ok') throw new Error('The controller did not return its toolhead options.');
+            const current = await this.ws.sendCommandWithAck('$$');
+            if (current.response !== 'ok') throw new Error('The controller did not return its current toolhead assignments.');
+            if (settings['512'] && values['512'] === undefined) throw new Error('Could not read the existing third toolhead assignment.');
+            if (!settings['395']?.some(option => option.name)) throw new Error('No primary toolhead options were reported.');
+            if (this._toolheadRequest !== request) return;
+            this._toolheadSettings = settings;
+            for (const { id } of TOOLHEAD_SLOTS) {
+                const options = this._getToolheadOptions(id);
+                if (id === '512') {
+                    this.wizardData.toolheads[id] = options.find(option => option.value === values[id])?.key ?? null;
+                    continue;
+                }
+                if (!options.some(option => option.key === this.wizardData.toolheads[id])) {
+                    this.wizardData.toolheads[id] = options.find(option => option.kind === 'disabled')?.key ?? null;
+                }
+            }
+        } catch (error) {
+            if (this._toolheadRequest === request) this._toolheadLoadError = error.message;
+        } finally {
+            this.ws.off('line', collect);
+            if (this._toolheadRequest === request) {
+                this._toolheadRequest = null;
+                if (this.wizardStep === 1 && this.modal?.isOpen()) this._renderWizardStep();
+            }
+        }
+    }
 
-            html += `</div>`;
-        });
+    _getToolheadOptions(id) {
+        return getToolheadOptions(this._toolheadSettings?.[id] || [], this.wizardData.machine?.routers || []);
+    }
 
+    _availableToolheadOptions(id) {
+        const assigned = new Set(this._selectedToolheads()
+            .filter(slot => slot.id !== id && slot.option && slot.option.kind !== 'disabled')
+            .map(slot => slot.option.source));
+        return this._getToolheadOptions(id).filter(option => option.kind === 'disabled'
+            || option.key === this.wizardData.toolheads[id] || !assigned.has(option.source));
+    }
+
+    _selectedToolheads() {
+        return TOOLHEAD_SLOTS.map(slot => ({
+            ...slot,
+            option: this._getToolheadOptions(slot.id).find(option => option.key === this.wizardData.toolheads[slot.id])
+        }));
+    }
+
+    _toolheadValidationError() {
+        if (!this.ws.isConnected) return 'Connect to read the available toolheads.';
+        if (this._toolheadRequest) return 'Reading available toolheads…';
+        if (this._toolheadLoadError) return this._toolheadLoadError;
+        const selected = this._selectedToolheads();
+        if (!selected[0].option || selected[0].option.kind === 'disabled') return 'Choose a primary toolhead.';
+        const used = new Set();
+        for (const { id, option } of selected) {
+            if (!this._toolheadSettings[id]) continue;
+            if (!option) return 'Choose a toolhead or None for each available slot.';
+            if (option.kind === 'disabled') continue;
+            if (used.has(option.source)) return 'Each output or VFD can only be assigned to one toolhead.';
+            used.add(option.source);
+        }
+        return '';
+    }
+
+    _renderRouterStep() {
+        if (!this._toolheadSettings['395'] && !this._toolheadRequest && !this._toolheadLoadError && this.ws.isConnected) {
+            void this._loadToolheadOptions();
+        }
+        let html = '<p class="text-sm text-grey mb-4">Choose your primary toolhead, then add any other toolheads fitted to your machine.</p>';
+        for (const { id, label } of TOOLHEAD_SLOTS.filter(slot => slot.id !== '512')) {
+            const options = this._availableToolheadOptions(id);
+            const selected = this.wizardData.toolheads[id];
+            const selection = this._getToolheadOptions(id).find(option => option.key === selected);
+            const expanded = (this._expandedToolheadSlot ?? '395') === id;
+            html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden mb-2">';
+            html += `<button type="button" class="config-filter-group__header flex items-center justify-between w-full text-left px-4 py-2.5 border-b border-grey-light cursor-pointer" aria-expanded="${expanded}" aria-controls="wizard-toolhead-${id}" onclick="window.configWizard._toggleToolheadSlot('${id}')">`;
+            html += `<span class="config-filter-group__title">${label}</span>`;
+            html += `<span class="text-xs text-grey ml-auto mr-3">${this._escapeHtml(selection?.name || (id === '395' ? 'Choose a toolhead' : 'None'))}</span>`;
+            html += `<i aria-hidden="true" class="config-filter-group__chevron bi ${expanded ? 'bi-chevron-up' : 'bi-chevron-down'}"></i></button>`;
+            if (expanded) {
+                html += `<div id="wizard-toolhead-${id}" role="radiogroup" aria-label="${label}">`;
+                for (const option of options) {
+                    const checked = option.key === selected;
+                    html += `<label class="toolhead-option config-filter-choice ${checked ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 cursor-pointer">`;
+                    html += `<input type="radio" name="wizard-toolhead-${id}" data-toolhead-slot="${id}" value="${option.key}" class="sr-only" ${checked ? 'checked' : ''}>`;
+                    html += `<span aria-hidden="true" class="config-filter-choice__control ${checked ? 'is-selected' : ''} w-4 h-4 rounded-full flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full ${checked ? 'bg-white' : ''}"></span></span>`;
+                    html += `<span class="config-filter-choice__label">${this._escapeHtml(option.name)}</span></label>`;
+                }
+                if (!options.length) html += `<p class="text-sm text-grey px-3 py-3">${this._toolheadRequest ? 'Reading toolheads…' : 'Not available on this controller'}</p>`;
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+        const error = this._toolheadValidationError();
+        if (error) html += `<p class="text-sm text-grey mt-2" role="status">${this._escapeHtml(error)}</p>`;
+        if (this._toolheadLoadError) html += '<button id="wizard-retry-toolheads" class="btn btn-secondary mt-3">Read toolheads again</button>';
         return html;
     }
 
-    _toggleCategory(catKey) {
-        if (this._expandedToolheadCategories.has(catKey)) {
-            this._expandedToolheadCategories.delete(catKey);
-        } else {
-            this._expandedToolheadCategories.add(catKey);
-        }
+    _toggleToolheadSlot(id) {
+        this._expandedToolheadSlot = this._expandedToolheadSlot === id ? '' : id;
         this._renderWizardStep();
     }
 
@@ -559,6 +597,14 @@ export class ConfigWizard {
         const t = machine.travel;
         const axes = ['x','y','z'];
         const lines = [];
+        if (machine.category === 'custom') {
+            let homingMask = (Number(window.grblSettings?.settings['23']?.val) || 0) & ~7;
+            axes.forEach((axis, i) => {
+                // grblHAL homes towards max unless the axis direction bit is set.
+                if ((machine.customEndstops?.[axis] || 'min') === 'min') homingMask |= 1 << i;
+            });
+            lines.push(`$23=${homingMask}`);
+        }
         axes.forEach((axis, i) => {
             const s = this._calcStepsPerMM(axis, machine);
             lines.push(`$${100 + i}=${s.toFixed(3)}`);
@@ -590,31 +636,21 @@ export class ConfigWizard {
     }
 
     _computeToolheadAssignments() {
-        const th = this.wizardData.toolheads;
-        const result = {};
-        const hasSpindle = th.spindle !== null;
-        const hasLaser = th.laser;
-        const hasModbus = th.vfdModbusEnabled;
+        return Object.fromEntries(this._selectedToolheads()
+            .filter(({ id, option }) => id !== '512' && option)
+            .map(({ id, option }) => [`$${id}`, { name: option.name, value: option.value }]));
+    }
 
-        if (!hasSpindle && !hasLaser && !hasModbus) return result;
-
-        const spindleDef = hasSpindle ? this.spindles[th.spindle] : null;
-        const laserDef = this.spindles['laser-pwm'];
-        const modbusDef = this.spindles['vfd-modbus'];
-
-        if (hasSpindle && spindleDef) {
-            result['$395'] = { name: spindleDef.name, value: spindleDef.value };
-        }
-        if (hasLaser && laserDef) {
-            // Secondary spindle numbering reserves 0 for Disabled.
-            result['$511'] = { name: laserDef.name, value: laserDef.value + 1 };
-        }
-        if (hasModbus && modbusDef) {
-            // Tertiary spindle numbering also reserves 0 for Disabled.
-            result['$512'] = { name: modbusDef.name, value: modbusDef.value + 1 };
-        }
-
-        return result;
+    _toolheadProfile() {
+        const selected = this._selectedToolheads();
+        return {
+            primary: selected[0].option,
+            secondary: selected[1].option,
+            additional: selected[2].option,
+            spindle: selected[0].option?.profile,
+            laser: selected.some(({ option }) => option?.kind === 'laser'),
+            vfdModbusEnabled: selected.some(({ option }) => option?.kind === 'vfd')
+        };
     }
 
     _renderProbePlateStep() {
@@ -696,12 +732,12 @@ export class ConfigWizard {
 
     _renderWifiSetupStep() {
         const isStation = this.wizardData.wifiMode === '1';
-        let html = '<p class="text-sm text-grey mb-4">Configure the controller network mode.</p>';
+        let html = '<p class="text-sm text-grey mb-4">Enable WiFi?</p>';
         html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden">';
         html += '<div>';
         [
-            { value: '0', label: 'Wifi Off / Ethernet (Optional)' },
-            { value: '1', label: 'Wifi Enabled' }
+            { value: '1', label: 'Yes, Enable WiFi' },
+            { value: '0', label: 'No, leave WiFi Disabled' }
         ].forEach(opt => {
             const sel = this.wizardData.wifiMode === opt.value;
             html += `<div class="wifi-mode-option config-filter-choice ${sel ? 'is-selected' : ''} flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer" data-value="${opt.value}">`;
@@ -751,10 +787,7 @@ export class ConfigWizard {
 
     _renderApplyStep() {
         const machine = this.wizardData.machine;
-        const th = this.wizardData.toolheads;
         const assignments = this._computeToolheadAssignments();
-        const modbusKey = th.vfdModbus;
-        const modbusProto = modbusKey ? this.modbusProtocols[modbusKey] : null;
         const wifiLines = this._getWifiConfigLines();
 
         let html = '<p class="text-sm text-grey mb-4">Review your configuration before applying:</p>';
@@ -763,34 +796,31 @@ export class ConfigWizard {
         if (machine) {
             const machineFamilies = { 'z1+': 'WorkBee Z1+', z2: 'WorkBee Z2', custom: 'Other' };
             const machineLabel = `${machineFamilies[machine.category] || 'Other'} ${machine.name}`;
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine</span><span class="text-xs font-bold text-secondary-dark">${this._escapeHtml(machineLabel)}</span></div>`;
+            html += `<div class="flex justify-between"><span class="text-xs text-grey">Machine</span><span class="text-xs font-bold text-grey-dark">${this._escapeHtml(machineLabel)}</span></div>`;
         }
 
         // Toolhead assignments
         if (Object.keys(assignments).length) {
-            const labels = { '$395': 'Toolhead', '$511': 'Secondary', '$512': 'Tertiary' };
+            const labels = { '$395': 'Primary Toolhead', '$511': 'Secondary Toolhead' };
             html += '<div class="border-t border-grey-light pt-2"></div>';
             Object.entries(assignments).forEach(([setting, info]) => {
                 const label = labels[setting] || setting;
-                html += `<div class="flex justify-between"><span class="text-xs text-grey">${label}</span><span class="text-xs font-bold text-secondary-dark">${info.name}</span></div>`;
+                html += `<div class="flex justify-between"><span class="text-xs text-grey">${label}</span><span class="text-xs font-bold text-grey-dark">${this._escapeHtml(info.name)}</span></div>`;
             });
-        }
-        if (modbusProto) {
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Modbus Protocol</span><span class="text-xs font-bold text-secondary-dark">${modbusProto.name} ($396=${modbusProto['$396']})</span></div>`;
         }
 
         html += '<div class="border-t border-grey-light pt-2"></div>';
         const probeLabel = this.wizardData.probeType === 'ooznest'
             ? 'WorkBee XYZ Touch Probe'
             : this.wizardData.probeType === 'custom'
-                ? 'Custom'
-                : 'None';
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe Plate</span><span class="text-xs font-bold text-secondary-dark">${probeLabel}</span></div>`;
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Dust Shoe</span><span class="text-xs font-bold ${this.wizardData.dustShoe ? 'text-green-600' : 'text-grey'}">${this.wizardData.dustShoe ? 'Yes' : 'No'}</span></div>`;
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold ${this.wizardData.enclosure ? 'text-green-600' : 'text-grey'}">${this.wizardData.enclosure ? 'WorkBee Enclosure' : 'No Enclosure'}</span></div>`;
-        html += `<div class="flex justify-between"><span class="text-xs text-grey">WiFi Mode</span><span class="text-xs font-bold text-secondary-dark">${this.wizardData.wifiMode === '1' ? 'Wifi Enabled' : 'Wifi Off / Ethernet (Optional)'}</span></div>`;
+                ? 'Custom Probe Plate'
+                : 'No Probe Plate';
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Probe Plate</span><span class="text-xs font-bold text-grey-dark">${probeLabel}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Dust Shoe</span><span class="text-xs font-bold text-grey-dark">${this.wizardData.dustShoe ? 'Yes, I have one' : 'No Dust Shoe'}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">Enclosure</span><span class="text-xs font-bold text-grey-dark">${this.wizardData.enclosure ? 'Yes, I have one' : 'No Enclosure'}</span></div>`;
+        html += `<div class="flex justify-between"><span class="text-xs text-grey">WiFi</span><span class="text-xs font-bold text-grey-dark">${this.wizardData.wifiMode === '1' ? 'Yes, Enable WiFi' : 'No, leave WiFi Disabled'}</span></div>`;
         if (this.wizardData.wifiMode === '1') {
-            html += `<div class="flex justify-between"><span class="text-xs text-grey">Wifi Network Name</span><span class="text-xs font-bold text-secondary-dark">${this._escapeHtml(this.wizardData.wifiSsid || '')}</span></div>`;
+            html += `<div class="flex justify-between"><span class="text-xs text-grey">WiFi Network Name</span><span class="text-xs font-bold text-grey-dark">${this._escapeHtml(this.wizardData.wifiSsid || '')}</span></div>`;
         }
 
         html += '</div>';
@@ -798,10 +828,11 @@ export class ConfigWizard {
         if (machine) {
             const configLines = this._getMachineConfig(machine).split('\n').filter(l => l.trim());
             const defaultLines = ['$1=255', '$4=0', '$9=5', '$10=511', '$22=3', '$32=1', '$40=1', '$300=Workbee', '$650=1', '$709=17', '$753=4'];
-            const totalSettings = configLines.length + wifiLines.length + defaultLines.length;
+            const toolheadLines = Object.entries(assignments).map(([setting, info]) => `${setting}=${info.value}`);
+            const totalSettings = configLines.length + wifiLines.length + defaultLines.length + toolheadLines.length;
             html += `<div class="mt-3"><p class="text-[10px] font-bold text-grey-dark uppercase tracking-wider mb-1">Grbl Settings to apply (${totalSettings} settings)</p>`;
             html += `<div class="bg-white border border-grey-light rounded-lg p-2 max-h-32 overflow-y-auto text-[10px] font-mono text-grey-dark leading-relaxed">`;
-            html += configLines.concat(wifiLines, defaultLines).map(l => `<div>${this._escapeHtml(l)}</div>`).join('');
+            html += configLines.concat(wifiLines, toolheadLines, defaultLines).map(l => `<div>${this._escapeHtml(l)}</div>`).join('');
             html += '</div></div>';
         }
 
@@ -850,7 +881,7 @@ export class ConfigWizard {
                     this.wizardData.machine = this.machines.find(m => m.id === id) || null;
                 }
                 this.wizardData.firmwareFlashed = false;
-                this.wizardData.toolheads = { spindle: null, vfdModbusEnabled: false, vfdModbus: null, laser: false };
+                this.wizardData.toolheads = { '395': null, '511': null, '512': null };
                 this._renderWizardStep();
             };
         });
@@ -863,14 +894,18 @@ export class ConfigWizard {
             };
         }
 
-        // Toolhead selection (radio-style for spindle options)
-        document.querySelectorAll('.toolhead-option').forEach(el => {
-            el.onclick = () => {
-                const id = el.dataset.id;
-                this.wizardData.toolheads.spindle = this.wizardData.toolheads.spindle === id ? null : id;
+        document.querySelectorAll('[data-toolhead-slot]').forEach(el => {
+            el.onchange = () => {
+                this.wizardData.toolheads[el.dataset.toolheadSlot] = el.value;
+                this._expandedToolheadSlot = '';
                 this._renderWizardStep();
             };
         });
+        const retryToolheads = document.getElementById('wizard-retry-toolheads');
+        if (retryToolheads) retryToolheads.onclick = () => {
+            this._toolheadLoadError = '';
+            this._renderWizardStep();
+        };
 
         // Probe selection
         document.querySelectorAll('.probe-option').forEach(el => {
@@ -879,13 +914,6 @@ export class ConfigWizard {
             };
         });
 
-        // Modbus protocol selection
-        document.querySelectorAll('.modbus-select-item').forEach(el => {
-            el.onclick = () => {
-                this.wizardData.toolheads.vfdModbus = el.dataset.modbusKey;
-                this._renderWizardStep();
-            };
-        });
 
         // Dust shoe selection
         document.querySelectorAll('.dust-shoe-option').forEach(el => {
@@ -924,6 +952,8 @@ export class ConfigWizard {
                     onFlashComplete: (firmwareKey) => {
                         if (firmwareKey !== this._getFirmwareForMachine()?.key) return;
                         this.wizardData.firmwareFlashed = true;
+                        this._toolheadSettings = {};
+                        this._toolheadLoadError = '';
                         this.wizardStep = 1;
                         this._renderWizardStep();
                     }
@@ -950,11 +980,7 @@ export class ConfigWizard {
                 return true;
             }
             case 1: {
-                const th = this.wizardData.toolheads;
-                const hasAny = th.spindle !== null || th.vfdModbusEnabled || th.laser;
-                if (!hasAny) return false;
-                if (th.vfdModbusEnabled && !th.vfdModbus) return false;
-                return true;
+                return !this._toolheadValidationError();
             }
             case 5: {
                 if (this.wizardData.wifiMode !== '1') return true;
@@ -1039,6 +1065,12 @@ export class ConfigWizard {
             return;
         }
 
+        const toolheadError = this._toolheadValidationError();
+        if (toolheadError) {
+            this._showWizardStatus(toolheadError, 'error');
+            return;
+        }
+
         // Save probe plate settings
         this.store.set('probe.plateThickness', this.wizardData.plateThickness);
         this.store.set('probe.xyPlateOffset', this.wizardData.xyPlateOffset);
@@ -1061,6 +1093,10 @@ export class ConfigWizard {
         this._showWizardStatus(`Applying ${allConfigLines.length} settings...`, 'info');
 
         try {
+            const sendSetting = async command => {
+                const result = await this.ws.sendCommandWithAck(command);
+                if (result.response !== 'ok') throw new Error(`${command} was rejected: ${result.response}`);
+            };
             for (let i = 0; i < allConfigLines.length; i++) {
                 const line = allConfigLines[i].trim();
                 if (!line) continue;
@@ -1068,59 +1104,49 @@ export class ConfigWizard {
                     this._showWizardStatus(`Setting ${i + 1} of ${allConfigLines.length}...`, 'info');
                     await this._sleep(10);
                 }
-                await this.ws.sendCommand(line);
+                await sendSetting(line);
                 await this._sleep(15);
             }
 
-            // Apply toolhead assignments ($395 primary, $511 secondary, $512 tertiary)
+            // Apply primary and secondary toolheads; leave $512 unchanged.
             const assignments = this._computeToolheadAssignments();
             for (const [setting, info] of Object.entries(assignments)) {
-                await this.ws.sendCommand(`${setting}=${info.value}`);
-                await this._sleep(15);
+                await sendSetting(`${setting}=${info.value}`);
             }
 
             // Enable probe ($6=1)
-            await this.ws.sendCommand('$6=1');
+            await sendSetting('$6=1');
             await this._sleep(15);
 
             // Apply Ooznest controller defaults
-            await this.ws.sendCommand('$1=255');
+            await sendSetting('$1=255');
             await this._sleep(15);
-            await this.ws.sendCommand('$4=0');
+            await sendSetting('$4=0');
             await this._sleep(15);
-            await this.ws.sendCommand('$9=5');
+            await sendSetting('$9=5');
             await this._sleep(15);
-            await this.ws.sendCommand('$10=511');
+            await sendSetting('$10=511');
             await this._sleep(15);
-            await this.ws.sendCommand('$22=3');
+            await sendSetting('$22=3');
             await this._sleep(15);
-            await this.ws.sendCommand('$32=1');
+            await sendSetting('$32=1');
             await this._sleep(15);
-            await this.ws.sendCommand('$40=1');
+            await sendSetting('$40=1');
             await this._sleep(15);
-            await this.ws.sendCommand('$300=Workbee');
+            await sendSetting('$300=Workbee');
             await this._sleep(15);
-            await this.ws.sendCommand('$650=1');
+            await sendSetting('$650=1');
             await this._sleep(15);
-            await this.ws.sendCommand('$709=17');
+            await sendSetting('$709=17');
             await this._sleep(15);
-            await this.ws.sendCommand('$753=4');
+            await sendSetting('$753=4');
             await this._sleep(15);
 
-            // Apply modbus protocol $396 setting
-            const modbusKey = this.wizardData.toolheads.vfdModbus;
-            if (modbusKey) {
-                const modbusProto = this.modbusProtocols[modbusKey];
-                if (modbusProto && modbusProto['$396'] !== undefined) {
-                    await this.ws.sendCommand(`$396=${modbusProto['$396']}`);
-                    await this._sleep(15);
-                }
-            }
 
             // Save machine config name to store
             this.store.set('machine.id', machine.id);
             this.store.set('machine.name', machine.name);
-            this.store.set('machine.toolheads', JSON.stringify(this.wizardData.toolheads));
+            this.store.set('machine.toolheads', JSON.stringify(this._toolheadProfile()));
 
             // Mark configured — send short WB code before soft reset so GRBL saves it to flash
             // WB code format: WB{size}{dust}{encl}{spindle}{laser}{probe}{cat}
@@ -1133,7 +1159,7 @@ export class ConfigWizard {
             //   Pos 7 (laser): A=yes, B=no
             //   Pos 8 (probe): A=WorkBee XYZ Touch Probe, B=Custom Probe, C=None
             //   Pos 9 (cat):   A=Z1+, B=Z2, C=Custom
-            const th = this.wizardData.toolheads;
+            const th = this._toolheadProfile();
             const sizeCodes = { '500x500':'A', '750x750':'B', '750x1000':'C', '1000x1000':'D', '1000x1500':'E', '1500x1500':'F' };
             const catCodes = { 'z1+':'A', 'z2':'B', 'custom':'C' };
             const spindleCodes = { 'workbee-router-head':'A', 'mafell-digital':'B', 'mafell-manual':'C', 'vfd-0-10v':'D', 'vfd-modbus':'E', 'laser-pwm':'F' };
@@ -1147,7 +1173,7 @@ export class ConfigWizard {
             const probeCodes = { ooznest: 'A', custom: 'B', none: 'C' };
             const prbCode = probeCodes[this.wizardData.probeType] || 'A';
             const wbCode = `WB${szCode}${dustCode}${encCode}${spCode}${lasCode}${prbCode}${catCode}`;
-            await this.ws.sendCommand(`$I=${wbCode}`);
+            await sendSetting(`$I=${wbCode}`);
 
             this._showWizardStatus('All settings applied! Performing soft reset...', 'success');
 

@@ -1,4 +1,5 @@
 import { registerModal } from '../ui/modal.js';
+import { TOOLHEAD_SLOTS, getToolheadOptions } from './toolhead-options.js';
 
 // Standard Grbl 1.1 settings do not include enumeration metadata.
 // Reference: https://github.com/gnea/grbl/wiki/Grbl-v1.1-Configuration
@@ -918,6 +919,24 @@ export class GrblSettings {
             return html;
         }
 
+        // Toolhead aliases share controller indexes; only their keys differ in the UI.
+        if (s.type === 3 && s.format && TOOLHEAD_SLOTS.some(slot => slot.id === String(s.id))) {
+            const options = this._availableToolheadOptions(s);
+            const alias = this._toolheadAliases?.[s.id];
+            let saved = window.store?.get('machine.toolheads');
+            try { if (typeof saved === 'string') saved = JSON.parse(saved); } catch { saved = null; }
+            const slot = { '395': 'primary', '511': 'secondary', '512': 'additional' }[String(s.id)];
+            const profile = saved?.[slot]?.profile || (slot === 'primary' ? saved?.spindle : null);
+            const selected = options.find(option => option.key === alias && String(option.value) === String(val))
+                || options.find(option => option.profile === profile && String(option.value) === String(val))
+                || options.find(option => String(option.value) === String(val));
+            let html = `<select class="oz-select oz-select--compact text-[10px] md:text-xs w-full" oninput="window.grblSettings.updateToolhead('${s.id}', this.value)">`;
+            for (const option of options) {
+                html += `<option value="${option.key}" ${option === selected ? 'selected' : ''}>${this._escapeHtml(option.name)}</option>`;
+            }
+            return html + '</select>';
+        }
+
         // 3: Enum (Select)
         if (s.type === 3 && s.format) {
             const options = s.format.split(',');
@@ -948,6 +967,38 @@ export class GrblSettings {
                 value="${val}"
                 oninput="window.grblSettings.update('${s.id}', this.value)">
         `;
+    }
+
+    _escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    }
+
+    _toolheadOptions(setting) {
+        return getToolheadOptions(setting.format.split(',').map((name, value) => ({ name: name.trim(), value })));
+    }
+
+    _availableToolheadOptions(setting) {
+        const assigned = new Set();
+        for (const { id } of TOOLHEAD_SLOTS) {
+            if (id === String(setting.id)) continue;
+            const other = this.settings[id];
+            if (!other?.format) continue;
+            const value = this.pendingChanges[id] ?? other.val;
+            const option = this._toolheadOptions(other).find(option => String(option.value) === String(value));
+            if (option && option.kind !== 'disabled') assigned.add(option.source);
+        }
+        const current = this.pendingChanges[setting.id] ?? setting.val;
+        return this._toolheadOptions(setting).filter(option => option.kind === 'disabled'
+            || String(option.value) === String(current) || !assigned.has(option.source));
+    }
+
+    updateToolhead(id, key) {
+        const option = this._availableToolheadOptions(this.settings[id]).find(option => option.key === key);
+        if (!option) return;
+        this._toolheadAliases ||= {};
+        this._toolheadAliases[id] = option.key;
+        this.update(id, String(option.value));
+        this.render();
     }
 
     _getPendingCount(groupId) {

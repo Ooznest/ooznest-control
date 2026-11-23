@@ -788,8 +788,10 @@ export class CalibrationHandler {
     _validateSpindleSettings() {
         let toolheads = this.store?.get('machine.toolheads');
         try { if (typeof toolheads === 'string') toolheads = JSON.parse(toolheads); } catch { toolheads = null; }
+        const primary = window.grblSettings?.settings?.['395'];
+        const primaryName = primary?.format?.split(',')[Number(primary.val)]?.trim();
         if (toolheads?.spindle === 'laser-pwm' || (!toolheads?.spindle && toolheads?.laser) ||
-            Number(window.grblSettings?.settings?.['395']?.val) === 1) return 'Configure a cutting spindle or router, not a laser, before using Vernier calibration.';
+            /^PWM2$/i.test(primaryName || '')) return 'Configure a cutting spindle or router, not a laser, before using Vernier calibration.';
         if (!['manual', 'controller'].includes(this.spindleControl)) return 'Choose how the spindle is controlled.';
         if (this.spindleControl === 'manual') return null;
         if (!Number.isFinite(this.spindleRpm) || !Number.isInteger(this.spindleRpm) || this.spindleRpm <= 0) return 'Enter a positive whole-number spindle RPM.';
