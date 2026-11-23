@@ -159,8 +159,15 @@ export class TroubleshootingInfoView {
 
     _networkCard(rows) {
         return '<section class="bg-white rounded-xl shadow-soft border border-grey-light overflow-hidden">' +
-            '<h3 class="px-4 py-2.5 border-b border-grey-light font-bold text-secondary-dark text-xs uppercase tracking-wider">Network Status</h3>' +
+            '<div class="px-4 py-2.5 border-b border-grey-light flex items-center gap-2">' +
+            '<h3 class="font-bold text-secondary-dark text-xs uppercase tracking-wider">Network Status</h3>' +
+            `<button class="btn btn-secondary ml-auto h-7 text-[10px] px-3" onclick="window.troubleshootingInfo.refreshInfo()" ${window.ws?.isConnected ? '' : 'disabled'}><i data-lucide="refresh-cw"></i> Refresh</button></div>` +
             '<div class="p-4 space-y-2">' + rows + '</div></section>';
+    }
+
+    refreshInfo() {
+        if (!window.ws?.isConnected) return;
+        window.ws.sendCommand(window.ws.isGrblHAL ? '$I+' : '$I');
     }
 
     _getPnLines() {

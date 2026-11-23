@@ -76,3 +76,24 @@ test('Disconnect and refreshed build info do not retain the previous Ethernet re
     assert.equal(view._getEthernetStatus().module, 'Unknown');
     assert.equal(view._getEthernetStatus().link, 'Unknown');
 });
+
+test('Network Refresh requests extended build info for grblHAL and standard info for Grbl', () => {
+    const { view, window } = setup();
+    const sent = [];
+    window.ws.sendCommand = command => sent.push(command);
+    window.ws.isGrblHAL = true;
+    view.refreshInfo();
+    assert.deepEqual(sent, ['$I+']);
+    window.ws.isGrblHAL = false;
+    view.refreshInfo();
+    assert.deepEqual(sent, ['$I+', '$I']);
+    assert.match(view._networkStatusCard(), /refreshInfo\(\)/);
+    assert.match(view._networkStatusCard(), /> Refresh<\/button>/);
+});
+
+test('Network Refresh is disabled and sends nothing while disconnected', () => {
+    const { view, window } = setup([], false);
+    window.ws.sendCommand = () => assert.fail('Disconnected refresh must not send');
+    view.refreshInfo();
+    assert.match(view._networkStatusCard(), /<button[^>]*disabled/);
+});

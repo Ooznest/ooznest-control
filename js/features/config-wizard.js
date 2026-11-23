@@ -548,7 +548,9 @@ export class ConfigWizard {
             html += '<div class="config-filter-group bg-white rounded-xl border border-grey-light overflow-hidden mb-2">';
             html += `<button type="button" class="config-filter-group__header flex items-center justify-between w-full text-left px-4 py-2.5 border-b border-grey-light cursor-pointer" aria-expanded="${expanded}" aria-controls="wizard-toolhead-${id}" onclick="window.configWizard._toggleToolheadSlot('${id}')">`;
             html += `<span class="config-filter-group__title">${label}</span>`;
-            html += `<span class="text-xs text-grey ml-auto mr-3">${this._escapeHtml(selection?.name || (id === '395' ? 'Choose a toolhead' : 'None'))}</span>`;
+            html += '<span class="ml-auto text-xs text-grey">';
+            if (!expanded) html += '<span class="text-secondary-dark underline">(Change)</span>&nbsp; ';
+            html += `${this._escapeHtml(selection?.name || (id === '395' ? 'Choose a toolhead' : 'None'))}</span>`;
             html += `<i aria-hidden="true" class="config-filter-group__chevron bi ${expanded ? 'bi-chevron-up' : 'bi-chevron-down'}"></i></button>`;
             if (expanded) {
                 html += `<div id="wizard-toolhead-${id}" role="radiogroup" aria-label="${label}">`;
